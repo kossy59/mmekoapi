@@ -1,0 +1,76 @@
+const nodeMailer = require('nodemailer')
+const {connectdatabase} = require('../config/connectDB')
+
+require('dotenv').config()
+
+const forgetHandler = async (req,res,email)=>{
+
+   let database = await connectdatabase();
+   
+    let match = undefined;
+    
+    try{
+        let  dupplicate = await database.databar.listDocuments(database.dataid,database.colid)
+
+        let du = dupplicate.documents.filter(value=>{
+         return value.email === email
+        })
+ 
+        match = du[0];
+
+    }catch(err){
+        return res.status(500).json({"ok":false,'message': `${err.message}!  send search dublicate`});
+    }
+   
+    if(match){
+        let smtpTransport = nodeMailer.createTransport({
+            service:'gmail',
+            auth:{
+                user:process.env.EMAIL,
+                pass:process.env.GOOGLEAPPKEY
+            }
+
+        });
+
+        let rand = Math.floor((Math.random()*100000)+100000);
+
+        let mailOption = {
+            to:email,
+            from:process.env.EMAIL,
+            subject:"Please confirm your new mmekoSocial Account Authentication",
+            text:`${rand}`
+        }
+
+        const result = await database.databar.updateDocument(
+            database.dataid,
+            database.colid,
+            match.$id,
+            {
+                emailconfirm:`${String(rand)}`
+            }
+        )
+
+        await database.databar.updateDocument(
+            database.dataid,
+            database.colid,
+            match.$id,
+            {
+                emailconfirmtime:`${String(Date.now())}`
+            }
+        )
+
+      
+
+        smtpTransport.sendMail(mailOption,function(err){
+            if(err){
+               return res.status(401).json({"ok":false,"message":`${err.message}`})
+            }else{
+                return res.status(200).json({"ok":true,"message":"code sent to your email"})
+            }
+        })
+    }else{
+        return res.status(401).json({"ok":false,"message":"failed to find mail for authentication"})
+    }
+}
+
+module.exports = forgetHandler;
