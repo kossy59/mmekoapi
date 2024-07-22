@@ -13,7 +13,7 @@ const corsOptions = require('./config/corsOptions')
 const connect = require('./config/DBInitalizer')
 const {connectdatabase} = require('./config/connectDB.js')
 
-//connect();
+connect();
 app.use(credentials)
 app.use(cors(corsOptions));
 app.use(express.urlencoded({extended:false}));
@@ -23,10 +23,8 @@ app.use(cookieParser());
 
 
 app.get('/', async (req,res)=>{
-  let data = await connectdatabase()
-  console.log(data.databar)
-  console.log(data.colid)
-  console.log(data.dataid)
+ 
+
     res.status(200).json({ok:" express mounted"})
   
 

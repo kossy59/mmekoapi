@@ -1,34 +1,37 @@
-const {userdb} = require('../../Model/userdb');
-const {memko_socialDB,database} = require('../../config/connectDB');
-const { Query } = require('node-appwrite');
+const {connectdatabase} = require('../../config/connectDB');
 const sdk = require("node-appwrite");
 
 const comfarm = async (req,res)=>{
 
     const code = req.body.code;
-    let match = undefined;
-
-    if(!code){
+    const email = req.body.email;
+  
+    let data = await connectdatabase()
+    if(!code && !email){
         return res.status(400).json({"ok":false,'message': 'Please enter authentication code!!'})
     }
 
     try{
-        const d = await database.getDocument(memko_socialDB,userdb,Query.equal('emailconfirm',[`${code}`]))
+        let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
 
-        if(d){
-            match = String(d.$id);
+        let du = dupplicate.documents.filter(value=>{
+        return value.email === email && value.passcode === code
+       })
 
-            await database.updateDocument(
-                memko_socialDB,
-                userdb,
-                match,
+
+        if(du[0]){
+
+            await data.databar.updateDocument(
+                data.dataid,
+                data.colid,
+                 du[0].$id,
                 {
-                    passcode:`${code}`
+                    passcode:`done`
                 }
             )
 
 
-            return res.status(200).json({"ok":true,"message":`Authentication Code sent To your Email`})
+            return res.status(200).json({"ok":true,"message":`Enter new password`,id:`${du[0].$id}`})
 
         }else{
             return res.status(409).json({"ok":false,"message":`Authentication code mismatch`})

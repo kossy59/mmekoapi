@@ -62,7 +62,8 @@ const handleNewUser = async (req,res)=>{
             refreshtoken:"",
             age:age,
             admin:false,
-            passcode:''
+            passcode:'',
+            balance:''
         }
 
         

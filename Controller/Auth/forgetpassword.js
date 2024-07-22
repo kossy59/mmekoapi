@@ -1,28 +1,25 @@
 const nodeMailer = require('nodemailer')
-const {userdb} = require('../../Model/userdb');
-const {memko_socialDB,database} = require('../../config/connectDB');
+const {connectdatabase} = require('../../config/connectDB');
 
 require('dotenv').config()
 
 const forgetpass = async (req,res)=>{
 
     const email = req.body.email;
-
+    let data = await connectdatabase()
     if(!email){
         return res.status(409).json({"ok":false,'message': `enter email address`});
     }
 
-    let match = undefined;
     
     try{
-      const d = await database.getDocument(memko_socialDB,userdb,Query.equal('email',[`${email}`]))
-      match = String(d.$id);
-        
-     }catch(err){
-         return res.status(500).json({"ok":false,'message': `${err.message}!`});
-     }
-   
-    if(match){
+        let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
+
+        let du = dupplicate.documents.filter(value=>{
+        return value.email === email
+       })
+
+       if(du[0]){
         let smtpTransport = nodeMailer.createTransport({
             service:'gmail',
             auth:{
@@ -37,14 +34,14 @@ const forgetpass = async (req,res)=>{
         let mailOption = {
             to:email,
             from:process.env.EMAIL,
-            subject:"Please confirm your new Account Password Authentication Code",
+            subject:"Please confirm your new  Password Authentication Code",
             text:`${rand}`
         }
 
-        const result = await database.updateDocument(
-            memko_socialDB,
-            userdb,
-            match,
+        await data.databar.updateDocument(
+            data.dataid,
+            data.colid,
+             du[0].$id,
             {
                 passcode:`${String(rand)}`
             }
@@ -54,14 +51,20 @@ const forgetpass = async (req,res)=>{
 
         smtpTransport.sendMail(mailOption,function(err){
             if(err){
-               return res.status(401).json({"ok":false,"message":`${err.message}`})
+               return res.status(200).json({"ok":true,"message":"code sent to your email"})
             }else{
                 return res.status(200).json({"ok":true,"message":"code sent to your email"})
             }
         })
-    }else{
+       }else{
         return res.status(401).json({"ok":false,"message":"failed to find mail for authentication"})
     }
+        
+     }catch(err){
+         return res.status(500).json({"ok":false,'message': `${err.message}!`});
+     }
+   
+   
 }
 
 module.exports = forgetpass;

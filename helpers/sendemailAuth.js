@@ -1,6 +1,7 @@
 const nodeMailer = require('nodemailer')
 const {connectdatabase} = require('../config/connectDB')
 
+
 require('dotenv').config()
 
 const forgetHandler = async (req,res,email)=>{
@@ -17,6 +18,7 @@ const forgetHandler = async (req,res,email)=>{
         })
  
         match = du[0];
+      
 
     }catch(err){
         return res.status(500).json({"ok":false,'message': `${err.message}!  send search dublicate`});
@@ -50,20 +52,14 @@ const forgetHandler = async (req,res,email)=>{
             }
         )
 
-        await database.databar.updateDocument(
-            database.dataid,
-            database.colid,
-            match.$id,
-            {
-                emailconfirmtime:`${String(Date.now())}`
-            }
-        )
+       
 
       
 
         smtpTransport.sendMail(mailOption,function(err){
             if(err){
-               return res.status(401).json({"ok":false,"message":`${err.message}`})
+              // return res.status(401).json({"ok":false,"message":`${err.message}`})
+              return res.status(200).json({"ok":true,"message":"Sending error"})
             }else{
                 return res.status(200).json({"ok":true,"message":"code sent to your email"})
             }

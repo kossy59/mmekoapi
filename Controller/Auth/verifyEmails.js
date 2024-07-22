@@ -1,44 +1,46 @@
 const {userdb} = require('../../Model/userdb');
-const {memko_socialDB,database} = require('../../config/connectDB');
-const { Query } = require('node-appwrite');
+const {connectdatabase} = require('../../config/connectDB');
 const sdk = require("node-appwrite");
 
 const handleNewUser = async (req,res)=>{
-
+     let data = await connectdatabase()
     const code = req.body.code;
+    const email = req.body.email
     let match = undefined;
 
-    if(!code){
+    if(!code && !email){
         return res.status(400).json({"ok":false,'message': 'Please enter authentication code!!'})
     }
 
     try{
-        const d = await database.getDocument(memko_socialDB,userdb,Query.equal('emailconfirm',[`${code}`]))
+        const d = await data.databar.listDocuments(data.dataid,data.colid)
+        match = d.documents.filter(value=>{
+            return value.email === email && code === value.emailconfirm
+           })
+       if(match[0]){
+        
+        await data.databar.updateDocument(
+            data.dataid,
+            data.colid,
+             match[0].$id,
+             {
+                 emailconfirm:'verify'
+             }
+         )
 
-        if(d){
-            match = String(d.$id);
+         await data.databar.updateDocument(
+             data.dataid,
+             data.colid,
+             match[0].$id,
+             {
+                 emailconfirmtime:`${new Date().toDateString()}`
+             }
+         )
 
-            await database.updateDocument(
-                memko_socialDB,
-                userdb,
-                match,
-                {
-                    emailconfirm:'verify'
-                }
-            )
+         return res.status(200).json({"ok":true,"message":`${d.firstname} ${d.lastname} Account Created Success`,'ID':`${match[0].$id}`})
+       }
 
-            await database.updateDocument(
-                memko_socialDB,
-                userdb,
-                match,
-                {
-                    emailconfirmtime:`${new Date().toDateString()}`
-                }
-            )
-
-            return res.status(200).json({"ok":true,"message":`${d.firstname} ${d.lastname} Account Created Success`})
-
-        }else{
+       else{
             return res.status(409).json({"ok":false,"message":`Authentication code mismatch`})
         }
       

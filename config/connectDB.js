@@ -4,6 +4,7 @@ const client = new sdk.Client()
 let memkodbID;
 let memko_socialDB = ''
 let colID = ''
+let userCOL = ''
 const {initalizeDB} = require('../Model/userdb')
 const {initalizeer} = require('../Model/usercomplete')
 client.setEndpoint("https://cloud.appwrite.io/v1")
@@ -41,6 +42,13 @@ async function connectdatabase(){
 
         colID = String(collection[0].$id)
 
+        let userincol = await database.listCollections(db[0].$id);
+        let userinfocollectin = userincol.collections.filter(value=>{
+            return value.name === "userInfo"
+        })
+
+        userCOL = String(userinfocollectin[0].$id)
+
        // console.log(colID)
     }
 
@@ -52,7 +60,8 @@ async function connectdatabase(){
   return{
     colid:colID,
     dataid:memko_socialDB,
-    databar:database
+    databar:database,
+    userincol:userCOL
   }
 
 

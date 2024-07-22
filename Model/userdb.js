@@ -80,7 +80,7 @@ async function initalizeDB(memko_socialDB,database){
         memko_socialDB,
         UsersDB.$id,
         'active',
-        true
+         true
     
     
     )
