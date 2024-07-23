@@ -15,7 +15,7 @@ const handleNewUser = async (req,res)=>{
     try{
         const d = await data.databar.listDocuments(data.dataid,data.colid)
         match = d.documents.filter(value=>{
-            return value.email === email && code === value.emailconfirm
+            return code === value.emailconfirm
            })
        if(match[0]){
         
