@@ -1,7 +1,7 @@
 var sdk = require("node-appwrite");
 
 var UsersDB = undefined
-let userdb;
+
 
 async function initalizeDB(memko_socialDB,database){
 
@@ -143,12 +143,12 @@ async function initalizeDB(memko_socialDB,database){
     )
     
     
-    userdb = String(UsersDB.$id);
+   return UsersDB ;
     
 
 }
 
 
 
-module.exports = {userdb,initalizeDB}
+module.exports = {initalizeDB}
 

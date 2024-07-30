@@ -42,7 +42,7 @@ const handleNewUser = async (req,res)=>{
             var moreuser ={
                 useraccountId,
                 interestedIn,
-                photoLink:`${imglink}`,
+                photoLink:`${photoLink}`,
                 relationshipType,
                 details
             }

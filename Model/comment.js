@@ -1,57 +1,57 @@
 var sdk = require("node-appwrite");
 
-var userInfo;
+var UsersDB = undefined
 
-async function initalizeer(memko_socialDB,database){
-    userInfo = await database.createCollection(
+async function initalizeComment(memko_socialDB,database){
+
+    UsersDB = await database.createCollection(
         memko_socialDB,
         sdk.ID.unique(),
-        'userInfo'
+        'Comment'
     )
     
     await database.createStringAttribute(
         memko_socialDB,
-        userInfo.$id,
-        'useraccountId',
+        UsersDB.$id,
+        'uesrid',
         255,true
     
     )
     
     await database.createStringAttribute(
         memko_socialDB,
-        userInfo.$id,
-        'interestedIn',
+        UsersDB.$id,
+        'content',
         255,true
     
     )
-    
+
     await database.createStringAttribute(
         memko_socialDB,
-        userInfo.$id,
-        'photoLink',
+        UsersDB.$id,
+        'sharedid',
         255,false
     
     )
-    
+
+
     await database.createStringAttribute(
         memko_socialDB,
-        userInfo.$id,
-        'relationshipType',
-        255,true
-    
-    )
-    
-    await database.createStringAttribute(
-        memko_socialDB,
-        userInfo.$id,
-        'details',
+        UsersDB.$id,
+        'postid',
         255,true
     
     )
 
-   return userInfo ;
+    await database.createStringAttribute(
+        memko_socialDB,
+        UsersDB.$id,
+        'commenttime',
+        255,true
+    
+    )
 
+    return UsersDB;
 }
 
-
-module.exports = {initalizeer}
+module.exports = {initalizeComment}

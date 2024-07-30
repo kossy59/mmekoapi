@@ -11,7 +11,9 @@ const io = new Server(server)
 const credentials = require('./middleware/credentials')
 const corsOptions = require('./config/corsOptions')
 const connect = require('./config/DBInitalizer')
-const {connectdatabase} = require('./config/connectDB.js')
+const handleRefresh = require('./Middleware/refresh')
+const verifyJwt = require('./middleware/verify')
+
 
 connect();
 app.use(credentials)
@@ -22,16 +24,16 @@ app.use(cookieParser());
 
 
 
-app.get('/', async (req,res)=>{
- 
+app.use('/', require('./routes/api/post/getpost'))
 
-    res.status(200).json({ok:" express mounted"})
-  
-
-   
-})
-
-
+app.use('/getallpost',require('./routes/api/post/getpost'))
+app.use('/getalluserpost',require('./routes/api/post/getalluserPost'))
+app.use('/getallcomment',require('./routes/api/comment/Getallcomment'))
+app.use('/getalllike',require('./routes/api/like/alllike'))
+app.use('/getallsharepost',require('./routes/api/share/getallsharedpost'))
+app.use('/getsharepost',require('./routes/api/share/getsharepost'))
+app.use('/getprofile',require('./routes/api/profile/Profile'))
+app.use('/getmoreprofile',require('./routes/api/Profilemore/getProfilemore'))
 
 io.on('connection', (socket) => {
     console.log('a user connected');
@@ -45,11 +47,17 @@ io.on('connection', (socket) => {
   app.use('/completeregister',require('./routes/Auth/completeregister'))
   app.use('/comfirmpasscode',require('./routes/Auth/comfirmpasscode'))
   app.use('/changepassword',require('./routes/Auth/changepassword'))
-  
+  app.use(handleRefresh);
 
-  io.on('connection', (socket) => {
-    console.log('a user connected');
-  });
+  app.use(verifyJwt)
+
+  app.use('/post',require('./routes/api/post/Post'))
+  app.use('/comment',require('./routes/api/comment/Comment'))
+  app.use('/like',require('./routes/api/like/Like'))
+  app.use('/sharepost',require('./routes/api/share/share'))
+  app.use('/editprofile',require('./routes/api/profile/Editprofile'))
+  app.use('/editmoreprofile',require('./routes/api/Profilemore/editprofilemore'))
+ 
   
   server.listen(PORT, () => {
    
