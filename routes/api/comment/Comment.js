@@ -7,6 +7,6 @@ const deleteComment = require('../../../Controller/Comment/Removecomment');
 router.route('/')
 .put(Newcomment)
 .post(editComment)
-.delete(deleteComment)
+.patch(deleteComment)
 
 module.exports = router;

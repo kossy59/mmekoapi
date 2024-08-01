@@ -5,7 +5,7 @@ const createComment = async (req,res)=>{
 
     const userid = req.body.userid;
     const content = req.body.content;
-    const sharedid = req.body.sharedid;
+    let sharedid = req.body.sharedid;
     const postid = req.body.postid;
    
     if(!userid && !content && !postid){
@@ -16,22 +16,22 @@ const createComment = async (req,res)=>{
 
     try{
       
-
+      // console.log("this post id "+ postid)
         if(!sharedid){
             sharedid = ""
         }
            
            let comment =     {
-                    userid,
+                    uesrid:userid,
                     content,
                     sharedid,
-                    postid,
-                    posttime:`${Date.now()}`
+                    postid:postid,
+                    commenttime:`${Date.now()}`
                     
                 }
             
-
-            let  du = await data.databar.createDocument(data.dataid,data.commentCol,sdk.ID.unique(),comment)
+               console.log('we are on database update')
+            await data.databar.createDocument(data.dataid,data.commentCol,sdk.ID.unique(),comment)
 
 
             return res.status(200).json({"ok":true,"message":`Comment Success`})

@@ -4,18 +4,18 @@ const sdk = require("node-appwrite");
 const readPost = async (req,res)=>{
 
     let data = await connectdatabase()
-    console.log('inside post method')
+  
     try{
-        console.log('inside postdb arra')
+      
             let  postdb = await data.databar.listDocuments(data.dataid,data.postCol)
-            console.log('inside userdb arra')
+           
             let  userdb = await data.databar.listDocuments(data.dataid,data.colid)
-            console.log('inside completedb arra')
+           
             let  comdb = await data.databar.listDocuments(data.dataid,data.userincol)
-            console.log('inside likedb arra')
+           
 
             let  commentdb = await data.databar.listDocuments(data.dataid,data.commentCol)
-            console.log('inside commentdb arra')
+           
             let  likedb = await data.databar.listDocuments(data.dataid,data.likeCol)
             
 
@@ -23,7 +23,7 @@ const readPost = async (req,res)=>{
             
             let post = [];
 
-            console.log('inside post loop')
+          
             for(let i = 0; i<postdb.documents.length; i++){
 
              
@@ -61,11 +61,13 @@ const readPost = async (req,res)=>{
 
             }
     
-            console.log('inside comment method')
+           
             for(let i = 0; i<post.length; i++){
-
+                
                 if(commentdb.documents.length <= 0){
+                    
                     continue;
+                    
                 }else{
 
                     for(let j = 0; j < commentdb.documents.length; j++){
@@ -78,7 +80,7 @@ const readPost = async (req,res)=>{
                 
             }
             
-            console.log('inside like method')
+            console.log(commentdb.documents.length)
             for(let i = 0; i<post.length; i++){
 
               if(likedb.documents.length <= 0){

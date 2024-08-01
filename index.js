@@ -47,6 +47,7 @@ io.on('connection', (socket) => {
   app.use('/completeregister',require('./routes/Auth/completeregister'))
   app.use('/comfirmpasscode',require('./routes/Auth/comfirmpasscode'))
   app.use('/changepassword',require('./routes/Auth/changepassword'))
+  app.use('/getpostcomment',require('./routes/api/comment/Getallcomment'))
   app.use(handleRefresh);
 
   app.use(verifyJwt)

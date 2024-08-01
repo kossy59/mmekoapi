@@ -2,11 +2,10 @@ const {connectdatabase} = require('../../config/connectDB');
 const sdk = require("node-appwrite");
 
 const deleteComment = async (req,res)=>{
-    const userid = req.body.userid;
+    const commentid = req.body.commentid;
 
-    const postid = req.body.postid;
 
-    if(!userid){
+    if(!commentid){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
 
@@ -18,7 +17,7 @@ const deleteComment = async (req,res)=>{
             let  dupplicate = await data.databar.listDocuments(data.dataid,data.commentCol)
 
             let du = dupplicate.documents.filter(value=>{
-                return value.userid === userid && value.$id === postid
+                return value.$id === commentid
                })
         
                if(!du[0]){
