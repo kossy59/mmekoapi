@@ -48,7 +48,8 @@ const readPost = async (req,res)=>{
                                 posttype: `${postdb.documents[i].posttype}`,
                                 postid: `${postdb.documents[i].$id}`,
                                 like:[],
-                                comment:[]
+                                comment:[],
+                                userid:userdb.documents[j].$id
                             }
 
                             post.push(con)
@@ -98,9 +99,7 @@ const readPost = async (req,res)=>{
             }
             }
 
-            console.log(postdb.documents.length)
-            console.log(userdb.documents.length)
-            console.log(comdb.documents.length)
+          
 
 
             return res.status(200).json({"ok":true,"message":`Enter new password`,post:post})

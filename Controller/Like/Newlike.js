@@ -3,27 +3,29 @@ const sdk = require("node-appwrite");
 
 const createLike = async (req,res)=>{
 
-    const userid = req.body.userid;
-    const sharedid = req.body.sharedid;
+    const uesrid = req.body.userid;
+    let sharedid = req.body.sharedid;
     const postid = req.body.postid;
    
-    if(!userid  && !postid){
+    if(!uesrid  && !postid){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
-
+    console.log('untop init db')
     let data = await connectdatabase()
 
     try{
-
+        console.log('untop like db')
         let  dupplicate = await data.databar.listDocuments(data.dataid,data.likeCol)
 
+        console.log('untop like db')
         let du = dupplicate.documents.find(value=>{
 
-            return value.userid === userid  && value.$id === postid
+            return value.uesrid === uesrid  && value.postid === postid
            })
     
+           console.log('untop delete db')
            if(du){
-            data.databar.deleteDocument(data.dataid,data.likeCol,du[0].$id)
+            data.databar.deleteDocument(data.dataid,data.likeCol,du.$id)
             return res.status(409).json({"ok":false,'message': 'ulike post success!!'});
     
            }
@@ -36,16 +38,16 @@ const createLike = async (req,res)=>{
        
            
            let like =     {
-                    userid,
+                    uesrid,
                     sharedid,
                     postid,
                     
                 }
             
-
+                console.log('untop asign db')
             data.databar.createDocument(data.dataid,data.likeCol,sdk.ID.unique(),like)
 
-
+            console.log('under  db')
             return res.status(200).json({"ok":true,"message":`like post Success`})
       
           

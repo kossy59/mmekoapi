@@ -34,7 +34,7 @@ const createPost = async (req,res)=>{
                 }
             
 
-              await data.databar.createDocument(data.dataid,data.postCol,sdk.ID.unique(),posts)
+            let currentpostid = await data.databar.createDocument(data.dataid,data.postCol,sdk.ID.unique(),posts)
 
             
             let  postdb = await data.databar.listDocuments(data.dataid,data.postCol)
@@ -44,7 +44,7 @@ const createPost = async (req,res)=>{
             let  likedb = await data.databar.listDocuments(data.dataid,data.likeCol)
             let  commentdb = await data.databar.listDocuments(data.dataid,data.commentCol)
 
-            let post = [];
+            let post ={};
 
             for(let i = 0; i<postdb.documents.length; i++){
 
@@ -57,10 +57,10 @@ const createPost = async (req,res)=>{
                        
                        
 
-                        if(postdb.documents[i].userid === userdb.documents[j].$id && comdb.documents[k].useraccountId === userdb.documents[j].$id ){
+                        if(postdb.documents[i].$id === currentpostid.$id && currentpostid.userid === userdb.documents[j].$id && comdb.documents[k].useraccountId === userdb.documents[j].$id ){
 
                            
-                            let con = {
+                             post = {
                                 username: `${ userdb.documents[j].firstname} ${ userdb.documents[j].lastname}`,
                                 nickname:  `${ userdb.documents[j].nickname}`,
                                 userphoto: `${comdb.documents[k].photoLink}`,
@@ -70,10 +70,11 @@ const createPost = async (req,res)=>{
                                 posttype: `${postdb.documents[i].posttype}`,
                                 postid: `${postdb.documents[i].$id}`,
                                 like:[],
-                                comment:[]
+                                comment:[],
+                                userid:userdb.documents[j].$id
                             }
 
-                            post.push(con)
+                           
 
                         }
 
@@ -83,23 +84,23 @@ const createPost = async (req,res)=>{
 
             }
 
-            for(let i = 0; i<post.length; i++){
+            
                 for(let j = 0; j < commentdb.documents.length; j++){
-                 if(post[i].postid === commentdb.documents[j].postid){
-                     post[i].comment.push(commentdb.documents[j])
+                 if(currentpostid.$id === commentdb.documents[j].postid){
+                     post.comment.push(commentdb.documents[j])
                  }
 
                 }
-            }
+            
 
-            for(let i = 0; i<post.length; i++){
+          
                 for(let j = 0; j < likedb.documents.length; j++){
-                 if(post[i].postid === likedb.documents[j].postid){
-                     post[i].like.push(likedb.documents[j])
+                 if(currentpostid.$id === likedb.documents[j].postid){
+                     post.like.push(likedb.documents[j])
                  }
 
                 }
-            }
+            
 
             return res.status(200).json({"ok":true,"message":`Posted successfully`,post:post})
       

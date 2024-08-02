@@ -7,6 +7,6 @@ const deletePost =  require('../../../Controller/Post/Removepost')
 router.route('/')
 .put(createPost)
 .post(editPost)
-.delete(deletePost)
+.patch(deletePost)
 
 module.exports = router;

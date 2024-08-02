@@ -1,50 +1,99 @@
+const { Duplex } = require('nodemailer/lib/xoauth2');
 const {connectdatabase} = require('../../config/connectDB');
 const sdk = require("node-appwrite");
 
 const updatePost = async (req,res)=>{
-    const userid = req.body.userid;
-    const content = req.body.content;
+   
     const postid = req.body.postid;
 
-    if(!userid){
+    if(!postid){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
 
 
     let data = await connectdatabase()
+    let post ={}
 
     try{
 
             let  dupplicate = await data.databar.listDocuments(data.dataid,data.postCol)
 
-            let du = dupplicate.documents.filter(value=>{
-                return value.userid === userid  && value.$id === postid
+            let du = dupplicate.documents.find(value=>{
+                return value.$id === postid
                })
         
-               if(!du[0]){
+               if(!du){
                 return res.status(409).json({"ok":false,'message': 'current user can not edit this post!!'});
         
                }
 
-            let Content = du[0].content
+               let  userdb = await data.databar.listDocuments(data.dataid,data.colid)
+           
+               let  comdb = await data.databar.listDocuments(data.dataid,data.userincol)
+              
+   
+               let  commentdb = await data.databar.listDocuments(data.dataid,data.commentCol)
+              
+               let  likedb = await data.databar.listDocuments(data.dataid,data.likeCol)
 
 
-            if(!content){
-                content = Content;
-            }
+             
 
-            await data.databar.updateDocument(
-                data.dataid,
-                data.postCol,
-                 du[0].$id,
-                {
-                    postlink,
-                    posttime:`${Date.now()}`,
-                    content
+                for(let j = 0; j<userdb.documents.length; j++){
+
+                    for(let k = 0; k<comdb.documents.length; k++){
+
+                       
+                       
+
+                        if(du.userid === userdb.documents[j].$id && comdb.documents[k].useraccountId === userdb.documents[j].$id ){
+
+                           
+                             post = {
+                                username: `${ userdb.documents[j].firstname} ${ userdb.documents[j].lastname}`,
+                                nickname:  `${ userdb.documents[j].nickname}`,
+                                userphoto: `${comdb.documents[k].photoLink}`,
+                                content: `${du.content}`,
+                                postphoto: `${du.postlink}`,
+                                posttime: `${du.posttime}`,
+                                posttype: `${du.posttype}`,
+                                postid: `${du.$id}`,
+                                like:[],
+                                comment:[],
+                                userid:userdb.documents[j].$id
+                            }
+
+                           
+
+                        }
+
+                    }
+
                 }
-            )
 
-            return res.status(200).json({"ok":true,"message":`Post updated Successfully`,post:du[0]})
+            
+
+            
+                for(let j = 0; j < commentdb.documents.length; j++){
+                 if(du.$id === commentdb.documents[j].postid){
+                     post.comment.push(commentdb.documents[j])
+                 }
+
+                }
+            
+
+          
+                for(let j = 0; j < likedb.documents.length; j++){
+                 if(du.$id === likedb.documents[j].postid){
+                     post.like.push(likedb.documents[j])
+                 }
+
+                }
+
+
+            
+
+            return res.status(200).json({"ok":true,"message":`Post updated Successfully`,post:post})
       
           
        }catch(err){
