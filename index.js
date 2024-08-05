@@ -13,15 +13,13 @@ const corsOptions = require('./config/corsOptions')
 const connect = require('./config/DBInitalizer')
 const handleRefresh = require('./Middleware/refresh')
 const verifyJwt = require('./middleware/verify')
-
-
-connect();
 app.use(credentials)
 app.use(cors(corsOptions));
 app.use(express.urlencoded({extended:false}));
 app.use(express.json());
 app.use(cookieParser());
 
+connect()
 
 
 app.use('/', require('./routes/api/post/getpost'))
@@ -48,6 +46,7 @@ io.on('connection', (socket) => {
   app.use('/comfirmpasscode',require('./routes/Auth/comfirmpasscode'))
   app.use('/changepassword',require('./routes/Auth/changepassword'))
   app.use('/getpostcomment',require('./routes/api/comment/Getallcomment'))
+  app.use('/getprofilebyid',require('./routes/api/profile/Profile'))
   app.use(handleRefresh);
 
   app.use(verifyJwt)
@@ -59,9 +58,17 @@ io.on('connection', (socket) => {
   app.use('/editprofile',require('./routes/api/profile/Editprofile'))
   app.use('/editmoreprofile',require('./routes/api/Profilemore/editprofilemore'))
  
+
   
-  server.listen(PORT, () => {
+
+
+   
+    server.listen(PORT, () => {
    
    
-    console.log('listening on *:3500');
-  });
+      console.log('listening on *:3500');
+    });
+
+
+  
+  

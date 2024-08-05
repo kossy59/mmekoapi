@@ -47,6 +47,7 @@ const readPost = async (req,res)=>{
                                 posttime: `${postdb.documents[i].posttime}`,
                                 posttype: `${postdb.documents[i].posttype}`,
                                 postid: `${postdb.documents[i].$id}`,
+                                active:userdb.documents[j].active,
                                 like:[],
                                 comment:[],
                                 userid:userdb.documents[j].$id

@@ -7,20 +7,21 @@ const handleNewUser = async (req,res)=>{
 
     const email = req.body.email;
     const password = req.body.password;
-
+   console.log('untop connecting to database')
     let data = await connectdatabase()
     if(!email && !password){
         return res.status(400).json({"ok":false,'message': 'Email OR Password Empty'})
     }
 
     try{
+        console.log('untop getting  database')
          let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
 
         let du = dupplicate.documents.filter(value=>{
         return value.email === email
        })
 
-
+       console.log('untop checking  database')
  
         if(du[0]){
             
@@ -44,7 +45,7 @@ const handleNewUser = async (req,res)=>{
                     {expiresIn : '1d'}
                 );
 
-
+                console.log('untop updating  database')
                 await data.databar.updateDocument(
                     data.dataid,
                     data.colid,
