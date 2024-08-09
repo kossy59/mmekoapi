@@ -41,7 +41,7 @@ async function initalizePost(memko_socialDB,database){
         memko_socialDB,
         UsersDB.$id,
         'content',
-        255,true
+        1000,true
     
     )
 

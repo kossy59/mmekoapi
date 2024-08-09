@@ -5,6 +5,7 @@ const {initalizePost} = require('../Model/post')
 const {initalizeComment}  = require('../Model/comment')
 const {initalizeLike}  = require('../Model/like')
 const {initalizeShare}  = require('../Model/share')
+const {initalizeModel} = require('../Model/models')
 
 
 require('dotenv').config()
@@ -17,6 +18,7 @@ let colPost = ''
 let colComment =''
 let colLike = ''
 let colShare = ''
+let colModel = ''
 
 client.setEndpoint("https://cloud.appwrite.io/v1")
 .setProject(process.env.PROJECTID)
@@ -53,6 +55,9 @@ async function connectdatabase(){
     
            let usershare = await initalizeShare(memkodbID.$id,database)
            colShare = String(usershare.$id)
+    
+           let usersmodel = await initalizeModel(memkodbID.$id,database)
+           colModel = String(usersmodel.$id)
     
            
         
@@ -105,8 +110,15 @@ async function connectdatabase(){
             })
     
             colShare = String(sharecollectin[0].$id)
+
+            let usermodel = await database.listCollections(db[0].$id);
+            let modelcollectin = usermodel.collections.filter(value=>{
+                return value.name === "Model"
+            })
     
-           // console.log(colID)
+            colModel = String(modelcollectin[0].$id)
+    
+           
         }
     
     
@@ -122,7 +134,8 @@ async function connectdatabase(){
         postCol:colPost,
         commentCol:colComment,
         likeCol:colLike,
-        shareCol:colShare
+        shareCol:colShare,
+        modelCol:colModel
       }
 
     }catch(err){

@@ -50,7 +50,7 @@ io.on('connection', (socket) => {
   app.use(handleRefresh);
 
   app.use(verifyJwt)
-
+  app.use('/model',require('./routes/api/model/models'))
   app.use('/post',require('./routes/api/post/Post'))
   app.use('/comment',require('./routes/api/comment/Comment'))
   app.use('/like',require('./routes/api/like/Like'))
