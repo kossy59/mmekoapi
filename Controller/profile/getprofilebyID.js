@@ -30,6 +30,7 @@ const readProfile = async (req,res)=>{
                let user = {
                 userid:du.$id,
                 username:`${du.firstname} ${du.lastname}`,
+                admin:du.admin,
                 userphoto:com.photoLink,
                 nickname:`${du.nickname}`,
                 aboutuser:`${com.details}`,

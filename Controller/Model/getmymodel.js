@@ -48,7 +48,8 @@ const createModel = async (req,res)=>{
                  gender:value.gender,
                  timeava:value.timeava,
                  daysava : value.daysava,
-                 hosttype : value.hosttype
+                 hosttype : value.hosttype,
+                 document: value.document
 
               }
             })

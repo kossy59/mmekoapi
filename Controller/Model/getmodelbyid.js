@@ -44,7 +44,8 @@ const createModel = async (req,res)=>{
                  timeava:currentuser.timeava,
                  daysava : currentuser.daysava,
                  hosttype : currentuser.hosttype,
-                 userid: currentuser.userid
+                 userid: currentuser.userid,
+                 document:currentuser.document
 
               }
         
