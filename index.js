@@ -1,5 +1,12 @@
 require('dotenv').config()
 const cookieParser = require('cookie-parser')
+const credentials = require('./middleware/credentials')
+const corsOptions = require('./config/corsOptions')
+const connect = require('./config/DBInitalizer')
+const handleRefresh = require('./Middleware/refresh')
+const verifyJwt = require('./middleware/verify')
+const checkuser = require('./utiils/useractive')
+const userdisconnect = require('./utiils/userdisconnect')
 const PORT = process.env.PORT || 3500
 const express = require('express')
 const app = express();
@@ -11,13 +18,7 @@ app.use(cors());
 const io = new Server(server, {
     cors: {origin:"http://localhost:3000", methods: ["GET", "POST"]},
 });
-const credentials = require('./middleware/credentials')
-const corsOptions = require('./config/corsOptions')
-const connect = require('./config/DBInitalizer')
-const handleRefresh = require('./Middleware/refresh')
-const verifyJwt = require('./middleware/verify')
-const checkuser = require('./utiils/useractive')
-const userdisconnect = require('./utiils/userdisconnect')
+
 app.use(credentials)
 
 app.use(express.urlencoded({extended:false}));
