@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router();
-const newUsers = require('../../controller/Auth/forgetpassword');
+const newUsers = require('../../Controller/Auth/forgetpassword');
 
 router.route('/')
 .post(newUsers)
