@@ -1,20 +1,25 @@
-const cors = require('cors')
 require('dotenv').config()
 const cookieParser = require('cookie-parser')
 const PORT = process.env.PORT || 3500
 const express = require('express')
 const app = express();
-const http = require('http')
-const server = http.createServer(app)
-const {Server} = require('socket.io')
-const io = new Server(server)
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const cors = require('cors')
+app.use(cors());
+const io = new Server(server, {
+    cors: {origin:"http://localhost:3000", methods: ["GET", "POST"]},
+});
 const credentials = require('./middleware/credentials')
 const corsOptions = require('./config/corsOptions')
 const connect = require('./config/DBInitalizer')
 const handleRefresh = require('./Middleware/refresh')
 const verifyJwt = require('./middleware/verify')
+const checkuser = require('./utiils/useractive')
+const userdisconnect = require('./utiils/userdisconnect')
 app.use(credentials)
-app.use(cors(corsOptions));
+
 app.use(express.urlencoded({extended:false}));
 app.use(express.json());
 app.use(cookieParser());
@@ -33,8 +38,22 @@ app.use('/getsharepost',require('./routes/api/share/getsharepost'))
 app.use('/getprofile',require('./routes/api/profile/Profile'))
 app.use('/getmoreprofile',require('./routes/api/Profilemore/getProfilemore'))
 
+
 io.on('connection', (socket) => {
-    console.log('a user connected');
+  socket.on('online',async (userid)=>{
+    if(userid){
+       
+       await checkuser(userid)
+       socket.id = userid
+       console.log('a user connected '+ socket.id);
+    }
+  })
+
+  socket.on('disconnect',async()=>{
+   await userdisconnect(socket.id)
+   console.log('user disconnected ' + socket.id)
+  })
+   
   });
 
   app.use('/verifyemail',require('./routes/Auth/verifyEmail'))
@@ -60,6 +79,9 @@ io.on('connection', (socket) => {
   app.use('/sharepost',require('./routes/api/share/share'))
   app.use('/editprofile',require('./routes/api/profile/Editprofile'))
   app.use('/editmoreprofile',require('./routes/api/Profilemore/editprofilemore'))
+  app.use('/rejectmodel',require('./routes/api/model/rejectmodel'))
+  app.use('/verifymodel',require('./routes/api/model/verifymodel'))
+  app.use('/getverifymodel',require('./routes/api/model/getlivemodel'))
  
 
   
