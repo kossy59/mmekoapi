@@ -1,6 +1,6 @@
 require('dotenv').config()
 const cookieParser = require('cookie-parser')
-const credentials = require('./middleware/credentials')
+//const credentials = require('./middleware/credentials')
 const corsOptions = require('./config/corsOptions')
 const connect = require('./config/DBInitalizer')
 const handleRefresh = require('./Middleware/refresh')
@@ -19,7 +19,7 @@ const io = new Server(server, {
     cors: {origin:"http://localhost:3000", methods: ["GET", "POST"]},
 });
 
-app.use(credentials)
+//app.use(credentials)
 
 app.use(express.urlencoded({extended:false}));
 app.use(express.json());
