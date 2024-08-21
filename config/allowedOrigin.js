@@ -1,6 +1,6 @@
 const whiteList = [
-    
-    'http://localhost:3000'
+  " http://Mmekosocial.onrender.com"
 ];
+ // 'http://localhost:3000'
 
 module.exports = whiteList;
