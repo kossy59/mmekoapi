@@ -23,12 +23,13 @@ const { setInterval } = require('timers')
 
 //https://Mmekosocial.onrender.com
 
-
+app.use(credentials)
+app.use(cors(corsOptions));
 app.use(express.urlencoded({extended:false}));
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors(corsOptions));
-app.use(credentials)
+
+
 
 const io = new Server(server, {
     cors: {origin:"*", methods: ["GET", "POST"]}
