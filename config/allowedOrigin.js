@@ -1,5 +1,5 @@
 const whiteList = [
-  "https://Mmekosocial.onrender.com"
+ "https://mmekosocial.onrender.com"
  
 ];
  //  'http://localhost:3000'
