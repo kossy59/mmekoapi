@@ -18,8 +18,7 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const cors = require('cors')
 const { setInterval } = require('timers')
-app.use(cors(corsOptions));
-app.use(credentials)
+
 const io = new Server(server, {
     cors: {origin:"*", methods: ["GET", "POST"]}
 });
@@ -30,6 +29,8 @@ const io = new Server(server, {
 app.use(express.urlencoded({extended:false}));
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors(corsOptions));
+app.use(credentials)
 
 
 
