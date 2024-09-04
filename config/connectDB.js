@@ -6,6 +6,7 @@ const {initalizeComment}  = require('../Model/comment')
 const {initalizeLike}  = require('../Model/like')
 const {initalizeShare}  = require('../Model/share')
 const {initalizeModel} = require('../Model/models')
+const {initalizeMessage} = require('../Model/message')
 
 
 require('dotenv').config()
@@ -19,6 +20,7 @@ let colComment =''
 let colLike = ''
 let colShare = ''
 let colModel = ''
+let colMsg
 
 client.setEndpoint("https://cloud.appwrite.io/v1")
 .setProject(process.env.PROJECTID)
@@ -58,6 +60,9 @@ async function connectdatabase(){
     
            let usersmodel = await initalizeModel(memkodbID.$id,database)
            colModel = String(usersmodel.$id)
+
+            let usermsg = await initalizeMessage(memkodbID.$id,database)
+            colMsg = String(usermsg.$id)
     
            
         
@@ -117,6 +122,14 @@ async function connectdatabase(){
             })
     
             colModel = String(modelcollectin[0].$id)
+
+
+             let usermsg = await database.listCollections(db[0].$id);
+             let msgcol = usermsg.collections.filter(value=>{
+                return value.name === "Message"
+            })
+    
+            colMsg = String(msgcol[0].$id)
     
            
         }
@@ -135,7 +148,8 @@ async function connectdatabase(){
         commentCol:colComment,
         likeCol:colLike,
         shareCol:colShare,
-        modelCol:colModel
+        modelCol:colModel,
+        msgCol:colMsg
       }
 
     }catch(err){

@@ -41,7 +41,10 @@ const readProfile = async (req,res)=>{
 
                du.model = ISmodel;
                if(modelava){
+                    let images = modelava.photolink.split(",")
                      du.modelID = modelava.$id
+                     du.modelphotolink = images[0]
+                     du.modelname = modelava.name
                }
              
 

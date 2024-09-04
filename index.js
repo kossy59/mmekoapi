@@ -7,6 +7,9 @@ const handleRefresh = require('./Middleware/refresh')
 const verifyJwt = require('./Middleware/verify')
 const checkuser = require('./utiils/useractive')
 const userdisconnect = require('./utiils/userdisconnect')
+const Livechats = require('./utiils/createlivechat')
+const getnotify = require("./utiils/getnotification")
+const MYID = require("./utiils/Getmyname")
 const PORT = process.env.PORT || 3500
 const express = require('express')
 const app = express();
@@ -14,18 +17,25 @@ const http = require('http');
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const cors = require('cors')
-app.use(cors());
-const io = new Server(server, {
-    cors: {origin:"https://Mmekosocial.onrender.com", methods: ["GET", "POST"]},
-});
-//http://localhost:3000
+const { setInterval } = require('timers')
+app.use(cors(corsOptions));
 app.use(credentials)
+const io = new Server(server, {
+    cors: {origin:"*", methods: ["GET", "POST"]}
+});
+
+//https://Mmekosocial.onrender.com
+
 
 app.use(express.urlencoded({extended:false}));
 app.use(express.json());
 app.use(cookieParser());
 
+
+
 connect()
+
+const IDS = {}
 
 
 app.use('/', require('./routes/api/post/getpost'))
@@ -39,23 +49,63 @@ app.use('/getsharepost',require('./routes/api/share/getsharepost'))
 app.use('/getprofile',require('./routes/api/profile/Profile'))
 app.use('/getmoreprofile',require('./routes/api/Profilemore/getProfilemore'))
 
-
 io.on('connection', (socket) => {
   socket.on('online',async (userid)=>{
     if(userid){
        
        await checkuser(userid)
        socket.id = userid
+       IDS.userid = userid
        console.log('a user connected '+ socket.id);
+       socket.join("LiveChat")
+
+
     }
   })
 
+  
+    socket.on("message",async (data)=>{
+
+         console.log(data);
+         await Livechats(data)
+         let info = await MYID(data.fromid)
+         let name ;
+         let photolink;
+         if(info){
+           name = info.name;
+           photolink = info.photolink;
+          
+         }
+      
+         //socket.to("LiveChat").emit(data)
+         socket.broadcast.emit("LiveChat",{name,photolink,data:data})
+         
+
+    })
+
+  socket.on('notify',async (data)=>{
+   // console.log("Inside notification")
+    if(data){
+       console.log("Inside notification")
+      setInterval(async ()=>{
+        let note = await getnotify(data)
+        console.log(note)
+         socket.emit(data+`notify`,note)
+      },20000)
+
+    }
+  })
+
+ 
+
   socket.on('disconnect',async()=>{
    await userdisconnect(socket.id)
+   socket.disconnect()
    console.log('user disconnected ' + socket.id)
   })
    
   });
+
 
   app.use('/verifyemail',require('./routes/Auth/verifyEmail'))
   app.use('/register',require('./routes/Auth/register'))
@@ -83,15 +133,11 @@ io.on('connection', (socket) => {
   app.use('/rejectmodel',require('./routes/api/model/rejectmodel'))
   app.use('/verifymodel',require('./routes/api/model/verifymodel'))
   app.use('/getverifymodel',require('./routes/api/model/getlivemodel'))
+  app.use('/getcurrentchat',require('./routes/api/chat/getchat'))
+  app.use('/getmsgnotify',require('./routes/api/chat/getmsgnotify'))
  
-
-  
-
-
-   
-    server.listen(PORT, () => {
-   
-   
+ 
+    server.listen(PORT, () => {   
       console.log('listening on *:3500');
     });
 
