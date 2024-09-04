@@ -1,7 +1,7 @@
 require('dotenv').config()
 const cookieParser = require('cookie-parser')
-const credentials = require('./Middleware/credentials')
-const corsOptions = require('./config/corsOptions')
+// const credentials = require('./Middleware/credentials')
+// const corsOptions = require('./config/corsOptions')
 const connect = require('./config/DBInitalizer')
 const handleRefresh = require('./Middleware/refresh')
 const verifyJwt = require('./Middleware/verify')
@@ -20,7 +20,12 @@ const cors = require('cors')
 const { setInterval } = require('timers')
 
 
+const corsOptions = {
+    credentials: true,
+    origin: ['https://mmekosocial.onrender.com'] // Whitelist the domains you want to allow
+};
 
+app.use(cors(corsOptions));
 //https://Mmekosocial.onrender.com
 
 // app.use(credentials)
