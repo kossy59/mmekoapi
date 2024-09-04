@@ -19,9 +19,7 @@ const { Server } = require("socket.io");
 const cors = require('cors')
 const { setInterval } = require('timers')
 
-const io = new Server(server, {
-    cors: {origin:"*", methods: ["GET", "POST"]}
-});
+
 
 //https://Mmekosocial.onrender.com
 
@@ -31,6 +29,10 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(cors(corsOptions));
 app.use(credentials)
+
+const io = new Server(server, {
+    cors: {origin:"*", methods: ["GET", "POST"]}
+});
 
 
 
