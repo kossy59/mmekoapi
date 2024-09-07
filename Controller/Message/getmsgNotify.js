@@ -75,7 +75,8 @@ const MsgNotify = async(req,res)=>{
                         date: value.date,
                         name: user.firstname,
                         photolink: image.photoLink,
-                        client: value.client
+                        client: value.client,
+                        value:"recent"
                        }
                        FullChat.push(chat)
                     }
@@ -92,7 +93,8 @@ const MsgNotify = async(req,res)=>{
                         date: value.date,
                         name: user.firstname,
                         photolink: image.photoLink,
-                        client: value.client
+                        client: value.client,
+                        value:"recent"
                        }
                        FullChat.push(chat)
                     }
@@ -116,7 +118,8 @@ const MsgNotify = async(req,res)=>{
                         date: value.date,
                         name: user.name,
                         photolink: picture[0],
-                        client: value.client
+                        client: value.client,
+                        value:"recent"
                        }
                        FullChat.push(chat)
 
@@ -130,7 +133,8 @@ const MsgNotify = async(req,res)=>{
                         date: value.date,
                         name: user.name,
                         photolink: picture[0],
-                        client: value.client
+                        client: value.client,
+                        value:"recent"
                        }
                        FullChat.push(chat)
 

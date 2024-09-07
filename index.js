@@ -26,7 +26,9 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-//https://Mmekosocial.onrender.com
+//https://mmekosocial.onrender.com
+//http://localhost:3000
+
 
 // app.use(credentials)
 // app.use(cors(corsOptions));

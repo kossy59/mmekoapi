@@ -1,10 +1,9 @@
-const {connectdatabase} = require("../config/connectDB")
+const {connectdatabase} = require('../../config/connectDB');
 const sdk = require("node-appwrite");
 
+const getnotify = async(req,res)=>{
 
-const getnotify = async(userid)=>{
-
-     //console.log(userid) 
+     const userid = req.body.userid
      let data = await connectdatabase();
      
 
@@ -14,13 +13,14 @@ const getnotify = async(userid)=>{
          let username = await data.databar.listDocuments(data.dataid,data.colid)
          let photolinks = await data.databar.listDocuments(data.dataid,data.userincol)
          let modelname = await data.databar.listDocuments(data.dataid,data.modelCol)
+         
          let Listofchat = Chats.documents.filter(value=>{
             return value.toid === userid
            })
 
           //console.log(Listofchat+" List of notification")
-        //   console.log(userid)
-        //   console.log("66ce8992001432aca6b0")
+          console.log(userid)
+          console.log("66ce8992001432aca6b0")
          //  console.log(Chats)
           
 
@@ -96,8 +96,7 @@ const getnotify = async(userid)=>{
                                 messagecount: notificationbyuser[k].notifycount,
                                 fromid: notificationbyuser[k].userid,
                                 toid: notificationbyuser[k].toid,
-                                client:notificationbyuser[k].client,
-                                value:"notify"
+                                client:notificationbyuser[k].client
                             }
 
                             notify.push(notication)
@@ -119,8 +118,7 @@ const getnotify = async(userid)=>{
                                 content: notificationbyuser[j].content,
                                 messagecount: notificationbyuser[j].notifycount,
                                 fromid: notificationbyuser[j].userid,
-                                toid: notificationbyuser[j].toid,
-                                value:"notify"
+                                toid: notificationbyuser[j].toid
                             }
 
                             notify.push(notication)

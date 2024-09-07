@@ -1,4 +1,4 @@
-const {connectdatabase} = require('../../config/connectDB');
+const {connectdatabase, client} = require('../../config/connectDB');
 const sdk = require("node-appwrite");
 
 const createModel = async (req,res)=>{
@@ -15,12 +15,14 @@ const createModel = async (req,res)=>{
 
     try{
       
-           let Chats = await data.databar.listDocuments(data.dataid,data.msgCol)
+           let Chats = await data.databar.listDocuments(data.dataid,data.msgCol,[sdk.Query.limit(200) ,sdk.Query.and([sdk.Query.equal("toid",[`${userid}`,`${clientid}`]), sdk.Query.equal("fromid",[`${userid}`,`${client}`])],  )])
            let Listofusername = await data.databar.listDocuments(data.dataid,data.colid)
            let Listofmodel = await data.databar.listDocuments(data.dataid,data.modelCol)
            let Listofuserphoto = await data.databar.listDocuments(data.dataid,data.userincol)
+           console.log("number of chats "+Chats.documents.length)
+         
            let Listofchat = Chats.documents.filter(value=>{
-            return ( (value.toid === userid || value.fromid === userid) && (value.toid === clientid || value.fromid === clientid) )
+            return  (value.toid === userid || value.fromid === userid) && (value.toid === clientid || value.fromid === clientid) 
            })
 
           
@@ -52,7 +54,7 @@ const createModel = async (req,res)=>{
             })
              console.log('under sorting')
 
-            let chatslice = msglist.slice(0,30)
+            let chatslice = msglist.slice(0,100)
              console.log('under slice')
 
             let Listchat =[]
