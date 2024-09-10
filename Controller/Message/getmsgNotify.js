@@ -7,18 +7,20 @@ const MsgNotify = async(req,res)=>{
 
      let data = await connectdatabase();
 
+     console.log("inside recent message "+userid)
+
      try{
-         let Chats = await data.databar.listDocuments(data.dataid,data.msgCol)
-         let Username = await data.databar.listDocuments(data.dataid,data.colid)
-         let Photo = await data.databar.listDocuments(data.dataid,data.userincol)
-         let Model = await data.databar.listDocuments(data.dataid,data.modelCol)
+         let Chats = await data.databar.listDocuments(data.dataid,data.msgCol,[sdk.Query.limit(200), sdk.Query.equal("fromid",[userid])])
+        
+        
+         
          
          // get any chat with my userid
-           let Listofchat = Chats.documents.filter(value=>{
-            return value.toid === userid || value.toid === userid
-           })
-
-             if(!Listofchat[0]){
+          //  let Listofchat = Chats.documents.filter(value=>{
+          //   return value.toid === userid || value.toid === userid
+          //  })
+             console.log("model recent chat length "+Chats.documents.length)
+             if(!Chats.documents[0]){
              return res.status(200).json({"ok":true,"message":`user host empty`,lastchat:[]})
              }
 
@@ -31,13 +33,15 @@ const MsgNotify = async(req,res)=>{
 
            let FullChat = []
 
-            Listofchat.forEach(value1 =>{
+            Chats.documents.forEach(value1 =>{
               if(value1.notify === false){
-                    if(ChatParID.length <= 0){
+
+                    if(ChatParID.length < 1){
                     ChatParID.push(value1)
-                  }
+                    }
+
                 ChatParID.forEach((value2,index) =>{
-                  if(value1.fromid === value2.fromid || value1.fromid === value2.toid && value1.toid === value2.fromid || value1.toid === value2.toid){
+                  if(value1.toid === value2.toid){
                     if(Number(value1.date) > Number(value2.date)){
                       ChatParID[index] = value1
 
@@ -60,109 +64,94 @@ const MsgNotify = async(req,res)=>{
 
             })
 
+            console.log(ChatParID)
+
             // lets search name and photolink as a client 
 
-            ChatParID.forEach(value =>{
-              Username.documents.forEach(user =>{
+            for(let i = 0; i < ChatParID.length; i++){
 
-                if(value.fromid !== userid && value.fromid === user.$id ){
-                  Photo.documents.forEach(image =>{
-                    if(user.$id === image.useraccountId){
-                       let chat = {
-                        fromid: value.fromid,
-                        toid: value.toid,
-                        content: value.content,
-                        date: value.date,
-                        name: user.firstname,
-                        photolink: image.photoLink,
-                        client: value.client,
+                if(ChatParID[i].client === true){
+                if(ChatParID[i].fromid === userid){
+                       console.log("on top database colotion")
+                   let Username = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[ChatParID[i].fromid])])
+                   console.log("on top database username colotion")
+                   let Photo = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[ChatParID[i].fromid])])
+                      console.log("on top database photo colotion")
+                   if(Username.documents.length > 0){
+
+                    let chat = {
+                        fromid: ChatParID[i].fromid,
+                        toid: ChatParID[i].toid,
+                        content: ChatParID[i].content,
+                        date: ChatParID[i].date,
+                        name: Username.documents[0].firstname,
+                        photolink: Photo.documents[0].photoLink,
+                        client: ChatParID[i].client,
                         value:"recent"
                        }
+
+                       
                        FullChat.push(chat)
-                    }
-                  })
-                 
+                   }
+             }
                 
-                } else if(value.toid !== userid && value.toid === user.$id ){
-                  Photo.documents.forEach(image =>{
-                    if(user.$id === image.useraccountId){
-                       let chat = {
-                        fromid: value.fromid,
-                        toid: value.toid,
-                        content: value.content,
-                        date: value.date,
-                        name: user.firstname,
-                        photolink: image.photoLink,
-                        client: value.client,
-                        value:"recent"
-                       }
-                       FullChat.push(chat)
-                    }
-                  })
-                 
-                }
-              })
-            })
+                
 
+                }
+            }
+
+            console.log("Under searching names as client for loop")
+
+           
+
+         
              // lets search name and photolink as a model 
 
-             ChatParID.forEach(value =>{
-              Model.documents.forEach(user =>{
-                if(value.fromid !== userid && value.fromid === user.$id){
+             for(let i = 0; i < ChatParID.length; i++){
+               console.log("inside model forloop "+i)
+              if(ChatParID[i].client === false){
+                console.log("inside model")
+                  if(ChatParID[i].fromid === userid){
 
-                  let picture = user.photolink.split(",")
-                    let chat = {
-                        fromid: value.fromid,
-                        toid: value.toid,
-                        content: value.content,
-                        date: value.date,
-                        name: user.name,
+                  let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[ChatParID[i].fromid])])
+                   if(Model.documents.length > 0){
+
+                      let picture = Model.documents[0].photolink.split(",")
+                      let chat = {
+                        fromid: ChatParID[i].fromid,
+                        toid: ChatParID[i].toid,
+                        content: ChatParID[i].content,
+                        date: ChatParID[i].date,
+                        name: Model.documents[0].name,
                         photolink: picture[0],
-                        client: value.client,
+                        client: ChatParID[i].client,
                         value:"recent"
                        }
                        FullChat.push(chat)
 
-                }else  if(value.toid !== userid && value.toid === user.$id){
-
-                  let picture = user.photolink.split(",")
-                    let chat = {
-                        fromid: value.fromid,
-                        toid: value.toid,
-                        content: value.content,
-                        date: value.date,
-                        name: user.name,
-                        photolink: picture[0],
-                        client: value.client,
-                        value:"recent"
-                       }
-                       FullChat.push(chat)
-
+                  }
                 }
-              })
-             })
-
+              }
+             }
+              console.log("Under searching names as model for loop")
 
 
            // console.log(FullChat)
 
-           FullChat.sort((a,b)=> Number(a.date) - Number(b.date)).reverse()
+           FullChat.sort((a,b)=> Number(a.date) - Number(b.date))
+
+           FullChat.reverse()
 
            let RecentChat = FullChat.slice(0,30)
 
            console.log(RecentChat)
-
-          
-        
+   
           return res.status(200).json({"ok":true,"message":`user host empty`,lastchat:FullChat}) 
-
-          
-      
 
 
      }catch(err){
 
-        console.log(err.message)
+        console.log(err.message+"  inside recent message")
         return []
      }
 

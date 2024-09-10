@@ -22,7 +22,7 @@ const { setInterval } = require('timers')
 
 const corsOptions = {
     credentials: true,
-    origin: ['https://mmekosocial.onrender.com'] // Whitelist the domains you want to allow
+    origin: ['http://localhost:3000'] // Whitelist the domains you want to allow
 };
 
 app.use(cors(corsOptions));
@@ -59,6 +59,7 @@ app.use('/getallsharepost',require('./routes/api/share/getallsharedpost'))
 app.use('/getsharepost',require('./routes/api/share/getsharepost'))
 app.use('/getprofile',require('./routes/api/profile/Profile'))
 app.use('/getmoreprofile',require('./routes/api/Profilemore/getProfilemore'))
+app.use('/messagenotification',require('./routes/api/chat/getNotificationmsg'))
 
 io.on('connection', (socket) => {
   socket.on('online',async (userid)=>{
@@ -94,18 +95,18 @@ io.on('connection', (socket) => {
 
     })
 
-  socket.on('notify',async (data)=>{
-   // console.log("Inside notification")
-    if(data){
-       console.log("Inside notification")
-      setInterval(async ()=>{
-        let note = await getnotify(data)
-        console.log(note)
-         socket.emit(data+`notify`,note)
-      },20000)
+  // socket.on('notify',async (data)=>{
+  //  // console.log("Inside notification")
+  //   if(data){
+  //      console.log("Inside notification")
+  //     setInterval(async ()=>{
+  //       let note = await getnotify(data)
+  //       console.log(note)
+  //        socket.emit(data+`notify`,note)
+  //     },20000)
 
-    }
-  })
+  //   }
+  // })
 
  
 
@@ -146,6 +147,7 @@ io.on('connection', (socket) => {
   app.use('/getverifymodel',require('./routes/api/model/getlivemodel'))
   app.use('/getcurrentchat',require('./routes/api/chat/getchat'))
   app.use('/getmsgnotify',require('./routes/api/chat/getmsgnotify'))
+  app.use('/updatenotify',require('./routes/api/chat/updatenotify'))
  
  
     server.listen(PORT, () => {   

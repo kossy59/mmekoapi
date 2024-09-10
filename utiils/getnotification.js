@@ -2,7 +2,7 @@ const {connectdatabase} = require("../config/connectDB")
 const sdk = require("node-appwrite");
 
 
-const getnotify = async(userid)=>{
+const getNotify = async(userid)=>{
 
      //console.log(userid) 
      let data = await connectdatabase();
@@ -10,13 +10,11 @@ const getnotify = async(userid)=>{
 
      try{
         
-         let Chats = await data.databar.listDocuments(data.dataid,data.msgCol)
-         let username = await data.databar.listDocuments(data.dataid,data.colid)
-         let photolinks = await data.databar.listDocuments(data.dataid,data.userincol)
-         let modelname = await data.databar.listDocuments(data.dataid,data.modelCol)
-         let Listofchat = Chats.documents.filter(value=>{
-            return value.toid === userid
-           })
+         let Chats = await data.databar.listDocuments(data.dataid,data.msgCol,[sdk.Query.and([sdk.Query.equal("toid",[userid]), sdk.Query.equal("notify",[true])])])
+       
+        //  let Listofchat = Chats.documents.filter(value=>{
+        //     return value.toid === userid
+        //    })
 
           //console.log(Listofchat+" List of notification")
         //   console.log(userid)
@@ -26,13 +24,13 @@ const getnotify = async(userid)=>{
 
 
           
-           let NonreponseChat = Listofchat.filter(value =>{
-             return value.notify === true
-           })
+        //    let NonreponseChat = Listofchat.filter(value =>{
+        //      return value.Notify === true
+        //    })
 
-           console.log(NonreponseChat)
+           //console.log(Chats.documents[0])
 
-            if(!NonreponseChat[0]){
+            if(!Chats.documents[0]){
              return []
            }
 
@@ -41,97 +39,111 @@ const getnotify = async(userid)=>{
            let notificationbyuser = []
          
            // file notification base on the sender
-         for(let i = 0; i < NonreponseChat.length; i++){
-            if(i < 1){
+
+           Chats.documents.forEach((value,index) => {
+
+            if(notificationbyuser.length < 1){
+                  
                 let chat = {
-                    userid: NonreponseChat[i].fromid,
-                    content:NonreponseChat[i].content,
+                    userid: value.fromid,
+                    content:value.content,
                     notifycount : 0,
-                    toid:NonreponseChat[i].toid,
-                    client:NonreponseChat[i].client
+                    toid:value.toid,
+                    client:value.client
                 }
 
                 notificationbyuser.push(chat)
 
             }
-            for(let k = 0; k < notificationbyuser.length; k++){
 
-                if(notificationbyuser[k].userid === NonreponseChat[i].fromid){
-                    notificationbyuser[k].content = NonreponseChat[i].content
-                    notificationbyuser[k].notifycount ++
+            notificationbyuser.forEach((value1,index2) => {
+                if(value1.userid === value.fromid){
+                    notificationbyuser[index2].content = value.content; 
+                    notificationbyuser[index2].notifycount++
                 }else{
-                    
                      let chat = {
-                            userid: NonreponseChat[i].fromid,
-                            content:NonreponseChat[i].content,
-                            notifycount : 1,
-                            toid:NonreponseChat[i].toid,
-                            client:NonreponseChat[i].client
+                            userid: value.fromid,
+                            content:value.content,
+                            notifycount : 0,
+                            toid:value.toid,
+                            client:value.client
                         }
 
-                notificationbyuser.push(chat)
+                 notificationbyuser.push(chat)
                 }
+            })
 
+           })
 
-            }
-         }
-
-       //  console.log(notificationbyuser)
+         //console.log(notificationbyuser[0])
 
          // all notification array
-         let notify = []
+         let Notify = []
 
          // get the sender notifcations name and photolink with it id
 
          // starting from userdb database as client...
-         for(let i = 0; i < username.documents.length; i++){
-            for(let j = 0; j < photolinks.documents.length; j++){
-                for(let k = 0; k < notificationbyuser.length; k++){
-                    if(notificationbyuser[k].userid === username.documents[i].$id){
-                        if(username.documents[i].$id === photolinks.documents[j].useraccountId){
-                            let notication = {
-                                photolink: photolinks.documents[j].photoLink,
-                                username: username.documents[i].firstname,
-                                content: notificationbyuser[k].content,
-                                messagecount: notificationbyuser[k].notifycount,
-                                fromid: notificationbyuser[k].userid,
-                                toid: notificationbyuser[k].toid,
-                                client:notificationbyuser[k].client,
+
+         for(let i = 0; i < notificationbyuser.length; i++){
+            if(notificationbyuser[i].client === true){
+                let Users =  await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[notificationbyuser[i].userid])])
+                let Photos = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[notificationbyuser[i].userid])])
+                 
+                if(Users.documents[0]){
+                     
+                           let notication = {
+                                photolink: Photos.documents[0].photoLink,
+                                username:Users.documents[0].firstname,
+                                content: notificationbyuser[i].content,
+                                messagecount: notificationbyuser[i].notifycount,
+                                fromid: notificationbyuser[i].userid,
+                                toid: notificationbyuser[i].toid,
+                                client:notificationbyuser[i].client,
                                 value:"notify"
                             }
 
-                            notify.push(notication)
-                        }
-                    }
+                       // Notify.push(notication)
+
+                        Notify.push(notication)
+                         //console.log(Notify[0])
+                          
                 }
             }
          }
+          
+       
 
-         // getting user names from model as model
-         for(let i = 0; i < modelname.documents.length; i++){
-            for(let j = 0; j < notificationbyuser.length; j++){
-                if(notificationbyuser[j].userid === modelname.documents[i].$id){
+     
 
-                    let photoLinks = modelname.documents[i].photolink.split(",")
+        //  getting user names from model as model
+
+        for(let i = 0; i < notificationbyuser.length; i++){
+            if(notificationbyuser[i].client === false){
+               let Modeling = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[notificationbyuser[i].userid])])
+               if(Modeling.documents[0]){
+
+                  let photoLinks = Modeling.documents[0].photolink.split(",")
                       let notication = {
                                 photolink: photoLinks[0],
-                                username: modelname.documents[i].name,
-                                content: notificationbyuser[j].content,
-                                messagecount: notificationbyuser[j].notifycount,
-                                fromid: notificationbyuser[j].userid,
-                                toid: notificationbyuser[j].toid,
+                                username: Modeling.documents[0].name,
+                                content: notificationbyuser[i].content,
+                                messagecount: notificationbyuser[i].notifycount,
+                                fromid: notificationbyuser[i].userid,
+                                toid: notificationbyuser[i].toid,
                                 value:"notify"
                             }
 
-                            notify.push(notication)
-
-                }
+                            Notify.push(notication)
+                 
+               }
             }
-         }
+        }
+      
+        
 
-       // console.log(notify)
+        console.log("still nothig "+Notify[0])
 
-          return notify
+          return Notify
          
 
 
@@ -144,4 +156,4 @@ const getnotify = async(userid)=>{
 }
 
 
-module.exports = getnotify
+module.exports = getNotify
