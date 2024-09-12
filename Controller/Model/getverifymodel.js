@@ -49,7 +49,8 @@ const createModel = async (req,res)=>{
                  daysava : currentuser[j].daysava,
                  hosttype : currentuser[j].hosttype,
                  online:useronline.documents[i].active,
-                 userid:currentuser[j].userid
+                 userid:currentuser[j].userid,
+                 amount:currentuser[j].price
 
                  }
 
