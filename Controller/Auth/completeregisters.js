@@ -1,7 +1,9 @@
-const {userdb} = require('../../Model/userdb');
-const information = require('../../Model/usercomplete')
-const {connectdatabase} = require('../../config/connectDB');
-var sdk = require("node-appwrite");
+// const {userdb} = require('../../Model/userdb');
+// const information = require('../../Model/usercomplete')
+// const {connectdatabase} = require('../../config/connectDB');
+// var sdk = require("node-appwrite");
+
+const userdb = require("../../Models/usercomplete")
 
 
 const handleNewUser = async (req,res)=>{
@@ -12,24 +14,26 @@ const handleNewUser = async (req,res)=>{
     const details = req.body.details;
     const useraccountId = req.body.useraccountId;
     
-    let data = await connectdatabase()
+   // let data = await connectdatabase()
     
     if(!interestedIn  && !relationshipType && !details && !useraccountId){
         return res.status(400).json({"ok":false,'message': 'Registeration not complete!!'})
     }
 
-    let imglink;
+    //let imglink;
 
     try{
-        const d = await data.databar.listDocuments(data.dataid,data.userincol)
+        // const d = await data.databar.listDocuments(data.dataid,data.userincol)
 
-        let du = d.documents.filter(value=>{
-            return value.useraccountId === useraccountId
-           })
+        // let du = d.documents.filter(value=>{
+        //     return value.useraccountId === useraccountId
+        //    })
+
+           let du = await userdb.findOne({useraccountId:useraccountId}).exec()
 
            
         
-           if(du[0]){
+           if(du){
             return res.status(409).json({"ok":false,'message': 'User Already Register!!'});
     
            }
@@ -39,7 +43,7 @@ const handleNewUser = async (req,res)=>{
         }
 
      
-            var moreuser ={
+            var moreuser = {
                 useraccountId,
                 interestedIn,
                 photoLink:`${photoLink}`,
@@ -47,7 +51,10 @@ const handleNewUser = async (req,res)=>{
                 details
             }
 
-            await data.databar.createDocument(data.dataid,data.userincol,sdk.ID.unique(),moreuser)
+            await userdb.create(moreuser)
+            
+
+           // await data.databar.createDocument(data.dataid,data.userincol,sdk.ID.unique(),moreuser)
             return res.status(200).json({"ok":true,'message': `Account Created Successful`})
 
       

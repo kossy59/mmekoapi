@@ -1,9 +1,10 @@
-const {userdb} = require('../../Model/userdb');
-const {connectdatabase} = require('../../config/connectDB');
+//const {userdb} = require('../../Model/userdb');
+//const {connectdatabase} = require('../../config/connectDB');
 const bcrypt = require('bcrypt');
-const { Query } = require('node-appwrite');
-const sdk = require("node-appwrite");
+//const { Query } = require('node-appwrite');
+//const sdk = require("node-appwrite");
 const forgetHandler = require('../../helpers/sendemailAuth');
+const userdb = require("../../Models/userdb")
 
 const handleNewUser = async (req,res)=>{
 
@@ -17,20 +18,27 @@ const handleNewUser = async (req,res)=>{
     const age = req.body.age;
     const country = req.body.country;
 
-   let data = await connectdatabase()
+   //let data = await connectdatabase()
     
     if(!firstname && !lastname && !gender && !email && !password && !state && !age && country ){
         return res.status(400).json({"ok":false,'message': 'Registeration not complete!!'})
     }
     //let dupplicate;
+  
     try{
-       let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
 
-       let du = dupplicate.documents.filter(value=>{
-        return value.email === email
-       })
+        let dublicate = await userdb.findOne({
+            email:email.toLowerCase()
+        }).exec()
+       //let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
 
-       if(du[0]){
+    //    let du = dupplicate.documents.filter(value=>{
+    //     return value.email === email
+    //    })
+   
+       
+
+       if(dublicate){
         return res.status(409).json({"ok":false,'message': 'User Already Register!!'});
 
        }
@@ -52,7 +60,7 @@ const handleNewUser = async (req,res)=>{
             lastname:lastname,
             gender:gender,
             nickname:nickname,
-            email:email,
+            email:email.toLowerCase(),
             password:hashPwd,
             emailconfirm:"not",
             emailconfirmtime:"not",
@@ -66,10 +74,10 @@ const handleNewUser = async (req,res)=>{
             balance:''
         }
 
-        
+        await userdb.create(db);
   
-        await data.databar.createDocument(data.dataid,data.colid,sdk.ID.unique(),db)
-        await forgetHandler(req,res,email,data.dataid,data.colid,data.databar)
+        //await data.databar.createDocument(data.dataid,data.colid,sdk.ID.unique(),db)
+        await forgetHandler(req,res,email)
 
     }catch(err){
         return res.status(500).json({'ok':false,'message':  `${err.message} register`});

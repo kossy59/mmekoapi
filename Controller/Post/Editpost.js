@@ -1,6 +1,12 @@
-const { Duplex } = require('nodemailer/lib/xoauth2');
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const { Duplex } = require('nodemailer/lib/xoauth2');
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+
+const postdb = require("../../Models/post")
+const userdb = require("../../Models/userdb")
+const completedb = require("../../Models/usercomplete")
+const commentdb = require("../../Models/comment")
+const likedb = require("../../Models/like")
 
 const updatePost = async (req,res)=>{
    
@@ -10,85 +16,92 @@ const updatePost = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
 
+    console.log("na here like dey post id "+postid)
 
-    let data = await connectdatabase()
+    //let data = await connectdatabase()
     let post ={}
 
     try{
 
-            let  dupplicate = await data.databar.listDocuments(data.dataid,data.postCol)
+            // let  dupplicate = await data.databar.listDocuments(data.dataid,data.postCol)
 
-            let du = dupplicate.documents.find(value=>{
-                return value.$id === postid
-               })
+            // let du = dupplicate.documents.find(value=>{
+            //     return value.$id === postid
+            //    })
+
+               let du = await postdb.findOne({_id:postid}).exec()
+               console.log("post id "+du._id)
+                console.log("post content "+du.content)
+               let userdatabase = await userdb.find().exec()
+               let completedatabase = await completedb.find().exec()
+               let commentdatabase = await commentdb.find().exec()
+                let likedatabase = await likedb.find().exec()
+                
         
                if(!du){
+                
                 return res.status(409).json({"ok":false,'message': 'current user can not edit this post!!'});
         
                }
 
-               let  userdb = await data.databar.listDocuments(data.dataid,data.colid)
-           
-               let  comdb = await data.databar.listDocuments(data.dataid,data.userincol)
-              
-   
-               let  commentdb = await data.databar.listDocuments(data.dataid,data.commentCol)
-              
-               let  likedb = await data.databar.listDocuments(data.dataid,data.likeCol)
+               userdatabase.forEach(username =>{
+                completedatabase.forEach(userphoto =>{
+                    
 
+                            if(String(du.userid) === String(username._id) && String(username._id) === String(userphoto.useraccountId)){
+
+                                 post = {
+                                    username: `${ username.firstname} ${ username.lastname}`,
+                                    nickname:  `${ username.nickname}`,
+                                    userphoto: `${userphoto.photoLink}`,
+                                    content: `${du.content}`,
+                                    postphoto: `${du.postlink}`,
+                                    posttime: `${du.posttime}`,
+                                    posttype: `${du.posttype}`,
+                                    postid: `${du._id}`,
+                                    like:[],
+                                    comment:[],
+                                    userid:username._id
+                                    }
+                              
+                            }
+
+
+                })
+               })
+
+               commentdatabase.forEach(value =>{
+                if(String(value.postid) === String(du._id)){
+                    post.comment.push(value)
+                }
+               })
+
+                likedatabase.forEach(value =>{
+                if(String(value.postid) === String(du._id)){
+                    post.like.push(value)
+                }
+               })
+            
+
+             
+               
+                
 
              
 
-                for(let j = 0; j<userdb.documents.length; j++){
+               
 
-                    for(let k = 0; k<comdb.documents.length; k++){
-
-                       
-                       
-
-                        if(du.userid === userdb.documents[j].$id && comdb.documents[k].useraccountId === userdb.documents[j].$id ){
-
-                           
-                             post = {
-                                username: `${ userdb.documents[j].firstname} ${ userdb.documents[j].lastname}`,
-                                nickname:  `${ userdb.documents[j].nickname}`,
-                                userphoto: `${comdb.documents[k].photoLink}`,
-                                content: `${du.content}`,
-                                postphoto: `${du.postlink}`,
-                                posttime: `${du.posttime}`,
-                                posttype: `${du.posttype}`,
-                                postid: `${du.$id}`,
-                                like:[],
-                                comment:[],
-                                userid:userdb.documents[j].$id
-                            }
-
-                           
-
-                        }
-
-                    }
-
-                }
+            //    post.comment.push(commentdatabase)
 
             
-
-            
-                for(let j = 0; j < commentdb.documents.length; j++){
-                 if(du.$id === commentdb.documents[j].postid){
-                     post.comment.push(commentdb.documents[j])
-                 }
-
-                }
+                
             
 
+              
+            //    post.like.push(likedatabase)
+               console.log("likes "+post.content)
           
-                for(let j = 0; j < likedb.documents.length; j++){
-                 if(du.$id === likedb.documents[j].postid){
-                     post.like.push(likedb.documents[j])
-                 }
-
-                }
+               
 
 
             

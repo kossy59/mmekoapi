@@ -1,5 +1,7 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+
+const commentdata = require("../../Models/comment")
 
 const createComment = async (req,res)=>{
 
@@ -12,7 +14,7 @@ const createComment = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
 
-    let data = await connectdatabase()
+   // let data = await connectdatabase()
 
     try{
       
@@ -22,16 +24,17 @@ const createComment = async (req,res)=>{
         }
            
            let comment =     {
-                    uesrid:userid,
+                    userid:userid,
                     content,
-                    sharedid,
+                    sharedid:sharedid,
                     postid:postid,
                     commenttime:`${Date.now()}`
                     
                 }
             
                console.log('we are on database update')
-            await data.databar.createDocument(data.dataid,data.commentCol,sdk.ID.unique(),comment)
+            //await data.databar.createDocument(data.dataid,data.commentCol,sdk.ID.unique(),comment)
+            await commentdata.create(comment)
 
 
             return res.status(200).json({"ok":true,"message":`Comment Success`})

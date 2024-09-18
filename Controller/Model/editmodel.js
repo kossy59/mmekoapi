@@ -1,5 +1,7 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+
+const models = require("../../Models/models")
 
 const createModel = async (req,res)=>{
 
@@ -25,16 +27,18 @@ const createModel = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
      
-    let data = await connectdatabase()
+    //let data = await connectdatabase()
 
     try{
       
 
-           let userdb = await data.databar.listDocuments(data.dataid,data.modelCol)
+           //let userdb = await data.databar.listDocuments(data.dataid,data.modelCol)
           
-           let currentuser = userdb.documents.find(value=>{
-            return value.$id === hostid
-           })
+          //  let currentuser = userdb.documents.find(value=>{
+          //   return value.$id === hostid
+          //  })
+
+           let currentuser = await models.findOne({_id:hostid}).exec()
 
           
 
@@ -105,29 +109,29 @@ const createModel = async (req,res)=>{
             hosttype = hosttype1
            }
 
-          let model =  {
-            verify:'notlive',
-            age,
-            location,
-            price,
-            duration,
-            bodytype,
-            smoke,
-            drink,
-            interestedin,
-            height,
-            weight,
-            description,
-            gender,
-            timeava,
-            daysava,
-            hosttype,
-            photolink
 
-            }
+            currentuser.verify = "notlive"
+            currentuser.age = age;
+            currentuser.location = location
+            currentuser.price = price;
+            currentuser.duration = duration
+            currentuser.bodytype = bodytype;
+            currentuser.smoke = smoke;
+            currentuser.drink = drink;
+            currentuser.interestedin = interestedin;
+            currentuser.height = height;
+            currentuser.weight = weight;
+            currentuser.description = description
+            currentuser.gender = gender;
+            currentuser.timeava = timeava
+            currentuser.daysava = daysava
+            currentuser.hosttype = hosttype;
+            currentuser.photolink = photolink
+            currentuser.save()
+
             
 
-            await data.databar.updateDocument(data.dataid,data.modelCol,currentuser.$id,model)
+           // await data.databar.updateDocument(data.dataid,data.modelCol,currentuser._id,currentuser)
 
 
             return res.status(200).json({"ok":true,"message":`Model Update successfully`})

@@ -1,39 +1,47 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+const commentdata = require("../../Models/comment")
+const userdata = require("../../Models/userdb")
+const comdata = require("../../Models/usercomplete")
 
 const readComment = async (req,res)=>{
 
     const postid = req.body.postid
-    let data = await connectdatabase()
+   // let data = await connectdatabase()
 
     try{
 
-        let  commentdb = await data.databar.listDocuments(data.dataid,data.commentCol)
-        let  userdb = await data.databar.listDocuments(data.dataid,data.colid)
-        let  comdb = await data.databar.listDocuments(data.dataid,data.userincol)
+       // let  commentdb = await data.databar.listDocuments(data.dataid,data.commentCol)
+        let  userdb = await userdata.find().exec()
+        let  comdb = await comdata.find().exec()
 
-        let test = commentdb.documents.filter(value=>{
-           return value.postid === postid
-        })
+        // let test = commentdb.documents.filter(value=>{
+        //    return value.postid === postid
+        // })
+
+        let test = await commentdata.find({postid:postid}).exec()
+         if(!test[0]){
+             return res.status(409).json({"ok":false,'message': `wrog comment id!`});
+        }
 
         const comment = []
 
     
           
            for(let i =0; i<test.length; i++){
-            for(let j = 0; j < userdb.documents.length; j++){
-                for(let k =0; k<comdb.documents.length; k++){
-                    if(test[i].uesrid === userdb.documents[j].$id && test[i].uesrid === comdb.documents[k].useraccountId
+            for(let j = 0; j < userdb.length; j++){
+                for(let k =0; k<comdb.length; k++){
+                    if(String(test[i].userid) === String(userdb[j]._id) && String(test[i].userid) === String(comdb[k].useraccountId)
                         ){
 
                            
                            let com = {
-                                commentuserphoto:comdb.documents[k].photoLink,
-                                commentusername:`${userdb.documents[j].firstname} ${userdb.documents[j].lastname}`,
+                                commentuserphoto:comdb[k].photoLink,
+                                commentusername:`${userdb[j].firstname} ${userdb[j].lastname}`,
                                 content:test[i].content,
-                                commentid:test[i].$id,
+                                commentid:test[i]._id,
                                 commenttime:test[i].commenttime,
-                                commentuserid:userdb.documents[j].$id
+                                commentuserid:userdb[j]._id
                             }
 
                             comment.push(com)

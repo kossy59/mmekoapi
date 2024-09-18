@@ -1,5 +1,7 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+
+const completedb = require("../../Models/usercomplete")
 
 const updatePost = async (req,res)=>{
     const userid = req.body.userid;
@@ -12,22 +14,24 @@ const updatePost = async (req,res)=>{
     }
 
 
-    let data = await connectdatabase()
+    // let data = await connectdatabase()
 
     try{
 
-            let  dupplicate = await data.databar.listDocuments(data.dataid,data.userincol)
+            // let  dupplicate = await data.databar.listDocuments(data.dataid,data.userincol)
 
-            let du = dupplicate.documents.filter(value=>{
-                return value.useraccountId === userid 
-               })
+            // let du = dupplicate.documents.filter(value=>{
+            //     return value.useraccountId === userid 
+            //    })
+
+               let du = await completedb.fineOne({useraccountId:userid}).exec()
         
-               if(!du[0]){
+               if(!du){
                 return res.status(409).json({"ok":false,'message': 'current user can not edit this profile!!'});
         
                }
 
-               let PhotoLink = du[0].photoLink;
+               let PhotoLink = du.photoLink;
                
 
 
@@ -37,17 +41,20 @@ const updatePost = async (req,res)=>{
 
 
 
-            await data.databar.updateDocument(
-                data.dataid,
-                data.userincol,
-                 du[0].$id,
-                {
-                    photoLink,
+            // await data.databar.updateDocument(
+            //     data.dataid,
+            //     data.userincol,
+            //      du[0].$id,
+            //     {
+            //         photoLink,
                    
-                }
-            )
+            //     }
+            // )
 
-            return res.status(200).json({"ok":true,"message":`Post updated Successfully`,profile:du[0]})
+            du.photoLink = photoLink
+            du.save()
+
+            return res.status(200).json({"ok":true,"message":`Post updated Successfully`,profile:du})
       
           
        }catch(err){

@@ -1,5 +1,6 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+const likedata = require("../../Models/like")
 
 const readComment = async (req,res)=>{
 
@@ -8,7 +9,7 @@ const readComment = async (req,res)=>{
 
     try{
 
-            let  du = await data.databar.listDocuments(data.dataid,data.likeCol)
+            let  du = await likedata.find().exec()
 
 
             return res.status(200).json({"ok":true,"message":`all comment`,like:du.documents})

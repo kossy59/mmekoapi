@@ -1,5 +1,7 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+
+const models = require("../../Models/models")
 
 const createModel = async (req,res)=>{
 
@@ -10,16 +12,19 @@ const createModel = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
      
-    let data = await connectdatabase()
+    //let data = await connectdatabase()
 
     try{
       
 
-           let userdb = await data.databar.listDocuments(data.dataid,data.modelCol)
+          //  let userdb = await data.databar.listDocuments(data.dataid,data.modelCol)
           
-           let currentuser = userdb.documents.find(value=>{
-            return value.$id === hostid
-           })
+          //  let currentuser = userdb.documents.find(value=>{
+          //   return value.$id === hostid
+          //  })
+
+           let currentuser = await models.findOne({_id:hostid}).exec()
+          
 
           
 
@@ -31,15 +36,18 @@ const createModel = async (req,res)=>{
 
           
 
-          let model =  {
-            verify:'live',
-             }
+          // let model =  {
+          //   verify:'live',
+          //    }
             
 
-            await data.databar.updateDocument(data.dataid,data.modelCol,currentuser.$id,model)
+            //await data.databar.updateDocument(data.dataid,data.modelCol,currentuser.$id,model)
+
+          currentuser.verify = "live"
+          currentuser.save()
 
 
-            return res.status(200).json({"ok":true,"message":`host Updated successfully`,hostid:currentuser.$id})
+            return res.status(200).json({"ok":true,"message":`host Updated successfully`,hostid: currentuser._id})
       
           
           }catch(err){

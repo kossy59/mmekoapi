@@ -1,5 +1,6 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+const models = require("../../Models/models")
 
 const createModel = async (req,res)=>{
 
@@ -10,16 +11,18 @@ const createModel = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
      
-    let data = await connectdatabase()
+  //  let data = await connectdatabase()
 
     try{
       
 
-           let userdb = await data.databar.listDocuments(data.dataid,data.modelCol)
+           //let userdb = await data.databar.listDocuments(data.dataid,data.modelCol)
           
-           let currentuser = userdb.documents.find(value=>{
-            return value.$id === hostid
-           })
+        //    let currentuser = userdb.documents.find(value=>{
+        //     return value.$id === hostid
+        //    })
+
+           let currentuser = await models.findOne({_id:hostid}).exec()
 
           
 
@@ -28,7 +31,9 @@ const createModel = async (req,res)=>{
            }
 
         
-            await data.databar.deleteDocument(data.dataid,data.modelCol,currentuser.$id)
+            //await data.databar.deleteDocument(data.dataid,data.modelCol,currentuser.$id)
+
+            await models.deleteOne({_id:hostid}).exec()
 
 
             return res.status(200).json({"ok":true,"message":`Model Deleted successfully`})

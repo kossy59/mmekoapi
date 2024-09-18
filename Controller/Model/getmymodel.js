@@ -1,5 +1,6 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+const models = require("../../Models/models")
 
 const createModel = async (req,res)=>{
 
@@ -10,49 +11,51 @@ const createModel = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
 
-    let data = await connectdatabase()
+   // let data = await connectdatabase()
 
     try{
       
-           let userdb = data.databar.listDocuments(data.dataid,data.modelCol)
-           let currentuser = (await userdb).documents.filter(value=>{
-            return value.userid === userid
-           })
+          //  let userdb = data.databar.listDocuments(data.dataid,data.modelCol)
+          //  let currentuser = (await userdb).documents.filter(value=>{
+          //   return value.userid === userid
+          //  })
 
-           if(!currentuser[0]){
+          let currentuser = await models.findOne({userid:userid}).exec()
+
+           if(!currentuser){
             return res.status(200).json({"ok":false,"message":`user host empty`,host:[]})
            }
 
           
-
-          let host = []
+              
             
-
-            host = currentuser.map(value=>{
-              return {
-                 hostid: value.$id,
-                 photolink: value.photolink,
-                 verify: value.verify,
-                 name : value.name,
-                 age : value.age,
-                 location : value.location,
-                 price : value.price,
-                 duration : value.duration,
-                 bodytype : value.bodytype,
-                 smoke: value.smoke,
-                 drink : value.drink,
-                 interestedin : value.interestedin,
-                 height : value.height,
-                 weight : value.weight,
-                 description : value.description,
-                 gender:value.gender,
-                 timeava:value.timeava,
-                 daysava : value.daysava,
-                 hosttype : value.hosttype,
-                 document: value.document
+           let myhost =
+               {
+                 hostid: currentuser._id,
+                 photolink: currentuser.photolink,
+                 verify: currentuser.verify,
+                 name : currentuser.name,
+                 age : currentuser.age,
+                 location : currentuser.location,
+                 price : currentuser.price,
+                 duration : currentuser.duration,
+                 bodytype : currentuser.bodytype,
+                 smoke: currentuser.smoke,
+                 drink : currentuser.drink,
+                 interestedin : currentuser.interestedin,
+                 height : currentuser.height,
+                 weight : currentuser.weight,
+                 description : currentuser.description,
+                 gender:currentuser.gender,
+                 timeava:currentuser.timeava,
+                 daysava : currentuser.daysava,
+                 hosttype : currentuser.hosttype,
+                 document: currentuser.document
 
               }
-            })
+
+              let host = [myhost]
+          
 
 
             return res.status(200).json({"ok":true,"message":`Model Fetched successfully`,host})

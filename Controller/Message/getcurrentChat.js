@@ -1,5 +1,9 @@
-const {connectdatabase, client} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase, client} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+const messagedb = require("../../Models/message")
+const userdb = require("../../Models/userdb")
+const completedb = require("../../Models/usercomplete")
+const models = require("../../Models/models")
 
 const createModel = async (req,res)=>{
 
@@ -11,17 +15,23 @@ const createModel = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
 
-    let data = await connectdatabase()
+   // let data = await connectdatabase()
 
     try{
       
-           let Chats = await data.databar.listDocuments(data.dataid,data.msgCol,[sdk.Query.limit(200), sdk.Query.and([
-            sdk.Query.or([sdk.Query.equal("toid",[userid]), sdk.Query.equal("toid",[clientid])]),
-            sdk.Query.or([sdk.Query.equal("fromid",[userid]), sdk.Query.equal("fromid",[clientid])])
-           ])])
+        //    let Chats = await data.databar.listDocuments(data.dataid,data.msgCol,[sdk.Query.limit(200), sdk.Query.and([
+        //     sdk.Query.or([sdk.Query.equal("toid",[userid]), sdk.Query.equal("toid",[clientid])]),
+        //     sdk.Query.or([sdk.Query.equal("fromid",[userid]), sdk.Query.equal("fromid",[clientid])])
+        //    ])])
+
+           let chating = await messagedb.find().exec();
+
+           let Chats = chating.filter(value =>{
+             return String(value.toid) === String(userid) || String(value.fromid) === String(userid) && String(value.fromid) === String(clientid) || String(value.toid)  === String(clientid)
+           })
 
           
-           console.log("number of chats "+Chats.documents.length)
+           console.log("number of chats "+Chats.length)
          
         //    let Listofchat = Chats.documents.filter(value=>{
         //     return  (value.toid === userid || value.fromid === userid) && (value.toid === clientid || value.fromid === clientid) 
@@ -29,11 +39,11 @@ const createModel = async (req,res)=>{
 
           
 
-           if(!Chats.documents[0]){
+           if(!Chats[0]){
             return res.status(200).json({"ok":true,"message":`user host empty`,chats:[]})
            }
            // fecting unviewed notification chats
-            let unviewing = Chats.documents.filter(value =>{
+            let unviewing = Chats.filter(value =>{
                 return value.notify === true;
             
             })
@@ -43,13 +53,14 @@ const createModel = async (req,res)=>{
         
             for(let i = 0; i < unviewing.length; i++){
                 if(unviewing[i].toid === clientid){
-                    await data.databar.updateDocument(data.dataid,data.msgCol,unviewing[i].$id,{notify:false})
+                    unviewing[i].notify = false;
+                    unviewing[i].save()
                 }
             }
              
 
             //let msg = await data.databar.listDocuments(data.dataid,data.msgCol)
-            let msglist = Chats.documents.sort((a,b)=>{
+            let msglist = Chats.sort((a,b)=>{
                 return Number(a.date) - Number(b.date)
             })
              console.log('under sorting')
@@ -77,16 +88,18 @@ const createModel = async (req,res)=>{
             for(let i = 0; i < myChat.length; i++){
                 if(myChat[i].client === true){
 
-                     let usernames = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[myChat[i].fromid])])
-                     let photos = await data.databar.listDocuments(data.dataid,data.userincol, [sdk.Query.equal("useraccountId",[myChat[i].fromid])])
+                     //let usernames = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[myChat[i].fromid])])
+                     //let photos = await data.databar.listDocuments(data.dataid,data.userincol, [sdk.Query.equal("useraccountId",[myChat[i].fromid])])
+                     let usernames = await userdb.findOne({_id:myChat[i].fromid}).exec()
+                     let photos = await completedb.findOne({useraccountId:myChat[i].fromid})
 
-                     if(usernames.documents[0]){
+                     if(usernames){
                          let chat = {
                                 id: myChat[i].fromid,
                                 content:  myChat[i].content,
                                 date:  myChat[i].date,
-                                name: usernames.documents[0].firstname,
-                                photolink: photos.documents[0].photoLink,
+                                name: usernames.firstname,
+                                photolink: photos.photoLink,
                                 client: myChat[i].client
                             }
 
@@ -105,14 +118,15 @@ const createModel = async (req,res)=>{
         
             for(let i = 0; i < myChat.length; i++){
                 if(myChat[i].client === false){
-                    let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[myChat[i].fromid])])
-                    let photolink = Model.documents[0].photolink.split(",")
+                    //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[myChat[i].fromid])])
+                    let Model = await models.findOne({userid:myChat[i].fromid})
+                    let photolink = Model.photolink.split(",")
                         let chat = {
                             id: myChat[i].fromid,
                             content:  myChat[i].content,
                             date: myChat[i].date,
                             photolink: photolink[0],
-                            name: Model.documents[0].name,
+                            name: Model.name,
                             client: myChat[i].client
                         }
                         Listchat.push(chat)
@@ -128,16 +142,18 @@ const createModel = async (req,res)=>{
             
             for(let i = 0; i <  clientchat.length; i++){
                 if(clientchat[i].client == true){
-                     let usernames = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[clientchat[i].fromid])])
-                     let photos = await data.databar.listDocuments(data.dataid,data.userincol, [sdk.Query.equal("useraccountId",[clientchat[i].fromid])])
+                     //let usernames = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[clientchat[i].fromid])])
+                     //let photos = await data.databar.listDocuments(data.dataid,data.userincol, [sdk.Query.equal("useraccountId",[clientchat[i].fromid])])
+                     let usernames = await userdb.findOne({_id:clientchat[i].fromid}).exec()
+                     let photos = await completedb.findOne({useraccountId:clientchat[i].fromid}).exec()
 
-                     if(usernames.documents[0]){
+                     if(usernames){
                          let chat = {
                                 id: clientchat[i].fromid,
                                 content:  clientchat[i].content,
                                 date:  clientchat[i].date,
-                                name: usernames.documents[0].firstname,
-                                photolink: photos.documents[0].photoLink,
+                                name: usernames.firstname,
+                                photolink: photos.photoLink,
                                 client: clientchat[i].client
                             }
 
@@ -154,15 +170,16 @@ const createModel = async (req,res)=>{
 
                 if(clientchat[i].client === false){
 
-                    let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[clientchat[i].fromid])])
-                     if(Model.documents[0]){
-                         let photolink = Model.documents[0].photolink.split(",")
+                   // let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[clientchat[i].fromid])])
+                   let Model = await models.findOne({userid:clientchat[i].fromid})
+                     if(Model){
+                         let photolink = Model.photolink.split(",")
                         let chat = {
                             id: clientchat[i].fromid,
                             content:  clientchat[i].content,
                             date: clientchat[i].date,
                             photolink: photolink[0],
-                            name: Model.documents[0].name,
+                            name: Model.name,
                             client: clientchat[i].client
                         }
                         Listchat.push(chat)

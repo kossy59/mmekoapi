@@ -1,44 +1,47 @@
-const {userdb} = require('../../Model/userdb');
-const {connectdatabase} = require('../../config/connectDB');
+// const {userdb} = require('../../Model/userdb');
+// const {connectdatabase} = require('../../config/connectDB');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const userdb = require("../../Models/userdb")
 
 const handleNewUser = async (req,res)=>{
 
     const email = req.body.email;
     const password = req.body.password;
-   console.log('untop connecting to database')
-    let data = await connectdatabase()
+//    console.log('untop connecting to database')
+//     let data = await connectdatabase()
     if(!email && !password){
         return res.status(400).json({"ok":false,'message': 'Email OR Password Empty'})
     }
 
     try{
-        console.log('untop getting  database')
-         let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
+        //console.log('untop getting  database')
 
-        let du = dupplicate.documents.filter(value=>{
-        return value.email === email
-       })
+        let du = await userdb.findOne({email:email.toLowerCase()}).exec()
+    //      let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
+
+    //     let du = dupplicate.documents.filter(value=>{
+    //     return value.email === email
+    //    })
 
        console.log('untop checking  database')
  
-        if(du[0]){
+        if(du){
             
                
-            if(du[0].emailconfirm !== "verify"){
+            if(du.emailconfirm !== "verify"){
 
                 res.status(401).json({"ok":false,"message": "notverify"})
-                await forgetHandler(req,res,email,data.dataid,data.colid,data.databar)
+                await forgetHandler(req,res,email)
             }
-            const match = await bcrypt.compare(password,du[0].password);
+            const match = await bcrypt.compare(password,du.password);
 
             if(match){
         
                 const refreshToken = jwt.sign(
                     {
                         "UserInfo":{
-                            "username":du[0].email
+                            "username":du.email
                         }
                     },
                     process.env.refreshToken,
@@ -46,19 +49,21 @@ const handleNewUser = async (req,res)=>{
                 );
 
                 console.log('untop updating  database')
-                await data.databar.updateDocument(
-                    data.dataid,
-                    data.colid,
-                     du[0].$id,
-                     {
-                        refreshtoken:refreshToken
-                     }
-                 )
+                // await data.databar.updateDocument(
+                //     data.dataid,
+                //     data.colid,
+                //      du[0].$id,
+                //      {
+                //         refreshtoken:refreshToken
+                //      }
+                //  )
+                 du.refreshtoken = refreshToken;
+                 du.save()
         
                 
             
         
-                   res.status(200).json({"ok":true,"message": "Login Success","id":du[0].$id,"token":refreshToken})
+                   res.status(200).json({"ok":true,"message": "Login Success","id":du._id,"token":refreshToken})
             }else{
                 res.status(401).json({"ok":false,"message": "Password mismatch"})
             }

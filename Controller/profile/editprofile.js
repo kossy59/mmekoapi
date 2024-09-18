@@ -1,5 +1,6 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+const userdb = require("../../Models/userdb")
 
 const updatePost = async (req,res)=>{
     const userid = req.body.userid;
@@ -14,25 +15,27 @@ const updatePost = async (req,res)=>{
     }
 
 
-    let data = await connectdatabase()
+    //let data = await connectdatabase()
 
     try{
 
-            let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
+            // let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
 
-            let du = dupplicate.documents.filter(value=>{
-                return value.$id === userid 
-               })
+            // let du = dupplicate.documents.filter(value=>{
+            //     return value.$id === userid 
+            //    })
+
+               let du = await userdb.findOne({_id:userid}).exec()
         
-               if(!du[0]){
+               if(!du){
                 return res.status(409).json({"ok":false,'message': 'current user can not edit this profile!!'});
         
                }
 
-               let Firstname = du[0].firstname;
-               let Lastname = du[0].lastname;
-               let Nickname = du[0].nickname;
-               let State = du[0].state;
+               let Firstname = du.firstname;
+               let Lastname = du.lastname;
+               let Nickname = du.nickname;
+               let State = du.state;
 
 
             if(!firstname){
@@ -52,19 +55,26 @@ const updatePost = async (req,res)=>{
             }
 
 
-            await data.databar.updateDocument(
-                data.dataid,
-                data.colid,
-                 du[0].$id,
-                {
-                    firstname,
-                    lastname,
-                    nickname,
-                    state
-                }
-            )
+            // await data.databar.updateDocument(
+            //     data.dataid,
+            //     data.colid,
+            //      du[0].$id,
+            //     {
+            //         firstname,
+            //         lastname,
+            //         nickname,
+            //         state
+            //     }
+            // )
 
-            return res.status(200).json({"ok":true,"message":`Post updated Successfully`,profile:du[0]})
+            du.firstname = firstname;
+            du.lastname = lastname;
+            du.nickname = nickname;
+            du.state = state;
+
+            du.save()
+
+            return res.status(200).json({"ok":true,"message":`Post updated Successfully`,profile:du})
       
           
        }catch(err){

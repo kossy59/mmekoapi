@@ -1,5 +1,7 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+const userdb = require("../../Models/userdb")
+const models = require("../../Models/models")
 
 const createModel = async (req,res)=>{
 
@@ -10,19 +12,22 @@ const createModel = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
 
-    let data = await connectdatabase()
+    //let data = await connectdatabase()
 
     try{
       
-           let userdb = await data.databar.listDocuments(data.dataid,data.colid)
-           let uvHost = await data.databar.listDocuments(data.dataid,data.modelCol)
-           let currentuser = userdb.documents.find(value=>{
-            return value.$id === userid
-           })
+          //  let userdb = await data.databar.listDocuments(data.dataid,data.colid)
+          //  let uvHost = await data.databar.listDocuments(data.dataid,data.modelCol)
+          //  let currentuser = userdb.documents.find(value=>{
+          //   return value.$id === userid
+          //  })
 
-           let hostlist =  uvHost.documents.filter(value =>{
-             return value.verify === "notlive"
-           })
+          //  let hostlist =  uvHost.documents.filter(value =>{
+          //    return value.verify === "notlive"
+          //  })
+
+           let currentuser = await userdb.findOne({_id:userid}).exec()
+           let hostlist = await models.find({verify:"notlive"}).exec()
 
            
 
@@ -35,7 +40,7 @@ const createModel = async (req,res)=>{
           let hosts = []
             hostlist.forEach(value =>{
                 let host ={
-                    hostid: value.$id,
+                    hostid: value._id,
                     userid: value.userid,
                     ids: value.document,
                     hostname: value.name

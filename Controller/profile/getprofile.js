@@ -1,11 +1,14 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+const userdb = require("../../Models/userdb")
+const models = require("../../Models/models")
 
 const readProfile = async (req,res)=>{
 
     const userid = req.body.userid;
+      let dues;
    
-    let data = await connectdatabase()
+   // let data = await connectdatabase()
 
     let ISmodel;
 
@@ -14,19 +17,23 @@ const readProfile = async (req,res)=>{
     try{
 
              console.log('inside profile database')
-            let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
+           // let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
+            
               console.log('inside model database')
-            let  model = await data.databar.listDocuments(data.dataid,data.modelCol)
+            //let  model = await data.databar.listDocuments(data.dataid,data.modelCol)
 
               console.log('ckecking profile database')
-            let du = dupplicate.documents.find(value=>{
-                return value.$id === userid
-               })
+            // let du = dupplicate.documents.find(value=>{
+            //     return value.$id === userid
+            //    })
+            let du = await userdb.findOne({_id:userid}).exec()
+            console.log('checking model database')
+            let modelava = await models.findOne({userid:userid}).exec()
 
-                 console.log('checking model database')
-               let modelava = model.documents.find(value =>{
-                return value.userid === userid;
-               })
+                 
+              //  let modelava = model.documents.find(value =>{
+              //   return value.userid === userid;
+              //  })
 
                if(modelava){
                 ISmodel = true
@@ -39,17 +46,19 @@ const readProfile = async (req,res)=>{
         
                }
 
-               du.model = ISmodel;
+               dues = du.toObject()
+
+               dues.model = ISmodel;
                if(modelava){
                     let images = modelava.photolink.split(",")
-                     du.modelID = modelava.$id
-                     du.modelphotolink = images[0]
-                     du.modelname = modelava.name
+                     dues.modelID = modelava._id
+                     dues.modelphotolink = images[0]
+                     dues.modelname = modelava.name
                }
              
 
                console.log('returning profile' + du)
-            return res.status(200).json({"ok":true,"message":`All Post`,profile:du})
+            return res.status(200).json({"ok":true,"message":`All Post`,profile:dues})
       
           
        }catch(err){

@@ -1,5 +1,10 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+const postdata = require("../../Models/post")
+const commentdata  = require("../../Models/comment")
+const likedata  = require("../../Models/like")
+const userdata  = require("../../Models/userdb")
+const comdata  = require("../../Models/usercomplete")
 
 const createPost = async (req,res)=>{
 
@@ -12,7 +17,7 @@ const createPost = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
 
-    let data = await connectdatabase()
+   // let data = await connectdatabase()
 
     try{
       
@@ -34,45 +39,50 @@ const createPost = async (req,res)=>{
                 }
             
 
-            let currentpostid = await data.databar.createDocument(data.dataid,data.postCol,sdk.ID.unique(),posts)
+           // let currentpostid = await data.databar.createDocument(data.dataid,data.postCol,sdk.ID.unique(),posts)
+           await  postdata.create(posts)
 
-            
-            let  postdb = await data.databar.listDocuments(data.dataid,data.postCol)
-            let  userdb = await data.databar.listDocuments(data.dataid,data.colid)
-            let  comdb = await data.databar.listDocuments(data.dataid,data.userincol)
+            let currentpostid = await postdata.findOne({posttime:posts.posttime})
+            let  postdb = await postdata.find().exec()
+            let  userdb = await userdata.find().exec()
+            let  comdb = await comdata.find().exec()
 
-            let  likedb = await data.databar.listDocuments(data.dataid,data.likeCol)
-            let  commentdb = await data.databar.listDocuments(data.dataid,data.commentCol)
+            let  likedb = await likedata.find().exec()
+            let  commentdb = await commentdata.find().exec()
 
             let post ={};
+            console.log("current posts id "+currentpostid._id)
 
-            for(let i = 0; i<postdb.documents.length; i++){
-
+          
              
 
-                for(let j = 0; j<userdb.documents.length; j++){
+                for(let j = 0; j<userdb.length; j++){
 
-                    for(let k = 0; k<comdb.documents.length; k++){
+                    for(let k = 0; k<comdb.length; k++){
 
                        
                        
 
-                        if(postdb.documents[i].$id === currentpostid.$id && currentpostid.userid === userdb.documents[j].$id && comdb.documents[k].useraccountId === userdb.documents[j].$id ){
+                        if( String(currentpostid.userid) === String(userdb[j]._id) && String(comdb[k].useraccountId) === String( userdb[j]._id) ){
 
-                           
+                           console.log("found post")
                              post = {
-                                username: `${ userdb.documents[j].firstname} ${ userdb.documents[j].lastname}`,
-                                nickname:  `${ userdb.documents[j].nickname}`,
-                                userphoto: `${comdb.documents[k].photoLink}`,
-                                content: `${postdb.documents[i].content}`,
-                                postphoto: `${postdb.documents[i].postlink}`,
-                                posttime: `${postdb.documents[i].posttime}`,
-                                posttype: `${postdb.documents[i].posttype}`,
-                                postid: `${postdb.documents[i].$id}`,
+                                username: `${ userdb[j].firstname} ${ userdb[j].lastname}`,
+                                nickname:  `${ userdb[j].nickname}`,
+                                userphoto: `${comdb[k].photoLink}`,
+                                content: `${currentpostid.content}`,
+                                postphoto: `${currentpostid.postlink}`,
+                                posttime: `${currentpostid.posttime}`,
+                                posttype: `${currentpostid.posttype}`,
+                                postid: `${currentpostid._id}`,
                                 like:[],
                                 comment:[],
-                                userid:userdb.documents[j].$id
+                                userid:userdb[j]._id
                             }
+
+                            console.log("post time why "+currentpostid.posttime)
+                             console.log("post id why "+currentpostid._id)
+                              console.log("post type why "+currentpostid.posttype)
 
                            
 
@@ -82,25 +92,25 @@ const createPost = async (req,res)=>{
 
                 }
 
-            }
+            
 
             
-                for(let j = 0; j < commentdb.documents.length; j++){
-                 if(currentpostid.$id === commentdb.documents[j].postid){
-                     post.comment.push(commentdb.documents[j])
+                for(let j = 0; j < commentdb.length; j++){
+                 if(currentpostid._id === commentdb[j].postid){
+                     post.comment.push(commentdb[j])
                  }
 
                 }
             
 
           
-                for(let j = 0; j < likedb.documents.length; j++){
-                 if(currentpostid.$id === likedb.documents[j].postid){
-                     post.like.push(likedb.documents[j])
+                for(let j = 0; j < likedb.length; j++){
+                 if(currentpostid._id === likedb[j].postid){
+                     post.like.push(likedb[j])
                  }
 
                 }
-            
+            console.log("posts "+post.posttime)
 
             return res.status(200).json({"ok":true,"message":`Posted successfully`,post:post})
       

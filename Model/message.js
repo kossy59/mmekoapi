@@ -9,13 +9,7 @@ async function initalizeMessage(memko_socialDB,database){
         'Message'
     )
 
-    await database.createStringAttribute(
-        memko_socialDB,
-        UsersDB.$id,
-        'client',
-        255,true
-    
-    )
+   
     await database.createBooleanAttribute(
         memko_socialDB,
         UsersDB.$id,

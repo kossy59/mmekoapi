@@ -1,17 +1,21 @@
-const {connectdatabase} = require('./../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('./../config/connectDB');
+// const sdk = require("node-appwrite");
+
+const userdb = require("../Models/userdb")
 
 const userdisconnect = async(userid)=>{
 
-      let data = await connectdatabase()
+      //let data = await connectdatabase()
 
     try{
 
-            let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
+            // let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
 
-            let du = dupplicate.documents.find(value=>{
-                return value.$id === userid 
-               })
+            // let du = dupplicate.documents.find(value=>{
+            //     return value.$id === userid 
+            //    })
+
+            let du = await userdb.findOne({_id:userid}).exec()
         
                if(!du){
                 return 
@@ -20,17 +24,8 @@ const userdisconnect = async(userid)=>{
 
               
 
-
- 
-
-            await data.databar.updateDocument(
-                data.dataid,
-                data.colid,
-                 du.$id,
-                {
-                   active:false
-                }
-            )
+            du.active = false;
+            du.save()
 
             return 
       

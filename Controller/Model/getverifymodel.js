@@ -1,18 +1,24 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+
+const models = require("../../Models/models")
+const userdb = require("../../Models/userdb")
 
 const createModel = async (req,res)=>{
    
-    let data = await connectdatabase()
+   // let data = await connectdatabase()
 
     try{
       
-           let userdb = await data.databar.listDocuments(data.dataid,data.modelCol)
-           let currentuser = userdb.documents.filter(value=>{
-            return value.verify === "live"
-           })
+          //  let userdb = await data.databar.listDocuments(data.dataid,data.modelCol)
+          //  let currentuser = userdb.documents.filter(value=>{
+          //   return value.verify === "live"
+          //  })
 
-            let useronline = await data.databar.listDocuments(data.dataid,data.colid)
+           let currentuser = await models.find({verify:"live"}).exec()
+           
+
+            let useronline = await userdb.find().exec()
           
 
            if(!currentuser[0]){
@@ -23,13 +29,13 @@ const createModel = async (req,res)=>{
 
           let host = []
 
-          for(let i = 0; i < useronline.documents.length; i++){
+          for(let i = 0; i < useronline.length; i++){
             for(let j = 0; j < currentuser.length; j++){
-                if(currentuser[j].userid === useronline.documents[i].$id){
+                if(String(currentuser[j].userid) === String(useronline[i]._id)){
 
                  listofhost = {
 
-                 hostid: currentuser[j].$id,
+                 hostid: currentuser[j]._id,
                  photolink: currentuser[j].photolink,
                  verify: currentuser[j].verify,
                  name : currentuser[j].name,
@@ -48,7 +54,7 @@ const createModel = async (req,res)=>{
                  timeava:currentuser[j].timeava,
                  daysava : currentuser[j].daysava,
                  hosttype : currentuser[j].hosttype,
-                 online:useronline.documents[i].active,
+                 online:useronline[i].active,
                  userid:currentuser[j].userid,
                  amount:currentuser[j].price
 

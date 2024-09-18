@@ -1,5 +1,7 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
+const models = require("../../Models/models")
+const userdb = require("../../Models/userdb")
 
 const createModel = async (req,res)=>{
 
@@ -27,18 +29,23 @@ const createModel = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
 
-    let data = await connectdatabase()
+    //let data = await connectdatabase()
 
     try{
       
-           let userdb = data.databar.listDocuments(data.dataid,data.colid)
-           let currentuser = (await userdb).documents.find(value=>{
-            return value.$id === userid
-           })
+          //  let userdb = data.databar.listDocuments(data.dataid,data.colid)
+          //  let currentuser = (await userdb).documents.find(value=>{
+          //   return value.$id === userid
+          //  })
+
+          console.log("ontop checking user")
+           let currentuser = await userdb.findOne({_id:userid}).exec()
 
            if(!currentuser){
+             console.log("user faild ")
             return res.status(409).json({"ok":false,"message":`user can not create model`})
            }
+
           let model =  {
             userid,
             photolink,
@@ -62,9 +69,13 @@ const createModel = async (req,res)=>{
             hosttype
 
             }
+
+             console.log("under model user")
             
 
-            await data.databar.createDocument(data.dataid,data.modelCol,sdk.ID.unique(),model)
+            //await data.databar.createDocument(data.dataid,data.modelCol,sdk.ID.unique(),model)
+
+            await models.create(model)
 
 
             return res.status(200).json({"ok":true,"message":`Model Hosted successfully`})

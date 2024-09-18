@@ -1,6 +1,11 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
 //we go also delete shared like and comment with this post id
+
+const postdata = require("../../Models/post")
+const commentdata = require("../../Models/comment")
+const likedata = require("../../Models/like")
+
 const deletePost = async (req,res)=>{
 
     const postid =  req.body.postid;
@@ -10,59 +15,44 @@ const deletePost = async (req,res)=>{
     }
 
   
-    let data = await connectdatabase()
+    //let data = await connectdatabase()
 
     try{
        
-            let  dupplicate = await data.databar.listDocuments(data.dataid,data.postCol)
+            // let  dupplicate = await data.databar.listDocuments(data.dataid,data.postCol)
            
-            let  commentdb = await data.databar.listDocuments(data.dataid,data.commentCol)
+            // let  commentdb = await data.databar.listDocuments(data.dataid,data.commentCol)
           
-            let  likedb = await data.databar.listDocuments(data.dataid,data.likeCol)
+            // let  likedb = await data.databar.listDocuments(data.dataid,data.likeCol)
 
            
-             let du = dupplicate.documents.filter(value=>{
-                return value.$id === postid
-               })
+            //  let du = dupplicate.documents.filter(value=>{
+            //     return value.$id === postid
+            //    })
+
+               let du = await postdata.findOne({_id:postid}).exec()
         
-               if(!du[0]){
+               if(!du){
                 return res.status(409).json({"ok":false,'message': 'current user can not delete this post!!'});
         
                }
              
-               let listofcomments = commentdb.documents.filter(value=>{
-                return value.postid === postid
-               })
+            //    let listofcomments = commentdb.documents.filter(value=>{
+            //     return value.postid === postid
+            //    })
 
-               if(listofcomments.length > 0){
-                for(let i = 0; i<listofcomments.length; i++){
-                    console.log('deleting post comment '+ listofcomments[i])
-                    data.databar.deleteDocument(data.dataid,data.commentCol,listofcomments[i].$id)
-
-                }
-               }
+               await commentdata.deleteMany({postid:postid}).exec()
+               await likedata.deleteMany({postid:postid}).exec()
 
               
-               let listoflike = likedb.documents.filter(value=>{
-                return value.postid === postid
-               })
-
-               if(listoflike.length > 0){
-                for(let i = 0; i<listoflike.length; i++){
-                    console.log('deleting post comment '+ listoflike[i])
-                    data.databar.deleteDocument(data.dataid,data.likeCol,listoflike[i].$id)
-
-                }
-               }
-
 
 
 
 
            
-          const posthotolink = du[0].postlink;
-          const postID = du[0].$id
-          data.databar.deleteDocument(data.dataid,data.postCol,du[0].$id)
+          const posthotolink = du.postlink;
+          const postID = du._id
+          await postdata.deleteMany({_id:postid}).exec()
 
             return res.status(200).json({"ok":true,"message":`Post deleted successfully`,post:{postphoto:posthotolink,postid:postID}})
       

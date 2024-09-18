@@ -1,23 +1,27 @@
 const nodeMailer = require('nodemailer')
 const {connectdatabase} = require('../config/connectDB')
 
+const userdb = require("../Models/userdb")
+
 
 require('dotenv').config()
 
 const forgetHandler = async (req,res,email)=>{
 
-   let database = await connectdatabase();
+  // let database = await connectdatabase();
    
     let match = undefined;
     
     try{
-        let  dupplicate = await database.databar.listDocuments(database.dataid,database.colid)
+        // let  dupplicate = await database.databar.listDocuments(database.dataid,database.colid)
 
-        let du = dupplicate.documents.filter(value=>{
-         return value.email === email
-        })
+        // let du = dupplicate.documents.filter(value=>{
+        //  return value.email === email
+        // })
+
+        match = await userdb.findOne({email:email}).exec()
  
-        match = du[0];
+       // match = du[0];
       
 
     }catch(err){
@@ -43,14 +47,17 @@ const forgetHandler = async (req,res,email)=>{
             text:`${rand}`
         }
 
-        const result = await database.databar.updateDocument(
-            database.dataid,
-            database.colid,
-            match.$id,
-            {
-                emailconfirm:`${String(rand)}`
-            }
-        )
+        match.emailconfirm = `${String(rand)}`
+        match.save();
+
+        // const result = await database.databar.updateDocument(
+        //     database.dataid,
+        //     database.colid,
+        //     match.$id,
+        //     {
+        //         emailconfirm:`${String(rand)}`
+        //     }
+        // )
 
        
 

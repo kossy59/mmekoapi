@@ -1,25 +1,28 @@
 const nodeMailer = require('nodemailer')
-const {connectdatabase} = require('../../config/connectDB');
+//const {connectdatabase} = require('../../config/connectDB');
+const userdb = require("../../Models/userdb")
 
 require('dotenv').config()
 
 const forgetpass = async (req,res)=>{
 
     const email = req.body.email;
-    let data = await connectdatabase()
+   // let data = await connectdatabase()
     if(!email){
         return res.status(409).json({"ok":false,'message': `enter email address`});
     }
 
     
     try{
-        let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
+    //     let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
 
-        let du = dupplicate.documents.filter(value=>{
-        return value.email === email
-       })
+    //     let du = dupplicate.documents.filter(value=>{
+    //     return value.email === email
+    //    })
 
-       if(du[0]){
+       let du = await userdb.findOne({email:email.toLowerCas()}).exec()
+
+       if(du){
         let smtpTransport = nodeMailer.createTransport({
             service:'gmail',
             auth:{
@@ -38,14 +41,18 @@ const forgetpass = async (req,res)=>{
             text:`${rand}`
         }
 
-        await data.databar.updateDocument(
-            data.dataid,
-            data.colid,
-             du[0].$id,
-            {
-                passcode:`${String(rand)}`
-            }
-        )
+        du.passcode = `${String(rand)}`
+
+        // await data.databar.updateDocument(
+        //     data.dataid,
+        //     data.colid,
+        //      du[0].$id,
+        //     {
+        //         passcode:`${String(rand)}`
+        //     }
+        // )
+
+        du.save()
 
       
 

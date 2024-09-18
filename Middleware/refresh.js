@@ -1,11 +1,12 @@
 const jwt = require('jsonwebtoken');
-const {connectdatabase} = require('../config/connectDB');
+//const {connectdatabase} = require('../config/connectDB');
+const userdb = require("../Models/userdb")
 
 const handleRefresh = async (req,res,next)=>{
     let token  =  ''
 
     token = req.body.token
-    let data = await connectdatabase()
+    //let data = await connectdatabase()
 
     if(!token){
         return res.status(401).json({"message":`token not found!!!`})
@@ -14,26 +15,28 @@ const handleRefresh = async (req,res,next)=>{
 
     try{
 
-        let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
+    //     let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
 
-        let du = dupplicate.documents.filter(value=>{
-        return value.refreshtoken === token
-       })
+    //     let du = dupplicate.documents.filter(value=>{
+    //     return value.refreshtoken === token
+    //    })
 
-       if(du[0]){
+       let du = await userdb.findOne({refreshtoken:token}).exec()
+
+       if(du){
 
 
         jwt.verify(
             refreshToken,
             process.env.refreshToken,
             (err,decode)=>{
-                if(err  || du[0].email !== decode.UserInfo.username){
+                if(err  || du.email !== decode.UserInfo.username){
                     return res.status(403).json({"message":`${err.message} please login again`})
                 }
                 const accessToken = jwt.sign(
                     {
                         "UserInfo":{
-                            "username":du[0].email
+                            "username":du.email
                         }
                     },
                     process.env.accessToken,

@@ -1,6 +1,7 @@
-const {connectdatabase} = require('../../config/connectDB');
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB');
+// const sdk = require("node-appwrite");
 
+const models = require("../../Models/models")
 const createModel = async (req,res)=>{
 
     const hostid = req.body.hostid;
@@ -10,14 +11,16 @@ const createModel = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
 
-    let data = await connectdatabase()
+    //let data = await connectdatabase()
 
     try{
       
-           let userdb = data.databar.listDocuments(data.dataid,data.modelCol)
-           let currentuser = (await userdb).documents.find(value=>{
-            return value.$id === hostid
-           })
+          //  let userdb = data.databar.listDocuments(data.dataid,data.modelCol)
+          //  let currentuser = (await userdb).documents.find(value=>{
+          //   return value.$id === hostid
+          //  })
+
+           let currentuser = await models.findOne({_id:hostid}).exec()
 
            if(!currentuser){
             return res.status(409).json({"ok":false,"message":`user host empty`})
@@ -25,7 +28,7 @@ const createModel = async (req,res)=>{
 
 
             let host =  {
-                 hostid: currentuser.$id,
+                 hostid: currentuser._id,
                  photolink: currentuser.photolink,
                  verify: currentuser.verify,
                  name : currentuser.name,

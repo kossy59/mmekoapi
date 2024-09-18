@@ -2,7 +2,8 @@ require('dotenv').config()
 const cookieParser = require('cookie-parser')
 // const credentials = require('./Middleware/credentials')
 // const corsOptions = require('./config/corsOptions')
-const connect = require('./config/DBInitalizer')
+const mongoose = require('mongoose')
+const connect = require('./config/connectdataBase')
 const handleRefresh = require('./Middleware/refresh')
 const verifyJwt = require('./Middleware/verify')
 const checkuser = require('./utiils/useractive')
@@ -18,6 +19,7 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const cors = require('cors')
 const { setInterval } = require('timers')
+
 
 
 const corsOptions = {
@@ -150,10 +152,16 @@ io.on('connection', (socket) => {
   app.use('/updatenotify',require('./routes/api/chat/updatenotify'))
  
  
-    server.listen(PORT, () => {   
+  mongoose.connection.once("open",()=>{
+    console.log("Database connected")
+      server.listen(PORT, () => {   
       console.log('listening on *:3500');
     });
-
+  })
+  
+  // server.listen(PORT, () => {   
+  //     console.log('listening on *:3500');
+  //   });
 
   
   
