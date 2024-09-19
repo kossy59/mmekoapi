@@ -26,7 +26,7 @@ const MsgNotify = async(req,res)=>{
           //  let Listofchat = Chats.documents.filter(value=>{
           //   return value.toid === userid || value.toid === userid
           //  })
-             console.log("model recent chat length "+Chats.documents.length)
+             console.log("model recent chat length "+Chats.length)
              if(!Chats[0]){
              return res.status(200).json({"ok":true,"message":`user host empty`,lastchat:[]})
              }
@@ -124,7 +124,7 @@ const MsgNotify = async(req,res)=>{
 
                   //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[ChatParID[i].fromid])])
                   let Model = await models.findOne({userid:ChatParID[i].fromid})
-                   if(Model.documents.length > 0){
+                   if(Model){
 
                       let picture = Model.photolink.split(",")
                       let chat = {
