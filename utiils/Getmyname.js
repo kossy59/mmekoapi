@@ -1,25 +1,33 @@
-const {connectdatabase} = require('../config/connectDB')
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../config/connectDB')
+// const sdk = require("node-appwrite");
+
+const models = require("../Models/models")
+const userdb = require("../Models/userdb")
+const completedb = require("../Models/usercomplete")
 
 const MYID = async(ID)=>{
           
-          let data = await connectdatabase();
+          //let data = await connectdatabase();
 
            try{
-             let Listofusername = await data.databar.listDocuments(data.dataid,data.colid)
-             let Listofmodel = await data.databar.listDocuments(data.dataid,data.modelCol)
-             let Listofuserphoto = await data.databar.listDocuments(data.dataid,data.userincol)
-             let name = Listofusername.documents.find(value =>{
-                return ID === value.$id
-             })
+             
+            //  let name = Listofusername.documents.find(value =>{
+            //     return ID === value.$id
+            //  })
 
-             let clientPhoto = Listofuserphoto.documents.find(value =>{
-                return value.useraccountId === ID
-             })
+             let name = await userdb.findOne({_id:ID}).exec()
 
-             let modelInfo = Listofmodel.documents.find(value =>{
-                return value.$id === ID
-             })
+            //  let clientPhoto = Listofuserphoto.documents.find(value =>{
+            //     return value.useraccountId === ID
+            //  })
+
+             let clientPhoto = completedb.findOne({useraccountId:ID}).exec()
+
+            //  let modelInfo = Listofmodel.documents.find(value =>{
+            //     return value.$id === ID
+            //  })
+
+             let modelInfo = await models.findOne({_id:ID}).exec()
 
              if (modelInfo){
                 let image = modelInfo.photolink.split(",")

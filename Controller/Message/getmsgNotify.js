@@ -1,16 +1,23 @@
-const {connectdatabase} = require('../../config/connectDB')
-const sdk = require("node-appwrite");
+// const {connectdatabase} = require('../../config/connectDB')
+// const sdk = require("node-appwrite");
+
+const messagedb = require("../../Models/message")
+const userdb = require("../../Models/userdb")
+const completedb = require("../../Models/usercomplete")
+const models = require("../../Models/models")
 
 const MsgNotify = async(req,res)=>{
 
     let userid = req.body.userid;
 
-     let data = await connectdatabase();
+    // let data = await connectdatabase();
 
      console.log("inside recent message "+userid)
 
      try{
-         let Chats = await data.databar.listDocuments(data.dataid,data.msgCol,[sdk.Query.limit(200), sdk.Query.equal("fromid",[userid])])
+        // let Chats = await data.databar.listDocuments(data.dataid,data.msgCol,[sdk.Query.limit(200), sdk.Query.equal("fromid",[userid])])
+
+        let Chats = await messagedb.find({fromid:userid}).exec()
         
         
          
@@ -20,7 +27,7 @@ const MsgNotify = async(req,res)=>{
           //   return value.toid === userid || value.toid === userid
           //  })
              console.log("model recent chat length "+Chats.documents.length)
-             if(!Chats.documents[0]){
+             if(!Chats[0]){
              return res.status(200).json({"ok":true,"message":`user host empty`,lastchat:[]})
              }
 
@@ -33,7 +40,7 @@ const MsgNotify = async(req,res)=>{
 
            let FullChat = []
 
-            Chats.documents.forEach(value1 =>{
+            Chats.forEach(value1 =>{
               if(value1.notify === false){
 
                     if(ChatParID.length < 1){
@@ -73,19 +80,21 @@ const MsgNotify = async(req,res)=>{
                 if(ChatParID[i].client === true){
                 if(ChatParID[i].fromid === userid){
                        console.log("on top database colotion")
-                   let Username = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[ChatParID[i].fromid])])
+                  // let Username = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[ChatParID[i].fromid])])
+                  let Username = await userdb.findOne({_id:ChatParID[i].fromid})
                    console.log("on top database username colotion")
-                   let Photo = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[ChatParID[i].fromid])])
+                  // let Photo = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[ChatParID[i].fromid])])
+                  let Photo = await completedb.findOne({useraccountId:ChatParID[i].fromid})
                       console.log("on top database photo colotion")
-                   if(Username.documents.length > 0){
+                   if(Username.length > 0){
 
                     let chat = {
                         fromid: ChatParID[i].fromid,
                         toid: ChatParID[i].toid,
                         content: ChatParID[i].content,
                         date: ChatParID[i].date,
-                        name: Username.documents[0].firstname,
-                        photolink: Photo.documents[0].photoLink,
+                        name: Username.firstname,
+                        photolink: Photo.photoLink,
                         client: ChatParID[i].client,
                         value:"recent"
                        }
@@ -113,16 +122,17 @@ const MsgNotify = async(req,res)=>{
                 console.log("inside model")
                   if(ChatParID[i].fromid === userid){
 
-                  let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[ChatParID[i].fromid])])
+                  //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[ChatParID[i].fromid])])
+                  let Model = await models.findOne({userid:ChatParID[i].fromid})
                    if(Model.documents.length > 0){
 
-                      let picture = Model.documents[0].photolink.split(",")
+                      let picture = Model.photolink.split(",")
                       let chat = {
                         fromid: ChatParID[i].fromid,
                         toid: ChatParID[i].toid,
                         content: ChatParID[i].content,
                         date: ChatParID[i].date,
-                        name: Model.documents[0].name,
+                        name: Model.name,
                         photolink: picture[0],
                         client: ChatParID[i].client,
                         value:"recent"
