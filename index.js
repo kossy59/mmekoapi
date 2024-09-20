@@ -24,7 +24,7 @@ const { setInterval } = require('timers')
 
 const corsOptions = {
     credentials: true,
-    origin: ['https://mmekosocial.onrender.com'] // Whitelist the domains you want to allow
+    origin: ["https://mmekosocial.onrender.com"] // Whitelist the domains you want to allow
 };
 
 app.use(cors(corsOptions));
