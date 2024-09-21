@@ -13,18 +13,23 @@ const handleNewUser = async (req,res)=>{
     if(!email && !password){
         return res.status(400).json({"ok":false,'message': 'Email OR Password Empty'})
     }
+    let Email = email.toLowerCase().trim()
 
     try{
         //console.log('untop getting  database')
 
-        let du = await userdb.findOne({email:email.toLowerCase()}).exec()
+      //  let mail = email.toLowerCase()
+
+        let du = await userdb.findOne({email:Email}).exec()
+
     //      let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
 
     //     let du = dupplicate.documents.filter(value=>{
     //     return value.email === email
     //    })
 
-       console.log('untop checking  database')
+      // console.log('untop checking  database email '+mail.toLowerCase())
+        console.log('untop checking  database email1 '+du)
  
         if(du){
             

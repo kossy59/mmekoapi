@@ -13,19 +13,20 @@ const handleNewUser = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'Please enter authentication code!!'})
     }
 
+     let Email = email.toLowerCase().trim()
     try{
         //const d = await data.databar.listDocuments(data.dataid,data.colid)
         // match = d.documents.filter(value=>{
         //     return code === value.emailconfirm
         //    })
 
-        match = await userdb.findOne({email:email.toLowerCase()}).exec()
+        match = await userdb.findOne({email:Email}).exec()
 
        if(match){
         if(Number(match.emailconfirm) === Number(code)){
              match.emailconfirm = `verify`;
          
-         match.emailconfirmtime = `${new Date().toDateString()}`;
+        // match.emailconfirmtime = `${new Date().toDateString()}`;
          match.save();
 
          return res.status(200).json({"ok":true,"message":`${match.firstname} ${match.lastname} Account Created Success`,'ID':`${match._id}`})

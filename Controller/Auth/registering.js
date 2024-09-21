@@ -24,11 +24,12 @@ const handleNewUser = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'Registeration not complete!!'})
     }
     //let dupplicate;
+    let Email = email.toLowerCase().trim()
   
     try{
 
         let dublicate = await userdb.findOne({
-            email:email.toLowerCase()
+            email:Email
         }).exec()
        //let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
 
@@ -60,7 +61,7 @@ const handleNewUser = async (req,res)=>{
             lastname:lastname,
             gender:gender,
             nickname:nickname,
-            email:email.toLowerCase(),
+            email:Email,
             password:hashPwd,
             emailconfirm:"not",
             emailconfirmtime:"not",

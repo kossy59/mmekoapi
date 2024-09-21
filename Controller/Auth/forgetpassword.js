@@ -12,6 +12,8 @@ const forgetpass = async (req,res)=>{
         return res.status(409).json({"ok":false,'message': `enter email address`});
     }
 
+    let Email = email.toLowerCase().trim()
+
     
     try{
     //     let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
@@ -20,7 +22,7 @@ const forgetpass = async (req,res)=>{
     //     return value.email === email
     //    })
 
-       let du = await userdb.findOne({email:email.toLowerCas()}).exec()
+       let du = await userdb.findOne({email:Email}).exec()
 
        if(du){
         let smtpTransport = nodeMailer.createTransport({

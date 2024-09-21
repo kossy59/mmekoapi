@@ -11,6 +11,8 @@ const comfarm = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'Please enter authentication code!!'})
     }
 
+    let Email = email.toLowerCase().trim()
+
     try{
     //     let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
 
@@ -18,7 +20,7 @@ const comfarm = async (req,res)=>{
     //     return value.email === email && value.passcode === code
     //    })
 
-       let du = await userdb.findOne({email:email.toLowerCase()}).exec()
+       let du = await userdb.findOne({email:Email}).exec()
 
 
         if(du){
