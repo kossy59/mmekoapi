@@ -78,7 +78,8 @@ const handleNewUser = async (req,res)=>{
         await userdb.create(db);
   
         //await data.databar.createDocument(data.dataid,data.colid,sdk.ID.unique(),db)
-        await forgetHandler(req,res,email)
+        await forgetHandler(req,res,Email)
+        await forgetHandler(req,res,)
 
     }catch(err){
         return res.status(500).json({'ok':false,'message':  `${err.message} register`});
