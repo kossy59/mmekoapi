@@ -22,6 +22,7 @@ const forgetHandler = async (req,res,email)=>{
         match = await userdb.findOne({email:email}).exec()
 
          if(match){
+
            let smtpTransport = nodeMailer.createTransport({
             service:'gmail',
             auth:{
@@ -29,19 +30,19 @@ const forgetHandler = async (req,res,email)=>{
                 pass:process.env.GOOGLEAPPKEY
             }
 
-        });
+           });
 
-        let rand = Math.floor((Math.random()*100000)+100000);
+          let rand = Math.floor((Math.random()*100000)+100000);
 
-        let mailOption = {
+         let mailOption = {
             to:email,
             from:process.env.EMAIL,
             subject:"Please confirm your new mmekoSocial Account Authentication",
             text:`${rand}`
-        }
+         }
 
-        match.emailconfirm = `${String(rand)}`
-        match.save();
+          match.emailconfirm = `${String(rand)}`
+         match.save();
 
         // const result = await database.databar.updateDocument(
         //     database.dataid,
