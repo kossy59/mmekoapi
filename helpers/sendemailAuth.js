@@ -20,16 +20,9 @@ const forgetHandler = async (req,res,email)=>{
         // })
 
         match = await userdb.findOne({email:email}).exec()
- 
-       // match = du[0];
-      
 
-    }catch(err){
-        return res.status(500).json({"ok":false,'message': `${err.message}!  send search dublicate`});
-    }
-   
-    if(match){
-        let smtpTransport = nodeMailer.createTransport({
+         if(match){
+           let smtpTransport = nodeMailer.createTransport({
             service:'gmail',
             auth:{
                 user:process.env.EMAIL,
@@ -74,6 +67,15 @@ const forgetHandler = async (req,res,email)=>{
     }else{
         return res.status(401).json({"ok":false,"message":"failed to find mail for authentication"})
     }
+ 
+       // match = du[0];
+      
+
+    }catch(err){
+        return res.status(500).json({"ok":false,'message': `${err.message}!  send search dublicate`});
+    }
+   
+   
 }
 
 module.exports = forgetHandler;
