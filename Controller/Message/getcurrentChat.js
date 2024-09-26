@@ -80,7 +80,7 @@ const createModel = async (req,res)=>{
             let clientchat = chatslice.filter(value =>{
                 return value.fromid === clientid
             })
-             console.log('under client chat')
+             console.log('under client chat '+clientchat)
 
             //now let marshal my chat names and photolink as ordinary client user
 
@@ -141,7 +141,7 @@ const createModel = async (req,res)=>{
            
             
             for(let i = 0; i <  clientchat.length; i++){
-                if(clientchat[i].client == true){
+                if(clientchat[i].client === true){
                      //let usernames = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[clientchat[i].fromid])])
                      //let photos = await data.databar.listDocuments(data.dataid,data.userincol, [sdk.Query.equal("useraccountId",[clientchat[i].fromid])])
                      let usernames = await userdb.findOne({_id:clientchat[i].fromid}).exec()

@@ -28,7 +28,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-//https://mmekosocial.onrender.com
+//https://mmekosocial.onrender.com .
 //http://localhost:3000
 
 
@@ -88,6 +88,8 @@ io.on('connection', (socket) => {
          if(info){
            name = info.name;
            photolink = info.photolink;
+
+           console.log("name "+name+" photolink "+photolink)
           
          }
       
@@ -150,6 +152,7 @@ io.on('connection', (socket) => {
   app.use('/getcurrentchat',require('./routes/api/chat/getchat'))
   app.use('/getmsgnotify',require('./routes/api/chat/getmsgnotify'))
   app.use('/updatenotify',require('./routes/api/chat/updatenotify'))
+  app.use('/bookhost',require('./routes/api/booking/book'))
  
  
   mongoose.connection.once("open",()=>{

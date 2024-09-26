@@ -21,7 +21,7 @@ const MYID = async(ID)=>{
             //     return value.useraccountId === ID
             //  })
 
-             let clientPhoto = completedb.findOne({useraccountId:ID}).exec()
+             let clientPhoto = await completedb.findOne({useraccountId:ID}).exec()
 
             //  let modelInfo = Listofmodel.documents.find(value =>{
             //     return value.$id === ID

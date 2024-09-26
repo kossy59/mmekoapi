@@ -58,10 +58,10 @@ const MsgNotify = async(req,res)=>{
                     }
                   }else{
                       if(Number(value1.date) > Number(value2.date)){
-                      ChatParID[index] = value1
+                      ChatParID.push(value1)
 
                     }else{
-                      ChatParID[index] = value2
+                      ChatParID.push(value2)
 
                     }
                   }
@@ -86,7 +86,7 @@ const MsgNotify = async(req,res)=>{
                   // let Photo = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[ChatParID[i].fromid])])
                   let Photo = await completedb.findOne({useraccountId:ChatParID[i].fromid})
                       console.log("on top database photo colotion")
-                   if(Username.length > 0){
+                   if(Username){
 
                     let chat = {
                         fromid: ChatParID[i].fromid,
