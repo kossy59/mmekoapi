@@ -153,6 +153,8 @@ io.on('connection', (socket) => {
   app.use('/getmsgnotify',require('./routes/api/chat/getmsgnotify'))
   app.use('/updatenotify',require('./routes/api/chat/updatenotify'))
   app.use('/bookhost',require('./routes/api/booking/book'))
+  app.use('/pendingrequest',require('./routes/api/booking/getpendingbook'))
+  app.use('/cancelrequest',require('./routes/api/booking/cancelmyrequest'))
  
  
   mongoose.connection.once("open",()=>{
