@@ -155,6 +155,9 @@ io.on('connection', (socket) => {
   app.use('/bookhost',require('./routes/api/booking/book'))
   app.use('/pendingrequest',require('./routes/api/booking/getpendingbook'))
   app.use('/cancelrequest',require('./routes/api/booking/cancelmyrequest'))
+  app.use('/notifymodel',require('./routes/api/booking/notifybooking'))
+  app.use('/acceptbook',require('./routes/api/booking/acceptbooking'))
+  app.use('/declinebook',require('./routes/api/booking/declinebooking'))
  
  
   mongoose.connection.once("open",()=>{

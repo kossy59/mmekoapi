@@ -32,7 +32,7 @@ const createLike = async (req,res)=>{
          }
 
         let book = bookings.find(value =>{
-            return String(value.date) === String(date) && String(value.time) === String(time) && String(value.modelid) === String(modelid) && String(value.status) === "pending"
+            return String(value.date) === String(date) && String(value.time) === String(time) && String(value.modelid) === String(modelid) && String(value.status) === "pending"  || String(value.status) === "decline" 
         })
 
         if(!book) {

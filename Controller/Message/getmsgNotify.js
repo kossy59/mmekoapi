@@ -12,7 +12,7 @@ const MsgNotify = async(req,res)=>{
 
     // let data = await connectdatabase();
 
-     console.log("inside recent message "+userid)
+    // console.log("inside recent message "+userid)
 
      try{
         // let Chats = await data.databar.listDocuments(data.dataid,data.msgCol,[sdk.Query.limit(200), sdk.Query.equal("fromid",[userid])])

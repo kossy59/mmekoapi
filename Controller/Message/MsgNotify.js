@@ -10,7 +10,7 @@ const getnotify = async(req,res)=>{
 
      const userid = req.body.userid
 
-     console.log("inside message notificaton "+userid)
+    // console.log("inside message notificaton "+userid)
      // let data = await connectdatabase();
      
 
