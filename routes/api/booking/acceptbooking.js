@@ -4,6 +4,6 @@ const booked = require('../../../Controller/Booking/acceptbook');
 
 
 router.route('/')
-.put(booked)
+.post(booked)
 
 module.exports = router;

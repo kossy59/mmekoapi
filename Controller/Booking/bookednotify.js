@@ -50,7 +50,8 @@ const createLike = async (req,res)=>{
                     time : user[i].time,
                     photolink : clientphoto.photoLink,
                     clientid : client._id,
-                    place: user[i].place 
+                    place: user[i].place ,
+                    modelid: user[i].modelid
                     }
                )
    

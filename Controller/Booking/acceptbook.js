@@ -6,7 +6,7 @@ const createLike = async (req,res)=>{
     const userid = req.body.userid
     const date = req.body.date
     const time = req.body.time
-    
+     console.log('accept model '+modelid)
    
     if(!modelid){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
@@ -24,6 +24,8 @@ const createLike = async (req,res)=>{
          let user = users.find(value =>{
             return String(value.status) === "pending"  && String(value.userid) === String(userid) && String(value.time) === String(time) && String(value.date) === String(date)
          })
+
+          console.log('under user pending')
 
          
 
