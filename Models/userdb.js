@@ -85,6 +85,11 @@ const markertdata = new Scheme({
         required : false,
        
     },
+    withdrawbalance:{
+        type:String,
+        required : false,
+       
+    },
 })
 
 module.exports = mongoose.model('UserDB',markertdata);

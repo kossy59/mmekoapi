@@ -1,6 +1,7 @@
 const bookingdb = require("../../Models/book")
 const userdb = require("../../Models/userdb")
 const modeldb = require("../../Models/models")
+const historydb = require("../../Models/mainbalance")
 
 const createLike = async (req,res)=>{
      
@@ -38,6 +39,32 @@ const createLike = async (req,res)=>{
         if(!book) {
              return res.status(200).json({"ok":false,'message': 'you have 0 pending request!!'})
          }
+
+         let modeluser = await modeldb.findOne({_id:modelid}).exec()
+         let modelprice = Number(modeluser.price)
+
+         let clientuser = await userdb.findOne({_id: userid}).exec()
+
+         let clientbalance = Number(clientuser.balance)
+
+         if(!clientbalance){
+            clientbalance = 0;
+         }
+
+         clientbalance =+ modelprice
+
+        let modelpaymenthistory = {
+            userid:userid,
+            details: "cancel host refound",
+            spent: `${0}`,
+            income: `${modelprice}`,
+            date: `${Date.now().toString()}`
+         }
+
+         await historydb.create(modelpaymenthistory)
+
+         clientuser.balance = `${clientbalance}`
+         clientuser.save()
 
         await bookingdb.deleteOne({_id:book._id}).exec()
 

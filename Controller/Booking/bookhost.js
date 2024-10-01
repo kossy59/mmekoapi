@@ -1,5 +1,6 @@
 const bookingdb = require("../../Models/book")
 const userdb = require("../../Models/userdb")
+const historydb = require("../../Models/mainbalance")
 
 const createLike = async (req,res)=>{
      
@@ -24,9 +25,9 @@ const createLike = async (req,res)=>{
     try{
          const user = await userdb.findOne({_id:userid}).exec()
 
-         let userbalance = parseInt(user.balance)
+         let userbalance = parseFloat(user.balance)
 
-         let modelprice = parseInt(price)
+         let modelprice = parseFloat(price)
 
          if(!userbalance){
             userbalance = 0
@@ -34,7 +35,16 @@ const createLike = async (req,res)=>{
 
          
 
+        
          let total = userbalance - modelprice
+
+         let clienthistory = {
+            userid,
+            details: "hosting a model",
+            spent: `${modelprice}`,
+            income: "0",
+            date: `${Date.now().toString()}`
+         }
 
         
          //console.log("user balance "+userbalance)
@@ -46,6 +56,8 @@ const createLike = async (req,res)=>{
           user.balance = String(total)
 
          user.save()
+
+         await historydb.create(clienthistory)
 
        let books  = {
             userid,

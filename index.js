@@ -158,6 +158,8 @@ io.on('connection', (socket) => {
   app.use('/notifymodel',require('./routes/api/booking/notifybooking'))
   app.use('/acceptbook',require('./routes/api/booking/acceptbooking'))
   app.use('/declinebook',require('./routes/api/booking/declinebooking'))
+  app.use('/getrequeststats',require('./routes/api/booking/requeststat'))
+  app.use('/paymodel',require('./routes/api/booking/paymodel'))
  
  
   mongoose.connection.once("open",()=>{
