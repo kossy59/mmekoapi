@@ -60,7 +60,6 @@ const createLike = async (req,res)=>{
          await historydb.create(modelpaymenthistory)
 
 
-
          if(!modelwitdraw){
             modelwitdraw = 0
          }

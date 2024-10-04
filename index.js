@@ -24,7 +24,7 @@ const { setInterval } = require('timers')
 
 const corsOptions = {
     credentials: true,
-    origin: ["https://mmekosocial.onrender.com"] // Whitelist the domains you want to allow
+    origin: ["http://localhost:3000"] // Whitelist the domains you want to allow
 };
 
 app.use(cors(corsOptions));
@@ -160,6 +160,7 @@ io.on('connection', (socket) => {
   app.use('/declinebook',require('./routes/api/booking/declinebooking'))
   app.use('/getrequeststats',require('./routes/api/booking/requeststat'))
   app.use('/paymodel',require('./routes/api/booking/paymodel'))
+  app.use('/gethistory',require('./routes/api/booking/gethistory'))
  
  
   mongoose.connection.once("open",()=>{

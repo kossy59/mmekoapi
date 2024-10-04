@@ -8,7 +8,7 @@ const markertdata = new Scheme({
         required : true
     },
 
-      detials:{
+      details:{
         type:String,
         required : false
     },

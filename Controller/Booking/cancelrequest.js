@@ -41,18 +41,19 @@ const createLike = async (req,res)=>{
          }
 
          let modeluser = await modeldb.findOne({_id:modelid}).exec()
-         let modelprice = Number(modeluser.price)
+         let modelprice = parseFloat(modeluser.price)
 
          let clientuser = await userdb.findOne({_id: userid}).exec()
 
-         let clientbalance = Number(clientuser.balance)
+         let clientbalance = parseFloat(clientuser.balance)
 
          if(!clientbalance){
             clientbalance = 0;
          }
 
-         clientbalance =+ modelprice
+         clientbalance = modelprice + clientbalance
 
+         console.log("total price: "+clientbalance)
         let modelpaymenthistory = {
             userid:userid,
             details: "cancel host refound",

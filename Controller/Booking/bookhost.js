@@ -15,10 +15,7 @@ const createLike = async (req,res)=>{
     if(!modelid  && !userid){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
-    console.log('untop init db')
-
-   
-
+    //console.log('untop init db')
 
     //let data = await connectdatabase()
 
