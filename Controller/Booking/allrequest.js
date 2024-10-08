@@ -20,8 +20,10 @@ const createLike = async (req,res)=>{
          const users = await bookingdb.find({userid:userid}).exec()
 
          let user = users.filter(value =>{
-            return String(value.status) === "accepted"  || String(value.status) === "decline"
+            return String(value.status) === "accepted"  || String(value.status) === "decline"  || String(value.status) === "pending"
          })
+
+         
 
           //console.log('under user pending')
 
@@ -48,7 +50,6 @@ const createLike = async (req,res)=>{
                     date : user[i].date,
                     time : user[i].time,
                     modelid : user[i].modelid,
-                    accepted : "accepted",
                     id : user[i]._id
 
                 })

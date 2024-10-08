@@ -1,5 +1,4 @@
 const bookingdb = require("../../Models/book")
-const userdb = require("../../Models/userdb")
 const modeldb = require("../../Models/models")
 
 const createLike = async (req,res)=>{
@@ -47,7 +46,8 @@ const createLike = async (req,res)=>{
                     date : user[i].date,
                     time : user[i].time,
                     photolink : image[0],
-                    modelid : modelid._id
+                    modelid : modelid._id,
+                    id: user[i]._id
                     }
                )
    

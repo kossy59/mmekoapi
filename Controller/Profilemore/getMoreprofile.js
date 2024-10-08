@@ -17,6 +17,8 @@ const readProfile = async (req,res)=>{
             //    })
 
                let du = await completedb.findOne({useraccountId:userid})
+
+               console.log("user photolink "+userid)
         
                if(!du){
                 return res.status(409).json({"ok":false,'message': 'current user can not edit this post!!'});
