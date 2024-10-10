@@ -20,7 +20,7 @@ const markertdata = new Scheme({
 
     content:{
         type:String,
-        required : false
+        required : true
     },
 
     
