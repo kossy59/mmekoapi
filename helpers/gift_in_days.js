@@ -18,7 +18,7 @@ let giftdb = require("../Models/gift")
 
     gift.forEach(value =>{
 
-        if( new Date(parseInt(value._id.getTimestamp())) <= first && new Date(parseInt(value._id.getTimestamp())) > last  ){
+        if( new Date(value._id.getTimestamp()).getTime() <= first && new Date(value._id.getTimestamp()).getTime() > last  ){
             gift_count++
         }
         

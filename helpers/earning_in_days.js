@@ -16,12 +16,16 @@ let modeldb = require("../Models/models")
      
 
     let last = new Date( first2.setDate(first2.getDate() - 28 ) )
+    console.log("first "+first.getTime())
+     console.log("last "+last.getTime())
     
     let earning_count = 0;
 
     earning.forEach(value =>{
+
+        console.log("incomes date "+new Date(value._id.getTimestamp()).getTime())
         
-        if( new Date(parseInt(value._id.getTimestamp())).getTime() <= first.getTime() && new Date(parseInt(value._id.getTimestamp())).getTime() > last.getTime()  ){
+        if( new Date(value._id.getTimestamp()).getTime() <= first.getTime() && new Date(value._id.getTimestamp()).getTime() > last.getTime()  ){
             earning_count = earning_count + parseFloat(value.income)
         }
     })
