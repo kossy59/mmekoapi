@@ -161,10 +161,11 @@ io.on('connection', (socket) => {
   app.use('/getrequeststats',require('./routes/api/booking/requeststat'))
   app.use('/paymodel',require('./routes/api/booking/paymodel'))
   app.use('/allrequest',require('./routes/api/booking/allrequestroute'))
-  // new urls
   app.use('/reviewmodel',require('./routes/api/model/reviewmodel'))
   app.use('/getreviews',require('./routes/api/model/getmodelreview'))
   app.use('/deletereview',require('./routes/api/model/deletereview'))
+  app.use('/gethistory',require('./routes/api/profile/get_history'))
+
  
  
   mongoose.connection.once("open",()=>{
