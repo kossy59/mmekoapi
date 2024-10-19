@@ -2,11 +2,15 @@
 // const sdk = require("node-appwrite");
 const userdb = require("../../Models/userdb")
 const models = require("../../Models/models")
+const history = require("../../helpers/earning_in_month")
 
 const readProfile = async (req,res)=>{
 
+
+  
     const userid = req.body.userid;
       let dues;
+
    
    // let data = await connectdatabase()
 
