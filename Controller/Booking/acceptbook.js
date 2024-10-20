@@ -25,7 +25,7 @@ const createLike = async (req,res)=>{
             return String(value.status) === "pending"  && String(value.userid) === String(userid) && String(value.time) === String(time) && String(value.date) === String(date)
          })
 
-          console.log('under user pending')
+          console.log('under user pending '+user.length)
 
          
 
@@ -36,7 +36,7 @@ const createLike = async (req,res)=>{
          }
 
          let status = await bookingdb.findOne({_id:user._id}).exec()
-
+         console.log('under user accepted')
          status.status = "accepted"
          status.save()
        

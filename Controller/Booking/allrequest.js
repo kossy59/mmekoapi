@@ -1,9 +1,12 @@
 const bookingdb = require("../../Models/book")
 const modeldb = require("../../Models/models")
+const photoLink = require("../../Models/usercomplete")
+const userdb = require("../../Models/userdb")
 
 const createLike = async (req,res)=>{
     
     const userid = req.body.userid
+    const modelid = req.body.modelid
     
    
     if(!userid){
@@ -19,6 +22,19 @@ const createLike = async (req,res)=>{
     try{
          const users = await bookingdb.find({userid:userid}).exec()
 
+         let model = [];
+
+         if(modelid){
+            
+             let mod = await bookingdb.find({modelid : modelid}).exec()
+             model = mod.filter(value =>{
+              
+                return String(value.status) === "pending" || String(value.status) === "accepted"
+            })
+
+    
+         }
+
          let user = users.filter(value =>{
             return String(value.status) === "accepted"  || String(value.status) === "decline"  || String(value.status) === "pending"
          })
@@ -27,15 +43,38 @@ const createLike = async (req,res)=>{
 
           //console.log('under user pending')
 
-         
+          let approve = []
 
-         
+           for(let i = 0; i < model.length; i++){
 
-         if(!user[0]) {
-             return res.status(200).json({"ok":false,'message': 'you have 0 approved request!!',approve:[]})
+            console.log("inside my model")
+            let username = await userdb.findOne({_id:model[i].userid}).exec()
+            let image1 = await photoLink.findOne({useraccountId:model[i].userid}).exec()
+            if (username){
+                
+
+                approve.push({
+                    photolink : image1.photoLink,
+                    name : username.firstname,
+                    status : model[i].status,
+                    type : model[i].type,
+                    date : model[i].date,
+                    time : model[i].time,
+                    modelid : model[i].modelid,
+                    id : model[i]._id,
+                    place: model[i].place,
+                    clientid: model[i].userid
+                  
+
+                })
+            }
          }
 
-         let approve = []
+         
+
+
+
+        
 
          for(let i = 0; i < user.length; i++){
             let image = await modeldb.findOne({_id:user[i].modelid}).exec()
@@ -55,6 +94,13 @@ const createLike = async (req,res)=>{
                 })
             }
          }
+
+                  if(!approve[0]) {
+                     return res.status(200).json({"ok":false,'message': 'you have 0 approved request!!',approve:[]})
+                }
+
+
+       
             return res.status(200).json({"ok":true,"message":` Success`,approve})
       
           

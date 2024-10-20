@@ -22,7 +22,7 @@ const createLike = async (req,res)=>{
          const users = await bookingdb.find({modelid:modelid}).exec()
 
          let user = users.filter(value =>{
-            return String(value.status) === "pending"
+            return String(value.status) === "pending" || String(value.status) === "accepted"
          })
 
          
@@ -51,7 +51,8 @@ const createLike = async (req,res)=>{
                     photolink : clientphoto.photoLink,
                     clientid : client._id,
                     place: user[i].place ,
-                    modelid: user[i].modelid
+                    modelid: user[i].modelid,
+                    status : user[i].status
                     }
                )
    
