@@ -166,6 +166,7 @@ io.on('connection', (socket) => {
   app.use('/deletereview',require('./routes/api/model/deletereview'))
   app.use('/gethistory',require('./routes/api/profile/get_history'))
   app.use('/getmonthlyhistory',require('./routes/api/profile/get_historyByMonth'))
+  app.use('/giftmodel',require('./routes/api/chat/giftGold'))
 
  
  
