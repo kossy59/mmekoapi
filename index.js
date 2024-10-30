@@ -20,16 +20,17 @@ const { Server } = require("socket.io");
 const cors = require('cors')
 const { setInterval } = require('timers')
 
-
+let myurl = "https://mmekosocial.onrender.com"
+//let myurl = "http://localhost:3000"
 
 const corsOptions = {
     credentials: true,
-    origin: ["https://mmekosocial.onrender.com"] // Whitelist the domains you want to allow
+    origin: [`${myurl}`] // Whitelist the domains you want to allow
 };
 
 app.use(cors(corsOptions));
-//https://mmekosocial.onrender.com .
-//http://localhost:3000
+// .
+//
 
 
 // app.use(credentials)
@@ -167,6 +168,8 @@ io.on('connection', (socket) => {
   app.use('/gethistory',require('./routes/api/profile/get_history'))
   app.use('/getmonthlyhistory',require('./routes/api/profile/get_historyByMonth'))
   app.use('/giftmodel',require('./routes/api/chat/giftGold'))
+  app.use('/topup',require('./routes/api/profile/topup'))
+
 
  
  
