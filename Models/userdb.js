@@ -90,6 +90,7 @@ const markertdata = new Scheme({
         required : false,
        
     },
+    
 })
 
 module.exports = mongoose.model('UserDB',markertdata);

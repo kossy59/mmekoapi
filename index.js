@@ -169,6 +169,8 @@ io.on('connection', (socket) => {
   app.use('/getmonthlyhistory',require('./routes/api/profile/get_historyByMonth'))
   app.use('/giftmodel',require('./routes/api/chat/giftGold'))
   app.use('/topup',require('./routes/api/profile/topup'))
+  app.use('/getallusers',require('./routes/api/Admin/getallusers'))
+   app.use('/deleteuser',require('./routes/api/Admin/deleteuser'))
 
 
  

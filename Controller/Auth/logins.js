@@ -3,6 +3,7 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const userdb = require("../../Models/userdb")
+const baneddb = require("../../Models/admindb")
 
 const handleNewUser = async (req,res)=>{
 
@@ -14,6 +15,15 @@ const handleNewUser = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'Email OR Password Empty'})
     }
     let Email = email.toLowerCase().trim()
+
+    let emailbaned = await baneddb.findOne({email:Email}).exec()
+
+    if(emailbaned){
+        if(emailbaned.delete === true){
+            return res.status(400).json({"ok":false,'message': 'You account have been banned'})
+
+        }
+    }
 
     try{
         //console.log('untop getting  database')

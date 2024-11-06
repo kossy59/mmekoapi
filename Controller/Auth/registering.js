@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt');
 //const sdk = require("node-appwrite");
 const forgetHandler = require('../../helpers/sendemailAuth');
 const userdb = require("../../Models/userdb")
+const baneddb = require("../../Models/admindb")
 
 const handleNewUser = async (req,res)=>{
 
@@ -25,6 +26,15 @@ const handleNewUser = async (req,res)=>{
     }
     //let dupplicate;
     let Email = email.toLowerCase().trim()
+
+     let emailbaned = await baneddb.findOne({email:Email}).exec()
+
+    if(emailbaned){
+        if(emailbaned.delete === true){
+            return res.status(400).json({"ok":false,'message': 'You account have been banned'})
+
+        }
+    }
   
     try{
 

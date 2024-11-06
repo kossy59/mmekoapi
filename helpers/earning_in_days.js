@@ -16,9 +16,7 @@ let modeldb = require("../Models/models")
      
 
     let last = new Date( first2.setDate(first2.getDate() - 28 ) )
-    console.log("first "+first.getTime())
-     console.log("last "+last.getTime())
-    
+  
     let earning_count = 0;
 
     earning.forEach(value =>{
