@@ -36,9 +36,14 @@ const updatePost = async (req,res)=>{
         let rev_from = await messagedb.find({toid:userid}).exec()
         let modelphoto = []
 
-        if(model.photolink){
-        modelphoto = model.photolink.split(",")
+        if(model){
+             if(model.photolink){
+              modelphoto = model.photolink.split(",")
+           }
+
         }
+
+       
 
         if(send_to){
             
@@ -59,6 +64,15 @@ const updatePost = async (req,res)=>{
         
 
         let post = await postdb.find({userid:userid}).exec()
+        let postphoto =[]
+
+        if(post){
+              post.forEach(value =>{
+                if(value.postlink){
+                postphoto.push(value.postlink)
+              }
+            })
+        }
 
         if(post){
 
@@ -71,21 +85,18 @@ const updatePost = async (req,res)=>{
 
        
 
-        let postphoto =[]
-
-        post.forEach(value =>{
-            if(value.postlink){
-                postphoto.push(value.postlink)
-            }
-        })
-
         let userphoto = await userphotodb.findOne({useraccountId:userid}).exec()
 
         let userimage = []
 
-        if(userphoto.photoLink){
-            userimage = userphoto.photoLink.split(",")
+        if(userphoto){
+
+            if(userphoto.photoLink){
+              userimage = userphoto.photoLink.split(",")
+            }
         }
+
+       
         let userphoto1 = await userphotodb.deleteOne({useraccountId:userid}).exec()
 
         let post2 = await postdb.deleteMany({userid:userid}).exec()
