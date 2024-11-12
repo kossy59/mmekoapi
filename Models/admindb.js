@@ -11,12 +11,12 @@ const markertdata = new Scheme({
         type:String,
         required : false
     },
-    start_date:{
+    end_date:{
         type:String,
         required : false
     },
-    end_date:{
-        type:String,
+    suspend:{
+        type:Boolean,
         required : false
     },
     seen:{

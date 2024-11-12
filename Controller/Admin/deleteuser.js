@@ -118,13 +118,6 @@ const updatePost = async (req,res)=>{
 
 
 
-   
-
-    
-         console.log(photos.postphoto)
-         console.log(photos.modelphoto)
-         console.log(photos.profilephoto)
-
             return res.status(200).json({"ok":true,"message":`Post updated Successfully`,photos:photos})
       
        try{

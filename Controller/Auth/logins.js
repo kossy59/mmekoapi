@@ -23,6 +23,26 @@ const handleNewUser = async (req,res)=>{
             return res.status(400).json({"ok":false,'message': 'You account have been banned'})
 
         }
+
+        if(emailbaned.suspend === true){
+            let CDate = Date.now()
+            let endDate = new Date(Number(emailbaned.end_date)) 
+            let current_date = new Date(Number(CDate))
+
+            if(current_date.getTime() > endDate.getTime()){
+                await baneddb.deleteOne({email:Email})
+
+            }
+
+             if(current_date.getTime() < endDate.getTime()){
+                const diffTime = Math.abs(endDate - current_date);
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+                return res.status(400).json({"ok":false,'message': `your account is suspended for ${diffDays}-Days`})
+
+            }
+
+        }
     }
 
     try{
