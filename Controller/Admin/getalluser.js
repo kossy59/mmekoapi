@@ -12,15 +12,11 @@ const updatePost = async (req,res)=>{
                let admin = await admindb.find({}).exec()
                let photos = await userphoto.find({}).exec()
 
-               const date = Date.now()
-
-               const current_date = new Date(Number(date))
-
                let suppend_user = []
 
                admin.forEach(value =>{
-                 let suppend_date = new Date(Number(value.end_date))
-                 if(current_date.getTime() > suppend_date.getTime()){
+                 
+                 if(value.suspend === true){
                     let user = {
                         userid:value.userid
                     }
@@ -30,10 +26,12 @@ const updatePost = async (req,res)=>{
 
                let list_user = []
 
+               console.log("list of suspend user "+suppend_user.length)
+
                du.forEach(value1 => {
                  if(suppend_user.length > 0){
                     suppend_user.forEach(value =>{
-                        if(String(value1.userid) !== String(value.userid)){
+                        if(String(value1._id) !== String(value.userid)){
                             list_user.push(value1)
                         }
                     })
