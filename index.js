@@ -172,6 +172,9 @@ io.on('connection', (socket) => {
   app.use('/getallusers',require('./routes/api/Admin/getallusers'))
   app.use('/deleteuser',require('./routes/api/Admin/deleteuser'))
   app.use('/suspenduser',require('./routes/api/Admin/suspenduser'))
+  app.use('/sendmessages',require('./routes/api/Admin/sendmessage'))
+  app.use('/recivemessage',require('./routes/api/Admin/recivemessage'))
+  app.use('/adminnotify',require('./routes/api/Admin/adminnotify'))
 
 
  
