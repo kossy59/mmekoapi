@@ -2,6 +2,8 @@ const admindb = require("../../Models/admindb");
 
 const updatePost = async (req,res)=>{
    const userid = req.body.userid
+
+   console.log("inside admin notify")
    
     if(!userid){
         return res.status(400).json({"ok":false,'message': 'invalid userID!!'})
@@ -11,6 +13,8 @@ const updatePost = async (req,res)=>{
     try{
                let adminMSG = await admindb.find({userid:userid}).exec()
 
+             
+
                if(!adminMSG){
                 return res.status(200).json({"ok":true,'message': 'add users!!',notifyme:false, notifycount:0});
         
@@ -18,6 +22,8 @@ const updatePost = async (req,res)=>{
 
               let notifyme = false
               let notifycount = 0
+
+               
 
               adminMSG.forEach(value=>{
 
@@ -28,6 +34,8 @@ const updatePost = async (req,res)=>{
                 }
                
               })
+
+              
 
             
 

@@ -26,7 +26,8 @@ const updatePost = async (req,res)=>{
                      let data = {
                        message:value.message,
                        id: value._id,
-                       time:`${value._id.getTimestamp().getTime()}`
+                       time:`${value._id.getTimestamp().getTime()}`,
+                       "adimn":true
                     }
 
                     message.push(data)

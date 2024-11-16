@@ -2,6 +2,7 @@ const bookingdb = require("../../Models/book")
 const modeldb = require("../../Models/models")
 const photoLink = require("../../Models/usercomplete")
 const userdb = require("../../Models/userdb")
+const admindb = require("../../Models/admindb")
 
 const createLike = async (req,res)=>{
     
@@ -21,6 +22,7 @@ const createLike = async (req,res)=>{
 
     try{
          const users = await bookingdb.find({userid:userid}).exec()
+         const adminmessage = await admindb.find({userid:userid}).exec()
 
          let model = [];
 
@@ -94,6 +96,25 @@ const createLike = async (req,res)=>{
                 })
             }
          }
+
+            adminmessage.forEach(value=>{
+
+                if(value.seen){
+
+                    let data = {
+                    message : value.message,
+                    time : `${value._id.getTimestamp().getTime()}`,
+                    ismessage:true,
+                    id:value._id,
+                    admindb:true,
+                    notification:false
+
+                    }
+
+                    approve.push(data)
+                }
+            
+            })
 
                   if(!approve[0]) {
                      return res.status(200).json({"ok":false,'message': 'you have 0 approved request!!',approve:[]})
