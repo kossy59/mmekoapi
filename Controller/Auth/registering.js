@@ -6,6 +6,7 @@ const bcrypt = require('bcrypt');
 const forgetHandler = require('../../helpers/sendemailAuth');
 const userdb = require("../../Models/userdb")
 const baneddb = require("../../Models/admindb")
+const usercompletedb = require("../../Models/usercomplete")
 
 const handleNewUser = async (req,res)=>{
 
@@ -28,6 +29,17 @@ const handleNewUser = async (req,res)=>{
     let Email = email.toLowerCase().trim()
 
      let emailbaned = await baneddb.findOne({email:Email}).exec()
+     let user_uncon = await userdb.findOne({email:Email}).exec()
+
+     if(user_uncon){
+        console.log("inside passcode")
+       
+       if(user_uncon.emailconfirm !== "verify"){
+            await userdb.deleteOne({_id:user_uncon._id})
+      }
+     }
+
+      
 
     if(emailbaned){
         if(emailbaned.delete === true){
@@ -105,7 +117,15 @@ const handleNewUser = async (req,res)=>{
             balance:''
         }
 
-        await userdb.create(db);
+        let user = await userdb.create(db);
+
+         var moreuser = {
+                useraccountId : user._id,
+                interestedIn :"Nothing",
+                details:"Hello am using Mmeko"
+            }
+
+            await usercompletedb.create(moreuser)
   
         //await data.databar.createDocument(data.dataid,data.colid,sdk.ID.unique(),db)
         await forgetHandler(req,res,Email)
