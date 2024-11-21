@@ -10,7 +10,7 @@ const markertdata = new Scheme({
 
      interestedIn:{
         type:String,
-        required : true
+        required : false
     },
 
      photoLink:{

@@ -29,7 +29,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// .
+// 
 //
 
 
@@ -90,7 +90,7 @@ io.on('connection', (socket) => {
            name = info.name;
            photolink = info.photolink;
 
-           console.log("name "+name+" photolink "+photolink)
+          // console.log("name "+name+" photolink "+photolink)
           
          }
       
@@ -175,6 +175,7 @@ io.on('connection', (socket) => {
   app.use('/sendmessages',require('./routes/api/Admin/sendmessage'))
   app.use('/recivemessage',require('./routes/api/Admin/recivemessage'))
   app.use('/adminnotify',require('./routes/api/Admin/adminnotify'))
+  app.use('/useredit',require('./routes/api/Profilemore/getuseredit'))
 
 
  
