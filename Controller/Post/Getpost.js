@@ -53,13 +53,19 @@ const readPost = async (req,res)=>{
                         if(String(postdb[i].userid) === String(userdb[j]._id) && String(comdb[k].useraccountId) === String(userdb[j]._id )){
  
                             console.log("inside getting post")
+
+                            let userpoto = ""
+
+                            if(comdb[k].photoLink){
+                                userpoto = comdb[k].photoLink
+                            }
                            
 
                            
                             let con = {
                                 username: `${ userdb[j].firstname} ${ userdb[j].lastname}`,
                                 nickname:  `${ userdb[j].nickname}`,
-                                userphoto: `${comdb[k].photoLink}`,
+                                userphoto: `${userpoto}`,
                                 content: `${postdb[i].content}`,
                                 postphoto: `${postdb[i].postlink}`,
                                 posttime: `${postdb[i].posttime}`,
