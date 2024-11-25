@@ -25,9 +25,9 @@ const updatePost = async (req,res)=>{
         if(!user){
             return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
         }
-
-
-        let booking = await bookingdb.deleteMany({userid:userid})
+      
+       try{
+         let booking = await bookingdb.deleteMany({userid:userid})
         let gift = await giftdb.deleteMany({userid:userid}).exec()
         let mainB = await mainbalancedb.deleteMany({userid:userid}).exec()
         let review = await reviewdb.deleteMany({userid:userid}).exec()
@@ -116,11 +116,11 @@ const updatePost = async (req,res)=>{
             profilephoto : userimage
         }
 
+       await  userdb.deleteOne({_id:userid}).exec()
 
 
-            return res.status(200).json({"ok":true,"message":`Post updated Successfully`,photos:photos})
-      
-       try{
+
+        return res.status(200).json({"ok":true,"message":`Post updated Successfully`,photos:photos, id:userid})
        }catch(err){
            return res.status(500).json({"ok":false,'message': `${err.message}!`});
        }
