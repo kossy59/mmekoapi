@@ -22,7 +22,7 @@ const handleNewUser = async (req,res)=>{
 
    //let data = await connectdatabase()
     
-    if(!firstname && !lastname && !gender && !email && !password && !state && !age && country ){
+    if(!firstname && !lastname && !gender && !email && !password && !state && !age && country && !nickname ){
         return res.status(400).json({"ok":false,'message': 'Registeration not complete!!'})
     }
     //let dupplicate;
@@ -31,8 +31,18 @@ const handleNewUser = async (req,res)=>{
      let emailbaned = await baneddb.findOne({email:Email}).exec()
      let user_uncon = await userdb.findOne({email:Email}).exec()
 
+
+     let nicknames = await userdb.find({}).exec()
+
+        let istrue = nicknames.find(value =>{
+            return value.nickname.toLowerCase().trim() === nickname.toLowerCase().trim()
+        })
+
+        if(istrue){
+             return res.status(400).json({"ok":false,'message': 'Nickname already taken!!'})
+        }
+
      if(user_uncon){
-        console.log("inside passcode")
        
        if(user_uncon.emailconfirm !== "verify"){
             await userdb.deleteOne({_id:user_uncon._id})

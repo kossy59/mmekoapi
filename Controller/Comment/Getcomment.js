@@ -41,7 +41,8 @@ const readComment = async (req,res)=>{
                                 content:test[i].content,
                                 commentid:test[i]._id,
                                 commenttime:test[i].commenttime,
-                                commentuserid:userdb[j]._id
+                                commentuserid:userdb[j]._id,
+                                commentnickname:userdb[j].nickname
                             }
 
                             comment.push(com)

@@ -176,6 +176,8 @@ io.on('connection', (socket) => {
   app.use('/recivemessage',require('./routes/api/Admin/recivemessage'))
   app.use('/adminnotify',require('./routes/api/Admin/adminnotify'))
   app.use('/useredit',require('./routes/api/Profilemore/getuseredit'))
+  app.use('/addcrush',require('./routes/api/model/addcrush'))
+  app.use('/getcrush',require('./routes/api/model/getcrush'))
 
 
  

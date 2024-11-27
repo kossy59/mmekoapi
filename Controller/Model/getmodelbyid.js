@@ -2,9 +2,12 @@
 // const sdk = require("node-appwrite");
 
 const models = require("../../Models/models")
+let crushdb = require("../../Models/crushdb")
 const createModel = async (req,res)=>{
 
     const hostid = req.body.hostid;
+    const userid = req.body.userid
+    let added = false
    
    
     if(!hostid){
@@ -21,6 +24,12 @@ const createModel = async (req,res)=>{
           //  })
 
            let currentuser = await models.findOne({_id:hostid}).exec()
+
+           let istrue = await crushdb.findOne({userid:userid}).exec()
+
+           if(istrue){
+            added = true
+           }
 
            if(!currentuser){
             return res.status(409).json({"ok":false,"message":`user host empty`})
@@ -48,7 +57,8 @@ const createModel = async (req,res)=>{
                  daysava : currentuser.daysava,
                  hosttype : currentuser.hosttype,
                  userid: currentuser.userid,
-                 document:currentuser.document
+                 document:currentuser.document,
+                 add : added
 
               }
         
