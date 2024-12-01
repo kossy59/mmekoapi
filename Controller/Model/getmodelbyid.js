@@ -3,6 +3,7 @@
 
 const models = require("../../Models/models")
 let crushdb = require("../../Models/crushdb")
+let userdb = require("../../Models/userdb")
 const createModel = async (req,res)=>{
 
     const hostid = req.body.hostid;
@@ -25,15 +26,29 @@ const createModel = async (req,res)=>{
 
            let currentuser = await models.findOne({_id:hostid}).exec()
 
-           let istrue = await crushdb.findOne({userid:userid}).exec()
 
-           if(istrue){
-            added = true
-           }
+
+
 
            if(!currentuser){
             return res.status(409).json({"ok":false,"message":`user host empty`})
            }
+
+           let istrue = await crushdb.findOne({modelid:currentuser._id}).exec()
+
+
+           if(istrue){
+
+              if(String(istrue.userid) === userid){
+                 added = true
+             }
+
+
+           }
+           
+
+         
+           let modState = await userdb.findOne({_id:currentuser.userid}).exec()
 
 
             let host =  {
@@ -58,9 +73,12 @@ const createModel = async (req,res)=>{
                  hosttype : currentuser.hosttype,
                  userid: currentuser.userid,
                  document:currentuser.document,
-                 add : added
+                 add : added,
+                 active: modState.active
 
               }
+
+              console.log("this is host "+host)
         
 
 
