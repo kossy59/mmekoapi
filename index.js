@@ -178,6 +178,10 @@ io.on('connection', (socket) => {
   app.use('/useredit',require('./routes/api/Profilemore/getuseredit'))
   app.use('/addcrush',require('./routes/api/model/addcrush'))
   app.use('/getcrush',require('./routes/api/model/getcrush'))
+  app.use('/deleteMsg',require('./routes/api/Admin/deleteMsg'))
+  app.use('/deletecrush',require('./routes/api/model/deletecrush'))
+
+
 
 
  
