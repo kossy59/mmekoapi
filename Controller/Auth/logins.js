@@ -29,7 +29,7 @@ const handleNewUser = async (req,res)=>{
             let endDate = new Date(Number(emailbaned.end_date)) 
             let current_date = new Date(Number(CDate))
 
-            if(current_date.getTime() > endDate.getTime()){
+            if(current_date.getTime() >= endDate.getTime()){
                 await baneddb.deleteOne({email:Email})
 
             }
@@ -59,7 +59,7 @@ const handleNewUser = async (req,res)=>{
     //    })
 
       // console.log('untop checking  database email '+mail.toLowerCase())
-        console.log('untop checking  database email1 '+du)
+       // console.log('untop checking  database email1 '+du)
  
         if(du){
             
@@ -83,7 +83,7 @@ const handleNewUser = async (req,res)=>{
                     {expiresIn : '1d'}
                 );
 
-                console.log('untop updating  database')
+              //  console.log('untop updating  database')
                 // await data.databar.updateDocument(
                 //     data.dataid,
                 //     data.colid,

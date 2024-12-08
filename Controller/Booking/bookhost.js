@@ -37,7 +37,7 @@ const createLike = async (req,res)=>{
 
          let clienthistory = {
             userid,
-            details: "hosting a model",
+            details: "hosting a model pendding",
             spent: `${modelprice}`,
             income: "0",
             date: `${Date.now().toString()}`

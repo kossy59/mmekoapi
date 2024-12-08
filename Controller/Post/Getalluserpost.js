@@ -18,6 +18,8 @@ const readPost = async (req,res)=>{
             //    })
 
                let du = await postdb.find({userid:userid}).exec()
+
+               
         
                if(!du){
                 return res.status(409).json({"ok":false,'message': 'current user can not edit this post!!'});

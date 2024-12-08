@@ -16,22 +16,22 @@ const readProfile = async (req,res)=>{
 
     let ISmodel;
 
-    console.log('inside profile')
+   // console.log('inside profile')
 
     try{
 
-             console.log('inside profile database')
+            // console.log('inside profile database')
            // let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
             
-              console.log('inside model database')
+             // console.log('inside model database')
             //let  model = await data.databar.listDocuments(data.dataid,data.modelCol)
 
-              console.log('ckecking profile database')
+              //console.log('ckecking profile database')
             // let du = dupplicate.documents.find(value=>{
             //     return value.$id === userid
             //    })
             let du = await userdb.findOne({_id:userid}).exec()
-            console.log('checking model database')
+            //console.log('checking model database')
             let modelava = await models.findOne({userid:userid}).exec()
 
                  
@@ -61,7 +61,7 @@ const readProfile = async (req,res)=>{
                }
              
 
-               console.log('returning profile' + du)
+              // console.log('returning profile' + du)
             return res.status(200).json({"ok":true,"message":`All Post`,profile:dues})
       
           

@@ -36,7 +36,7 @@ const createLike = async (req,res)=>{
          }
 
          let status = await bookingdb.findOne({_id:user._id}).exec()
-         console.log('under user accepted')
+        // console.log('under user accepted')
          status.status = "accepted"
          status.save()
        

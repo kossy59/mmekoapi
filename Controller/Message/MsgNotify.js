@@ -157,7 +157,7 @@ const getnotify = async(req,res)=>{
       
         
 
-        console.log("still nothig "+Notify[0])
+      //  console.log("still nothig "+Notify[0])
 
          // return Notify
         return res.status(200).json({"ok":true,"message":`user host empty`,notify:Notify})

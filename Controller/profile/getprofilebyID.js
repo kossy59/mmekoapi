@@ -58,7 +58,7 @@ const readProfile = async (req,res)=>{
                 lastname:du.lastname  
                }
 
-               console.log(user)
+              // console.log(user)
 
               
 

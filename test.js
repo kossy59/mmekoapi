@@ -7,9 +7,9 @@
 //modelid
 // "67077eb615b063d46b93d995"
 
-const test = require("./helpers/earning_in_month")
+const test = require("./utiils/Deletes/deleteAcceptsBook")
 let play = async ()=>{
- await test('67077cdb15b063d46b93d956')
+ await test()
 
 
 }

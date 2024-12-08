@@ -5,6 +5,7 @@ const messagedb = require("../../Models/message")
 const userdb = require("../../Models/userdb")
 const completedb = require("../../Models/usercomplete")
 const models = require("../../Models/models")
+const deleteOldChats = require("../../utiils/Deletes/deletemessage")
 
 const MsgNotify = async(req,res)=>{
 
@@ -18,18 +19,16 @@ const MsgNotify = async(req,res)=>{
         // let Chats = await data.databar.listDocuments(data.dataid,data.msgCol,[sdk.Query.limit(200), sdk.Query.equal("fromid",[userid])])
 
         let Chats = await messagedb.find({fromid:userid}).exec()
-        
-        
-         
-         
+
+        await deleteOldChats()
          // get any chat with my userid
           //  let Listofchat = Chats.documents.filter(value=>{
           //   return value.toid === userid || value.toid === userid
           //  })
-             console.log("model recent chat length "+Chats.length)
-             if(!Chats[0]){
-             return res.status(200).json({"ok":true,"message":`user host empty`,lastchat:[]})
-             }
+             //console.log("model recent chat length "+Chats.length)
+            //  if(!Chats[0]){
+            //  return res.status(200).json({"ok":true,"message":`user host empty`,lastchat:[]})
+            //  }
 
           
 
@@ -40,7 +39,8 @@ const MsgNotify = async(req,res)=>{
 
            let FullChat = []
 
-            Chats.forEach(value1 =>{
+           if(Chats){
+                Chats.forEach(value1 =>{
               if(value1.notify === false){
 
                     if(ChatParID.length < 1){
@@ -70,8 +70,24 @@ const MsgNotify = async(req,res)=>{
               }
 
             })
+           
+            for(let i = 0; i < ChatParID.length; i++ ){
 
-            console.log(ChatParID)
+               let allmodel = await models.findOne({_id:ChatParID[i].toid}).exec()
+               let alluser = await userdb.findOne({_id:ChatParID[i].toid}).exec()
+
+               if(!allmodel && !alluser){
+
+                console.log("inside deleting")
+               let sus =  await messagedb.deleteOne({toid:ChatParID[i].toid}).exec()
+                let sus2 =  await messagedb.deleteOne({fomid:ChatParID[i].fomid}).exec()
+
+               console.log("sus "+sus)
+               }
+             
+            }
+
+           // console.log(ChatParID)
 
             // lets search name and photolink as a client 
 
@@ -109,7 +125,7 @@ const MsgNotify = async(req,res)=>{
                 }
             }
 
-            console.log("Under searching names as client for loop")
+          //  console.log("Under searching names as client for loop")
 
            
 
@@ -117,9 +133,9 @@ const MsgNotify = async(req,res)=>{
              // lets search name and photolink as a model 
 
              for(let i = 0; i < ChatParID.length; i++){
-               console.log("inside model forloop "+i)
+              // console.log("inside model forloop "+i)
               if(ChatParID[i].client === false){
-                console.log("inside model")
+                //console.log("inside model")
                   if(ChatParID[i].fromid === userid){
 
                   //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[ChatParID[i].fromid])])
@@ -143,7 +159,7 @@ const MsgNotify = async(req,res)=>{
                 }
               }
              }
-              console.log("Under searching names as model for loop")
+            //  console.log("Under searching names as model for loop")
 
 
            // console.log(FullChat)
@@ -154,8 +170,130 @@ const MsgNotify = async(req,res)=>{
 
            let RecentChat = FullChat.slice(0,30)
 
-           console.log(RecentChat)
-   
+          // console.log(RecentChat)
+
+           }
+
+        
+
+           // uread chat section
+
+            let  chatting = await messagedb.find({toid:userid}).exec()
+            if(chatting[0]){
+                let Chatss = chatting.filter(value =>{
+            return value.notify === true
+         })
+
+           let notificationbyuser = []
+         
+           // file notification base on the sender
+
+           Chatss.forEach((value,index) => {
+
+            if(notificationbyuser.length < 1){
+                  
+                let chat = {
+                    userid: value.fromid,
+                    content:value.content,
+                    notifycount : 0,
+                    toid:value.toid,
+                    client:value.client,
+                    date:value.date
+                }
+
+                notificationbyuser.push(chat)
+
+            }
+
+            notificationbyuser.forEach((value1,index2) => {
+                if(value1.userid === value.fromid){
+                    notificationbyuser[index2].content = value.content; 
+                    notificationbyuser[index2].notifycount++
+                }else{
+                     let chat = {
+                            userid: value.fromid,
+                            content:value.content,
+                            notifycount : 0,
+                            toid:value.toid,
+                            client:value.client,
+                            date:value.date
+                        }
+
+                 notificationbyuser.push(chat)
+                }
+            })
+
+           })
+
+
+         // get the sender notifcations name and photolink with it id
+
+         // starting from userdb database as client...
+
+         for(let i = 0; i < notificationbyuser.length; i++){
+            if(notificationbyuser[i].client === true){
+               // let Users =  await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[notificationbyuser[i].userid])])
+               let Users = await userdb.findOne({_id:notificationbyuser[i].userid}).exec()
+                //let Photos = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[notificationbyuser[i].userid])])
+                 let Photos = await completedb.findOne({useraccountId:userid}).exec()
+                if(Users){
+                     
+                           let notication = {
+                                photolink: Photos.photoLink,
+                                username:Users.firstname,
+                                content: notificationbyuser[i].content,
+                                messagecount: notificationbyuser[i].notifycount,
+                                fromid: notificationbyuser[i].userid,
+                                toid: notificationbyuser[i].toid,
+                                client:notificationbyuser[i].client,
+                                value:"notify",
+                                date:notificationbyuser[i].date
+                            }
+
+                       // Notify.push(notication)
+
+                        FullChat.push(notication)
+                         //console.log(Notify[0])
+                          
+                }
+            }
+         }
+          
+       
+
+     
+
+        //  getting user names from model as model
+
+        for(let i = 0; i < notificationbyuser.length; i++){
+            if(notificationbyuser[i].client === false){
+               //let Modeling = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[notificationbyuser[i].userid])])
+               let Modeling = await models.findOne({userid:notificationbyuser[i].userid}).exec()
+               if(Modeling){
+
+                  let photoLinks = Modeling.photolink.split(",")
+                      let notication = {
+                                photolink: photoLinks[0],
+                                username: Modeling.name,
+                                content: notificationbyuser[i].content,
+                                messagecount: notificationbyuser[i].notifycount,
+                                fromid: notificationbyuser[i].userid,
+                                toid: notificationbyuser[i].toid,
+                                value:"notify",
+                                 date:notificationbyuser[i].date
+                            }
+
+                            FullChat.push(notication)
+                 
+               }
+            }
+        }
+
+      //  console.log("all chat "+FullChat[0].value)
+
+            }
+          
+          //console.log("chat content "+FullChat[0].content)
           return res.status(200).json({"ok":true,"message":`user host empty`,lastchat:FullChat}) 
 
 

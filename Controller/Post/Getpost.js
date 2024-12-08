@@ -6,6 +6,7 @@ const userdbs = require("../../Models/userdb")
 const comdbs = require("../../Models/usercomplete")
 const commentdbs = require("../../Models/comment")
 const likedbs = require("../../Models/like")
+const alldelete = require("../../utiils/Deletes/deleteAcceptsBook")
 
 const readPost = async (req,res)=>{
 
@@ -30,9 +31,9 @@ const readPost = async (req,res)=>{
             let commentdb = await commentdbs.find().exec()
             let likedb = await likedbs.find().exec()
 
-
+             alldelete()
             
-          console.log("number of post "+postdb.length)
+          //console.log("number of post "+postdb.length)
            
             
             let post = [];
@@ -41,18 +42,18 @@ const readPost = async (req,res)=>{
             for(let i = 0; i < postdb.length; i++){
 
              
-                        console.log("list of post userid id "+ postdb[i].userid)
+                       // console.log("list of post userid id "+ postdb[i].userid)
                 for(let j = 0; j<userdb.length; j++){
-                    console.log("list of userdb id "+ userdb[j]._id)
+                    //console.log("list of userdb id "+ userdb[j]._id)
 
                     for(let k = 0; k<comdb.length; k++){
 
                        
-                       console.log("list of comdb id "+ comdb[k].useraccountId)
+                       //console.log("list of comdb id "+ comdb[k].useraccountId)
 
                         if(String(postdb[i].userid) === String(userdb[j]._id) && String(comdb[k].useraccountId) === String(userdb[j]._id )){
  
-                            console.log("inside getting post")
+                            //console.log("inside getting post")
 
                             let userpoto = ""
 
@@ -76,7 +77,7 @@ const readPost = async (req,res)=>{
                                 comment:[],
                                 userid:userdb[j]._id
                             }
-                            console.log("post time "+con.posttime)
+                           // console.log("post time "+con.posttime)
 
                             post.push(con)
 
@@ -88,7 +89,7 @@ const readPost = async (req,res)=>{
 
             }
 
-            console.log("list of un verifyied post "+post.length)
+            //console.log("list of un verifyied post "+post.length)
     
            
             for(let i = 0; i<post.length; i++){
@@ -130,7 +131,7 @@ const readPost = async (req,res)=>{
           
 
 
-            console.log("list of post"+post.length)
+            //console.log("list of post"+post.length)
 
             return res.status(200).json({"ok":true,"message":`Enter new password`,post:post})
       
