@@ -36,8 +36,8 @@ const createModel = async (req,res)=>{
 
            let istrue = await crushdb.findOne({modelid:currentuser._id}).exec()
 
-
-           if(istrue){
+           if(userid){
+              if(istrue){
 
               if(String(istrue.userid) === userid){
                  added = true
@@ -45,6 +45,10 @@ const createModel = async (req,res)=>{
 
 
            }
+
+           }
+
+         
            
 
          
@@ -78,7 +82,7 @@ const createModel = async (req,res)=>{
 
               }
 
-              console.log("this is host "+host)
+              //console.log("this is host "+host)
         
 
 
