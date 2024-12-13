@@ -4,6 +4,10 @@ let deleteMessage = async()=>{
 
     let messages = await messageDB.find({}).exec()
 
+    // for(let i = 0; i < messages.length; i++){
+    //     await messageDB.deleteOne({_id:messages[i]._id}).exec()
+    // }
+
     let messageID = []
 
     let today = new Date

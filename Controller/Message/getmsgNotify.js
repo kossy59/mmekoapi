@@ -112,7 +112,8 @@ const MsgNotify = async(req,res)=>{
                         name: Username.firstname,
                         photolink: Photo.photoLink,
                         client: ChatParID[i].client,
-                        value:"recent"
+                        value:"recent",
+                        online:Username.active
                        }
 
                        
@@ -140,8 +141,9 @@ const MsgNotify = async(req,res)=>{
 
                   //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[ChatParID[i].fromid])])
                   let Model = await models.findOne({userid:ChatParID[i].fromid})
+                 
                    if(Model){
-
+                       let Username = await userdb.findOne({_id:Model.userid})
                       let picture = Model.photolink.split(",")
                       let chat = {
                         fromid: ChatParID[i].fromid,
@@ -151,7 +153,8 @@ const MsgNotify = async(req,res)=>{
                         name: Model.name,
                         photolink: picture[0],
                         client: ChatParID[i].client,
-                        value:"recent"
+                        value:"recent",
+                        online:Username.active
                        }
                        FullChat.push(chat)
 

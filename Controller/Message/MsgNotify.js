@@ -101,8 +101,9 @@ const getnotify = async(req,res)=>{
                // let Users =  await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[notificationbyuser[i].userid])])
                let Users = await userdb.findOne({_id:notificationbyuser[i].userid}).exec()
                 //let Photos = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[notificationbyuser[i].userid])])
-                 let Photos = await completedb.findOne({useraccountId:userid}).exec()
+                 let Photos = await completedb.findOne({useraccountId:notificationbyuser[i].userid}).exec()
                 if(Users){
+                  //  console.log("fetching clent")
                      
                            let notication = {
                                 photolink: Photos.photoLink,
@@ -113,7 +114,8 @@ const getnotify = async(req,res)=>{
                                 toid: notificationbyuser[i].toid,
                                 client:notificationbyuser[i].client,
                                 value:"notify",
-                                date:notificationbyuser[i].date
+                                date:notificationbyuser[i].date,
+                                online:Users.active
                             }
 
                        // Notify.push(notication)
@@ -135,6 +137,7 @@ const getnotify = async(req,res)=>{
             if(notificationbyuser[i].client === false){
                //let Modeling = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[notificationbyuser[i].userid])])
                let Modeling = await models.findOne({userid:notificationbyuser[i].userid}).exec()
+                let Users = await userdb.findOne({_id:notificationbyuser[i].userid}).exec()
                if(Modeling){
 
                   let photoLinks = Modeling.photolink.split(",")
@@ -146,7 +149,9 @@ const getnotify = async(req,res)=>{
                                 fromid: notificationbyuser[i].userid,
                                 toid: notificationbyuser[i].toid,
                                 value:"notify",
-                                 date:notificationbyuser[i].date
+                                date:notificationbyuser[i].date,
+                                client:false,
+                                online:Users.active
                             }
 
                             Notify.push(notication)

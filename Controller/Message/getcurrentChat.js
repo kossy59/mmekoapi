@@ -9,6 +9,9 @@ const createModel = async (req,res)=>{
 
     const userid = req.body.modelid;
     const clientid = req.body.clientid
+    const myid = req.body.myid
+    const messageType = req.body.messageType
+    
    
    
     if(!userid){
@@ -18,7 +21,46 @@ const createModel = async (req,res)=>{
    // let data = await connectdatabase()
 
     try{
-      
+
+        let chatInfo = {}
+
+        console.log("myid "+ myid)
+
+        if(messageType === "model"){
+             let modelinfo = await models.findOne({userid:myid}).exec()
+
+             console.log("inside model information "+modelinfo)
+                if(modelinfo){
+                    let photolink = modelinfo.photolink.split(",")
+                    chatInfo.name = modelinfo.name
+                    chatInfo.photolink = photolink[0]
+                    chatInfo.value = "model"
+                    chatInfo.id = modelinfo.userid
+
+                }
+
+        }
+
+       
+
+        if(messageType === "client"){
+             let clientinfo = await userdb.findOne({_id:myid}).exec()
+            if(clientinfo){
+                let photos = await completedb.findOne({useraccountId:clientinfo._id}).exec()
+                let image = ''
+                if(photos){
+                    image = photos.photoLink
+                }
+                chatInfo.name = `${clientinfo.firstname} ${clientinfo.lastname}`
+                chatInfo.photolink = image
+                chatInfo.value = "client"
+                chatInfo.id = clientinfo._id
+            }
+
+        }
+       
+
+        console.log("this is chatinfo "+chatInfo)
         //    let Chats = await data.databar.listDocuments(data.dataid,data.msgCol,[sdk.Query.limit(200), sdk.Query.and([
         //     sdk.Query.or([sdk.Query.equal("toid",[userid]), sdk.Query.equal("toid",[clientid])]),
         //     sdk.Query.or([sdk.Query.equal("fromid",[userid]), sdk.Query.equal("fromid",[clientid])])
@@ -40,7 +82,7 @@ const createModel = async (req,res)=>{
           
 
            if(!Chats[0]){
-            return res.status(200).json({"ok":true,"message":`user host empty`,chats:[]})
+            return res.status(200).json({"ok":true,"message":`user host empty`,chats:[],chatInfo})
            }
            // fecting unviewed notification chats
             let unviewing = Chats.filter(value =>{
@@ -161,7 +203,7 @@ const createModel = async (req,res)=>{
                      }
                 }
             }
-            console.log('under  our client chat names and photolink as ordinary client user')
+           // console.log('under  our client chat names and photolink as ordinary client user')
 
             // now marshal our client chat names and photolink as a model client user
 
@@ -187,12 +229,12 @@ const createModel = async (req,res)=>{
                 }
             }
           
-            console.log('under  our client chat names and photolink as ordinary client user')
-                 console.log(Listchat) 
+            // console.log('under  our client chat names and photolink as ordinary client user')
+            //      console.log(Listchat) 
                  let allchat = Listchat.sort((a,b)=>{
                 return Number(a.date) - Number(b.date)
             }) 
-          return res.status(200).json({"ok":true,"message":`Model Fetched successfully`,chats:allchat})
+          return res.status(200).json({"ok":true,"message":`Model Fetched successfully`,chats:allchat,chatInfo})
 
           
           }catch(err){
