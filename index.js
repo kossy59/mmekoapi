@@ -20,8 +20,8 @@ const { Server } = require("socket.io");
 const cors = require('cors')
 const { setInterval } = require('timers')
 
-//let myurl = "https://mmekosocial.onrender.com"
-let myurl = "http://localhost:3000"
+let myurl = "https://mmekosocial.onrender.com"
+//let myurl = "http://localhost:3000"
 
 const corsOptions = {
     credentials: true,
