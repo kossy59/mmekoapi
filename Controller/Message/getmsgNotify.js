@@ -18,21 +18,9 @@ const MsgNotify = async(req,res)=>{
      try{
         // let Chats = await data.databar.listDocuments(data.dataid,data.msgCol,[sdk.Query.limit(200), sdk.Query.equal("fromid",[userid])])
 
-        let Chats = await messagedb.find({fromid:userid}).exec()
+         let Chats = await messagedb.find({fromid:userid}).exec()
 
-        await deleteOldChats()
-         // get any chat with my userid
-          //  let Listofchat = Chats.documents.filter(value=>{
-          //   return value.toid === userid || value.toid === userid
-          //  })
-             //console.log("model recent chat length "+Chats.length)
-            //  if(!Chats[0]){
-            //  return res.status(200).json({"ok":true,"message":`user host empty`,lastchat:[]})
-            //  }
-
-          
-
-           //list of  chat perID
+          await deleteOldChats()
            let ChatParID = []
 
            //List of saturated Chat with Photo Link and names
@@ -98,12 +86,11 @@ const MsgNotify = async(req,res)=>{
                        console.log("on top database colotion")
                   // let Username = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[ChatParID[i].fromid])])
                   let Username = await userdb.findOne({_id:ChatParID[i].fromid})
-                   console.log("on top database username colotion")
+                 //  console.log("on top database username colotion")
                   // let Photo = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[ChatParID[i].fromid])])
                   let Photo = await completedb.findOne({useraccountId:ChatParID[i].fromid})
-                      console.log("on top database photo colotion")
+                     // console.log("on top database photo colotion")
                    if(Username){
-
                     let chat = {
                         fromid: ChatParID[i].fromid,
                         toid: ChatParID[i].toid,
@@ -171,11 +158,195 @@ const MsgNotify = async(req,res)=>{
 
            FullChat.reverse()
 
+         //  let RecentChat = FullChat.slice(0,30)
+
+          // console.log(RecentChat)
+
+           }
+
+           
+          
+          
+           // if no recent message sent by me check sent to me
+           if(true){
+            
+             let toChats = await messagedb.find({toid:userid}).exec()
+
+             let nonchat = []
+             
+              // check for message that is my id which is to and not equal to fromid
+             toChats.forEach(value1=>{
+
+              if(Chats.length > 0){
+                 Chats.forEach(value2=>{
+                  if(value1.toid !== value2.fromid){
+                    nonchat.push(value1)
+                  }
+                })
+
+              }else{
+                nonchat.push(value1)
+              }
+             })
+
+     
+         // get any chat with my userid
+          //  let Listofchat = Chats.documents.filter(value=>{
+          //   return value.toid === userid || value.toid === userid
+          //  })
+             //console.log("model recent chat length "+Chats.length)
+            //  if(!Chats[0]){
+            //  return res.status(200).json({"ok":true,"message":`user host empty`,lastchat:[]})
+            //  }
+
+          
+
+           //list of  chat perID
+           let ChatParID = []
+
+           //List of saturated Chat with Photo Link and names
+
+          
+
+           if(nonchat){
+                nonchat.forEach(value1 =>{
+              if(value1.notify === false){
+
+                    if(ChatParID.length < 1){
+                    ChatParID.push(value1)
+                    }
+
+                ChatParID.forEach((value2,index) =>{
+                  if(value1.fromid === value2.fromid){
+                    if(Number(value1.date) > Number(value2.date)){
+                      ChatParID[index] = value1
+
+                    }else{
+                      ChatParID[index] = value2
+
+                    }
+                  }else{
+                      if(Number(value1.date) > Number(value2.date)){
+                      ChatParID.push(value1)
+
+                    }else{
+                      ChatParID.push(value2)
+
+                    }
+                  }
+                })
+
+              }
+
+            })
+           
+            for(let i = 0; i < ChatParID.length; i++ ){
+
+               let allmodel = await models.findOne({_id:ChatParID[i].fromid}).exec()
+               let alluser = await userdb.findOne({_id:ChatParID[i].fromid}).exec()
+
+               if(!allmodel && !alluser){
+
+                console.log("inside deleting")
+               let sus =  await messagedb.deleteOne({toid:ChatParID[i].fromid}).exec()
+                let sus2 =  await messagedb.deleteOne({fomid:ChatParID[i].toid}).exec()
+
+               console.log("sus "+sus)
+               }
+             
+            }
+
+           // console.log(ChatParID)
+
+            // lets search name and photolink as a client 
+
+            for(let i = 0; i < ChatParID.length; i++){
+
+                if(ChatParID[i].client === true){
+                if(ChatParID[i].toid === userid){
+                       console.log("on top database colotion")
+                  // let Username = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[ChatParID[i].fromid])])
+                  let Username = await userdb.findOne({_id:ChatParID[i].toid})
+                 //  console.log("on top database username colotion")
+                  // let Photo = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[ChatParID[i].fromid])])
+                  let Photo = await completedb.findOne({useraccountId:ChatParID[i].toid})
+                     // console.log("on top database photo colotion")
+                   if(Username){
+                    let chat = {
+                        toid: ChatParID[i].toid,
+                        fromid: ChatParID[i].fromid,
+                        content: ChatParID[i].content,
+                        date: ChatParID[i].date,
+                        name: Username.firstname,
+                        photolink: Photo.photoLink,
+                        client: ChatParID[i].client,
+                        value:"recent",
+                        online:Username.active
+                       }
+
+                       
+                       FullChat.push(chat)
+                   }
+             }
+                
+                
+
+                }
+            }
+
+          //  console.log("Under searching names as client for loop")
+
+           
+
+         
+             // lets search name and photolink as a model 
+
+             for(let i = 0; i < ChatParID.length; i++){
+              // console.log("inside model forloop "+i)
+              if(ChatParID[i].client === false){
+                //console.log("inside model")
+                  if(ChatParID[i].toid === userid){
+
+                  //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[ChatParID[i].fromid])])
+                  let Model = await models.findOne({userid:ChatParID[i].toid})
+                 
+                   if(Model){
+                       let Username = await userdb.findOne({_id:Model.userid})
+                      let picture = Model.photolink.split(",")
+                      let chat = {
+                        toid: ChatParID[i].toid,
+                        fromid: ChatParID[i].fromid,
+                        content: ChatParID[i].content,
+                        date: ChatParID[i].date,
+                        name: Model.name,
+                        photolink: picture[0],
+                        client: ChatParID[i].client,
+                        value:"recent",
+                        online:Username.active
+                       }
+                       FullChat.push(chat)
+
+                  }
+                }
+              }
+             }
+            //  console.log("Under searching names as model for loop")
+
+
+           // console.log(FullChat)
+
+           FullChat.sort((a,b)=> Number(a.date) - Number(b.date))
+
+           FullChat.reverse()
+
            let RecentChat = FullChat.slice(0,30)
 
           // console.log(RecentChat)
 
            }
+           }
+
+
 
         
 
@@ -238,8 +409,11 @@ const MsgNotify = async(req,res)=>{
                // let Users =  await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[notificationbyuser[i].userid])])
                let Users = await userdb.findOne({_id:notificationbyuser[i].userid}).exec()
                 //let Photos = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[notificationbyuser[i].userid])])
-                 let Photos = await completedb.findOne({useraccountId:userid}).exec()
+                 let Photos = await completedb.findOne({useraccountId:notificationbyuser[i].userid}).exec()
                 if(Users){
+
+                  // console.log("message content "+notificationbyuser[i].content)
+                  //  console.log("message photolink "+Photos.photoLink)
                      
                            let notication = {
                                 photolink: Photos.photoLink,
@@ -248,9 +422,10 @@ const MsgNotify = async(req,res)=>{
                                 messagecount: notificationbyuser[i].notifycount,
                                 fromid: notificationbyuser[i].userid,
                                 toid: notificationbyuser[i].toid,
-                                client:notificationbyuser[i].client,
+                                client:true,
                                 value:"notify",
-                                date:notificationbyuser[i].date
+                                date:notificationbyuser[i].date,
+                                online:Users.active
                             }
 
                        // Notify.push(notication)
@@ -273,7 +448,7 @@ const MsgNotify = async(req,res)=>{
                //let Modeling = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[notificationbyuser[i].userid])])
                let Modeling = await models.findOne({userid:notificationbyuser[i].userid}).exec()
                if(Modeling){
-
+                  let username = await userdb.findOne({_id:notificationbyuser[i].userid}).exec()
                   let photoLinks = Modeling.photolink.split(",")
                       let notication = {
                                 photolink: photoLinks[0],
@@ -283,7 +458,9 @@ const MsgNotify = async(req,res)=>{
                                 fromid: notificationbyuser[i].userid,
                                 toid: notificationbyuser[i].toid,
                                 value:"notify",
-                                 date:notificationbyuser[i].date
+                                date:notificationbyuser[i].date,
+                                online:username.active,
+                                client:false
                             }
 
                             FullChat.push(notication)

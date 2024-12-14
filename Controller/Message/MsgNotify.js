@@ -104,6 +104,7 @@ const getnotify = async(req,res)=>{
                  let Photos = await completedb.findOne({useraccountId:notificationbyuser[i].userid}).exec()
                 if(Users){
                   //  console.log("fetching clent")
+                 // console.log("message photolink "+Photos.photoLink)
                      
                            let notication = {
                                 photolink: Photos.photoLink,
