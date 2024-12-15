@@ -154,9 +154,9 @@ const MsgNotify = async(req,res)=>{
 
            // console.log(FullChat)
 
-           FullChat.sort((a,b)=> Number(a.date) - Number(b.date))
+          //  FullChat.sort((a,b)=> Number(a.date) - Number(b.date))
 
-           FullChat.reverse()
+          //  FullChat.reverse()
 
          //  let RecentChat = FullChat.slice(0,30)
 
@@ -164,7 +164,7 @@ const MsgNotify = async(req,res)=>{
 
            }
 
-              console.log("fullchats "+FullChat.length)
+             // console.log("fullchats "+FullChat.length)
 
            
           
@@ -179,10 +179,16 @@ const MsgNotify = async(req,res)=>{
               // check for message that is my id which is to and not equal to fromid
              toChats.forEach(value1=>{
 
-              if(Chats.length > 0){
-                 Chats.forEach(value2=>{
-                  if(value1.toid !== value2.fromid){
-                    nonchat.push(value1)
+             // console.log("inside to chat "+value1.toid)
+
+              if(FullChat.length > 0){
+                 FullChat.forEach(value2=>{
+                 // console.log("inside  chat "+value2.fromid)
+                  if(value1.fromid !== value2.toid){
+                     nonchat.push(value1)
+                  
+                  }else{
+                      
                   }
                 })
 
@@ -191,7 +197,7 @@ const MsgNotify = async(req,res)=>{
               }
              })
 
-             console.log("nonChat "+nonchat)
+            // console.log("tochat "+nonchat.length)
 
           
 
@@ -253,11 +259,11 @@ const MsgNotify = async(req,res)=>{
 
                if(!allmodel && !alluser){
 
-                console.log("inside deleting")
+                //console.log("inside deleting")
                let sus =  await messagedb.deleteOne({toid:ChatParID[i].fromid}).exec()
                 let sus2 =  await messagedb.deleteOne({fomid:ChatParID[i].toid}).exec()
 
-               console.log("sus "+sus)
+               //console.log("sus "+sus)
                }
              
             }
@@ -272,10 +278,10 @@ const MsgNotify = async(req,res)=>{
                 if(ChatParID[i].toid === userid){
                        console.log("on top database colotion")
                   // let Username = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[ChatParID[i].fromid])])
-                  let Username = await userdb.findOne({_id:ChatParID[i].toid})
+                  let Username = await userdb.findOne({_id:ChatParID[i].fromid})
                  //  console.log("on top database username colotion")
                   // let Photo = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[ChatParID[i].fromid])])
-                  let Photo = await completedb.findOne({useraccountId:ChatParID[i].toid})
+                  let Photo = await completedb.findOne({useraccountId:ChatParID[i].fromid})
                      // console.log("on top database photo colotion")
                    if(Username){
                     let chat = {
@@ -314,7 +320,7 @@ const MsgNotify = async(req,res)=>{
                   if(ChatParID[i].toid === userid){
 
                   //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[ChatParID[i].fromid])])
-                  let Model = await models.findOne({userid:ChatParID[i].toid})
+                  let Model = await models.findOne({userid:ChatParID[i].fromid})
                  
                    if(Model){
                        let Username = await userdb.findOne({_id:Model.userid})
@@ -328,7 +334,8 @@ const MsgNotify = async(req,res)=>{
                         photolink: picture[0],
                         client: ChatParID[i].client,
                         value:"recent",
-                        online:Username.active
+                        online:Username.active,
+                        
                        }
                        FullChat.push(chat)
 
@@ -352,7 +359,7 @@ const MsgNotify = async(req,res)=>{
            }
            }
 
-              console.log("fullchats "+FullChat.length)
+             console.log("fullchating "+FullChat.length)
 
 
 
@@ -481,7 +488,7 @@ const MsgNotify = async(req,res)=>{
 
             }
           
-          //console.log("chat content "+FullChat[0].content)
+         // console.log("chat content "+FullChat.length)
           return res.status(200).json({"ok":true,"message":`user host empty`,lastchat:FullChat}) 
 
 
