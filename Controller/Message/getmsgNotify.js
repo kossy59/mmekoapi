@@ -29,7 +29,7 @@ const MsgNotify = async(req,res)=>{
 
            if(Chats){
                 Chats.forEach(value1 =>{
-              if(value1.notify === false){
+              if(true){
 
                     if(ChatParID.length < 1){
                     ChatParID.push(value1)
@@ -164,6 +164,8 @@ const MsgNotify = async(req,res)=>{
 
            }
 
+              console.log("fullchats "+FullChat.length)
+
            
           
           
@@ -189,6 +191,10 @@ const MsgNotify = async(req,res)=>{
               }
              })
 
+             console.log("nonChat "+nonchat)
+
+          
+
      
          // get any chat with my userid
           //  let Listofchat = Chats.documents.filter(value=>{
@@ -210,7 +216,7 @@ const MsgNotify = async(req,res)=>{
 
            if(nonchat){
                 nonchat.forEach(value1 =>{
-              if(value1.notify === false){
+              if(true){
 
                     if(ChatParID.length < 1){
                     ChatParID.push(value1)
@@ -345,6 +351,8 @@ const MsgNotify = async(req,res)=>{
 
            }
            }
+
+              console.log("fullchats "+FullChat.length)
 
 
 

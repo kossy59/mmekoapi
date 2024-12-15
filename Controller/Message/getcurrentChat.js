@@ -94,7 +94,14 @@ const createModel = async (req,res)=>{
             // setting them to notified
         
             for(let i = 0; i < unviewing.length; i++){
-                if(unviewing[i].toid === clientid){
+                if(unviewing[i].toid === clientid && clientid !== myid){
+                    unviewing[i].notify = false;
+                    unviewing[i].save()
+                }
+            }
+
+             for(let i = 0; i < unviewing.length; i++){
+                if(unviewing[i].toid === userid  && userid !== myid){
                     unviewing[i].notify = false;
                     unviewing[i].save()
                 }
