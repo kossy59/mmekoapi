@@ -445,6 +445,12 @@ const MsgNotify = async(req,res)=>{
 
                        // Notify.push(notication)
 
+                       for(let i =0; i < FullChat.length; i++){
+                        if(FullChat[i].toid === notication.toid && FullChat[i].fromid === notication.fromid || FullChat[i].fromid === notication.toid && FullChat[i].toid === notication.fromid){
+                          FullChat.splice(i,1)
+                        }
+                       }
+
                         FullChat.push(notication)
                          //console.log(Notify[0])
                           
@@ -478,7 +484,15 @@ const MsgNotify = async(req,res)=>{
                                 client:false
                             }
 
-                            FullChat.push(notication)
+                        for(let i =0; i < FullChat.length; i++){
+                              if(FullChat[i].toid === notication.toid && FullChat[i].fromid === notication.fromid || FullChat[i].fromid === notication.toid && FullChat[i].toid === notication.fromid){
+                                FullChat.splice(i,1)
+                              }
+                       }
+
+                        FullChat.push(notication)
+
+              
                  
                }
             }
