@@ -18,25 +18,43 @@ const MsgNotify = async(req,res)=>{
      try{
         // let Chats = await data.databar.listDocuments(data.dataid,data.msgCol,[sdk.Query.limit(200), sdk.Query.equal("fromid",[userid])])
 
-         let Chats = await messagedb.find({fromid:userid}).exec()
+        
+         let Chatss = await messagedb.find({}).exec()
+          let toChatss = await messagedb.find({toid:userid}).exec()
+
+         let Chats = Chatss.filter(value=>{
+          return value.toid !== userid && value.fromid === userid
+         }
+          )
+
+          let toChats = toChatss.filter(value=>{
+            return value.fromid !== userid && value.toid === userid
+          })
 
           await deleteOldChats()
            let ChatParID = []
+
 
            //List of saturated Chat with Photo Link and names
 
            let FullChat = []
 
+       
+            const fromchat = []
+       
+              console.log("Chats length "+Chats.length)
+
            if(Chats){
+            
                 Chats.forEach(value1 =>{
-              if(true){
+              if(value1.toid !== userid){
 
                     if(ChatParID.length < 1){
                     ChatParID.push(value1)
                     }
 
                 ChatParID.forEach((value2,index) =>{
-                  if(value1.toid === value2.toid){
+                  if(value1.toid === value2.toid && value1.fromid === userid){
                     if(Number(value1.date) > Number(value2.date)){
                       ChatParID[index] = value1
 
@@ -59,21 +77,21 @@ const MsgNotify = async(req,res)=>{
 
             })
            
-            for(let i = 0; i < ChatParID.length; i++ ){
+            // for(let i = 0; i < ChatParID.length; i++ ){
 
-               let allmodel = await models.findOne({_id:ChatParID[i].toid}).exec()
-               let alluser = await userdb.findOne({_id:ChatParID[i].toid}).exec()
+            //    let allmodel = await models.findOne({_id:ChatParID[i].toid}).exec()
+            //    let alluser = await userdb.findOne({_id:ChatParID[i].toid}).exec()
 
-               if(!allmodel && !alluser){
+            //   //  if(!allmodel && !alluser){
 
-                console.log("inside deleting")
-               let sus =  await messagedb.deleteOne({toid:ChatParID[i].toid}).exec()
-                let sus2 =  await messagedb.deleteOne({fomid:ChatParID[i].fomid}).exec()
+            //   //   console.log("inside deleting")
+            //   //  let sus =  await messagedb.deleteOne({toid:ChatParID[i].toid}).exec()
+            //   //   let sus2 =  await messagedb.deleteOne({fomid:ChatParID[i].fomid}).exec()
 
-               console.log("sus "+sus)
-               }
+            //   //  console.log("sus "+sus)
+            //   //  }
              
-            }
+            // }
 
            // console.log(ChatParID)
 
@@ -85,10 +103,11 @@ const MsgNotify = async(req,res)=>{
                 if(ChatParID[i].fromid === userid){
                        console.log("on top database colotion")
                   // let Username = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[ChatParID[i].fromid])])
-                  let Username = await userdb.findOne({_id:ChatParID[i].fromid})
+                  let Username = await models.findOne({userid:ChatParID[i].toid}).exec()
+                  let modeluser = await userdb.findOne({_id:Username.userid}).exec()
                  //  console.log("on top database username colotion")
                   // let Photo = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[ChatParID[i].fromid])])
-                  let Photo = await completedb.findOne({useraccountId:ChatParID[i].fromid})
+                 let Photo = Username.photolink.split(",")
                      // console.log("on top database photo colotion")
                    if(Username){
                     let chat = {
@@ -96,15 +115,17 @@ const MsgNotify = async(req,res)=>{
                         toid: ChatParID[i].toid,
                         content: ChatParID[i].content,
                         date: ChatParID[i].date,
-                        name: Username.firstname,
-                        photolink: Photo.photoLink,
+                        name: Username.name,
+                        photolink: Photo[0],
                         client: ChatParID[i].client,
                         value:"recent",
-                        online:Username.active
+                        online:modeluser.active,
+                        clientid:ChatParID[i].toid,
+                        photostats:"model"
                        }
 
                        
-                       FullChat.push(chat)
+                       fromchat.push(chat)
                    }
              }
                 
@@ -127,23 +148,33 @@ const MsgNotify = async(req,res)=>{
                   if(ChatParID[i].fromid === userid){
 
                   //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[ChatParID[i].fromid])])
-                  let Model = await models.findOne({userid:ChatParID[i].fromid})
+                  let Model = await userdb.findOne({_id:ChatParID[i].toid}).exec()
+                 
                  
                    if(Model){
-                       let Username = await userdb.findOne({_id:Model.userid})
-                      let picture = Model.photolink.split(",")
+
+                    let userphoto = ""
+                    let photo = await completedb.findOne({useraccountId:Model._id}).exec()
+
+                       if(photo){
+                        if(photo.photoLink){
+                          userphoto = photo.photoLink
+                        }
+                       }
                       let chat = {
                         fromid: ChatParID[i].fromid,
                         toid: ChatParID[i].toid,
                         content: ChatParID[i].content,
                         date: ChatParID[i].date,
-                        name: Model.name,
-                        photolink: picture[0],
+                        name: Model.firstname,
+                        photolink: userphoto,
                         client: ChatParID[i].client,
                         value:"recent",
-                        online:Username.active
+                        online:Model.active,
+                      clientid:ChatParID[i].toid,
+                      photostats:"profile"
                        }
-                       FullChat.push(chat)
+                       fromchat.push(chat)
 
                   }
                 }
@@ -154,150 +185,147 @@ const MsgNotify = async(req,res)=>{
 
            // console.log(FullChat)
 
-          //  FullChat.sort((a,b)=> Number(a.date) - Number(b.date))
-
-          //  FullChat.reverse()
-
-         //  let RecentChat = FullChat.slice(0,30)
-
-          // console.log(RecentChat)
-
+         
            }
+          //    fromchat.sort((a,b)=> Number(a.date) - Number(b.date))
 
-             // console.log("fullchats "+FullChat.length)
+          //  fromchat.reverse()
 
-           
+          // let RecentChat1 = fromchat.slice(0,30)
+
+            console.log("fromchat length "+fromchat.length)
           
           
            // if no recent message sent by me check sent to me
-           if(true){
-            
-             let toChats = await messagedb.find({toid:userid}).exec()
-
-             let nonchat = []
-             
-              // check for message that is my id which is to and not equal to fromid
-             toChats.forEach(value1=>{
-
-             // console.log("inside to chat "+value1.toid)
-
-              if(FullChat.length > 0){
-                 FullChat.forEach(value2=>{
-                 // console.log("inside  chat "+value2.fromid)
-                  if(value1.fromid !== value2.toid){
-                     nonchat.push(value1)
-                  
-                  }else{
-                      
-                  }
-                })
-
-              }else{
-                nonchat.push(value1)
-              }
-             })
-
-            // console.log("tochat "+nonchat.length)
-
           
+            const tochatlist = []
+       
+           if(toChats){
+            
+            console.log("tochat length "+toChats.length)
 
-     
-         // get any chat with my userid
+         //get any chat with my userid
           //  let Listofchat = Chats.documents.filter(value=>{
           //   return value.toid === userid || value.toid === userid
           //  })
-             //console.log("model recent chat length "+Chats.length)
-            //  if(!Chats[0]){
-            //  return res.status(200).json({"ok":true,"message":`user host empty`,lastchat:[]})
-            //  }
+          //    console.log("model recent chat length "+Chats.length)
+          //    if(!Chats[0]){
+          //    return res.status(200).json({"ok":true,"message":`user host empty`,lastchat:[]})
+          //    }
 
           
 
-           //list of  chat perID
-           let ChatParID = []
+          // list of  chat perID
+           let ChatParID1 = []
 
-           //List of saturated Chat with Photo Link and names
+          // List of saturated Chat with Photo Link and names
 
           
 
-           if(nonchat){
-                nonchat.forEach(value1 =>{
-              if(true){
+           if(true){
 
-                    if(ChatParID.length < 1){
-                    ChatParID.push(value1)
+            
+           toChats.forEach((value1,index1) =>{
+            console.log("tochat  index1 "+index1)
+              if(value1.fromid !== userid){
+
+                    if(ChatParID1.length <= 0){
+                     ChatParID1.push(value1)
                     }
 
-                ChatParID.forEach((value2,index) =>{
-                  if(value1.fromid === value2.fromid){
+                  //  console.log("chatparid length "+ChatParID1.length)
+
+                    if(ChatParID1.length > 0){
+                        ChatParID1.forEach((value2,index) =>{
+                          console.log("chatpar  index "+index)
+                 
+                  if(value2.fromid === value1.fromid ){
+                    // console.log("adding match")
+                    //  console.log("chatpar id index "+index)
                     if(Number(value1.date) > Number(value2.date)){
-                      ChatParID[index] = value1
+                      // console.log("adding match value1")
+                      
+                      ChatParID1[index] = value1
 
-                    }else{
-                      ChatParID[index] = value2
-
-                    }
-                  }else{
-                      if(Number(value1.date) > Number(value2.date)){
-                      ChatParID.push(value1)
-
-                    }else{
-                      ChatParID.push(value2)
+                     }
+                     else{
+                     // console.log("adding match value2")
+                      ChatParID1[index] = value2
 
                     }
                   }
-                })
+                 else if(value2.fromid !== value1.fromid){
+                  
+                     
+                          // console.log("value1 id "+value1.fromid)
+                          // console.log("value2 id "+value2.fromid)
+                          ChatParID1.push(value1)
+
+                     
+                  }
+                      })
+
+                    }
+
+              
 
               }
 
             })
            
-            for(let i = 0; i < ChatParID.length; i++ ){
+            // for(let i = 0; i < ChatParID1.length; i++ ){
 
-               let allmodel = await models.findOne({_id:ChatParID[i].fromid}).exec()
-               let alluser = await userdb.findOne({_id:ChatParID[i].fromid}).exec()
+            //    let allmodel = await models.findOne({userid:ChatParID[i].fromid}).exec()
+            //    let alluser = await userdb.findOne({_id:allmodel.userid}).exec()
 
-               if(!allmodel && !alluser){
+            //    if(!allmodel && !alluser){
 
-                //console.log("inside deleting")
-               let sus =  await messagedb.deleteOne({toid:ChatParID[i].fromid}).exec()
-                let sus2 =  await messagedb.deleteOne({fomid:ChatParID[i].toid}).exec()
+            //     //console.log("inside deleting")
+            //    let sus =  await messagedb.deleteOne({toid:ChatParID[i].fromid}).exec()
+            //     let sus2 =  await messagedb.deleteOne({fomid:ChatParID[i].toid}).exec()
 
-               //console.log("sus "+sus)
-               }
+            //    //console.log("sus "+sus)
+            //    }
              
-            }
+            // }
 
-           // console.log(ChatParID)
+            console.log("chatparID length "+ChatParID1.length)
 
-            // lets search name and photolink as a client 
+            //lets search name and photolink as a client 
 
-            for(let i = 0; i < ChatParID.length; i++){
+            for(let i = 0; i < ChatParID1.length; i++){
 
-                if(ChatParID[i].client === true){
-                if(ChatParID[i].toid === userid){
+                if(ChatParID1[i].client === true){
+                if(ChatParID1[i].toid === userid){
                        console.log("on top database colotion")
-                  // let Username = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[ChatParID[i].fromid])])
-                  let Username = await userdb.findOne({_id:ChatParID[i].fromid})
-                 //  console.log("on top database username colotion")
-                  // let Photo = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[ChatParID[i].fromid])])
-                  let Photo = await completedb.findOne({useraccountId:ChatParID[i].fromid})
-                     // console.log("on top database photo colotion")
-                   if(Username){
+                   //let Username = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[ChatParID[i].fromid])])
+                  let modelname = await userdb.findOne({_id:ChatParID1[i].fromid}).exec()
+                 
+                  console.log("on top database username colotion")
+                     // let Photo = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[ChatParID[i].fromid])])
+                  let Photo = ""
+                     console.log("on top database photo colotion")
+                   if(modelname){
+                    let photolink = await completedb.findOne({useraccountId:modelname._id}).exec()
+                    if(photolink.photoLink){
+                      Photo = photolink.photoLink
+                    }
                     let chat = {
-                        toid: ChatParID[i].toid,
-                        fromid: ChatParID[i].fromid,
-                        content: ChatParID[i].content,
-                        date: ChatParID[i].date,
-                        name: Username.firstname,
-                        photolink: Photo.photoLink,
-                        client: ChatParID[i].client,
+                        toid: ChatParID1[i].toid,
+                        fromid: ChatParID1[i].fromid,
+                        content: ChatParID1[i].content,
+                        date: ChatParID1[i].date,
+                        name: modelname.firstname,
+                        photolink: Photo,
+                        client: ChatParID1[i].client,
                         value:"recent",
-                        online:Username.active
+                        online:modelname.active,
+                        clientid:ChatParID1[i].fromid,
+                        photostats:"profile"
                        }
 
                        
-                       FullChat.push(chat)
+                       tochatlist.push(chat)
                    }
              }
                 
@@ -306,61 +334,162 @@ const MsgNotify = async(req,res)=>{
                 }
             }
 
-          //  console.log("Under searching names as client for loop")
+           console.log("Under searching names as client for loop")
 
            
 
          
-             // lets search name and photolink as a model 
+             //lets search name and photolink as a model 
 
-             for(let i = 0; i < ChatParID.length; i++){
-              // console.log("inside model forloop "+i)
-              if(ChatParID[i].client === false){
-                //console.log("inside model")
-                  if(ChatParID[i].toid === userid){
+             for(let i = 0; i < ChatParID1.length; i++){
+              console.log("inside model forloop "+i)
+              if(ChatParID1[i].client === false){
+                console.log("inside model")
+                  if(ChatParID1[i].toid === userid){
 
-                  //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[ChatParID[i].fromid])])
-                  let Model = await models.findOne({userid:ChatParID[i].fromid})
+                    //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[ChatParID[i].fromid])])
+                  let Model = await models.findOne({userid:ChatParID1[i].fromid}).exec()
                  
                    if(Model){
-                       let Username = await userdb.findOne({_id:Model.userid})
-                      let picture = Model.photolink.split(",")
+
+                       let userphoto = Model.photolink.split(",")
+
+                      let picture = ""
+
+                      if(userphoto){
+                        
+                          picture = userphoto[0]
+                        
+                      }
                       let chat = {
-                        toid: ChatParID[i].toid,
-                        fromid: ChatParID[i].fromid,
-                        content: ChatParID[i].content,
-                        date: ChatParID[i].date,
+                        toid: ChatParID1[i].toid,
+                        fromid: ChatParID1[i].fromid,
+                        content: ChatParID1[i].content,
+                        date: ChatParID1[i].date,
                         name: Model.name,
-                        photolink: picture[0],
-                        client: ChatParID[i].client,
+                        photolink: picture,
+                        client: ChatParID1[i].client,
                         value:"recent",
-                        online:Username.active,
+                        online:Model.active,
+                        clientid:ChatParID1[i].fromid,
+                        photostats:"model"
                         
                        }
-                       FullChat.push(chat)
+                       tochatlist.push(chat)
 
                   }
                 }
               }
              }
-            //  console.log("Under searching names as model for loop")
+             console.log("Under searching names as model for loop")
 
+             
+          //  console.log(FullChat)
 
-           // console.log(FullChat)
-
-           FullChat.sort((a,b)=> Number(a.date) - Number(b.date))
-
-           FullChat.reverse()
-
-           let RecentChat = FullChat.slice(0,30)
+          
 
           // console.log(RecentChat)
 
            }
            }
 
-             console.log("fullchating "+FullChat.length)
+           // tochatlist.sort((a,b)=> Number(a.date) - Number(b.date))
 
+           //tochatlist.reverse()
+
+           //let RecentChat = tochatlist.slice(0,30)
+
+           // console.log("tochatlist length "+tochatlist.length)
+
+
+           // sepreting the tochat and fromchat
+            const allrecentList = []
+          
+
+           if(fromchat.length > 0 && tochatlist.length > 0){
+              console.log(" value in both tolist and fromlist ")
+            if(tochatlist.length > fromchat.length){
+               console.log(" to list is bigger ")
+              for(let i = 0; i < tochatlist.length; i++){
+                for(let j = 0; j < fromchat.length; j++){
+                    console.log("allrecentList length "+allrecentList.length)
+                    console.log(" client match ")
+                      // we have to choose the latest
+                    if(tochatlist[i].fromid === fromchat[j].toid && tochatlist[i].toid === fromchat[j].fromid ){
+                         if(Number(tochatlist[i].date) > Number(fromchat[j].date)){
+                        allrecentList.push(tochatlist[i])
+                        console.log("allrecentList length inside match on tolist"+allrecentList.length)
+                      }else if(Number(tochatlist[i].date) < Number(fromchat[j].date)){
+                        console.log("allrecentList length inside match fromlist "+allrecentList.length)
+                          allrecentList.push(fromchat[j])
+
+                      }
+                    } else{
+                   console.log("pushing all")
+                   allrecentList.push(tochatlist[i])
+                   allrecentList.push(fromchat[j])
+                  }
+
+                  
+
+                  
+                }
+              }
+
+            //     tochatlist.forEach((tovalue,index) =>{
+            //     fromchat.forEach((fromvalue,index2) =>{
+
+            //       console.log("indextop indexbottom "+index +""+index2)
+
+            //     // if we get message that resembles 
+            //     //console.log("toid client ids "+tovalue.fromid)
+            //     //console.log("fromid client ids "+fromvalue.toid)
+             
+
+            //   })
+            // })
+
+            }else if(fromchat.length > tochatlist.length){
+              
+            }else{
+
+               console.log(" from list is equal ")
+              fromchat.forEach((tovalue,index) =>{
+                tochatlist.forEach((fromvalue,index2) =>{
+
+                // if we get message that resembles 
+                if(tovalue.toid === fromvalue.fromid ){
+                 // we have to choose the latest
+                  if(Number(tovalue.date) > Number(fromvalue.date)){
+                    allrecentList.push(tovalue)
+                  }else{
+                    allrecentList.push(fromvalue)
+                  }
+
+                }else{
+                  allrecentList.push(tovalue)
+                   allrecentList.push(fromvalue)
+                }
+
+              })
+            })
+
+            }
+           }else if(fromchat.length <= 0 && tochatlist.length > 0){
+            tochatlist.forEach(value =>{
+              allrecentList.push(value)
+            })
+           }else if(tochatlist.length <= 0 && fromchat.length > 0){
+            fromchat.forEach(value =>{
+              allrecentList.push(value)
+            })
+           }
+
+           console.log("all recent length "+allrecentList.length)
+
+
+
+  
 
 
         
@@ -368,10 +497,13 @@ const MsgNotify = async(req,res)=>{
            // uread chat section
 
             let  chatting = await messagedb.find({toid:userid}).exec()
-            if(chatting[0]){
+             const ureadchat = []
+
+      if(chatting[0]){
+
                 let Chatss = chatting.filter(value =>{
-            return value.notify === true
-         })
+                return value.notify === true
+                })
 
            let notificationbyuser = []
          
@@ -443,15 +575,8 @@ const MsgNotify = async(req,res)=>{
                                 online:Users.active
                             }
 
-                       // Notify.push(notication)
-
-                       for(let i =0; i < FullChat.length; i++){
-                        if(FullChat[i].toid === notication.toid && FullChat[i].fromid === notication.fromid || FullChat[i].fromid === notication.toid && FullChat[i].toid === notication.fromid){
-                          FullChat.splice(i,1)
-                        }
-                       }
-
-                        FullChat.push(notication)
+                      
+                        ureadchat.push(notication)
                          //console.log(Notify[0])
                           
                 }
@@ -484,13 +609,7 @@ const MsgNotify = async(req,res)=>{
                                 client:false
                             }
 
-                        for(let i =0; i < FullChat.length; i++){
-                              if(FullChat[i].toid === notication.toid && FullChat[i].fromid === notication.fromid || FullChat[i].fromid === notication.toid && FullChat[i].toid === notication.fromid){
-                                FullChat.splice(i,1)
-                              }
-                       }
-
-                        FullChat.push(notication)
+                        ureadchat.push(notication)
 
               
                  
@@ -498,9 +617,55 @@ const MsgNotify = async(req,res)=>{
             }
         }
 
+        
+
       //  console.log("all chat "+FullChat[0].value)
 
-            }
+      }
+
+      if(ureadchat.length > 0 && allrecentList.length > 0){
+        if(ureadchat.length > allrecentList.length ){
+          ureadchat.forEach((unread,index)=>{
+            allrecentList.forEach((recent,index2)=>{
+              if(unread.toid === recent.toid && unread.fromid === recent.fromid || unread.toid === recent.fromid && unread.fromid === recent.toid){
+                FullChat.push(unread)
+              }else{
+                FullChat.push(unread)
+                FullChat.push(recent)
+              }
+            })
+          })
+        }else if(allrecentList.length > ureadchat.length ){
+          allrecentList.forEach((unread,index)=>{
+            ureadchat.forEach((recent,index2)=>{
+              if(unread.toid === recent.toid && unread.fromid === recent.fromid || unread.toid === recent.fromid && unread.fromid === recent.toid){
+                FullChat.push(unread)
+              }else{
+                FullChat.push(unread)
+                FullChat.push(recent)
+              }
+            })
+          })
+        }else{
+          ureadchat.forEach(value=>{
+             FullChat.push(value)
+            
+          })
+
+          allrecentList.forEach(value=>{
+             FullChat.push(value)
+            
+          })
+        }
+      }else if(ureadchat.length <= 0){
+        allrecentList.forEach(value=>{
+          FullChat.push(value)
+        })
+      }else if(allrecentList.length <=0){
+          ureadchat.forEach(value=>{
+          FullChat.push(value)
+        })
+      }
           
          // console.log("chat content "+FullChat.length)
           return res.status(200).json({"ok":true,"message":`user host empty`,lastchat:FullChat}) 
