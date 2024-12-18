@@ -20,7 +20,7 @@ const { Server } = require("socket.io");
 const cors = require('cors')
 const { setInterval } = require('timers')
 
-let myurl = "https://mmekoapi.onrender.com"
+let myurl = "https://mmekosocial.onrender.com"
 //let myurl = "http://localhost:3000"
 
 const corsOptions = {
@@ -134,6 +134,8 @@ io.on('connection', (socket) => {
   app.use('/changepassword',require('./routes/Auth/changepassword'))
   app.use('/getpostcomment',require('./routes/api/comment/Getallcomment'))
   app.use('/getprofilebyid',require('./routes/api/profile/Profile'))
+  app.use('/getverifymodel',require('./routes/api/model/getlivemodel'))
+  app.use('/getmodelbyid',require('./routes/api/model/getmodelbyid'))
   app.use(handleRefresh);
 
   app.use(verifyJwt)
@@ -149,7 +151,6 @@ io.on('connection', (socket) => {
   app.use('/editmoreprofile',require('./routes/api/Profilemore/editprofilemore'))
   app.use('/rejectmodel',require('./routes/api/model/rejectmodel'))
   app.use('/verifymodel',require('./routes/api/model/verifymodel'))
-  app.use('/getverifymodel',require('./routes/api/model/getlivemodel'))
   app.use('/getcurrentchat',require('./routes/api/chat/getchat'))
   app.use('/getmsgnotify',require('./routes/api/chat/getmsgnotify'))
   app.use('/updatenotify',require('./routes/api/chat/updatenotify'))
