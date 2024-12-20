@@ -55,4 +55,11 @@ let check_connected = async (answerid)=>{
   }
  }
 }
-module.exports = {Check_caller, deletebyClient,deletebyCallerid, check_connected};
+
+let deletecallOffline = async(userid)=>{
+    let my_id = `v_id_${userid}`
+
+    await videocalldb.deleteOne({clientid:my_id}).exec()
+    await videocalldb.deleteOne({callerid:my_id}).exec()
+}
+module.exports = {Check_caller, deletebyClient,deletebyCallerid, check_connected, deletecallOffline};

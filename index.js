@@ -19,7 +19,7 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const cors = require('cors')
 const { setInterval } = require('timers')
-let {Check_caller, deletebyClient ,deletebyCallerid, check_connected} = require("./utiils/check_caller")
+let {Check_caller, deletebyClient ,deletebyCallerid, check_connected, deletecallOffline} = require("./utiils/check_caller")
 
 let myurl = "https://mmekosocial.onrender.com"
 //let myurl = "http://localhost:3000"
@@ -70,6 +70,7 @@ io.on('connection', (socket) => {
     if(userid){
        
        await checkuser(userid)
+       await deletecallOffline(userid)
        socket.id = userid
        IDS.userid = userid
        console.log('a user connected '+ socket.id);
@@ -168,8 +169,10 @@ io.on('connection', (socket) => {
 
   socket.on('disconnect',async()=>{
    await userdisconnect(socket.id)
+   await deletecallOffline(socket.id)
    socket.disconnect()
    console.log('user disconnected ' + socket.id)
+
   })
    
   });
