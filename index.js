@@ -19,6 +19,7 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const cors = require('cors')
 const { setInterval } = require('timers')
+let {Check_caller, deletebyClient ,deletebyCallerid, check_connected} = require("./utiils/check_caller")
 
 let myurl = "https://mmekosocial.onrender.com"
 //let myurl = "http://localhost:3000"
@@ -81,7 +82,7 @@ io.on('connection', (socket) => {
   
     socket.on("message",async (data)=>{
 
-         console.log(data);
+         //console.log(data);
          await Livechats(data)
          let info = await MYID(data.fromid)
          let name ;
@@ -97,6 +98,56 @@ io.on('connection', (socket) => {
          //socket.to("LiveChat").emit(data)
          socket.broadcast.emit("LiveChat",{name,photolink,data:data})
          
+
+    })
+
+    socket.on("videocall",async (data)=>{
+      let myid = data.caller_id
+      let answerid = data.answer_id
+      let video_user =  data.my_id
+      let callname = data.name
+
+      // set caller socket
+
+      if(myid === video_user){
+
+        let responds = await Check_caller(answerid, myid)
+        if(data.answer_message === "reject"){
+          await deletebyClient(myid)
+          data.answer_message = "call ended"
+          socket.broadcast.emit(answerid,{data:data})
+
+        }else if(responds === "calling"){
+          data.answer_message = "calling"
+          data.message = `incomming caller ${callname}`
+          //console.log("calling user "+data.answer_id)
+          socket.broadcast.emit(answerid,{data:data})
+
+        }else if(responds === "user_busy"){
+
+          data.answer_message = "user busy"
+          socket.broadcast.emit(myid,{data:data})
+
+        }else if(responds === "store_sdb"){
+           socket.broadcast.emit(answerid,{data:data})
+        }
+      }
+
+
+      if(answerid === video_user){
+        let responds = await check_connected(answerid)
+        if(data.answer_message === "reject"){
+          await deletebyCallerid(answerid)
+          data.answer_message = "call ended"
+          socket.broadcast.emit(myid,{data:data})
+        }else if(responds === false){
+          socket.broadcast.emit(myid,{data:data})
+        }else if(responds === true){
+          socket.broadcast.emit(myid,{data:data})
+        }
+      }
+
+      
 
     })
 

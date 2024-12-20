@@ -27,9 +27,14 @@ const MsgNotify = async(req,res)=>{
          }
           )
 
+       
+
+         // console.log("chats length "+Chats.length)
+
           let toChats = toChatss.filter(value=>{
             return value.fromid !== userid && value.toid === userid
           })
+
 
           await deleteOldChats()
            let ChatParID = []
