@@ -432,7 +432,7 @@ const MsgNotify = async(req,res)=>{
                     } else{
                    console.log("pushing all")
                    allrecentList.push(tochatlist[i])
-                   allrecentList.push(fromchat[j])
+                  //  allrecentList.push(fromchat[j])
                   }
 
                   
@@ -461,7 +461,7 @@ const MsgNotify = async(req,res)=>{
                       }
                     } else{
                    console.log("pushing all")
-                   allrecentList.push(tochatlist[i])
+                  //  allrecentList.push(tochatlist[i])
                    allrecentList.push(fromchat[j])
                   }
 
@@ -489,7 +489,7 @@ const MsgNotify = async(req,res)=>{
 
                 }else{
                   allrecentList.push(tovalue)
-                   allrecentList.push(fromvalue)
+                  // allrecentList.push(fromvalue)
                 }
 
               })
