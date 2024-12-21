@@ -115,13 +115,14 @@ io.on('connection', (socket) => {
         let responds = await Check_caller(answerid, myid)
         if(data.answer_message === "reject"){
           await deletebyClient(myid)
-          data.answer_message = "call ended"
+          data.message = "call ended"
+          data.answer_message = "reject"
           socket.broadcast.emit(answerid,{data:data})
 
         }else if(responds === "calling"){
           data.answer_message = "calling"
           data.message = `incomming caller ${callname}`
-          //console.log("calling user "+data.answer_id)
+          console.log("calling user "+data.sdp_c_offer)
           socket.broadcast.emit(answerid,{data:data})
 
         }else if(responds === "user_busy"){
@@ -139,7 +140,7 @@ io.on('connection', (socket) => {
         let responds = await check_connected(answerid)
         if(data.answer_message === "reject"){
           await deletebyCallerid(answerid)
-          data.answer_message = "call ended"
+          data.answer_message = "reject"
           socket.broadcast.emit(myid,{data:data})
         }else if(responds === false){
           socket.broadcast.emit(myid,{data:data})

@@ -420,7 +420,7 @@ const MsgNotify = async(req,res)=>{
                     console.log("allrecentList length "+allrecentList.length)
                     console.log(" client match ")
                       // we have to choose the latest
-                    if(tochatlist[i].fromid === fromchat[j].toid && tochatlist[i].toid === fromchat[j].fromid ){
+                    if(tochatlist[i].fromid === fromchat[j].toid){
                          if(Number(tochatlist[i].date) > Number(fromchat[j].date)){
                         allrecentList.push(tochatlist[i])
                         console.log("allrecentList length inside match on tolist"+allrecentList.length)
@@ -441,25 +441,41 @@ const MsgNotify = async(req,res)=>{
                 }
               }
 
-            //     tochatlist.forEach((tovalue,index) =>{
-            //     fromchat.forEach((fromvalue,index2) =>{
+            }
+            
+            if(fromchat.length > tochatlist.length){
 
-            //       console.log("indextop indexbottom "+index +""+index2)
+               for(let j = 0; i < fromchat.length; i++){
+                for(let i = 0; j < tochatlist.length; j++){
+                    console.log("allrecentList length "+allrecentList.length)
+                    console.log(" client match ")
+                      // we have to choose the latest
+                    if(tochatlist[i].fromid === fromchat[j].toid ){
+                         if(Number(tochatlist[i].date) > Number(fromchat[j].date)){
+                        allrecentList.push(tochatlist[i])
+                        console.log("allrecentList length inside match on tolist"+allrecentList.length)
+                      }else if(Number(tochatlist[i].date) < Number(fromchat[j].date)){
+                        console.log("allrecentList length inside match fromlist "+allrecentList.length)
+                          allrecentList.push(fromchat[j])
 
-            //     // if we get message that resembles 
-            //     //console.log("toid client ids "+tovalue.fromid)
-            //     //console.log("fromid client ids "+fromvalue.toid)
-             
+                      }
+                    } else{
+                   console.log("pushing all")
+                   allrecentList.push(tochatlist[i])
+                   allrecentList.push(fromchat[j])
+                  }
 
-            //   })
-            // })
+                  
 
-            }else if(fromchat.length > tochatlist.length){
+                  
+                }
+              }
               
-            }else{
+            }
+            if(fromchat.length === tochatlist.length){
 
                console.log(" from list is equal ")
-              fromchat.forEach((tovalue,index) =>{
+                fromchat.forEach((tovalue,index) =>{
                 tochatlist.forEach((fromvalue,index2) =>{
 
                 // if we get message that resembles 
@@ -480,11 +496,14 @@ const MsgNotify = async(req,res)=>{
             })
 
             }
-           }else if(fromchat.length <= 0 && tochatlist.length > 0){
+           }
+            if(fromchat.length <= 0 && tochatlist.length > 0){
             tochatlist.forEach(value =>{
               allrecentList.push(value)
             })
-           }else if(tochatlist.length <= 0 && fromchat.length > 0){
+           }
+           
+           if(tochatlist.length <= 0 && fromchat.length > 0){
             fromchat.forEach(value =>{
               allrecentList.push(value)
             })

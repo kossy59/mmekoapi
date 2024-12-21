@@ -90,6 +90,11 @@ const markertdata = new Scheme({
         required : false,
        
     },
+    exclusive_verify:{
+        type:Boolean,
+        required : false,
+        default:false
+    },
     
 })
 

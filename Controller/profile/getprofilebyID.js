@@ -45,6 +45,7 @@ const readProfile = async (req,res)=>{
 
                let user = {
                 userid:du._id,
+                exclusive:du.exclusive_verify,
                 username:`${du.firstname} ${du.lastname}`,
                 admin:du.admin,
                 userphoto:com.photoLink,
