@@ -34,12 +34,14 @@ let Check_caller = async (answerid,callerid)=>{
 let deletebyClient = async (clientid)=>{
 
     await videocalldb.deleteOne({clientid:clientid}).exec()
+    await videocalldb.deleteOne({callerid:clientid}).exec()
 
 }
 
 let deletebyCallerid = async (answerid)=>{
 
     await videocalldb.deleteOne({callerid:answerid}).exec()
+    await videocalldb.deleteOne({clientid:answerid}).exec()
 
 }
 

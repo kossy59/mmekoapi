@@ -102,27 +102,76 @@ io.on('connection', (socket) => {
 
     })
 
-    socket.on("videocall",async (data)=>{
+    socket.on("videocall",async (data,arkFunction)=>{
       let myid = data.caller_id
       let answerid = data.answer_id
       let video_user =  data.my_id
       let callname = data.name
+
+      let calloffer = []
 
       // set caller socket
 
       if(myid === video_user){
 
         let responds = await Check_caller(answerid, myid)
+
         if(data.answer_message === "reject"){
           await deletebyClient(myid)
           data.message = "call ended"
           data.answer_message = "reject"
           socket.broadcast.emit(answerid,{data:data})
 
+        }else if(responds === "store_sdb"){
+
+          if(data.offer_can){
+            console.log("we got offer can")
+            socket.broadcast.emit(`${answerid}__offer`,data.offer_can)
+          }
+
         }else if(responds === "calling"){
           data.answer_message = "calling"
           data.message = `incomming caller ${callname}`
           console.log("calling user "+data.sdp_c_offer)
+          if(data.sdp_c_offer){
+           
+            let info = calloffer.find(value=>{
+              return value.callerid === data.caller_id && value.answerid === data.answer_id
+            })
+            if(!info){
+               console.log(" string offer sdp user")
+              let datas = {
+              callerid : data.caller_id,
+              answerid : data.answer_id,
+              sdp_c_offer : data.sdp_c_offer
+            }
+
+            calloffer.push(datas)
+              
+            }
+            
+          }
+
+           if(data.offer_can){
+            console.log("sending offer can")
+
+            socket.broadcast.emit(`${answerid}_offer`,data.offer_can)
+
+            //  let info = calloffer.find(value=>{
+            //   return value.callerid === data.caller_id && value.answerid === data.answer_id
+            // })
+            // if(!info){
+            //   let datas = {
+            //   callerid : data.caller_id,
+            //   answerid : data.answer_id,
+            //   answer_can : data.offer_can
+            // }
+
+            // calloffer.push(datas)
+              
+            // }
+           
+             }
           socket.broadcast.emit(answerid,{data:data})
 
         }else if(responds === "user_busy"){
@@ -137,14 +186,86 @@ io.on('connection', (socket) => {
 
 
       if(answerid === video_user){
+        
         let responds = await check_connected(answerid)
         if(data.answer_message === "reject"){
+          console.log("inside anser reject test "+data.answer_message)
           await deletebyCallerid(answerid)
           data.answer_message = "reject"
           socket.broadcast.emit(myid,{data:data})
         }else if(responds === false){
-          socket.broadcast.emit(myid,{data:data})
+          console.log("answer sdp "+data.sdp_a_offer)
+          console.log("answer sdp "+data.answer_can)
+
+          let datas = calloffer.find(value=>{
+             return value.callerid === data.caller_id && value.answerid === data.answer_id
+
+          })
+
+          if(datas){
+           if(datas.sdp_c_offer){
+
+            console.log("sending offer sdp")
+            let info = {
+            sdp_c_offer : datas.sdp_c_offer
+          
+           }
+            arkFunction(info)
+
+           }
+          
+          }
+
+          if(data.sdp_a_offer && data.answer_can){
+           
+             socket.broadcast.emit(`${myid}_answeroffer`,{sdp:data.sdp_a_offer,offer:data.answer_can})
+
+          }
+
+          // if(data.answer_can){
+          //   let offer = data.answer_can
+          
+          //   socket.broadcast.emit(`${myid}_answerice`,data.answer_can)
+
+          // }
+
+           socket.broadcast.emit(myid,{data:data})
+         
         }else if(responds === true){
+          console.log("answer sdp "+data.sdp_a_offer)
+          console.log("answer sdp "+data.answer_can)
+          
+           let datas = calloffer.find(value=>{
+             return value.callerid === data.caller_id && value.answerid === data.answer_id
+
+          })
+
+          if(datas){
+           if(datas.sdp_c_offer){
+            console.log("sending offer sdp")
+
+            let info = {
+            sdp_c_offer : datas.sdp_c_offer
+          
+           }
+            arkFunction(info)
+
+           }
+          
+          }
+           if(data.sdp_a_offer){
+            console.log("sending  answer sdp offer")
+            let offer = data.sdp_a_offer
+             socket.broadcast.emit(`${myid}_answeroffer`,offer)
+
+          }
+
+          if(data.answer_can){
+            console.log("sending  answer ice can offer")
+            let offer = data.answer_can
+            socket.broadcast.emit(`${myid}_answerice`,offer)
+
+          }
           socket.broadcast.emit(myid,{data:data})
         }
       }
