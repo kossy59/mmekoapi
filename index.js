@@ -235,24 +235,24 @@ io.on('connection', (socket) => {
           console.log("answer sdp "+data.sdp_a_offer)
           console.log("answer sdp "+data.answer_can)
           
-           let datas = calloffer.find(value=>{
-             return value.callerid === data.caller_id && value.answerid === data.answer_id
+           //let datas = calloffer.find(value=>{
+             //return value.callerid === data.caller_id && value.answerid === data.answer_id
 
-          })
+         // })
 
-          if(datas){
-           if(datas.sdp_c_offer){
-            console.log("sending offer sdp")
+         // if(datas){
+          // if(datas.sdp_c_offer){
+            //console.log("sending offer sdp")
 
-            let info = {
-            sdp_c_offer : datas.sdp_c_offer
+            //let info = {
+            //sdp_c_offer : datas.sdp_c_offer
           
-           }
-            arkFunction(info)
+         //  }
+            //arkFunction(info)
 
-           }
+          // }
           
-          }
+         // }
            if(data.sdp_a_offer){
             console.log("sending  answer sdp offer")
             let offer = data.sdp_a_offer
