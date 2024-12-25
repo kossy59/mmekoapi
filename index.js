@@ -126,7 +126,7 @@ io.on('connection', (socket) => {
 
           if(data.offer_can){
             console.log("we got offer can")
-            socket.broadcast.emit(`${answerid}__offer`,data.offer_can)
+            socket.broadcast.emit(`${answerid}_calloffer`,{offer:data.offer_can})
           }
 
         }else if(responds === "calling"){
@@ -154,7 +154,8 @@ io.on('connection', (socket) => {
 
            if(data.offer_can){
             console.log("sending offer can")
-
+            socket.broadcast.emit(`${answerid}_calloffer`,{offer:data.offer_can})
+           
             socket.broadcast.emit(`${answerid}_offer`,data.offer_can)
 
             //  let info = calloffer.find(value=>{
@@ -197,30 +198,32 @@ io.on('connection', (socket) => {
           console.log("answer sdp "+data.sdp_a_offer)
           console.log("answer sdp "+data.answer_can)
 
-          let datas = calloffer.find(value=>{
-             return value.callerid === data.caller_id && value.answerid === data.answer_id
+          // let datas = calloffer.find(value=>{
+          //    return value.callerid === data.caller_id && value.answerid === data.answer_id
 
-          })
+          // })
 
-          if(datas){
-           if(datas.sdp_c_offer){
+          // if(datas){
+          //  if(datas.sdp_c_offer){
 
-            console.log("sending offer sdp")
-            let info = {
-            sdp_c_offer : datas.sdp_c_offer
+          //   console.log("sending offer sdp")
+          //   let info = {
+          //   sdp_c_offer : datas.sdp_c_offer
           
-           }
-            arkFunction(info)
+          //  }
+          //   arkFunction(info)
 
-           }
+          //  }
           
-          }
+          // }
 
           if(data.sdp_a_offer && data.answer_can){
            
              socket.broadcast.emit(`${myid}_answeroffer`,{sdp:data.sdp_a_offer,offer:data.answer_can})
 
           }
+
+        
 
           // if(data.answer_can){
           //   let offer = data.answer_can
@@ -235,37 +238,42 @@ io.on('connection', (socket) => {
           console.log("answer sdp "+data.sdp_a_offer)
           console.log("answer sdp "+data.answer_can)
           
-           let datas = calloffer.find(value=>{
-             return value.callerid === data.caller_id && value.answerid === data.answer_id
+          //  let datas = calloffer.find(value=>{
+          //    return value.callerid === data.caller_id && value.answerid === data.answer_id
 
-          })
+          // })
 
-          if(datas){
-           if(datas.sdp_c_offer){
-            console.log("sending offer sdp")
+          // if(datas){
+          //  if(datas.sdp_c_offer){
+          //   console.log("sending offer sdp")
 
-            let info = {
-            sdp_c_offer : datas.sdp_c_offer
+          //   let info = {
+          //   sdp_c_offer : datas.sdp_c_offer
           
-           }
-            arkFunction(info)
+          //  }
+          //   arkFunction(info)
 
-           }
+          //  }
           
-          }
-           if(data.sdp_a_offer){
-            console.log("sending  answer sdp offer")
-            let offer = data.sdp_a_offer
-             socket.broadcast.emit(`${myid}_answeroffer`,offer)
+          // }
+          // if(data.sdp_a_offer){
+           
+          //    socket.broadcast.emit(`${myid}_answeroffer`,{sdp:data.sdp_a_offer,offer:""})
+
+          // }
+
+           if(data.answer_can){
+           
+             socket.broadcast.emit(`${myid}_answeroffer`,{offer:data.answer_can})
 
           }
 
-          if(data.answer_can){
-            console.log("sending  answer ice can offer")
-            let offer = data.answer_can
-            socket.broadcast.emit(`${myid}_answerice`,offer)
+          // if(data.answer_can){
+          //   console.log("sending  answer ice can offer")
+          //   let offer = data.answer_can
+          //   socket.broadcast.emit(`${myid}_answerice`,offer)
 
-          }
+          // }
           socket.broadcast.emit(myid,{data:data})
         }
       }
