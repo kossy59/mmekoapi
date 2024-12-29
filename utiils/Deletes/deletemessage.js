@@ -10,7 +10,7 @@ let deleteMessage = async()=>{
 
     let messageID = []
 
-    let today = new Date
+    let today = new Date()
 
     messages.forEach(value =>{
         let expireDate = new Date(Number(value._id.getTimestamp()))

@@ -10,6 +10,7 @@ const readProfile = async (req,res)=>{
   
     const userid = req.body.userid;
       let dues;
+      let exclusive = false
 
    
    // let data = await connectdatabase()
@@ -44,6 +45,12 @@ const readProfile = async (req,res)=>{
                }else{
                 ISmodel = false;
                }
+
+               if(du.exclusive_verify){
+                exclusive = true
+               }else{
+                exclusive = false
+               }
         
                if(!du){
                 return res.status(409).json({"ok":false,'message': 'current user can not edit this post!!'});
@@ -51,13 +58,14 @@ const readProfile = async (req,res)=>{
                }
 
                dues = du.toObject()
-
+               dues.exclusive = exclusive;
                dues.model = ISmodel;
                if(modelava){
                     let images = modelava.photolink.split(",")
                      dues.modelID = modelava._id
                      dues.modelphotolink = images[0]
                      dues.modelname = modelava.name
+
                }
              
 

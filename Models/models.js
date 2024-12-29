@@ -97,12 +97,6 @@ const markertdata = new Scheme({
         type:String,
         required : true
     },
-
-    document:{
-        type:String,
-        required : true
-    },
-
     
 })
 

@@ -109,8 +109,6 @@ const createModel = async (req,res)=>{
             hosttype = hosttype1
            }
 
-
-            currentuser.verify = "notlive"
             currentuser.age = age;
             currentuser.location = location
             currentuser.price = price;

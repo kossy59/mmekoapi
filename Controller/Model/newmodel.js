@@ -22,7 +22,6 @@ const createModel = async (req,res)=>{
     let timeava = req.body.timeava
     let daysava = req.body.daysava
     let drink = req.body.drink
-    let document = req.body.document
     let hosttype = req.body.hosttype
    
     if(!userid){
@@ -46,10 +45,10 @@ const createModel = async (req,res)=>{
             return res.status(409).json({"ok":false,"message":`user can not create model`})
            }
 
-          let model =  {
+           let model =  {
             userid,
             photolink,
-            verify:'notlive',
+            verify:'live',
             name,
             age,
             location,
@@ -65,7 +64,6 @@ const createModel = async (req,res)=>{
             gender,
             timeava,
             daysava,
-            document,
             hosttype
 
             }
