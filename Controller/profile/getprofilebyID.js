@@ -6,6 +6,8 @@ const completedb = require("../../Models/usercomplete")
 const commentdb = require("../../Models/comment")
 const likedb = require("../../Models/like")
 const postdb = require("../../Models/post")
+let exclusivedb = require("../../Models/exclusivedb")
+let followersdb = require("../../Models/followers")
 
 const readProfile = async (req,res)=>{
 
@@ -56,10 +58,27 @@ const readProfile = async (req,res)=>{
                 gender:du.gender,
                 post:[],
                 firstname:du.firstname,
-                lastname:du.lastname  
+                lastname:du.lastname,
+                exclusive_content:[],
+                followers:[],
+                joined_month:`${du._id.getTimestamp().getMonth()}`,
+                joined_year:`${du._id.getTimestamp().getFullYear()}`
                }
 
-              // console.log(user)
+               console.log("date joined "+user.joined_month)
+               console.log("date joined "+user.joined_year)
+
+              let exclusiveData = await exclusivedb.find({userid:userid}).exec()
+
+              if(exclusiveData){
+                user.exclusive_content = exclusiveData
+              }
+
+              let followers = await followersdb.find({userid:userid}).exec()
+
+              if(followers){
+                user.followers = followers
+              }
 
               
 

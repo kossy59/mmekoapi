@@ -76,7 +76,6 @@ const createModel = async (req,res)=>{
                  daysava : currentuser.daysava,
                  hosttype : currentuser.hosttype,
                  userid: currentuser.userid,
-                 document:currentuser.document,
                  add : added,
                  active: modState.active
 
