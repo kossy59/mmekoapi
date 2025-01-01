@@ -12,7 +12,7 @@ let followersdb = require("../../Models/followers")
 const readProfile = async (req,res)=>{
 
     const userid = req.body.userid;
-   
+     let likecount = 0
    // let data = await connectdatabase()
 
     try{
@@ -62,7 +62,8 @@ const readProfile = async (req,res)=>{
                 exclusive_content:[],
                 followers:[],
                 joined_month:`${du._id.getTimestamp().getMonth()}`,
-                joined_year:`${du._id.getTimestamp().getFullYear()}`
+                joined_year:`${du._id.getTimestamp().getFullYear()}`,
+                likecount:0
                }
 
                console.log("date joined "+user.joined_month)
@@ -180,10 +181,13 @@ const readProfile = async (req,res)=>{
                    likeDB.forEach(value1 =>{
                     if(String(value.postid) === String(value1.postid)){
                         user.post[index].like.push(value1)
+                        likecount = likecount + 1
                     }
                 })
 
             })
+
+        user.likecount = likecount
 
 
             return res.status(200).json({"ok":true,"message":`All Post`,profile:user})
