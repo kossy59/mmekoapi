@@ -21,9 +21,10 @@ const createModel = async (req,res)=>{
         }
        
         let followers = await followerdb.find({userid:userid}).exec()
-
+        //console.log("getting follower")
         if(followers){
 
+           // console.log("got the follower")
             for(let i = 0; i < followers.length; i++){
                let canmessage = false
                let modelid = ""
@@ -58,9 +59,9 @@ const createModel = async (req,res)=>{
         }
 
         let followings = await followerdb.find({followerid:userid}).exec()
-
+       // console.log("getting follower")
         if(followings){
-
+            //console.log("got the followings")
             for(let i = 0; i < followings.length; i++){
                let canmessage = false
                let modelid = ""
@@ -68,15 +69,18 @@ const createModel = async (req,res)=>{
                let  username = await userdb.findOne({_id:followings[i].userid}).exec()
                let  model = await modeldb.findOne({userid:followings[i].userid}).exec()
 
-               
+              // console.log("under following model")
                 if(username){
+                   // console.log("inside there is user")
                    let photo = await photodb.findOne({useraccountId:followings[i].userid}).exec()
                     if(model){
+                       // console.log("inside she is model")
                         canmessage = true
-                        modelid = model._id
+                        modelid = model.userid
                     }
 
                     if(photo){
+                       // console.log("inside has photo")
                         photolink = photo.photoLink
                     }
 
@@ -85,7 +89,7 @@ const createModel = async (req,res)=>{
                         image : photolink,
                         canmessage:canmessage,
                         modelid:modelid,
-                        id:followers[i].followerid,
+                        id:followings[i].userid,
                         following:true
                     }
 
@@ -98,9 +102,9 @@ const createModel = async (req,res)=>{
         return res.status(200).json({"ok":true,"message":`followed successfully`, data:follows})
       
           
-          }catch(err){
+    }catch(err){
            return res.status(500).json({"ok":false,'message': `${err.message}!`});
-       }
+    }
 }
 
 module.exports = createModel
