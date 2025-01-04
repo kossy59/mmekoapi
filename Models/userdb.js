@@ -95,6 +95,11 @@ const markertdata = new Scheme({
         required : false,
         default:false
     },
+    dob:{
+        type:String,
+        required : false,
+        
+    },
     
 })
 

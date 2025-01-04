@@ -324,6 +324,8 @@ io.on('connection', (socket) => {
 
   app.use(verifyJwt)
   app.use('/model',require('./routes/api/model/models'))
+  app.use('/follow',require('./routes/api/follow/follower'))
+  app.use('/getfollowers',require('./routes/api/follow/get_followers'))
   app.use('/postdocument',require('./routes/api/model/postdocument'))
   app.use('/editmodel',require('./routes/api/model/editemodel'))
   app.use('/getadminhost',require('./routes/api/model/hostforadmin'))

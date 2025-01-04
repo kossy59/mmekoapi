@@ -8,31 +8,22 @@ const likedb = require("../../Models/like")
 const postdb = require("../../Models/post")
 let exclusivedb = require("../../Models/exclusivedb")
 let followersdb = require("../../Models/followers")
+let modeldb = require("../../Models/models")
 
 const readProfile = async (req,res)=>{
 
     const userid = req.body.userid;
+    let clientid = req.body.clientid;
    
-   // let data = await connectdatabase()
+ 
 
     try{
 
-            // let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
-            // let  comdb = await data.databar.listDocuments(data.dataid,data.userincol)
-            // let  commentDB = await data.databar.listDocuments(data.dataid,data.commentCol)
-            // let  likeDB = await data.databar.listDocuments(data.dataid,data.likeCol)
-            // let  postDB = await data.databar.listDocuments(data.dataid,data.postCol)
-
-            // let du = dupplicate.documents.find(value=>{
-            //     return value.$id === userid
-            //    })
+           
               
                let du = await userdb.findOne({_id:userid}).exec()
               
 
-            //    let com = comdb.documents.find(value=>{
-            //     return value.useraccountId === userid
-            //    })
 
                let com = await completedb.findOne({useraccountId:userid}).exec()
                let commentDB = await commentdb.find().exec()
@@ -44,6 +35,12 @@ const readProfile = async (req,res)=>{
                }
 
                 let postDB = await postdb.find({userid:userid}).exec()
+
+                let dob = "12/06/1992"
+
+                if(du.dob){
+                  dob = du.dob
+                }
 
                let user = {
                 userid:du._id,
@@ -62,11 +59,15 @@ const readProfile = async (req,res)=>{
                 exclusive_content:[],
                 followers:[],
                 joined_month:`${du._id.getTimestamp().getMonth()}`,
-                joined_year:`${du._id.getTimestamp().getFullYear()}`
+                joined_year:`${du._id.getTimestamp().getFullYear()}`,
+                following:false,
+                ismodel:false,
+                modelid:"",
+                modeltype:"",
+                dob:dob
                }
 
-               console.log("date joined "+user.joined_month)
-               console.log("date joined "+user.joined_year)
+             
 
               let exclusiveData = await exclusivedb.find({userid:userid}).exec()
 
@@ -79,6 +80,28 @@ const readProfile = async (req,res)=>{
               if(followers){
                 user.followers = followers
               }
+
+              if(clientid){
+
+                let isFollowed = followers.find(value=>{
+                    return String(value.followerid) === String(clientid)
+                  })
+
+                  if(isFollowed){
+                    user.following = true
+                  }
+
+              }
+
+              let ismodel = await modeldb.findOne({userid:userid}).exec()
+
+              if(ismodel){
+                user.ismodel = true
+                user.modelid = ismodel._id
+                user.modeltype = ismodel.hosttype
+              }
+
+             
 
               
 
@@ -101,49 +124,7 @@ const readProfile = async (req,res)=>{
 
                }
 
-            //    for(let i = 0; i < postDB.documents.length; i++){
-
-            //     if(postDB.documents[i].userid === du.$id){
-            //         con = {
-            //             content:postDB.documents[i].content,
-            //             postphoto: `${postDB.documents[i].postlink}`,
-            //             posttime: `${postDB.documents[i].posttime}`,
-            //             posttype: `${postDB.documents[i].posttype}`,
-            //             postid: `${postDB.documents[i].$id}`,
-            //             userid:du.$id,
-            //             active:du.active,
-            //             comment:[],
-            //             like:[]
-            //         }
-            //         user.post.push(con)
-            //     }
-
-            //    }
-
-
-           
-
-
-
-            //    for(let i = 0; i<user.post.length; i++){
-                
-            //     if(commentDB.documents.length <= 0){
-                    
-            //         continue;
-                    
-            //     }else{
-
-            //         for(let j = 0; j < commentDB.documents.length; j++){
-            //         if(user.post[i].postid === commentDB.documents[j].postid){
-            //         user.post[i].comment.push(commentDB.documents[j])
-            //         }
-
-            //       }
-            //     }
-                
-            //      }
-
-             
+          
 
             user.post.forEach((value, index) =>{
              
@@ -159,22 +140,6 @@ const readProfile = async (req,res)=>{
 
              
 
-            // for(let i = 0; i<user.post.length; i++){
-
-            //     if(likeDB.documents.length <= 0){
-  
-            //      continue;
-                  
-            //     }else{
-  
-            //       for(let j = 0; j < likeDB.documents.length; j++){
-            //        if(user.post[i].postid === likeDB.documents[j].postid){
-            //            user.post[i].like.push(likeDB.documents[j])
-            //        }
-  
-            //       }
-            //   }
-            //   }
 
                  user.post.forEach((value, index) =>{
                    likeDB.forEach(value1 =>{

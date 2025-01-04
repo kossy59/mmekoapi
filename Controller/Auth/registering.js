@@ -19,10 +19,11 @@ const handleNewUser = async (req,res)=>{
     const state = req.body.state;
     const age = req.body.age;
     const country = req.body.country;
+    const dob = req.body.dob
 
    //let data = await connectdatabase()
     
-    if(!firstname && !lastname && !gender && !email && !password && !state && !age && country && !nickname ){
+    if(!firstname && !lastname && !gender && !email && !password && !state && !age && country && !nickname && !dob){
         return res.status(400).json({"ok":false,'message': 'Registeration not complete!!'})
     }
     //let dupplicate;
@@ -124,7 +125,8 @@ const handleNewUser = async (req,res)=>{
             age:age,
             admin:false,
             passcode:'',
-            balance:''
+            balance:'',
+            dob:dob
         }
 
         let user = await userdb.create(db);

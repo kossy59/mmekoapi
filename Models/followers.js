@@ -13,14 +13,6 @@ const markertdata = new Scheme({
         required : false
     },
 
-     new_follower:{
-        type:Boolean,
-        required : false
-    },
-
-
-   
-  
   
 })
 
