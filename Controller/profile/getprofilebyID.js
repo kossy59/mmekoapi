@@ -16,6 +16,8 @@ const readProfile = async (req,res)=>{
     let clientid = req.body.clientid;
    
  
+     let likecount = 0
+   // let data = await connectdatabase()
 
     try{
 
@@ -64,7 +66,8 @@ const readProfile = async (req,res)=>{
                 ismodel:false,
                 modelid:"",
                 modeltype:"",
-                dob:dob
+                dob:dob,
+                likecount:0
                }
 
              
@@ -145,10 +148,13 @@ const readProfile = async (req,res)=>{
                    likeDB.forEach(value1 =>{
                     if(String(value.postid) === String(value1.postid)){
                         user.post[index].like.push(value1)
+                        likecount = likecount + 1
                     }
                 })
 
             })
+
+        user.likecount = likecount
 
 
             return res.status(200).json({"ok":true,"message":`All Post`,profile:user})
