@@ -104,25 +104,30 @@ const MsgNotify = async(req,res)=>{
 
             for(let i = 0; i < ChatParID.length; i++){
 
-                if(ChatParID[i].client === true){
                 if(ChatParID[i].fromid === userid){
                        console.log("on top database colotion")
                   // let Username = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[ChatParID[i].fromid])])
-                  let Username = await models.findOne({userid:ChatParID[i].toid}).exec()
-                  let modeluser = await userdb.findOne({_id:Username.userid}).exec()
+                  let Username = await userdb.findOne({_id:ChatParID[i].toid}).exec()
+                  let modeluser = await userdb.findOne({_id:Username._id}).exec()
                  //  console.log("on top database username colotion")
                   // let Photo = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[ChatParID[i].fromid])])
-                 let Photo = Username.photolink.split(",")
+                
+                 
                      // console.log("on top database photo colotion")
                    if(Username){
+                    let Photo = ""
+                    let poto = await completedb.findOne({useraccountId:ChatParID[i].toid}).exec()
+
+                    if(poto){
+                      Photo = poto.photoLink
+                    }
                     let chat = {
                         fromid: ChatParID[i].fromid,
                         toid: ChatParID[i].toid,
                         content: ChatParID[i].content,
                         date: ChatParID[i].date,
-                        name: Username.name,
-                        photolink: Photo[0],
-                        client: ChatParID[i].client,
+                        name:`${ Username.firstname} ${ Username.lastname}`,
+                        photolink: Photo,
                         value:"recent",
                         online:modeluser.active,
                         clientid:ChatParID[i].toid,
@@ -136,7 +141,7 @@ const MsgNotify = async(req,res)=>{
                 
                 
 
-                }
+                
             }
 
           //  console.log("Under searching names as client for loop")
@@ -146,45 +151,45 @@ const MsgNotify = async(req,res)=>{
          
              // lets search name and photolink as a model 
 
-             for(let i = 0; i < ChatParID.length; i++){
-              // console.log("inside model forloop "+i)
-              if(ChatParID[i].client === false){
-                //console.log("inside model")
-                  if(ChatParID[i].fromid === userid){
+            //  for(let i = 0; i < ChatParID.length; i++){
+            //   // console.log("inside model forloop "+i)
+            //   if(ChatParID[i].client === false){
+            //     //console.log("inside model")
+            //       if(ChatParID[i].fromid === userid){
 
-                  //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[ChatParID[i].fromid])])
-                  let Model = await userdb.findOne({_id:ChatParID[i].toid}).exec()
+            //       //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[ChatParID[i].fromid])])
+            //       let Model = await userdb.findOne({_id:ChatParID[i].toid}).exec()
                  
                  
-                   if(Model){
+            //        if(Model){
 
-                    let userphoto = ""
-                    let photo = await completedb.findOne({useraccountId:Model._id}).exec()
+            //         let userphoto = ""
+            //         let photo = await completedb.findOne({useraccountId:Model._id}).exec()
 
-                       if(photo){
-                        if(photo.photoLink){
-                          userphoto = photo.photoLink
-                        }
-                       }
-                      let chat = {
-                        fromid: ChatParID[i].fromid,
-                        toid: ChatParID[i].toid,
-                        content: ChatParID[i].content,
-                        date: ChatParID[i].date,
-                        name: Model.firstname,
-                        photolink: userphoto,
-                        client: ChatParID[i].client,
-                        value:"recent",
-                        online:Model.active,
-                      clientid:ChatParID[i].toid,
-                      photostats:"profile"
-                       }
-                       fromchat.push(chat)
+            //            if(photo){
+            //             if(photo.photoLink){
+            //               userphoto = photo.photoLink
+            //             }
+            //            }
+            //           let chat = {
+            //             fromid: ChatParID[i].fromid,
+            //             toid: ChatParID[i].toid,
+            //             content: ChatParID[i].content,
+            //             date: ChatParID[i].date,
+            //             name: Model.firstname,
+            //             photolink: userphoto,
+            //             client: ChatParID[i].client,
+            //             value:"recent",
+            //             online:Model.active,
+            //           clientid:ChatParID[i].toid,
+            //           photostats:"profile"
+            //            }
+            //            fromchat.push(chat)
 
-                  }
-                }
-              }
-             }
+            //       }
+            //     }
+            //   }
+            //  }
             //  console.log("Under searching names as model for loop")
 
 
@@ -300,7 +305,7 @@ const MsgNotify = async(req,res)=>{
 
             for(let i = 0; i < ChatParID1.length; i++){
 
-                if(ChatParID1[i].client === true){
+              
                 if(ChatParID1[i].toid === userid){
                        console.log("on top database colotion")
                    //let Username = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[ChatParID[i].fromid])])
@@ -336,7 +341,7 @@ const MsgNotify = async(req,res)=>{
                 
                 
 
-                }
+                
             }
 
            console.log("Under searching names as client for loop")
@@ -346,46 +351,46 @@ const MsgNotify = async(req,res)=>{
          
              //lets search name and photolink as a model 
 
-             for(let i = 0; i < ChatParID1.length; i++){
-              console.log("inside model forloop "+i)
-              if(ChatParID1[i].client === false){
-                console.log("inside model")
-                  if(ChatParID1[i].toid === userid){
+            //  for(let i = 0; i < ChatParID1.length; i++){
+            //   console.log("inside model forloop "+i)
+            //   if(ChatParID1[i].client === false){
+            //     console.log("inside model")
+            //       if(ChatParID1[i].toid === userid){
 
-                    //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[ChatParID[i].fromid])])
-                  let Model = await models.findOne({userid:ChatParID1[i].fromid}).exec()
+            //         //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[ChatParID[i].fromid])])
+            //       let Model = await models.findOne({userid:ChatParID1[i].fromid}).exec()
                  
-                   if(Model){
+            //        if(Model){
 
-                       let userphoto = Model.photolink.split(",")
+            //            let userphoto = Model.photolink.split(",")
 
-                      let picture = ""
+            //           let picture = ""
 
-                      if(userphoto){
+            //           if(userphoto){
                         
-                          picture = userphoto[0]
+            //               picture = userphoto[0]
                         
-                      }
-                      let chat = {
-                        toid: ChatParID1[i].toid,
-                        fromid: ChatParID1[i].fromid,
-                        content: ChatParID1[i].content,
-                        date: ChatParID1[i].date,
-                        name: Model.name,
-                        photolink: picture,
-                        client: ChatParID1[i].client,
-                        value:"recent",
-                        online:Model.active,
-                        clientid:ChatParID1[i].fromid,
-                        photostats:"model"
+            //           }
+            //           let chat = {
+            //             toid: ChatParID1[i].toid,
+            //             fromid: ChatParID1[i].fromid,
+            //             content: ChatParID1[i].content,
+            //             date: ChatParID1[i].date,
+            //             name: Model.name,
+            //             photolink: picture,
+            //             client: ChatParID1[i].client,
+            //             value:"recent",
+            //             online:Model.active,
+            //             clientid:ChatParID1[i].fromid,
+            //             photostats:"model"
                         
-                       }
-                       tochatlist.push(chat)
+            //            }
+            //            tochatlist.push(chat)
 
-                  }
-                }
-              }
-             }
+            //       }
+            //     }
+            //   }
+            //  }
              console.log("Under searching names as model for loop")
 
              

@@ -59,7 +59,6 @@ const getnotify = async(req,res)=>{
                     content:value.content,
                     notifycount : 0,
                     toid:value.toid,
-                    client:value.client,
                     date:value.date
                 }
 
@@ -77,7 +76,6 @@ const getnotify = async(req,res)=>{
                             content:value.content,
                             notifycount : 0,
                             toid:value.toid,
-                            client:value.client,
                             date:value.date
                         }
 
@@ -97,7 +95,7 @@ const getnotify = async(req,res)=>{
          // starting from userdb database as client...
 
          for(let i = 0; i < notificationbyuser.length; i++){
-            if(notificationbyuser[i].client === true){
+           
                // let Users =  await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[notificationbyuser[i].userid])])
                let Users = await userdb.findOne({_id:notificationbyuser[i].userid}).exec()
                 //let Photos = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[notificationbyuser[i].userid])])
@@ -113,7 +111,6 @@ const getnotify = async(req,res)=>{
                                 messagecount: notificationbyuser[i].notifycount,
                                 fromid: notificationbyuser[i].userid,
                                 toid: notificationbyuser[i].toid,
-                                client:notificationbyuser[i].client,
                                 value:"notify",
                                 date:notificationbyuser[i].date,
                                 online:Users.active
@@ -125,7 +122,7 @@ const getnotify = async(req,res)=>{
                          //console.log(Notify[0])
                           
                 }
-            }
+            
          }
           
        
@@ -134,32 +131,32 @@ const getnotify = async(req,res)=>{
 
         //  getting user names from model as model
 
-        for(let i = 0; i < notificationbyuser.length; i++){
-            if(notificationbyuser[i].client === false){
-               //let Modeling = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[notificationbyuser[i].userid])])
-               let Modeling = await models.findOne({userid:notificationbyuser[i].userid}).exec()
-                let Users = await userdb.findOne({_id:notificationbyuser[i].userid}).exec()
-               if(Modeling){
+        // for(let i = 0; i < notificationbyuser.length; i++){
+        //     if(notificationbyuser[i].client === false){
+        //        //let Modeling = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[notificationbyuser[i].userid])])
+        //        let Modeling = await models.findOne({userid:notificationbyuser[i].userid}).exec()
+        //         let Users = await userdb.findOne({_id:notificationbyuser[i].userid}).exec()
+        //        if(Modeling){
 
-                  let photoLinks = Modeling.photolink.split(",")
-                      let notication = {
-                                photolink: photoLinks[0],
-                                username: Modeling.name,
-                                content: notificationbyuser[i].content,
-                                messagecount: notificationbyuser[i].notifycount,
-                                fromid: notificationbyuser[i].userid,
-                                toid: notificationbyuser[i].toid,
-                                value:"notify",
-                                date:notificationbyuser[i].date,
-                                client:false,
-                                online:Users.active
-                            }
+        //           let photoLinks = Modeling.photolink.split(",")
+        //               let notication = {
+        //                         photolink: photoLinks[0],
+        //                         username: Modeling.name,
+        //                         content: notificationbyuser[i].content,
+        //                         messagecount: notificationbyuser[i].notifycount,
+        //                         fromid: notificationbyuser[i].userid,
+        //                         toid: notificationbyuser[i].toid,
+        //                         value:"notify",
+        //                         date:notificationbyuser[i].date,
+        //                         client:false,
+        //                         online:Users.active
+        //                     }
 
-                            Notify.push(notication)
+        //                     Notify.push(notication)
                  
-               }
-            }
-        }
+        //        }
+        //     }
+        // }
       
         
 

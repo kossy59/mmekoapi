@@ -9,8 +9,7 @@ const createModel = async (req,res)=>{
 
     const userid = req.body.modelid;
     const clientid = req.body.clientid
-    const myid = req.body.myid
-    const messageType = req.body.messageType
+
     
    
    
@@ -18,33 +17,14 @@ const createModel = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
 
-   // let data = await connectdatabase()
+   //let data = await connectdatabase()
 
     try{
 
         let chatInfo = {}
 
-        console.log("myid "+ myid)
 
-        if(messageType === "model"){
-             let modelinfo = await models.findOne({userid:myid}).exec()
-
-             console.log("inside model information "+modelinfo)
-                if(modelinfo){
-                    let photolink = modelinfo.photolink.split(",")
-                    chatInfo.name = modelinfo.name
-                    chatInfo.photolink = photolink[0]
-                    chatInfo.value = "model"
-                    chatInfo.id = modelinfo.userid
-
-                }
-
-        }
-
-       
-
-        if(messageType === "client"){
-             let clientinfo = await userdb.findOne({_id:myid}).exec()
+             let clientinfo = await userdb.findOne({_id:userid}).exec()
             if(clientinfo){
                 let photos = await completedb.findOne({useraccountId:clientinfo._id}).exec()
                 let image = ''
@@ -57,10 +37,10 @@ const createModel = async (req,res)=>{
                 chatInfo.id = clientinfo._id
             }
 
-        }
+        
        
 
-        console.log("this is chatinfo "+chatInfo)
+        // console.log("this is chatinfo "+chatInfo)
         //    let Chats = await data.databar.listDocuments(data.dataid,data.msgCol,[sdk.Query.limit(200), sdk.Query.and([
         //     sdk.Query.or([sdk.Query.equal("toid",[userid]), sdk.Query.equal("toid",[clientid])]),
         //     sdk.Query.or([sdk.Query.equal("fromid",[userid]), sdk.Query.equal("fromid",[clientid])])
@@ -93,15 +73,15 @@ const createModel = async (req,res)=>{
            
             // setting them to notified
         
-            for(let i = 0; i < unviewing.length; i++){
-                if(unviewing[i].toid === clientid && clientid !== myid){
-                    unviewing[i].notify = false;
-                    unviewing[i].save()
-                }
-            }
+            // for(let i = 0; i < unviewing.length; i++){
+            //     if(unviewing[i].toid === clientid ){
+            //         unviewing[i].notify = false;
+            //         unviewing[i].save()
+            //     }
+            // }
 
              for(let i = 0; i < unviewing.length; i++){
-                if(unviewing[i].toid === userid  && userid !== myid){
+                if(unviewing[i].toid === userid){
                     unviewing[i].notify = false;
                     unviewing[i].save()
                 }
@@ -135,8 +115,7 @@ const createModel = async (req,res)=>{
 
           
             for(let i = 0; i < myChat.length; i++){
-                if(myChat[i].client === true){
-
+               
                      //let usernames = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[myChat[i].fromid])])
                      //let photos = await data.databar.listDocuments(data.dataid,data.userincol, [sdk.Query.equal("useraccountId",[myChat[i].fromid])])
                      let usernames = await userdb.findOne({_id:myChat[i].fromid}).exec()
@@ -154,7 +133,7 @@ const createModel = async (req,res)=>{
 
                          Listchat.push(chat)
                      }
-                }
+                
             }
 
 
@@ -165,24 +144,24 @@ const createModel = async (req,res)=>{
             //now let marshal my chat names and photolink as a model user
 
         
-            for(let i = 0; i < myChat.length; i++){
-                if(myChat[i].client === false){
-                    //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[myChat[i].fromid])])
-                    let Model = await models.findOne({userid:myChat[i].fromid})
-                    let photolink = Model.photolink.split(",")
-                        let chat = {
-                            id: myChat[i].fromid,
-                            content:  myChat[i].content,
-                            date: myChat[i].date,
-                            photolink: photolink[0],
-                            name: Model.name,
-                            client: myChat[i].client
-                        }
-                        Listchat.push(chat)
-                }
-            }
+            // for(let i = 0; i < myChat.length; i++){
+            //     if(myChat[i].client === false){
+            //         //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[myChat[i].fromid])])
+            //         let Model = await models.findOne({userid:myChat[i].fromid})
+            //         let photolink = Model.photolink.split(",")
+            //             let chat = {
+            //                 id: myChat[i].fromid,
+            //                 content:  myChat[i].content,
+            //                 date: myChat[i].date,
+            //                 photolink: photolink[0],
+            //                 name: Model.name,
+            //                 client: myChat[i].client
+            //             }
+            //             Listchat.push(chat)
+            //     }
+            // }
            
-             console.log('under  my chat names and photolink as a model user')
+
 
 
             // now let marshal our client chat names and photolink as ordinary client user
@@ -190,7 +169,7 @@ const createModel = async (req,res)=>{
            
             
             for(let i = 0; i <  clientchat.length; i++){
-                if(clientchat[i].client === true){
+
                      //let usernames = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[clientchat[i].fromid])])
                      //let photos = await data.databar.listDocuments(data.dataid,data.userincol, [sdk.Query.equal("useraccountId",[clientchat[i].fromid])])
                      let usernames = await userdb.findOne({_id:clientchat[i].fromid}).exec()
@@ -208,33 +187,33 @@ const createModel = async (req,res)=>{
 
                          Listchat.push(chat)
                      }
-                }
+                
             }
            // console.log('under  our client chat names and photolink as ordinary client user')
 
             // now marshal our client chat names and photolink as a model client user
 
           
-            for(let i = 0; i < clientchat.length; i++){
+            // for(let i = 0; i < clientchat.length; i++){
 
-                if(clientchat[i].client === false){
+            //     if(clientchat[i].client === false){
 
-                   // let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[clientchat[i].fromid])])
-                   let Model = await models.findOne({userid:clientchat[i].fromid})
-                     if(Model){
-                         let photolink = Model.photolink.split(",")
-                        let chat = {
-                            id: clientchat[i].fromid,
-                            content:  clientchat[i].content,
-                            date: clientchat[i].date,
-                            photolink: photolink[0],
-                            name: Model.name,
-                            client: clientchat[i].client
-                        }
-                        Listchat.push(chat)
-                     }
-                }
-            }
+            //        // let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[clientchat[i].fromid])])
+            //        let Model = await models.findOne({userid:clientchat[i].fromid})
+            //          if(Model){
+            //              let photolink = Model.photolink.split(",")
+            //             let chat = {
+            //                 id: clientchat[i].fromid,
+            //                 content:  clientchat[i].content,
+            //                 date: clientchat[i].date,
+            //                 photolink: photolink[0],
+            //                 name: Model.name,
+            //                 client: clientchat[i].client
+            //             }
+            //             Listchat.push(chat)
+            //          }
+            //     }
+            // }
           
             // console.log('under  our client chat names and photolink as ordinary client user')
             //      console.log(Listchat) 
