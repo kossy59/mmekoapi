@@ -12,7 +12,9 @@ const createModel = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
 
-    let Isfollowed = await followerdb.findOne({followerid:followerid}).exec()
+    let followeds = await followerdb.find({userid:userid}).exec()
+
+    let Isfollowed = followeds.find(value=> value.followerid === followerid)
 
     if(Isfollowed ){
         return res.status(400).json({"ok":false,'message': 'already followed this user!!'})
