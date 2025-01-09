@@ -49,7 +49,7 @@ const createModel = async (req,res)=>{
                         image : photolink,
                         canmessage:canmessage,
                         modelid:modelid,
-                        id:followers[i].followerid,
+                        id: username._id,
                         following:false
                     }
 
@@ -89,7 +89,7 @@ const createModel = async (req,res)=>{
                         image : photolink,
                         canmessage:canmessage,
                         modelid:modelid,
-                        id:followings[i].userid,
+                        id: username._id,
                         following:true
                     }
 
