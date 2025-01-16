@@ -38,7 +38,7 @@ const pay = async(userid,toid)=>{
             return 
          }
 
-         user_paying.balance = String(total)
+         user_paying.balance = `${total}`
 
         await  user_paying.save()
 
@@ -52,7 +52,7 @@ const pay = async(userid,toid)=>{
  
           let modelpaymenthistory = {
              userid:modelid.userid,
-             details: "hosting service completed",
+             details: "private call service completed",
              spent: `${0}`,
              income: `${price}`,
              date: `${Date.now().toString()}`
@@ -65,7 +65,7 @@ const pay = async(userid,toid)=>{
              modelwitdraw = 0
           }
  
-          modelwitdraw += price
+          modelwitdraw = modelwitdraw + price
  
           modeluser.withdrawbalance = `${modelwitdraw}`
           await modeluser.save()
