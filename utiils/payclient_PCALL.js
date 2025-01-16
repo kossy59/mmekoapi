@@ -22,7 +22,7 @@ const pay = async(userid,toid)=>{
           let price = parseFloat( modelid.price)
           //console.log("model price "+price)
          let user_paying = await userdb.findOne({_id:userid}).exec()
-          let  userbalance = parseFloat(user_paying.balance)
+         let  userbalance = parseFloat(user_paying.balance)
  
           let total = userbalance - price
 
@@ -40,7 +40,7 @@ const pay = async(userid,toid)=>{
 
          user_paying.balance = String(total)
 
-         user_paying.save()
+        await  user_paying.save()
 
         await historydb.create(clienthistory)
 
@@ -68,7 +68,7 @@ const pay = async(userid,toid)=>{
           modelwitdraw += price
  
           modeluser.withdrawbalance = `${modelwitdraw}`
-          modeluser.save()
+          await modeluser.save()
           user.status = "completed"
           await user.save()
 
