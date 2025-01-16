@@ -10,7 +10,7 @@ const pay = async(userid,toid)=>{
         let users = await bookdb.find({userid:userid}).exec()
 
         let user = users.find(value=>{
-            return String(value.modelid) === String(modelid._id ) && String(value.type) === "Private show" && String(value.status) === "accepted"
+            return String(value.modelid) === String(modelid._id ) && String(value.type) === "Private show"
         })
 
         if(!user) {
