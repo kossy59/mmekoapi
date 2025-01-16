@@ -1,4 +1,6 @@
 const bookingdb = require("../../Models/book")
+const modeldb = require("../../Models/models")
+const userdb = require("../../Models/userdb")
 
 const createLike = async (req,res)=>{
      
@@ -11,12 +13,8 @@ const createLike = async (req,res)=>{
     if(!modelid){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
-    console.log('untop init db')
+   // console.log('untop init db')
 
-   
-
-
-    //let data = await connectdatabase()
 
     try{
          const users = await bookingdb.find({modelid:modelid}).exec()
@@ -37,8 +35,27 @@ const createLike = async (req,res)=>{
 
          status.status = "decline"
          status.save()
+         let models = await modeldb.findOne({_id:modelid}).exec()
+         let modelprice = parseFloat(models.price)
+         let clientuser = await userdb.findOne({_id:userid}).exec()
+
+         let clientbalance = parseFloat(clientuser.balance)
+         clientbalance = clientbalance + modelprice
+
+         let modelpaymenthistory = {
+            userid:userid,
+            details: "cancel host refound",
+            spent: `${0}`,
+            income: `${modelprice}`,
+            date: `${Date.now().toString()}`
+         }
+
+         await historydb.create(modelpaymenthistory)
+
+         clientuser.balance = `${clientbalance}`
+         await  clientuser.save()
        
-            return res.status(200).json({"ok":true,"message":` Success`})
+        return res.status(200).json({"ok":true,"message":` Success`})
       
           
        }catch(err){
