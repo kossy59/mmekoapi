@@ -80,6 +80,7 @@ const createLike = async (req,res)=>{
 
          for(let i = 0; i < user.length; i++){
             let image = await modeldb.findOne({_id:user[i].modelid}).exec()
+            
             if (image){
                 let photo = image.photolink.split(",")
 
@@ -91,7 +92,9 @@ const createLike = async (req,res)=>{
                     date : user[i].date,
                     time : user[i].time,
                     modelid : user[i].modelid,
-                    id : user[i]._id
+                    id : user[i]._id,
+                    modeluserid : image.userid,
+                    amount:image.price
 
                 })
             }

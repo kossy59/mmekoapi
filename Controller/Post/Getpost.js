@@ -7,10 +7,13 @@ const comdbs = require("../../Models/usercomplete")
 const commentdbs = require("../../Models/comment")
 const likedbs = require("../../Models/like")
 const alldelete = require("../../utiils/Deletes/deleteAcceptsBook")
+const followdb = require("../../Models/followers")
 
 const readPost = async (req,res)=>{
 
    // let data = await connectdatabase()
+
+   let userid = req.body.userid
   
     try{
       
@@ -30,6 +33,7 @@ const readPost = async (req,res)=>{
             let comdb = await comdbs.find().exec()
             let commentdb = await commentdbs.find().exec()
             let likedb = await likedbs.find().exec()
+            let following = await followdb.find({}).exec()
 
              alldelete()
             
@@ -37,6 +41,7 @@ const readPost = async (req,res)=>{
            
             
             let post = [];
+           
 
           
             for(let i = 0; i < postdb.length; i++){
@@ -60,7 +65,17 @@ const readPost = async (req,res)=>{
                             if(comdb[k].photoLink){
                                 userpoto = comdb[k].photoLink
                             }
-                           
+
+                            let isfollow = false
+                           if(userid){
+                            let isFollowing = following.find(value=>{
+                                return String(value.userid) === String(postdb[i].userid) && String(value.followerid) === String(userid)
+                            })
+
+                            if(isFollowing){
+                                isfollow = true
+                            }
+                           }
 
                            
                             let con = {
@@ -75,7 +90,8 @@ const readPost = async (req,res)=>{
                                 active:userdb[j].active,
                                 like:[],
                                 comment:[],
-                                userid:userdb[j]._id
+                                userid:userdb[j]._id,
+                                isfollow
                             }
                            // console.log("post time "+con.posttime)
 

@@ -49,7 +49,9 @@ const createLike = async (req,res)=>{
                     time : user[i].time,
                     modelid : user[i].modelid,
                     accepted : "accepted",
-                    id : user[i]._id
+                    id : user[i]._id,
+                    modeluserid:image.userid,
+                    amount:image.price
 
                 })
             }

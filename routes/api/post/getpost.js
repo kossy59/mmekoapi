@@ -4,6 +4,6 @@ const readPost = require('../../../Controller/Post/Getpost');
 
 
 router.route('/')
-.get(readPost)
+.post(readPost)
 
 module.exports = router;

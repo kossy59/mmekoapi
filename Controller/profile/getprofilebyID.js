@@ -30,7 +30,9 @@ const readProfile = async (req,res)=>{
                let com = await completedb.findOne({useraccountId:userid}).exec()
                let commentDB = await commentdb.find().exec()
                let likeDB = await likedb.find().exec()
-                
+               let followPost = await followersdb.find({}).exec()
+                 
+              
                if(!du){
                 return res.status(409).json({"ok":false,'message': 'current user cant view this post!!'});
         
@@ -110,7 +112,18 @@ const readProfile = async (req,res)=>{
 
                if(postDB.length > 0){
                 postDB.forEach(value =>{
-                      con = {
+                  let postFollowed = false
+                  if(clientid){
+                    let isfollowww = followPost.find(value=>{
+                      return String( value.followerid) === String(clientid) && String(value.userid) === String(userid)
+                    })
+
+                    if(isfollowww){
+                      postFollowed = true
+                    }
+
+                  }
+                     let con = {
                         content:value.content,
                         postphoto: `${value.postlink}`,
                         posttime: `${value.posttime}`,
@@ -119,7 +132,8 @@ const readProfile = async (req,res)=>{
                         userid:du._id,
                         active:du.active,
                         comment:[],
-                        like:[]
+                        like:[],
+                        isfollow:postFollowed
                     }
                     user.post.push(con)
 
