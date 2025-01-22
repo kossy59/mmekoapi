@@ -1,26 +1,29 @@
 const documentdb = require("../../Models/document")
+const admindb = require("../../Models/admindb")
 
 const createModel = async (req,res)=>{
 
     // {} object field names
     const userid = req.body.userid;
-    let firstname = req.body.firstname
-    let lastname = req.body.lastname
+    let firstname = req.body.firstName
+    let lastname = req.body.lastName
     let email = req.body.email
     let dob = req.body.dob
     let country = req.body.country
     let city = req.body.city
-    let resident_address = req.body.resident_address
-    let document_type = req.body.document_type
-    let photolinkid = req.body.photolinkid
-    let userphotolink = req.body.userphotolink
-    let id_expiredate = req.body.id_expiredate
-    let expireable = req.body.expireable
+    let address = req.body.address
+    let documentType = req.body.documentType
+    let holdingIdPhoto = req.body.holdingIdPhoto
+    let idPhoto = req.body.idPhoto
+    let idexpire = req.body.idexpire
+  
     
    
-    if(!userid && !firstname && !lastname && !email && !dob && !country && !city && !resident_address && !document_type && !photolinkid && !userphotolink && !id_expiredate && !expireable){
+    if(!userid && !firstname && !lastname && !email && !dob && !country && !city && !address && !documentType && !holdingIdPhoto && !idPhoto && !idexpire){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
+
+    console.log("doc type "+documentType)
 
    
 
@@ -36,22 +39,28 @@ const createModel = async (req,res)=>{
             dob,
             country,
             city,
-            resident_address,
-            document_type,
-            photolinkid,
-            userphotolink,
-            id_expiredate,
-            expireable
-
+            address,
+            documentType,
+            holdingIdPhoto,
+            idPhoto,
+            idexpire
+            
             }
 
            
 
             await documentdb.create(document)
 
+            let respond = {
+                userid:userid,
+                message:`you exclusive application has been sumitted successfully, wait for comfirmation`,
+                seen:true
+            }
+        
+            await admindb.create(respond)
 
             // returns ok true if succefully posted
-            return res.status(200).json({"ok":true,"message":`Model Hosted successfully`})
+            return res.status(200).json({"ok":true,"message":`successfully`})
       
           
           }catch(err){

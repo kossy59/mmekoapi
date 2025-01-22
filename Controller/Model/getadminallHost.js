@@ -1,7 +1,8 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
-const userdb = require("../../Models/userdb")
-const models = require("../../Models/models")
+let documentdb = require("../../Models/document")
+let photodb = require("../../Models/usercomplete")
+let userdb = require("../../Models/userdb")
 
 const createModel = async (req,res)=>{
 
@@ -15,42 +16,63 @@ const createModel = async (req,res)=>{
     //let data = await connectdatabase()
 
     try{
-      
-          //  let userdb = await data.databar.listDocuments(data.dataid,data.colid)
-          //  let uvHost = await data.databar.listDocuments(data.dataid,data.modelCol)
-          //  let currentuser = userdb.documents.find(value=>{
-          //   return value.$id === userid
-          //  })
 
-          //  let hostlist =  uvHost.documents.filter(value =>{
-          //    return value.verify === "notlive"
-          //  })
+        let host = []
+        let unverify_host = await documentdb.find({}).exec()
+        
+        let list_of_host = unverify_host.filter(value=>{
+            return value.verify === false
+        })
 
-           let currentuser = await userdb.findOne({_id:userid}).exec()
-           let hostlist = await models.find({verify:"notlive"}).exec()
-
-           
-
-           if(!currentuser){
-            return res.status(401).json({"ok":false,"message":`No unvrified Host`,})
-           }
-           
-
-       
-          let hosts = []
-            hostlist.forEach(value =>{
-                let host ={
-                    hostid: value._id,
-                    userid: value.userid,
-                    ids: value.document,
-                    hostname: value.name
-                }
-
-                hosts.push(host)
+        let image1 = await photodb.find({}).exec()
+        let list_of_users = await userdb.find({}).exec()
+        list_of_host.forEach(value =>{
+            let image = image1.find(value1=>{
+             return String(value.userid) === String(value1.useraccountId)
             })
 
-           
-            return res.status(200).json({"ok":true,"message":`Model Fetched successfully`,hosts})
+            let username ="none"
+
+            let users = list_of_users.find(value1=>{
+                return String(value.userid) === String(value1._id)
+               })
+            let userPhotolink = ""
+            if(image.photoLink){
+                userPhotolink = image.photoLink
+            }
+
+            if(users.nickname){
+                username = users.nickname
+            }
+            let data = {
+                image:userPhotolink,
+                userid:value.userid,
+                firstname:value.firstname,
+                lastname:value.lastname,
+                email:value.email,
+                dob:value.dob,
+                country:value.country,
+                city:value.city,
+                resident_address:value.address,
+                documentType:value.documentType,
+                holdingIdPhoto:value.holdingIdPhoto,
+                idPhoto:value.idPhoto,
+                idexpire:value.idexpire,
+                id:value._id,
+                username,
+                address:value.address
+
+
+            }
+            host.push(data)
+        })
+
+
+           if(!list_of_host){
+            return res.status(401).json({"ok":false,"message":`No unvrified Host`,hosts:[]})
+           }
+
+            return res.status(200).json({"ok":true,"message":`Model Fetched successfully`,hosts:host})
       
           
           }catch(err){

@@ -1,52 +1,33 @@
-// const {connectdatabase} = require('../../config/connectDB');
-// const sdk = require("node-appwrite");
-const models = require("../../Models/models")
+let userdb = require("../../Models/userdb")
+let documentdb = require("../../Models/document")
+let admindb = require("../../Models/admindb")
 
 const createModel = async (req,res)=>{
 
-    const hostid = req.body.hostid;
+  const userid = req.body.userid;
+  const docID = req.body.docid
     
    
-    if(!hostid){
-        return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
-    }
-     
-   // let data = await connectdatabase()
-
+  if(!userid && !docID){
+    return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
+}
+ 
     try{
       
+      await documentdb.deleteOne({_id:docID}).exec()
 
-          //  let userdb = await data.databar.listDocuments(data.dataid,data.modelCol)
-          
-          //  let currentuser = userdb.documents.find(value=>{
-          //   return value.$id === hostid
-          //  })
+      let respond = {
+        userid:userid,
+        message:`you exclusive application has been rejected`,
+        seen:true
+    }
 
-          let currentuser = await models.findOne({_id:hostid}).exec()
-
-           if(!currentuser){
-            return res.status(409).json({"ok":false,"message":`no host to update`})
-           }
-
-          
-
-          
-
-          // let model =  {
-          //   verify:'rejected',
-          //    }
-            
-
-            //await data.databar.updateDocument(data.dataid,data.modelCol,currentuser.$id,model)
-
-            currentuser.verify = "rejected"
-            currentuser.save()
-
-
-            return res.status(200).json({"ok":true,"message":`host Updated successfully`,hostid:currentuser._id})
+    await admindb.create(respond)
+         
+    return res.status(200).json({"ok":true,"message":`host Updated successfully`,hostid:docID})
       
           
-          }catch(err){
+     }catch(err){
            return res.status(500).json({"ok":false,'message': `${err.message}!`});
        }
 }

@@ -32,29 +32,31 @@ const markertdata = new Scheme({
         type:String,
         required : true
     },
-    resident_address:{
+    address:{
         type:String,
         required : true
     },
-    document_type:{
+    documentType:{
         type:String,
         required : true
     },
-    photolinkid:{
+    idPhoto:{
         type:String,
         required : true
     },
-    userphotolink:{
+    holdingIdPhoto:{
         type:String,
         required : true
     },
-    id_expiredate:{
-        type:String,
-        required : true
-    },
-    expireable:{
+    verify:{
         type:Boolean,
-        required : true
+        required : false,
+        default:false
+    },
+    idexpire:{
+        type:String,
+        required : true,
+       
     },
 
 

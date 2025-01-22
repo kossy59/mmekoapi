@@ -1,53 +1,39 @@
-// const {connectdatabase} = require('../../config/connectDB');
-// const sdk = require("node-appwrite");
-
-const models = require("../../Models/models")
+let userdb = require("../../Models/userdb")
+let documentdb = require("../../Models/document")
+let admindb = require("../../Models/admindb")
 
 const createModel = async (req,res)=>{
 
-    const hostid = req.body.hostid;
+    const userid = req.body.userid;
+    const docID = req.body.docid
     
    
-    if(!hostid){
+    if(!userid && !docID){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
      
-    //let data = await connectdatabase()
+ 
 
     try{
       
+      let user = await userdb.findOne({_id:userid}).exec()
 
-          //  let userdb = await data.databar.listDocuments(data.dataid,data.modelCol)
-          
-          //  let currentuser = userdb.documents.find(value=>{
-          //   return value.$id === hostid
-          //  })
+      user.exclusive_verify = true
+      await user.save()
 
-           let currentuser = await models.findOne({_id:hostid}).exec()
-          
+      await documentdb.deleteOne({_id:docID}).exec()
 
-          
+      let respond = {
+        userid:userid,
+        message:`you exclusive application has been verified`,
+        seen:true
+    }
 
-           if(!currentuser){
-            return res.status(409).json({"ok":false,"message":`no host to update`})
-           }
-
-          
-
-          
-
-          // let model =  {
-          //   verify:'live',
-          //    }
-            
-
-            //await data.databar.updateDocument(data.dataid,data.modelCol,currentuser.$id,model)
-
-          currentuser.verify = "live"
-          currentuser.save()
+   await admindb.create(respond)
+       
 
 
-            return res.status(200).json({"ok":true,"message":`host Updated successfully`,hostid: currentuser._id})
+            return res.status(200).json({"ok":true,"message":`host Updated successfully`,hostid: docID})
       
           
           }catch(err){
