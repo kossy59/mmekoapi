@@ -31,10 +31,12 @@ const createModel = async (req,res)=>{
                 if(photos){
                     image = photos.photoLink
                 }
+               
                 chatInfo.name = `${clientinfo.firstname} ${clientinfo.lastname}`
                 chatInfo.photolink = image
                 chatInfo.value = "client"
                 chatInfo.id = clientinfo._id
+                console.log("success getting client info")
             }
 
         
@@ -138,7 +140,7 @@ const createModel = async (req,res)=>{
 
 
            
-            console.log('under  my chat names and photolink as ordinary client user')
+            console.log('under  my chat names and photolink as ordinary client user ')
 
 
             //now let marshal my chat names and photolink as a model user
@@ -220,6 +222,7 @@ const createModel = async (req,res)=>{
                  let allchat = Listchat.sort((a,b)=>{
                 return Number(a.date) - Number(b.date)
             }) 
+            console.log("all chat "+allchat.length)
           return res.status(200).json({"ok":true,"message":`Model Fetched successfully`,chats:allchat,chatInfo})
 
           

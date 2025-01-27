@@ -57,7 +57,7 @@ const getnotify = async(req,res)=>{
                 let chat = {
                     userid: value.fromid,
                     content:value.content,
-                    notifycount : 0,
+                    notifycount : 1,
                     toid:value.toid,
                     date:value.date
                 }
@@ -74,7 +74,7 @@ const getnotify = async(req,res)=>{
                      let chat = {
                             userid: value.fromid,
                             content:value.content,
-                            notifycount : 0,
+                            notifycount : 1,
                             toid:value.toid,
                             date:value.date
                         }

@@ -21,6 +21,7 @@ const cors = require('cors')
 const { setInterval } = require('timers')
 let {Check_caller, deletebyClient ,deletebyCallerid, check_connected, deletecallOffline} = require("./utiils/check_caller")
 const pay_model = require("./utiils/payclient_PCALL")
+const updatebalance = require("./utiils/deductPVC")
 
 let myurl = "https://mmekosocial.onrender.com"
 //let myurl = "http://localhost:3000"
@@ -302,7 +303,8 @@ io.on('connection', (socket) => {
           
           console.log("sending amount")
          if(parseFloat(data.amount) > 0 ){
-          await pay_model(data.fromid,data.toid)
+          await pay_model(data.fromid,data.toid,data.amount)
+          await updatebalance(data.fromid,data.toid,data.balance,data.amount)
            socket.broadcast.emit(`pvc_${data.toid}_amount`,{amount:data.amount})
             data.amount = ""
          }

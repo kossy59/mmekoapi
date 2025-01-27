@@ -2,10 +2,11 @@ const bookingdb = require("../../Models/book")
 const userdb = require("../../Models/userdb")
 const completedb = require("../../Models/usercomplete")
 const admindb = require("../../Models/admindb")
+const modeldb = require("../../Models/models")
 
 const createLike = async (req,res)=>{
      
-    const modelid = req.body.modelid;
+   
     const userid = req.body.userid
 
     console.log("notificationsss1")
@@ -13,7 +14,7 @@ const createLike = async (req,res)=>{
      
     
    
-    if(!modelid && !userid){
+    if(!userid){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
     console.log("notificationsss2")
@@ -23,9 +24,18 @@ const createLike = async (req,res)=>{
 
     //let data = await connectdatabase()
 
-    try{
-         const users = await bookingdb.find({modelid:modelid}).exec()
+    
+        let isModel = await modeldb.findOne({userid:userid}).exec()
+        let users = []
+        if(isModel){
+            console.log("this is model")
+            users  = await bookingdb.find({modelid:isModel._id}).exec()
+            console.log("this is model not "+users.length)
+        }
+        
          const adminmessage = await admindb.find({userid:userid}).exec()
+
+         let model_list = []
 
          let user = users.filter(value =>{
             return String(value.status) === "pending" || String(value.status) === "accepted"
@@ -34,10 +44,6 @@ const createLike = async (req,res)=>{
          
 
          
-
-         if(!user[0] && !adminmessage[0]) {
-             return res.status(200).json({"ok":false,'message': 'you have 0 pending request!!',notify:[]})
-         }
 
          let listinfos = []
 
@@ -50,7 +56,7 @@ const createLike = async (req,res)=>{
             const clientphoto = await completedb.findOne({useraccountId:user[i].userid}).exec()
             
 
-               listinfos.push(
+               model_list.push(
                     { 
                     name : client.firstname,
                     type : user[i].type,
@@ -94,12 +100,12 @@ const createLike = async (req,res)=>{
          
 
        
-            return res.status(200).json({"ok":true,"message":` Success`,notify:listinfos})
+            return res.status(200).json({"ok":true,"message":` Success`,data:{model:model_list,notify:listinfos}})
       
           
-       }catch(err){
-           return res.status(500).json({"ok":false,'message': `${err.message}!`});
-       }
+    //    catch(err){
+    //        return res.status(500).json({"ok":false,'message': `${err.message}!`});
+    //    }
 }
 
 module.exports = createLike
