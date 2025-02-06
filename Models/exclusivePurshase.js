@@ -3,20 +3,11 @@ const Scheme = mongoose.Schema;
 
 const markertdata = new Scheme({
 
-     userid:{
+    userid:{
         type:String,
         required : true
     },
-
-     content_type:{
-        type:String,
-        required : true
-    },
-    contentlink:{
-        type:String,
-        required : true
-    },
-    contentname:{
+    exclusiveid:{
         type:String,
         required : true
     },
@@ -24,8 +15,22 @@ const markertdata = new Scheme({
         type:String,
         required : true
     },
+    paid:{
+        type:Boolean,
+        required : true,
+        default:false
+    },
+    exclusivelink:{
+        type:String,
+        required : true
+    },
+    exclusivename:{
+        type:String,
+        required : true,
+       
+    },
 
 
 })
 
-module.exports = mongoose.model('Exclusive',markertdata);
+module.exports = mongoose.model('Exclusivebuy',markertdata);

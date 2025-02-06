@@ -16,12 +16,7 @@ const MsgNotify = async(req,res)=>{
       console.log("getting message in all")
       let unfiterd_my_MSG = await messagedb.find({fromid:userid}).exec()
       let fiterd_my_MSG = unfiterd_my_MSG.filter(value=>{
-        if (value.notify === false || value.notify === true && value.fromid === userid){
-            
-          return true
-        }else if(value.notify === false){
-         return true
-        }
+         return value.notify === false || value.notify === true 
       })
 
       console.log("getting message in all 1")

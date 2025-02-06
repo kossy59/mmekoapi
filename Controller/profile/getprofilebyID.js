@@ -9,6 +9,7 @@ const postdb = require("../../Models/post")
 let exclusivedb = require("../../Models/exclusivedb")
 let followersdb = require("../../Models/followers")
 let modeldb = require("../../Models/models")
+let exclusive_pushasedb = require("../../Models/exclusivePurshase")
 
 const readProfile = async (req,res)=>{
 
@@ -75,9 +76,27 @@ const readProfile = async (req,res)=>{
              
 
               let exclusiveData = await exclusivedb.find({userid:userid}).exec()
+              let have_buy = []
+
+              if(clientid){
+                have_buy = await exclusive_pushasedb.find({userid:clientid}).exec()
+              }
 
               if(exclusiveData){
-                user.exclusive_content = exclusiveData
+                exclusiveData.forEach(value=>{
+                  let data = {}
+                  let is_in = have_buy.find(index=>index.exclusiveid === value._id)
+                  if(is_in){
+                    data = value.toObject()
+                    data.buy = true
+
+                  }else{
+                    data = value.toObject()
+                    data.buy = false
+                  }
+                  user.exclusive_content.push(data)
+                })
+                 
               }
 
               let followers = await followersdb.find({userid:userid}).exec()
