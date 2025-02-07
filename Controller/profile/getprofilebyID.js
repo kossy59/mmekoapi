@@ -84,9 +84,11 @@ const readProfile = async (req,res)=>{
 
               if(exclusiveData){
                 exclusiveData.forEach(value=>{
+                 
                   let data = {}
-                  let is_in = have_buy.find(index=>index.exclusiveid === value._id)
+                  let is_in = have_buy.find(index=>String(index.exclusiveid) === String(value._id))
                   if(is_in){
+                    
                     data = value.toObject()
                     data.buy = true
 
