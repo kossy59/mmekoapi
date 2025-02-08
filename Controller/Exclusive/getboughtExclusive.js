@@ -1,6 +1,7 @@
 let exclusivePdb = require("../../Models/exclusivePurshase")
 const crushdb = require("../../Models/crushdb")
 const modeldb = require("../../Models/models")
+const userdb = require("../../Models/userdb")
 
 const postexclusive = async(req,res)=>{
 
@@ -16,17 +17,25 @@ const postexclusive = async(req,res)=>{
 
     let mycrush =  await crushdb.find({userid:userid}).exec()
     let modelDetail =  await modeldb.find({}).exec()
+    let modelUser =  await userdb.find({}).exec()
 
     let myContent = await exclusivePdb.find({userid:userid}).exec()
+
 
     for(let i = 0 ; i< mycrush.length; i++){
        let modelInfo = modelDetail.find(value=>mycrush[i].modelid  === value._id )
        if(modelInfo){
+        let onlineuser = modelUser.find(value=>modelInfo.userid  === String(value._id) )
         let data = {
 
             photolink : modelInfo.photolink,
             name : modelInfo.name,
-            id : modelInfo._id
+            id : mycrush[i]._id,
+            userid:modelInfo.userid,
+            hosttype:modelInfo.hosttype,
+            modelid:modelInfo._id,
+            location:modelInfo.location,
+            online:onlineuser.active
         }
 
         allcrush.push(data)

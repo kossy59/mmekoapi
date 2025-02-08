@@ -8,7 +8,7 @@ const postexclusive = async(req,res)=>{
         return res.status(400).json({"ok":false,'message': 'Invalid exclusive ID!!'})
     }
 
-   
+   console.log("id "+id)
     await exclusivedb.deleteOne({_id:id}).exec()
 
 
