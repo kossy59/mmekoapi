@@ -6,6 +6,8 @@ const userdb = require("../../Models/userdb")
 const postexclusive = async(req,res)=>{
 
     let userid = req.body.userid;
+
+    console.log("my userID "+userid)
     
 
     if(!userid){
@@ -23,12 +25,15 @@ const postexclusive = async(req,res)=>{
 
 
     for(let i = 0 ; i< mycrush.length; i++){
-       let modelInfo = modelDetail.find(value=>mycrush[i].modelid  === value._id )
+       let modelInfo = modelDetail.find(value=>mycrush[i].modelid  === String(value._id) )
+       
        if(modelInfo){
+       
         let onlineuser = modelUser.find(value=>modelInfo.userid  === String(value._id) )
+        let image =  modelInfo.photolink.split(",")
         let data = {
 
-            photolink : modelInfo.photolink,
+            photolink :image[0],
             name : modelInfo.name,
             id : mycrush[i]._id,
             userid:modelInfo.userid,
@@ -41,6 +46,7 @@ const postexclusive = async(req,res)=>{
         allcrush.push(data)
        }
     }
+   
 
     myContent.forEach(value=>{
         let data = {
@@ -51,6 +57,8 @@ const postexclusive = async(req,res)=>{
         }
         allContent.push(data)
     })
+
+    
 
 
     return res.status(200).json({"ok":true,'message': 'exclusive post successfully!!',data:{allcrush:allcrush, allcontent:allContent}})
