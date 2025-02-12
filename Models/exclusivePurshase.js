@@ -30,6 +30,12 @@ const markertdata = new Scheme({
        
     },
 
+    contenttype:{
+        type:String,
+        required : true,
+       
+    },
+
 
 })
 

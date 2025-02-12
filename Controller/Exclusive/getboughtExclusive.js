@@ -53,7 +53,8 @@ const postexclusive = async(req,res)=>{
             exclusiveid:value.exclusiveid,
             name:value.exclusivename,
             id:value._id,
-            exclusivelink:value.exclusivelink
+            exclusivelink:value.exclusivelink,
+            contenttype:value.contenttype
         }
         allContent.push(data)
     })

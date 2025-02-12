@@ -6,9 +6,10 @@ const postexclusive = async(req,res)=>{
     let contentlink = req.body.contentlink;
     let contentname = req.body.contentname;
     let price = req.body.price;
+    let thumblink = req.body.thumblink;
 
    
-    if(!userid || !content_type || !contentlink || !contentname || !price){
+    if(!userid || !content_type || !contentlink || !contentname || !price || !thumblink){
         return res.status(400).json({"ok":false,'message': 'Invalid post details!!'})
     }
 
@@ -17,7 +18,8 @@ const postexclusive = async(req,res)=>{
         content_type,
         contentlink,
         contentname,
-        price
+        price,
+        thumblink
     }
 
     await exclusivedb.create(data)

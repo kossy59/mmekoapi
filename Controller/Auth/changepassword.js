@@ -9,47 +9,34 @@ const forgetpass = async (req,res)=>{
 
     const password = req.body.password;
     const id = req.body.id;
+    const isuser = req.body.isuser;
 
-    //let data = await connectdatabase()
-    if(!password && !id){
+    if(!password || !id){
         return res.status(409).json({"ok":false,'message': `enter new password`});
     }
 
-
-
-    //let match = undefined;
-
-    
-    
     try{
-    //   let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
-
-    //     let du = dupplicate.documents.filter(value=>{
-    //     return value.$id === id
-    //    })
+   
 
        let du = await userdb.findOne({_id:id}).exec()
 
       
        if(du){
+        
+        if(!isuser){
+            if(du.passcode !== "done"){
+                return res.status(500).json({"ok":false,'message': `Verify your email first`});
+            }
+        }
+       
+        console.log("in progress")
 
-        if(du.passcode !== "done"){
-            return res.status(500).json({"ok":false,'message': `Verify your email first`});
-           }
-
-           const hashPwd = await bcrypt.hash(password,10);
-
-        //    await data.databar.updateDocument(
-        //     data.dataid,
-        //     data.colid,
-        //      du[0].$id,
-        //     {
-        //         password:`${String(hashPwd)}`
-        //     }
-        // )
+        const hashPwd = await bcrypt.hash(password,10);
 
         du.password = `${String(hashPwd)}`
         du.save()
+
+        console.log("password change success")
 
         return res.status(200).json({'ok':true,'message':  "Password Changed Success"});
            

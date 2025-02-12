@@ -46,7 +46,8 @@ const postexclusive = async(req,res)=>{
             price,
             paid:true,
             exclusivename,
-            exclusivelink
+            exclusivelink,
+            contenttype:content_price.content_type
         }  
 
         userprice.balance = `${pricebalance}`

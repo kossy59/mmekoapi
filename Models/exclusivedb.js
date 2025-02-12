@@ -25,6 +25,12 @@ const markertdata = new Scheme({
         required : true
     },
 
+    thumblink:{
+        type:String,
+        required : true
+    },
+
+
 
 })
 
