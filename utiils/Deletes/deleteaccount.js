@@ -30,7 +30,7 @@ let deletedbs = async(userid)=>{
  await mainbalance.deleteMany({userid:userid}).exec()
  await messagedb.deleteMany({fromid:userid}).exec()
  await reviewdb.deleteMany({userid:userid}).exec()
- await userdb.deleteOne({_id:userid}).exec()
+ 
  await videocalldb.deleteMany({callerid:userid}).exec()
  await exclusivepurchase.deleteMany({userid:userid}).exec()
  await blockeddb.deleteMany({userid:userid}).exec()
@@ -41,6 +41,7 @@ let deletedbs = async(userid)=>{
  let list_of_exclusve = await exclusivedb.find({userid:userid}).exec()
  let userImage = await completedb.findOne({useraccountId:userid}).exec()
  let modelimage = await modeldb.findOne({userid:userid}).exec()
+ 
 
  for(let i = 0; i < list_of_post.length; i++){
     await deletelike(String(list_of_post[i]._id))
@@ -49,21 +50,25 @@ let deletedbs = async(userid)=>{
     await deleteImage("post",list_of_post[i].postlink)
     }
  }
+ console.log("failone")
+ await postdb.deleteMany({userid:userid}).exec()
 
  for(let i = 0; i < list_of_exclusve.length; i++){
    
     if(list_of_exclusve[i].thumblink){
-    await deleteImage("post",list_of_exclusve[i].thumblink)
+      console.log("fail in thumb")
+      console.log("thumb "+list_of_exclusve[i].thumblink)
+      await deleteImage("post",list_of_exclusve[i].thumblink)
     }
- }
 
- if(userImage){
-
-    if(userImage.photoLink){
-        await deleteImage("profile",userImage.photoLink)
-     }
-    await completedb.deleteOne({useraccountId:userid}).exec()
+    if(list_of_exclusve[i].contentlink){
+      console.log("thumb "+list_of_exclusve[i].thumblink)
+      await deleteImage("content",list_of_exclusve[i].contentlink)
+      await deleteImage("post",list_of_exclusve[i].contentlink)
+      }
  }
+ console.log("failtwo")
+ await exclusivedb.deleteMany({userid:userid}).exec()
 
  if(modelimage){
 
@@ -72,16 +77,24 @@ let deletedbs = async(userid)=>{
         let images = modelimage.photolink.split(",")
 
         for(let i = 0; i < images.length; i++){
-            await deleteImage("profile",images[i].photolink)
+            await deleteImage("model",images[i])
         }
         
      }
-    await modeldb.deleteOne({userid:userid}).exec()
+   
  }
+ console.log("failtree")
+ await modeldb.deleteOne({userid:userid}).exec()
 
- await postdb.deleteMany({userid:userid}).exec()
- await exclusivedb.deleteMany({userid:userid}).exec()
- 
+
+ if(userImage){
+
+   if(userImage.photoLink){
+       await deleteImage("profile",userImage.photoLink)
+    }
+   await completedb.deleteOne({useraccountId:userid}).exec()
+}
+ await userdb.deleteOne({_id:userid}).exec()
 }
 
 module.exports = deletedbs;

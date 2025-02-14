@@ -529,7 +529,8 @@ io.on('connection', (socket) => {
   //(patch)delete exclusive content
   app.use('/exclusivecontent',require('./routes/api/Exclusive/allexclusive'))  //(put) get my purshased exclusive (post) delete my purshased exclusive
   app.use('/model',require('./routes/api/model/models'))
-  app.use('/deleteaccount',require('./routes/api/profile/deleteprofile')) // (post) to delete user account
+  app.use('/deleteaccount',require('./routes/api/profile/deleteprofile')) // (post) to delete user account (put) get  block users with user your userid input
+  //(patch) to remove block user with id input
   app.use('/follow',require('./routes/api/follow/follower'))
   app.use('/getfollowers',require('./routes/api/follow/get_followers'))
   app.use('/postdocument',require('./routes/api/model/postdocument'))
