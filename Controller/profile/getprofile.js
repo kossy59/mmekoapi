@@ -2,7 +2,9 @@
 // const sdk = require("node-appwrite");
 const userdb = require("../../Models/userdb")
 const models = require("../../Models/models")
-const history = require("../../helpers/earning_in_month")
+//const history = require("../../helpers/earning_in_month")
+const settingdb = require("../../Models/settingsdb")
+
 
 const readProfile = async (req,res)=>{
 
@@ -11,6 +13,8 @@ const readProfile = async (req,res)=>{
     const userid = req.body.userid;
       let dues;
       let exclusive = false
+      let emailnot = false
+      let pushnot = false
 
    
    // let data = await connectdatabase()
@@ -22,18 +26,16 @@ const readProfile = async (req,res)=>{
     try{
 
             // console.log('inside profile database')
-           // let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
-            
-             // console.log('inside model database')
-            //let  model = await data.databar.listDocuments(data.dataid,data.modelCol)
-
-              //console.log('ckecking profile database')
-            // let du = dupplicate.documents.find(value=>{
-            //     return value.$id === userid
-            //    })
+          
             let du = await userdb.findOne({_id:userid}).exec()
             //console.log('checking model database')
             let modelava = await models.findOne({userid:userid}).exec()
+            let notificaton_turn = await settingdb.findOne({userid:userid}).exec()
+
+            if(notificaton_turn){
+              emailnot = notificaton_turn.emailnot
+              pushnot = notificaton_turn.pushnot
+            }
 
                  
               //  let modelava = model.documents.find(value =>{
@@ -60,6 +62,8 @@ const readProfile = async (req,res)=>{
                dues = du.toObject()
                dues.exclusive = exclusive;
                dues.model = ISmodel;
+               dues.emailnot = emailnot;
+               dues.pushnot = pushnot;
                if(modelava){
                     let images = modelava.photolink.split(",")
                      dues.modelID = modelava._id

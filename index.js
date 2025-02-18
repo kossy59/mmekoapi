@@ -531,6 +531,7 @@ io.on('connection', (socket) => {
   app.use('/model',require('./routes/api/model/models'))
   app.use('/deleteaccount',require('./routes/api/profile/deleteprofile')) // (post) to delete user account (put) get  block users with user your userid input
   //(patch) to remove block user with id input
+  app.use('/setting',require('./routes/api/profile/setting')) //(post) setting input-> userid , emailnot,pushnot
   app.use('/follow',require('./routes/api/follow/follower'))
   app.use('/getfollowers',require('./routes/api/follow/get_followers'))
   app.use('/postdocument',require('./routes/api/model/postdocument'))

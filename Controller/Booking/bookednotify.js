@@ -49,11 +49,21 @@ const createLike = async (req,res)=>{
 
          console.log("notificationsss")
 
+         let modelast = 0
+         let adminlast = 0
+         let admintext = ""
+         let modelmessage = ""
+
         
          for(let i = 0; i < user.length; i++){
 
             const client = await userdb.findOne({_id:user[i].userid}).exec()
             const clientphoto = await completedb.findOne({useraccountId:user[i].userid}).exec()
+
+            if(modelast < user[i]._id.getTimestamp().getTime()){
+                modelast = user[i]._id.getTimestamp().getTime()
+                modelmessage = `model notification from ${client.firstname}`
+            }
             
 
                model_list.push(
@@ -78,7 +88,14 @@ const createLike = async (req,res)=>{
 
         adminmessage.forEach(value=>{
 
+           
+
         if(value.seen){
+
+            if(adminlast < value._id.getTimestamp().getTime()){
+                adminlast = value._id.getTimestamp().getTime()
+                admintext = value.message
+            }
 
             let data = {
             message : value.message,
@@ -94,13 +111,19 @@ const createLike = async (req,res)=>{
         }
         
         })
-   
 
+        let lastmessage = ''
+   
+         if(modelast > adminlast ){
+            lastmessage = modelmessage
+         }else if(adminlast > modelast ){
+            lastmessage = admintext
+         }
 
          
 
        
-            return res.status(200).json({"ok":true,"message":` Success`,data:{model:model_list,notify:listinfos}})
+            return res.status(200).json({"ok":true,"message":` Success`,data:{model:model_list,notify:listinfos, lastmessage:lastmessage}})
       
           
     //    catch(err){

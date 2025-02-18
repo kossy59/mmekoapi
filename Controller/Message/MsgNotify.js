@@ -93,6 +93,8 @@ const getnotify = async(req,res)=>{
          // get the sender notifcations name and photolink with it id
 
          // starting from userdb database as client...
+         let lastmessagecount = 0
+         let lastmessageDisplay = ""
 
          for(let i = 0; i < notificationbyuser.length; i++){
            
@@ -103,6 +105,13 @@ const getnotify = async(req,res)=>{
                 if(Users){
                   //  console.log("fetching clent")
                  // console.log("message photolink "+Photos.photoLink)
+
+
+                 if(parseFloat(lastmessagecount) < parseFloat(notificationbyuser[i].date) ){
+
+                    lastmessageDisplay = `message from ${Users.firstname}`
+                  
+                 }
                      
                            let notication = {
                                 photolink: Photos.photoLink,
@@ -163,7 +172,7 @@ const getnotify = async(req,res)=>{
       //  console.log("still nothig "+Notify[0])
 
          // return Notify
-        return res.status(200).json({"ok":true,"message":`user host empty`,notify:Notify})
+        return res.status(200).json({"ok":true,"message":`user host empty`,notify:Notify, lastmessage:lastmessageDisplay})
          
 
 
