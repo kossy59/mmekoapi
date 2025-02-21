@@ -1,7 +1,6 @@
 const bookingdb = require("../../Models/book")
 const modeldb = require("../../Models/models")
 const userdb = require("../../Models/userdb")
-const modeldb = require("../../Models/models")
 let sendEmail = require("../../utiils/sendEmailnot")
 
 const createLike = async (req,res)=>{
