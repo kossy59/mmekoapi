@@ -204,13 +204,13 @@ const MsgNotify = async(req,res)=>{
       let fiterd_notify_msg = [] // list of newest unread messages per user
 
      // console.log("notificatin is in "+allRecent_A.length)
-     let count = 1;
+     let count = 0;
      for(i = 0; i < allRecent_A.length; i++){
       
       if(allRecent_A[i].fromid === allRecent_B[i].fromid){
         count = count + 1
         console.log("count "+count)
-        if(fiter_tome_A[i]._id.getTimestamp().getTime() > allRecent_B[i]._id.getTimestamp().getTime()){
+        if(allRecent_A[i]._id.getTimestamp().getTime() > allRecent_B[i]._id.getTimestamp().getTime()){
           
           let canpush = fiterd_notify_msg.findIndex(index=>index.fromid === allRecent_A[i].fromid)
           if(canpush !== -1){
