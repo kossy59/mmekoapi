@@ -1,4 +1,5 @@
 const bookingdb = require("../../Models/book")
+let sendEmail = require("../../utiils/sendEmailnot")
 
 const createLike = async (req,res)=>{
      
@@ -39,6 +40,7 @@ const createLike = async (req,res)=>{
         // console.log('under user accepted')
          status.status = "accepted"
          status.save()
+         await sendEmail(status.userid,"model has accepted your booking request")
        
             return res.status(200).json({"ok":true,"message":` Success`})
       

@@ -1,6 +1,8 @@
 const bookingdb = require("../../Models/book")
 const modeldb = require("../../Models/models")
 const userdb = require("../../Models/userdb")
+const modeldb = require("../../Models/models")
+let sendEmail = require("../../utiils/sendEmailnot")
 
 const createLike = async (req,res)=>{
      
@@ -32,7 +34,7 @@ const createLike = async (req,res)=>{
          }
 
          let status = await bookingdb.findOne({_id:user._id}).exec()
-
+        
          status.status = "decline"
          status.save()
          let models = await modeldb.findOne({_id:modelid}).exec()
@@ -54,6 +56,7 @@ const createLike = async (req,res)=>{
 
          clientuser.balance = `${clientbalance}`
          await  clientuser.save()
+         await sendEmail(userid, "Model declined your Booking")
        
         return res.status(200).json({"ok":true,"message":` Success`})
       

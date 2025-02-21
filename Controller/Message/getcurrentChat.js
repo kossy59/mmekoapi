@@ -9,6 +9,7 @@ const createModel = async (req,res)=>{
 
     const userid = req.body.modelid;
     const clientid = req.body.clientid
+    const mychat = req.body.mychat
 
     
    
@@ -57,9 +58,7 @@ const createModel = async (req,res)=>{
           
            console.log("number of chats "+Chats.length)
          
-        //    let Listofchat = Chats.documents.filter(value=>{
-        //     return  (value.toid === userid || value.fromid === userid) && (value.toid === clientid || value.fromid === clientid) 
-        //    })
+      
 
           
 
@@ -68,26 +67,23 @@ const createModel = async (req,res)=>{
            }
            // fecting unviewed notification chats
             let unviewing = Chats.filter(value =>{
-                return value.notify === true;
+                return value.notify === true && String(value.toid) === String(clientid)
             
             })
             
            
-            // setting them to notified
-        
-            // for(let i = 0; i < unviewing.length; i++){
-            //     if(unviewing[i].toid === clientid ){
-            //         unviewing[i].notify = false;
-            //         unviewing[i].save()
-            //     }
-            // }
+           console.log("list of unview chat "+unviewing.length)
+          
 
-             for(let i = 0; i < unviewing.length; i++){
-                if(unviewing[i].toid === userid){
-                    unviewing[i].notify = false;
-                    unviewing[i].save()
-                }
-            }
+                
+                    for(let i = 0; i < unviewing.length; i++){
+                       
+                            unviewing[i].notify = false;
+                           await unviewing[i].save()
+                        
+                      }
+
+            
              
 
             //let msg = await data.databar.listDocuments(data.dataid,data.msgCol)

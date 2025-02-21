@@ -1,6 +1,8 @@
 const bookingdb = require("../../Models/book")
 const userdb = require("../../Models/userdb")
+const modeldb = require("../../Models/models")
 const historydb = require("../../Models/mainbalance")
+let sendEmail = require("../../utiils/sendEmailnot")
 
 const createLike = async (req,res)=>{
      
@@ -30,6 +32,8 @@ const createLike = async (req,res)=>{
             userbalance = 0
          }
 
+         let modelemail = await modeldb.findOne({_id:modelid}).exec()
+
          
 
         
@@ -49,12 +53,13 @@ const createLike = async (req,res)=>{
          if(total < 0 || total === 0 ) {
              return res.status(400).json({"ok":false,'message': 'insuffciate balance!!'})
          }
-
+           
           user.balance = String(total)
 
          user.save()
 
          await historydb.create(clienthistory)
+         await sendEmail(modelemail.userid, "Accept Booking from User")
 
        let books  = {
             userid,

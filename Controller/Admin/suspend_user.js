@@ -1,5 +1,6 @@
 const userdb = require("../../Models/userdb")
 const admin = require("../../Models/admindb")
+let sendEmail = require("../../utiils/sendEmailnot")
 
 const updatePost = async (req,res)=>{
     const userid = req.body.userid;
@@ -34,6 +35,8 @@ const updatePost = async (req,res)=>{
                 }
 
                 await admin.create(data)
+
+                await sendEmail(userid,"your account has been suspended")
 
 
 

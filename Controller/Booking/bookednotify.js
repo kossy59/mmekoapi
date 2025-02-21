@@ -122,7 +122,7 @@ const createLike = async (req,res)=>{
 
          
 
-       
+           console.log("notification length "+listinfos.length)
             return res.status(200).json({"ok":true,"message":` Success`,data:{model:model_list,notify:listinfos, lastmessage:lastmessage}})
       
           

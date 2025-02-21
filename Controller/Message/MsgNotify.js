@@ -106,7 +106,7 @@ const getnotify = async(req,res)=>{
                   //  console.log("fetching clent")
                  // console.log("message photolink "+Photos.photoLink)
 
-
+                 console.log("data number "+parseFloat(notificationbyuser[i].date))
                  if(parseFloat(lastmessagecount) < parseFloat(notificationbyuser[i].date) ){
 
                     lastmessageDisplay = `message from ${Users.firstname}`

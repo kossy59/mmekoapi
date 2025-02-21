@@ -10,6 +10,7 @@ const checkuser = require('./utiils/useractive')
 const userdisconnect = require('./utiils/userdisconnect')
 const Livechats = require('./utiils/createlivechat')
 const getnotify = require("./utiils/getnotification")
+let sendEmail = require("./utiils/sendEmailnot")
 const MYID = require("./utiils/Getmyname")
 const PORT = process.env.PORT || 3500
 const express = require('express')
@@ -66,6 +67,7 @@ app.use('/getsharepost',require('./routes/api/share/getsharepost'))
 app.use('/getprofile',require('./routes/api/profile/Profile'))
 app.use('/getmoreprofile',require('./routes/api/Profilemore/getProfilemore'))
 app.use('/messagenotification',require('./routes/api/chat/getNotificationmsg'))
+app.use('/notifymodel',require('./routes/api/booking/notifybooking'))
 
 io.on('connection', (socket) => {
   socket.on('online',async (userid)=>{
@@ -88,12 +90,13 @@ io.on('connection', (socket) => {
          //console.log(data);
          await Livechats(data)
          let info = await MYID(data.fromid)
+         
          let name ;
          let photolink;
          if(info){
            name = info.name;
            photolink = info.photolink;
-
+           await sendEmail(data.toid,`your have new message from ${name}`)
           // console.log("name "+name+" photolink "+photolink)
           
          }
@@ -552,7 +555,7 @@ io.on('connection', (socket) => {
   app.use('/bookhost',require('./routes/api/booking/book'))
   app.use('/pendingrequest',require('./routes/api/booking/getpendingbook'))
   app.use('/cancelrequest',require('./routes/api/booking/cancelmyrequest'))
-  app.use('/notifymodel',require('./routes/api/booking/notifybooking'))
+ 
   app.use('/acceptbook',require('./routes/api/booking/acceptbooking'))
   app.use('/declinebook',require('./routes/api/booking/declinebooking'))
   app.use('/getrequeststats',require('./routes/api/booking/requeststat'))
