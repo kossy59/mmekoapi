@@ -2,6 +2,9 @@ let exclusivedb = require("../../Models/exclusivedb")
 let exclusive_purshaseDB = require("../../Models/exclusivePurshase")
 let userdb = require("../../Models/userdb")
 let historydb = require("../../Models/mainbalance")
+let sendEmail = require("../../utiils/sendEmailnot")
+let sendpushnote = require("../../utiils/sendPushnot")
+
 const postexclusive = async(req,res)=>{
 
     let userid = req.body.userid;
@@ -64,9 +67,10 @@ const postexclusive = async(req,res)=>{
 
         await historydb.create(clienthistory)
 
-        console.log("buy completed")
+        await sendEmail(content_price.userid, "user purchased your content")
+        await sendpushnote(content_price.userid,"user purchase content","modelicon")
 
-        return res.status(200).json({"ok":true,'message': 'purshase successful!!'})
+        return res.status(200).json({"ok":true,'message': 'purshased your successful!!'})
 
        }
        

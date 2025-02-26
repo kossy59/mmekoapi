@@ -23,6 +23,7 @@ const { setInterval } = require('timers')
 let {Check_caller, deletebyClient ,deletebyCallerid, check_connected, deletecallOffline} = require("./utiils/check_caller")
 const pay_model = require("./utiils/payclient_PCALL")
 const updatebalance = require("./utiils/deductPVC")
+const pushnotify = require("./utiils/sendPushnot")
 
 let myurl = "https://mmekosocial.onrender.com"
 //let myurl = "http://localhost:3000"
@@ -68,6 +69,7 @@ app.use('/getprofile',require('./routes/api/profile/Profile'))
 app.use('/getmoreprofile',require('./routes/api/Profilemore/getProfilemore'))
 app.use('/messagenotification',require('./routes/api/chat/getNotificationmsg'))
 app.use('/notifymodel',require('./routes/api/booking/notifybooking'))
+app.use('/subpushid',require('./routes/api/profile/postUserPushNote'))
 
 io.on('connection', (socket) => {
   socket.on('online',async (userid)=>{
@@ -97,6 +99,7 @@ io.on('connection', (socket) => {
            name = info.name;
            photolink = info.photolink;
            await sendEmail(data.toid,`your have new message from ${name}`)
+           await pushnotify(data.toid,`your have new message from ${name}`,"messageicon")
           // console.log("name "+name+" photolink "+photolink)
           
          }

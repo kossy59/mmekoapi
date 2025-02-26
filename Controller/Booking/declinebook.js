@@ -2,6 +2,7 @@ const bookingdb = require("../../Models/book")
 const modeldb = require("../../Models/models")
 const userdb = require("../../Models/userdb")
 let sendEmail = require("../../utiils/sendEmailnot")
+let sendpushnote = require("../../utiils/sendPushnot")
 
 const createLike = async (req,res)=>{
      
@@ -56,6 +57,7 @@ const createLike = async (req,res)=>{
          clientuser.balance = `${clientbalance}`
          await  clientuser.save()
          await sendEmail(userid, "Model declined your Booking")
+         await sendpushnote(userid,"Model declined your Booking","modelicon")
        
         return res.status(200).json({"ok":true,"message":` Success`})
       

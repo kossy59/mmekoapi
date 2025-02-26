@@ -1,6 +1,8 @@
 const followerdb = require("../../Models/followers")
 const userdb = require("../../Models/userdb")
 const admindb = require("../../Models/admindb")
+let sendEmail = require("../../utiils/sendEmailnot")
+let sendpushnote = require("../../utiils/sendPushnot")
 
 const createModel = async (req,res)=>{
 
@@ -43,7 +45,8 @@ const createModel = async (req,res)=>{
         }
 
         await followerdb.create(follow)
-
+        await sendEmail(userid, "you have new follower")
+        await sendpushnote(userid,"you have new follower","modelicon")
 
         return res.status(200).json({"ok":true,"message":`followed successfully`})
       

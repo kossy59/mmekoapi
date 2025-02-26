@@ -1,6 +1,8 @@
 const followerdb = require("../../Models/followers")
 const userdb = require("../../Models/userdb")
 const admindb = require("../../Models/admindb")
+let sendEmail = require("../../utiils/sendEmailnot")
+let sendpushnote = require("../../utiils/sendPushnot")
 
 const createModel = async (req,res)=>{
 
@@ -39,6 +41,9 @@ const createModel = async (req,res)=>{
 
 
         await followerdb.deleteOne({_id:Isfollowed._id})
+        await sendEmail(userid, "user unfollow you")
+        await sendpushnote(userid,"user unfollow you","modelicon")
+
 
 
         return res.status(200).json({"ok":true,"message":`followed successfully`})

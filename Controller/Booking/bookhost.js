@@ -3,6 +3,7 @@ const userdb = require("../../Models/userdb")
 const modeldb = require("../../Models/models")
 const historydb = require("../../Models/mainbalance")
 let sendEmail = require("../../utiils/sendEmailnot")
+let sendpushnote = require("../../utiils/sendPushnot")
 
 const createLike = async (req,res)=>{
      
@@ -60,6 +61,7 @@ const createLike = async (req,res)=>{
 
          await historydb.create(clienthistory)
          await sendEmail(modelemail.userid, "Accept Booking from User")
+         await sendpushnote(modelemail.userid,"Accept Booking from User","modelicon")
 
        let books  = {
             userid,
