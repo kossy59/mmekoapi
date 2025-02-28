@@ -9,7 +9,7 @@ const pushmessage = async(userid,message,icon)=>{
     let subinfo = await pushdb.findOne({userid:userid}).exec()
 
     if(online){
-        if(online.active === true){
+       
             console.log("is online")
             let datasend = JSON.stringify({
                 message:message,
@@ -41,7 +41,7 @@ const pushmessage = async(userid,message,icon)=>{
                
 
             }
-        }
+        
     }
 
 }
