@@ -7,6 +7,7 @@ const forgetHandler = require('../../helpers/sendemailAuth');
 const userdb = require("../../Models/userdb")
 const baneddb = require("../../Models/admindb")
 const usercompletedb = require("../../Models/usercomplete")
+let pushdb = require("../../Models/settingsdb")
 
 const handleNewUser = async (req,res)=>{
 
@@ -47,6 +48,8 @@ const handleNewUser = async (req,res)=>{
        
        if(user_uncon.emailconfirm !== "verify"){
             await userdb.deleteOne({_id:user_uncon._id})
+            await usercompletedb.deleteOne({useraccountId:user_uncon._id})
+            await pushdb.deleteOne({userid:user_uncon._id})
       }
      }
 
@@ -138,6 +141,14 @@ const handleNewUser = async (req,res)=>{
             }
 
             await usercompletedb.create(moreuser)
+
+            let notification = {
+                emailnot:true,
+                pushnot:true,
+                userid: user._id
+            }
+
+            await pushdb.create(notification)
   
         //await data.databar.createDocument(data.dataid,data.colid,sdk.ID.unique(),db)
         await forgetHandler(req,res,Email)

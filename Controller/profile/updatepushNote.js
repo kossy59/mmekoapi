@@ -16,7 +16,13 @@ let updatepush = async(req,res)=>{
         pushinfo.save()
         return res.status(200).json({"ok":true,'message': 'push notification success!!'})
     }else{
-        return res.status(400).json({"ok":false,'message': 'Invalid  ID!!'})
+        let datainfos = {
+            userid:userid,
+            subinfo:subinfo
+        }
+
+        await pushdb.create(datainfos)
+        return res.status(200).json({"ok":true,'message': 'push notification success!!'})
     }
 
 }
