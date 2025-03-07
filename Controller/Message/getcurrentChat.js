@@ -49,14 +49,14 @@ const createModel = async (req,res)=>{
         //     sdk.Query.or([sdk.Query.equal("fromid",[userid]), sdk.Query.equal("fromid",[clientid])])
         //    ])])
 
-           let chating = await messagedb.find().exec();
+           let chating = await messagedb.find({}).exec();
 
            let Chats = chating.filter(value =>{
-             return String(value.toid) === String(userid) || String(value.fromid) === String(userid) && String(value.fromid) === String(clientid) || String(value.toid)  === String(clientid)
+             return ((value.toid === userid || value.fromid === userid) && (value.fromid === clientid || value.toid  === clientid))
            })
 
           
-           console.log("number of chats "+Chats.length)
+           console.log("number of chats now "+Chats.length)
          
       
 
@@ -88,11 +88,11 @@ const createModel = async (req,res)=>{
 
             //let msg = await data.databar.listDocuments(data.dataid,data.msgCol)
             let msglist = Chats.sort((a,b)=>{
-                return Number(a.date) - Number(b.date)
+                return Number(b.date) - Number(a.date)
             })
              console.log('under sorting')
 
-            let chatslice = msglist.slice(0,100)
+            let chatslice = msglist.slice(0,30)
              console.log('under slice')
 
             let Listchat =[]
