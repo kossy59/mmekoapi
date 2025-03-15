@@ -8,11 +8,14 @@ const createModel = async (req,res)=>{
     const modelid = req.body.modelid;
     const userid = req.body.userid
     const amount = req.body.amount
+
    
    
     if(!userid && !modelid){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
+
+    let withdraw = await userdb.findOne({_id :modelid}).exec()
 
  
     try{
@@ -75,10 +78,15 @@ const createModel = async (req,res)=>{
            user.balance = `${user_balance}`
            user.save()
 
-            let withdraw = await userdb.findOne({_id :modelid}).exec()
+           
             let withdraw_balance = parseFloat(withdraw.withdrawbalance)
 
+            if(!withdraw_balance || withdraw_balance <= 0){
+              withdraw_balance = 0
+            }
+
             withdraw_balance = withdraw_balance + gold_amount
+            console.log("gold sent "+withdraw_balance)
 
             withdraw.withdrawbalance = `${withdraw_balance}`
            

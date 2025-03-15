@@ -529,6 +529,7 @@ io.on('connection', (socket) => {
   app.use('/getprofilebyid',require('./routes/api/profile/Profile'))
   app.use('/getverifymodel',require('./routes/api/model/getlivemodel'))
   app.use('/getmodelbyid',require('./routes/api/model/getmodelbyid'))
+  app.use('/searchuser',require('./routes/api/profile/getallUser'))
   app.use(handleRefresh);
 
   app.use(verifyJwt)

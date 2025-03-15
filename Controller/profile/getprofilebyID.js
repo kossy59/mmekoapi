@@ -55,7 +55,7 @@ const readProfile = async (req,res)=>{
                 userphoto:com.photoLink,
                 nickname:`${du.nickname}`,
                 aboutuser:`${com.details}`,
-                location: `${du.state}, ${du.country}`,
+                location: `${du.country}`,
                 active:du.active,
                 gender:du.gender,
                 post:[],

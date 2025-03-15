@@ -45,7 +45,12 @@ const createLike = async (req,res)=>{
             let clientuser = await userdb.findOne({_id:userid}).exec()
    
             let clientbalance = parseFloat(clientuser.balance)
+            if(!clientbalance || clientbalance <= 0){
+                clientbalance = 0
+            }
             clientbalance = clientbalance + modelprice
+            clientuser.balance = `${clientbalance}`
+            await  clientuser.save()
    
             let modelpaymenthistory = {
                userid:userid,

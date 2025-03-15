@@ -9,6 +9,8 @@ const userdb = require("../Models/userdb")
 
    let coin = parseFloat( user.withdrawbalance)
 
+   console.log("your withdraw coin is "+user.withdrawbalance)
+
    if(!coin || coin === 0){
      coin = 0
    }

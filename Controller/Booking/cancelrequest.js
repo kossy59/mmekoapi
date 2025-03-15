@@ -53,8 +53,10 @@ const createLike = async (req,res)=>{
          }
 
          clientbalance = modelprice + clientbalance
+         clientuser.balance = `${clientbalance}`
+         clientuser.save()
 
-         console.log("total price: "+clientbalance)
+        
         let modelpaymenthistory = {
             userid:userid,
             details: "cancel host refound",
@@ -65,11 +67,9 @@ const createLike = async (req,res)=>{
 
          await historydb.create(modelpaymenthistory)
 
-         clientuser.balance = `${clientbalance}`
-         clientuser.save()
+         
          }
 
-         
 
         await bookingdb.deleteOne({_id:book._id}).exec()
 

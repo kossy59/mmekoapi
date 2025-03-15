@@ -43,7 +43,7 @@ const createLike = async (req,res)=>{
          status.save()
          await sendEmail(status.userid,"model has accepted your booking request")
          await sendpushnote(status.userid,"model has accepted your booking request","modelicon")
-            return res.status(200).json({"ok":true,"message":` Success`})
+         return res.status(200).json({"ok":true,"message":` Success`})
       
           
        }catch(err){
