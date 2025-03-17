@@ -39,6 +39,10 @@ const markertdata = new Scheme({
         type:String,
         required : true
     },
+    coin:{
+        type:Boolean,
+        required : false
+    },
 
   
   

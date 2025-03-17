@@ -44,11 +44,7 @@ const markertdata = new Scheme({
         default:false
     },
 
-    state:{
-        type:String,
-        required : true,
-       
-    },
+
 
      country:{
         type:String,

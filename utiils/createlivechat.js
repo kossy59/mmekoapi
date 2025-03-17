@@ -1,13 +1,8 @@
-// const {connectdatabase} = require('../config/connectDB')
-// const sdk = require("node-appwrite");
-
 const messagedb = require("../Models/message")
 
 const Livechats = async(newdata)=>{
 
-     //let data = await connectdatabase();
-
-     try{
+   
 
         //  let Chats = await data.databar.listDocuments(data.dataid,data.msgCol);
 
@@ -28,11 +23,7 @@ const Livechats = async(newdata)=>{
          })
 
          //console.log(listchat)
-     }catch(err){
-
-       // console.log(err.message)
-        return
-     }
+   
 
 }
 

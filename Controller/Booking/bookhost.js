@@ -36,30 +36,36 @@ const createLike = async (req,res)=>{
          let modelemail = await modeldb.findOne({_id:modelid}).exec()
 
          
+        if(type !== "Private show"){
 
+            let total = userbalance - modelprice
+
+            let clienthistory = {
+               userid,
+               details: "hosting a model pendding",
+               spent: `${modelprice}`,
+               income: "0",
+               date: `${Date.now().toString()}`
+            }
+
+            if(total < 0 || total === 0 ) {
+                return res.status(400).json({"ok":false,'message': 'insuffciate balance!!'})
+            }
+              
+             user.balance = String(total)
+   
+            user.save()
+   
+            await historydb.create(clienthistory)
+
+        }
         
-         let total = userbalance - modelprice
-
-         let clienthistory = {
-            userid,
-            details: "hosting a model pendding",
-            spent: `${modelprice}`,
-            income: "0",
-            date: `${Date.now().toString()}`
-         }
+        
 
         
          //console.log("user balance "+userbalance)
 
-         if(total < 0 || total === 0 ) {
-             return res.status(400).json({"ok":false,'message': 'insuffciate balance!!'})
-         }
-           
-          user.balance = String(total)
-
-         user.save()
-
-         await historydb.create(clienthistory)
+      
          await sendEmail(modelemail.userid, "Accept Booking from User")
          await sendpushnote(modelemail.userid,"Accept Booking from User","modelicon")
 

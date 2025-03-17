@@ -34,28 +34,34 @@ const createLike = async (req,res)=>{
          }
 
          let status = await bookingdb.findOne({_id:user._id}).exec()
-        
+         
          status.status = "decline"
          status.save()
-         let models = await modeldb.findOne({_id:modelid}).exec()
-         let modelprice = parseFloat(models.price)
-         let clientuser = await userdb.findOne({_id:userid}).exec()
+         
+         if(status.type !== "Private show"){
 
-         let clientbalance = parseFloat(clientuser.balance)
-         clientbalance = clientbalance + modelprice
+            let models = await modeldb.findOne({_id:modelid}).exec()
+            let modelprice = parseFloat(models.price)
+            let clientuser = await userdb.findOne({_id:userid}).exec()
+   
+            let clientbalance = parseFloat(clientuser.balance)
+            clientbalance = clientbalance + modelprice
+   
+            let modelpaymenthistory = {
+               userid:userid,
+               details: "cancel host refound",
+               spent: `${0}`,
+               income: `${modelprice}`,
+               date: `${Date.now().toString()}`
+            }
+   
+            await historydb.create(modelpaymenthistory)
+   
+            clientuser.balance = `${clientbalance}`
+            await  clientuser.save()
 
-         let modelpaymenthistory = {
-            userid:userid,
-            details: "cancel host refound",
-            spent: `${0}`,
-            income: `${modelprice}`,
-            date: `${Date.now().toString()}`
          }
-
-         await historydb.create(modelpaymenthistory)
-
-         clientuser.balance = `${clientbalance}`
-         await  clientuser.save()
+        
          await sendEmail(userid, "Model declined your Booking")
          await sendpushnote(userid,"Model declined your Booking","modelicon")
        

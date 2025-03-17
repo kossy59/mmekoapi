@@ -37,7 +37,7 @@ const createModel = async (req,res)=>{
 
 
             let user_history = {
-            userid,
+            userid:userid,
             details: "Gifts Gold",
             spent: `${gold_amount}`,
             income: "0",
@@ -50,16 +50,18 @@ const createModel = async (req,res)=>{
           let model_as_user = await get_model_userID(modelid)
          // console.log("Under model convert "+model_as_user)
            let model_history = {
-            userid: model_as_user.userid,
+            userid: modelid,
             details: "Receives gold gift",
             spent: "0",
             income: `${gold_amount}`,
             date: `${Date.now().toString()}`
            }
 
+           await historydb.create(model_history)
+
            let gift = {
-            modelid:model_as_user._id,
-            userid,
+            modelid:modelid,
+            userid:userid,
             date:`${Date.now()}`,
             amount : `${gold_amount}`
            }
@@ -68,12 +70,12 @@ const createModel = async (req,res)=>{
           console.log("Under gift create")
           
 
-           await historydb.create(model_history)
+           
 
            user.balance = `${user_balance}`
            user.save()
 
-            let withdraw = await userdb.findOne({_id : model_as_user.userid}).exec()
+            let withdraw = await userdb.findOne({_id :modelid}).exec()
             let withdraw_balance = parseFloat(withdraw.withdrawbalance)
 
             withdraw_balance = withdraw_balance + gold_amount

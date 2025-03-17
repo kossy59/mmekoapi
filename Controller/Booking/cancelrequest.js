@@ -43,7 +43,8 @@ const createLike = async (req,res)=>{
          let modeluser = await modeldb.findOne({_id:modelid}).exec()
          let modelprice = parseFloat(modeluser.price)
 
-         let clientuser = await userdb.findOne({_id: userid}).exec()
+         if(book.type !== "Private show"){
+            let clientuser = await userdb.findOne({_id: userid}).exec()
 
          let clientbalance = parseFloat(clientuser.balance)
 
@@ -66,6 +67,9 @@ const createLike = async (req,res)=>{
 
          clientuser.balance = `${clientbalance}`
          clientuser.save()
+         }
+
+         
 
         await bookingdb.deleteOne({_id:book._id}).exec()
 
@@ -81,5 +85,4 @@ const createLike = async (req,res)=>{
            return res.status(500).json({"ok":false,'message': `${err.message}!`});
        }
 }
-
 module.exports = createLike

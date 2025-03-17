@@ -46,15 +46,15 @@ const readHistory = async (req,res)=>{
         }
      
 
-        if(modelid){
+        
 
             console.log("inside history log")
             console.log('inside gift')
-            gift_count = String(await getGift(modelid))
+            gift_count = String(await getGift(userid))
             console.log('inside request')
             request_count = String(await getRequest(modelid))
             console.log('inside earning')
-            earning = String(await getEarning(modelid))
+            earning = String(await getEarning(userid))
 
             if(parseFloat(gift_count) <= 0){
               gift_count = "---"
@@ -67,7 +67,7 @@ const readHistory = async (req,res)=>{
              if(parseFloat(request_count) <= 0){
                 request_count = "---"
             }
-        }
+        
 
         let history = {
             gift : gift_count,

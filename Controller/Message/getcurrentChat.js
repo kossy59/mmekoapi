@@ -118,15 +118,20 @@ const createModel = async (req,res)=>{
                      //let photos = await data.databar.listDocuments(data.dataid,data.userincol, [sdk.Query.equal("useraccountId",[myChat[i].fromid])])
                      let usernames = await userdb.findOne({_id:myChat[i].fromid}).exec()
                      let photos = await completedb.findOne({useraccountId:myChat[i].fromid})
+                     let coin = false
 
                      if(usernames){
+                        if(myChat[i].coin){
+                            coin = myChat[i].coin
+                        }
                          let chat = {
                                 id: myChat[i].fromid,
                                 content:  myChat[i].content,
                                 date:  myChat[i].date,
                                 name: usernames.firstname,
                                 photolink: photos.photoLink,
-                                client: myChat[i].client
+                                client: myChat[i].client,
+                                coin : coin
                             }
 
                          Listchat.push(chat)
@@ -172,15 +177,19 @@ const createModel = async (req,res)=>{
                      //let photos = await data.databar.listDocuments(data.dataid,data.userincol, [sdk.Query.equal("useraccountId",[clientchat[i].fromid])])
                      let usernames = await userdb.findOne({_id:clientchat[i].fromid}).exec()
                      let photos = await completedb.findOne({useraccountId:clientchat[i].fromid}).exec()
-
+                     let coin = false
                      if(usernames){
+                        if(clientchat[i].coin){
+                            coin = clientchat[i].coin
+                        }
                          let chat = {
                                 id: clientchat[i].fromid,
                                 content:  clientchat[i].content,
                                 date:  clientchat[i].date,
                                 name: usernames.firstname,
                                 photolink: photos.photoLink,
-                                client: clientchat[i].client
+                                client: clientchat[i].client,
+                                coin:coin
                             }
 
                          Listchat.push(chat)

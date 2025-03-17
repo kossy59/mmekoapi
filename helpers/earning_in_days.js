@@ -1,11 +1,12 @@
 let earningdb = require("../Models/mainbalance")
 let modeldb = require("../Models/models")
+let userdb = require("../Models/models")
 
  let earning_history = async (modelid)=>{
 
-    let user = await modeldb.findOne({_id : modelid}).exec()
+   // let user = await modeldb.findOne({_id : modelid}).exec()
 
-    let earning = await earningdb.find({userid : user.userid}).exec() 
+    let earning = await earningdb.find({userid : modelid}).exec() 
 
     let first1 =  Date.now()
 

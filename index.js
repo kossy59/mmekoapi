@@ -89,10 +89,11 @@ io.on('connection', (socket) => {
   
     socket.on("message",async (data)=>{
 
-         //console.log(data);
+        console.log("1");
          await Livechats(data)
+         console.log("2");
          let info = await MYID(data.fromid)
-         
+         console.log("3");
          let name ;
          let photolink;
          if(info){
