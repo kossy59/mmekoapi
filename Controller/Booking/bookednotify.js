@@ -38,7 +38,7 @@ const createLike = async (req,res)=>{
          let model_list = []
 
          let user = users.filter(value =>{
-            return value.status === "pending" || value.status === "accepted" || value.status === "completed" || value.status === "decline"
+            return value.status === "pending" || value.status === "accepted" || value.status === "decline"
          })
 
          

@@ -38,7 +38,7 @@ const forgetHandler = async (req,res,email)=>{
             to:email,
             from:process.env.EMAIL,
             subject:"Please confirm your new mmekoSocial Account Authentication",
-            text:`${rand}`
+            text:`Enter the code ${rand} to comfirm your email for Mmeko`
          }
 
           match.emailconfirm = `${String(rand)}`

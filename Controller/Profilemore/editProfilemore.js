@@ -9,7 +9,6 @@ const updatePost = async (req,res)=>{
     const photoLink = req.body.photolink;
     let firstname = req.body.firstname
     let lastname = req.body.lastname
-    let state = req.body.state
     let country = req.body.country
     let aboutme = req.body.bio
     
@@ -58,9 +57,7 @@ const updatePost = async (req,res)=>{
                  if(lastname){
                     usersedit.lastname = lastname
                 }
-                 if(state){
-                    usersedit.state = state
-                }
+                 
 
                  if(country){
                     usersedit.country = country

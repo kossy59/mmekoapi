@@ -32,8 +32,15 @@ const createModel = async (req,res)=>{
                 if(photos){
                     image = photos.photoLink
                 }
+
+                let username = ""
+                if(clientinfo.nickname){
+                    username = clientinfo.nickname
+                }else {
+                    username = `${clientinfo.firstname} ${clientinfo.lastname}`
+                }
                
-                chatInfo.name = `${clientinfo.firstname} ${clientinfo.lastname}`
+                chatInfo.name = username
                 chatInfo.photolink = image
                 chatInfo.value = "client"
                 chatInfo.id = clientinfo._id
