@@ -17,6 +17,9 @@ let completedb = require("../../Models/usercomplete")
 let exclusivepurchase = require("../../Models/exclusivePurshase")
 let modeldb = require("../../Models/models")
 let blockeddb = require("../../Models/BlockedDB")
+let settingdb = require("../../Models/settingsdb")
+let pushdb = require("../../Models/pushnotifydb")
+
 
 
 let deletedbs = async(userid)=>{
@@ -30,7 +33,8 @@ let deletedbs = async(userid)=>{
  await mainbalance.deleteMany({userid:userid}).exec()
  await messagedb.deleteMany({fromid:userid}).exec()
  await reviewdb.deleteMany({userid:userid}).exec()
- 
+ await settingdb.deleteMany({userid:userid}).exec()
+ await pushdb.deleteMany({userid:userid}).exec()
  await videocalldb.deleteMany({callerid:userid}).exec()
  await exclusivepurchase.deleteMany({userid:userid}).exec()
  await blockeddb.deleteMany({userid:userid}).exec()
