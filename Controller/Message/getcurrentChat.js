@@ -44,7 +44,7 @@ const createModel = async (req,res)=>{
                 chatInfo.photolink = image
                 chatInfo.value = "client"
                 chatInfo.id = clientinfo._id
-                console.log("success getting client info")
+                chatInfo.firstname = clientinfo.firstname
             }
 
         

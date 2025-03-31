@@ -148,7 +148,7 @@ const readPost = async (req,res)=>{
 
 
             //console.log("list of post"+post.length)
-
+            post.reverse()
             return res.status(200).json({"ok":true,"message":`Enter new password`,post:post})
       
           
