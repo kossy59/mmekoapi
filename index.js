@@ -337,11 +337,7 @@ io.on('connection', (socket) => {
 
         }else if(responds === "calling"){
           data.answer_message = "calling"
-<<<<<<< HEAD
           data.message = `private show ${callname}`
-=======
-          data.message = `private caller ${callname}`
->>>>>>> c34362b934792b57ae39211230d67d8c4f31095a
           //console.log("calling user "+data.sdp_c_offer)
           if(data.sdp_c_offer){
            
