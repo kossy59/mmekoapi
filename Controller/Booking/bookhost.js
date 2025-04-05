@@ -65,7 +65,6 @@ const createLike = async (req,res)=>{
         
          //console.log("user balance "+userbalance)
 
-      
          await sendEmail(modelemail.userid, "Accept appointment")
          await sendpushnote(modelemail.userid,"Accept appointment","modelicon")
 
