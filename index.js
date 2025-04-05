@@ -25,7 +25,7 @@ const pay_model = require("./utiils/payclient_PCALL")
 const updatebalance = require("./utiils/deductPVC")
 const pushnotify = require("./utiils/sendPushnot")
 
-let myurl = "https://mmeko.com/"
+let myurl = "https://mmeko.com"
 //let myurl = "http://localhost:3000"
 
 const corsOptions = {
