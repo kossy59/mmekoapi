@@ -17,12 +17,15 @@ const createPost = async (req,res)=>{
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
 
+    console.log("posting image")
+
    // let data = await connectdatabase()
 
     try{
       
 
         if(!postlink){
+            console.log("no photolink")
             postlink = ""
         }
 

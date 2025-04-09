@@ -39,8 +39,8 @@ const forgetpass = async (req,res)=>{
         let mailOption = {
             to:email,
             from:process.env.EMAIL,
-            subject:"Please confirm your new  Password Authentication Code",
-            text:`${rand}`
+            subject:"Mmeko New Password",
+            text:`Please confirm your new  Password Authentication Code ${rand}`
         }
 
         du.passcode = `${String(rand)}`
