@@ -51,25 +51,44 @@ let deletedbs = async(userid)=>{
     await deletelike(String(list_of_post[i]._id))
 
     if(list_of_post[i].postlink){
-    await deleteImage("post",list_of_post[i].postlink)
+      try{
+         await deleteImage("post",list_of_post[i].postlink)
+      }catch{
+          console.log("failed deleting post")
+      }
+   
     }
  }
  console.log("failone")
  await postdb.deleteMany({userid:userid}).exec()
 
  for(let i = 0; i < list_of_exclusve.length; i++){
-   
-    if(list_of_exclusve[i].thumblink){
-      console.log("fail in thumb")
-      console.log("thumb "+list_of_exclusve[i].thumblink)
-      await deleteImage("post",list_of_exclusve[i].thumblink)
-    }
 
-    if(list_of_exclusve[i].contentlink){
-      console.log("thumb "+list_of_exclusve[i].thumblink)
-      await deleteImage("content",list_of_exclusve[i].contentlink)
-      await deleteImage("post",list_of_exclusve[i].contentlink)
-      }
+  
+      if(list_of_exclusve[i].thumblink){
+         console.log("fail in thumb")
+         console.log("thumb "+list_of_exclusve[i].thumblink)
+         try{
+            await deleteImage("post",list_of_exclusve[i].thumblink)
+         }catch{
+            console.log("failed deleting thumb")
+         }
+        
+       }
+   
+       if(list_of_exclusve[i].contentlink){
+         console.log("thumb "+list_of_exclusve[i].thumblink)
+         try{
+            await deleteImage("content",list_of_exclusve[i].contentlink)
+            await deleteImage("post",list_of_exclusve[i].contentlink)
+         }catch{
+            console.log("failed deleting content and post")
+         }
+
+         }
+
+   
+   
  }
  console.log("failtwo")
  await exclusivedb.deleteMany({userid:userid}).exec()
@@ -81,7 +100,12 @@ let deletedbs = async(userid)=>{
         let images = modelimage.photolink.split(",")
 
         for(let i = 0; i < images.length; i++){
+         try{
             await deleteImage("model",images[i])
+         }catch{
+           console.log("failed deleting model")
+         }
+            
         }
         
      }
