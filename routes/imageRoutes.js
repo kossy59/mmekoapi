@@ -18,7 +18,7 @@ const upload = multer({ dest: 'uploads/' });
 router.post('/save', upload.single('image'), async (req, res) => {
   try {
     // Get the bucket (folder) from the request body, defaulting to 'default_folder' if not provided
-    const bucket = req.body.bucket || 'default_folder';
+    const bucket = req.body.bucket || 'video';
     const file = req.file;
 
     // Make sure the file exists and then pass it to the saveImage function
