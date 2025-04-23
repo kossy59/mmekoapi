@@ -15,32 +15,30 @@ const upload = multer({ dest: 'uploads/' });
  * POST /api/image/save
  * Upload and save a new image to Cloudinary
  */
-export const saveImage = async (image, bucket = 'default_folder') => {
+router.post('/save', upload.single('image'), async (req, res) => {
   try {
-    console.log("Uploading image to Cloudinary...");
+    // Get the bucket (folder) from the request body, defaulting to 'default_folder' if not provided
+    const bucket = req.body.bucket || 'default_folder';
+    const file = req.file;
 
-    // Create a FormData object to send the image and folder info
-    const formData = new FormData();
-    formData.append('image', image);  // This must match `upload.single('image')` in the backend
-    formData.append('upload_preset', 'post_file'); // Cloudinary preset (optional if uploading directly to Cloudinary)
-    formData.append('bucket', bucket); // Cloudinary folder (bucket)
+    // Make sure the file exists and then pass it to the saveImage function
+    if (!file) {
+      return res.status(400).json({ error: 'No file uploaded.' });
+    }
 
-    // Make the POST request to upload the image
-    const response = await axios.post('https://mmeko.com/api/image/save', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    // Call the saveImage function, passing the file and bucket/folder name
+    const id = await saveImage(file, bucket);
 
-    console.log("Image :", response.data);
-    console.log("Image uploaded successfully:", response.data);
-    return response.data.public_id; // Cloudinary public ID returned after upload
-  } catch (error) {
-    console.error("Error uploading image:", error);
-    throw error;
+    // Clean up local file after upload
+    fs.unlinkSync(file.path);
+
+    // Respond with the public ID of the uploaded image
+    res.json({ public_id: id });
+  } catch (err) {
+    console.error("Error uploading image:", err);
+    res.status(500).json({ error: err.message });
   }
-};
-
+});
 
 /**
  * GET /api/image/download
