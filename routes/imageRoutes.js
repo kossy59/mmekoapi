@@ -6,7 +6,7 @@ const {
   deleteImage,
   updateImage,
   downloadImage
-} = require('../utils/cloudinary'); // Adjust path as needed
+} = require('../utiils/cloudinary'); // Adjust path as needed
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' });
