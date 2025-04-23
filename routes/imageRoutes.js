@@ -15,19 +15,32 @@ const upload = multer({ dest: 'uploads/' });
  * POST /api/image/save
  * Upload and save a new image to Cloudinary
  */
-router.post('/save', upload.single('image'), async (req, res) => {
+export const saveImage = async (image, bucket = 'default_folder') => {
   try {
-    const bucket = req.body.bucket;
-    const file = req.file;
+    console.log("Uploading image to Cloudinary...");
 
-    const id = await saveImage(file, bucket);
-    fs.unlinkSync(file.path); // delete local file after upload
+    // Create a FormData object to send the image and folder info
+    const formData = new FormData();
+    formData.append('image', image);  // This must match `upload.single('image')` in the backend
+    formData.append('upload_preset', 'post_file'); // Cloudinary preset (optional if uploading directly to Cloudinary)
+    formData.append('bucket', bucket); // Cloudinary folder (bucket)
 
-    res.json({ public_id: id });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    // Make the POST request to upload the image
+    const response = await axios.post('https://mmeko.com/api/image/save', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    console.log("Image :", response.data);
+    console.log("Image uploaded successfully:", response.data);
+    return response.data.public_id; // Cloudinary public ID returned after upload
+  } catch (error) {
+    console.error("Error uploading image:", error);
+    throw error;
   }
-});
+};
+
 
 /**
  * GET /api/image/download
