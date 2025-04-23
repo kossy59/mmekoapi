@@ -25,6 +25,11 @@ const pay_model = require("./utiils/payclient_PCALL")
 const updatebalance = require("./utiils/deductPVC")
 const pushnotify = require("./utiils/sendPushnot")
 
+const imageRoutes = require('./routes/imageRoutes.js'); // adjust path if needed
+
+// Load environment variables from .env
+dotenv.config();
+
 let myurl = "https://mmeko.com"
 //let myurl = "http://localhost:3000"
 
@@ -55,7 +60,7 @@ const io = new Server(server, {
 connect()
 
 const IDS = {}
-
+app.use('/api/image', imageRoutes);
 
 app.use('/', require('./routes/api/post/getpost'))
 
