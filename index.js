@@ -27,8 +27,7 @@ const pushnotify = require("./utiils/sendPushnot")
 
 const imageRoutes = require('./routes/imageRoutes.js'); // adjust path if needed
 
-// Load environment variables from .env
-dotenv.config();
+
 
 let myurl = "https://mmeko.com"
 //let myurl = "http://localhost:3000"
