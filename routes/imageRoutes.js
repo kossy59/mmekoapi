@@ -22,12 +22,13 @@ router.post('/save', upload.single('image'), async (req, res) => {
     // Save image to Cloudinary and get the public_id
     const publicId = await saveImage(file);
 
-    res.json({ public_id: publicId });
+    res.json({ public_id: publicId });  // Respond with the public_id
   } catch (err) {
     console.error("Error uploading image:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // GET route to download image from Cloudinary using public_id
 router.get('/download', async (req, res) => {
