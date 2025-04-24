@@ -30,12 +30,17 @@ router.post('/save', upload.single('image'), async (req, res) => {
       return res.status(500).json({ error: 'Failed to receive public_id from Cloudinary' });
     }
 
+    // Log the result of saveImage to verify
+    console.log("Cloudinary response public_id:", publicId);
+
+    // Return the public_id in the response
     res.json({ public_id: publicId });
   } catch (err) {
     console.error("Error uploading image:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
 
 
 
