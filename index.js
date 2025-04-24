@@ -25,7 +25,8 @@ const pay_model = require("./utiils/payclient_PCALL")
 const updatebalance = require("./utiils/deductPVC")
 const pushnotify = require("./utiils/sendPushnot")
 
-const imageRoutes = require('./routes/imageRoutes.js'); // adjust path if needed
+
+const imageRoutes = require("./routes/imageRoutes");
 
 
 
@@ -59,8 +60,11 @@ const io = new Server(server, {
 connect()
 
 const IDS = {}
-app.use('/api/image', imageRoutes);
+app.use(express.urlencoded({ extended: true, limit: "10mb" })); // Handle URL-encoded data
+app.use(express.json({ limit: "10mb" })); // Handle JSON data
 
+// Routes
+app.use("/api/image", imageRoutes);
 app.use('/', require('./routes/api/post/getpost'))
 
 app.use('/getallpost',require('./routes/api/post/getpost'))
