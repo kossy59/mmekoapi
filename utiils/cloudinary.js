@@ -12,12 +12,13 @@ cloudinary.config({
 const saveImage = async (file, folder = "assets") => {
   const result = await cloudinary.uploader.upload(file.path, {
     resource_type: "auto",
-    folder, // default folder
+    folder,
   });
 
-  fs.unlinkSync(file.path); // delete local temp file
-  return result.public_id;
+  fs.unlinkSync(file.path); // Delete the local temp file after upload
+  return { public_id: result.public_id };  // Ensure public_id is returned in the response
 };
+
 
 // Delete Image
 const deleteImage = async (publicId) => {
