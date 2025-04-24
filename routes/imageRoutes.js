@@ -19,15 +19,25 @@ router.post('/save', upload.single('image'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded.' });
     }
 
+    // Log the file object to check if the file is being uploaded
+    console.log("File received:", file);
+
     // Save image to Cloudinary and get the public_id
     const publicId = await saveImage(file);
 
-    res.json({ public_id: publicId });  // Respond with the public_id
+    // Check if public_id is received
+    if (!publicId) {
+      return res.status(500).json({ error: 'Failed to receive public_id from Cloudinary' });
+    }
+
+    res.json({ public_id: publicId });
   } catch (err) {
     console.error("Error uploading image:", err);
     res.status(500).json({ error: err.message });
   }
 });
+
+
 
 
 // GET route to download image from Cloudinary using public_id
