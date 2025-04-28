@@ -74,7 +74,7 @@ const upload = multer({ storage: storage });
 // .post(editPost)
 // .patch(deletePost)
 
-router.use(cors(corsOptions));
+// router.use(cors(corsOptions));
 
 router.route('/')
 .put(upload.single('postFile'), handleRefresh, createPost)
