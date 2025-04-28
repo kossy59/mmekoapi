@@ -17,14 +17,14 @@ const createPost = async (req, res) => {
     let content = data.content;
     let posttype = data.posttype;
 
-    // const result = await saveFile(req.file, req.file.path, `assets/${posttype}s`);
+    const result = await saveFile(req.file, req.file.path, `assets/${posttype}s`);
 
-    // console.log("result: ", result)
+    console.log("result: ", result)
 
-    // const postfilelink = result.file_link
-    // const postfilepublicid = result.public_id
-    const postfilelink = ""
-    const postfilepublicid = ""
+    const postfilelink = result.file_link
+    const postfilepublicid = result.public_id
+    // const postfilelink = ""
+    // const postfilepublicid = ""
    
     if (!userid) {
         return res.status(400).json({ "ok": false, 'message': 'user Id invalid!!' })
