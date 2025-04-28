@@ -55,7 +55,7 @@ router.route('/')
 // })
 .put((req, res, next) => {
   // Determine the allowed methods for this endpoint
-  const allowedMethods = ['GET', 'POST', 'OPTIONS', 'PATCH'];
+  const allowedMethods = ['GET', 'POST', 'PUT' 'OPTIONS', 'PATCH'];
 
   // Set the 'Allow' header
   res.setHeader('Allow', allowedMethods.join(', '));
