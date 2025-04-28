@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
 const corsOptions = {
   origin: 'https://mmeko.com', // Replace with your frontend's actual origin
   // methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  // allowedHeaders: 'Content-Type', // Add any other headers your PUT request uses
+  allowedHeaders: 'Content-Type', // Add any other headers your PUT request uses
   // credentials: true,
   // maxAge: 86400, // Optional: Cache preflight response for 24 hours
 };
@@ -74,7 +74,7 @@ const upload = multer({ storage: storage });
 // .post(editPost)
 // .patch(deletePost)
 
-// router.use(cors(corsOptions));
+router.use(cors(corsOptions));
 
 router.route('/')
 .put(upload.single('postFile'), handleRefresh, createPost)
