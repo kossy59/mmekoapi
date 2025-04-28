@@ -9,9 +9,6 @@ const { saveFile } = require("../../utiils/cloudinary")
 
 const createPost = async (req, res) => {
 
-    res.setHeader('access-control-allow-credentials', true);
-    res.setHeader('access-control-allow-origin', 'https://mmeko.com');
-
     console.log("req.body.data", req.body.data);
     const data = JSON.parse(req.body.data);
     console.log("data", data);
