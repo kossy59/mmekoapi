@@ -35,25 +35,25 @@ const corsOptions = {
 const upload = multer({ storage: storage });
 
 router.route('/')
-// .options((req, res) => {
-//   // Determine the allowed methods for this endpoint
-//   const allowedMethods = ['GET', 'POST', 'OPTIONS', 'PATCH'];
+.options((req, res) => {
+  // Determine the allowed methods for this endpoint
+  const allowedMethods = ['PUT', 'GET', 'POST', 'OPTIONS', 'PATCH'];
 
-//   // Set the 'Allow' header
-//   res.setHeader('Allow', allowedMethods.join(', '));
+  // Set the 'Allow' header
+  res.setHeader('Allow', allowedMethods.join(', '));
 
-//   res.setHeader('access-control-allow-credentials', true);
-//   res.setHeader('access-control-allow-origin', 'https://mmeko.com');
+  res.setHeader('access-control-allow-credentials', true);
+  res.setHeader('access-control-allow-origin', 'https://mmeko.com');
 
-//   // Set CORS headers (Express-CORS handles most of this, but be explicit if needed)
-//   res.setHeader('Access-Control-Allow-Methods', allowedMethods.join(', '));
-//   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-//   // res.setHeader('Access-Control-Max-Age', '3600'); // Optional
+  // Set CORS headers (Express-CORS handles most of this, but be explicit if needed)
+  res.setHeader('Access-Control-Allow-Methods', allowedMethods.join(', '));
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  // res.setHeader('Access-Control-Max-Age', '3600'); // Optional
 
-//   // Respond with a 204 No Content status for OPTIONS requests
-//   res.sendStatus(204);
-// })
-.put((req, res, next) => {
+  // Respond with a 204 No Content status for OPTIONS requests
+  res.sendStatus(204);
+})
+.put(/*(req, res, next) => {
   // Determine the allowed methods for this endpoint
   const allowedMethods = ['GET', 'POST', 'PUT' 'OPTIONS', 'PATCH'];
 
@@ -69,7 +69,7 @@ router.route('/')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   next();
-}, upload.single('postFile'), handleRefresh, createPost)
+}, *//*upload.single('postFile'), */handleRefresh, createPost)
 .post(editPost)
 .patch(deletePost)
 
