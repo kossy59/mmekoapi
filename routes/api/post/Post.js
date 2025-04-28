@@ -29,47 +29,55 @@ const corsOptions = {
   origin: 'https://mmeko.com', // Replace with your frontend's actual origin
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
   allowedHeaders: 'Content-Type', // Add any other headers your PUT request uses
+  credentials: true,
   maxAge: 86400, // Optional: Cache preflight response for 24 hours
 };
 
 const upload = multer({ storage: storage });
 
+// router.route('/')
+// /*.options((req, res) => {
+//   // Determine the allowed methods for this endpoint
+//   const allowedMethods = ['PUT', 'GET', 'POST', 'OPTIONS', 'PATCH'];
+
+//   // Set the 'Allow' header
+//   res.setHeader('Allow', allowedMethods.join(', '));
+
+//   res.setHeader('access-control-allow-credentials', true);
+//   res.setHeader('access-control-allow-origin', 'https://mmeko.com');
+
+//   // Set CORS headers (Express-CORS handles most of this, but be explicit if needed)
+//   res.setHeader('Access-Control-Allow-Methods', allowedMethods.join(', '));
+//   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+//   // res.setHeader('Access-Control-Max-Age', '3600'); // Optional
+
+//   // Respond with a 204 No Content status for OPTIONS requests
+//   res.sendStatus(204);
+// })*/
+// .put(/*(req, res, next) => {
+//   // Determine the allowed methods for this endpoint
+//   const allowedMethods = ['GET', 'POST', 'PUT' 'OPTIONS', 'PATCH'];
+
+//   // Set the 'Allow' header
+//   res.setHeader('Allow', allowedMethods.join(', '));
+
+//   res.setHeader('access-control-allow-credentials', true);
+//   // res.setHeader('access-control-allow-origin', 'https://mmeko.com');
+//   res.setHeader('access-control-allow-origin', 'https://mmeko.com');
+
+//   // Set CORS headers (Express-CORS handles most of this, but be explicit if needed)
+//   res.setHeader('Access-Control-Allow-Methods', allowedMethods.join(', '));
+//   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+//   next();
+// }, */ /*upload.single('postFile'), handleRefresh,*/ createPost)
+// .post(editPost)
+// .patch(deletePost)
+
+router.use(cors(corsOptions));
+
 router.route('/')
-/*.options((req, res) => {
-  // Determine the allowed methods for this endpoint
-  const allowedMethods = ['PUT', 'GET', 'POST', 'OPTIONS', 'PATCH'];
-
-  // Set the 'Allow' header
-  res.setHeader('Allow', allowedMethods.join(', '));
-
-  res.setHeader('access-control-allow-credentials', true);
-  res.setHeader('access-control-allow-origin', 'https://mmeko.com');
-
-  // Set CORS headers (Express-CORS handles most of this, but be explicit if needed)
-  res.setHeader('Access-Control-Allow-Methods', allowedMethods.join(', '));
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  // res.setHeader('Access-Control-Max-Age', '3600'); // Optional
-
-  // Respond with a 204 No Content status for OPTIONS requests
-  res.sendStatus(204);
-})*/
-.put(/*(req, res, next) => {
-  // Determine the allowed methods for this endpoint
-  const allowedMethods = ['GET', 'POST', 'PUT' 'OPTIONS', 'PATCH'];
-
-  // Set the 'Allow' header
-  res.setHeader('Allow', allowedMethods.join(', '));
-
-  res.setHeader('access-control-allow-credentials', true);
-  // res.setHeader('access-control-allow-origin', 'https://mmeko.com');
-  res.setHeader('access-control-allow-origin', 'https://mmeko.com');
-
-  // Set CORS headers (Express-CORS handles most of this, but be explicit if needed)
-  res.setHeader('Access-Control-Allow-Methods', allowedMethods.join(', '));
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-
-  next();
-}, */ /*upload.single('postFile'), handleRefresh,*/ createPost)
+.put(upload.single('postFile'), handleRefresh, createPost)
 .post(editPost)
 .patch(deletePost)
 
