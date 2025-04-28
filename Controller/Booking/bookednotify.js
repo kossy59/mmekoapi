@@ -9,7 +9,7 @@ const createLike = async (req,res)=>{
    
     const userid = req.body.userid
 
-    console.log("notificationsss1")
+    // console.log("notificationsss1")
 
      
     
@@ -17,7 +17,7 @@ const createLike = async (req,res)=>{
     if(!userid){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
-    console.log("notificationsss2")
+    // console.log("notificationsss2")
 
    
 
@@ -47,7 +47,7 @@ const createLike = async (req,res)=>{
 
          let listinfos = []
 
-         console.log("notificationsss")
+         // console.log("notificationsss")
 
          let modelast = 0
          let adminlast = 0
@@ -122,7 +122,7 @@ const createLike = async (req,res)=>{
 
          
 
-           console.log("notification length "+listinfos.length)
+           // console.log("notification length "+listinfos.length)
             return res.status(200).json({"ok":true,"message":` Success`,data:{model:model_list,notify:listinfos, lastmessage:lastmessage}})
       
           

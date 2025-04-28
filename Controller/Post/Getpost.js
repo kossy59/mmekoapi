@@ -83,7 +83,7 @@ const readPost = async (req,res)=>{
                                 nickname:  `${ userdb[j].nickname}`,
                                 userphoto: `${userpoto}`,
                                 content: `${postdb[i].content}`,
-                                postphoto: `${postdb[i].postlink}`,
+                                postphoto: `${postdb[i].postfilelink}`,
                                 posttime: `${postdb[i].posttime}`,
                                 posttype: `${postdb[i].posttype}`,
                                 postid: `${postdb[i]._id}`,

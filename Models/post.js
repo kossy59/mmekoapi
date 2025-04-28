@@ -3,32 +3,37 @@ const Scheme = mongoose.Schema;
 
 const markertdata = new Scheme({
 
-     userid:{
-        type:String,
-        required : true
-    },
+   userid: {
+      type: String,
+      required: true
+   },
 
-     postlink:{
-        type:String,
-        required : false
-    },
+   postfilelink: {
+      type: String,
+      required: false
+   },
 
-     posttime:{
-        type:String,
-        required : true
-    },
+   postfilepublicid: {
+      type: String,
+      required: false
+   },
 
-    content:{
-        type:String,
-        required : false
-    },
+   posttime: {
+      type: String,
+      required: true
+   },
 
-     posttype:{
-        type:String,
-        required : false
-    },
+   content: {
+      type: String,
+      required: false
+   },
+
+   posttype: {
+      type: String,
+      required: false
+   },
 
     
 })
 
-module.exports = mongoose.model('Post',markertdata);
+module.exports = mongoose.model('Post', markertdata);

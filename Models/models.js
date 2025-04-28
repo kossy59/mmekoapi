@@ -23,22 +23,22 @@ const markertdata = new Scheme({
         required : true
     },
 
-     age:{
+    age:{
         type:String,
         required : true
     },
 
-     location:{
+    location:{
         type:String,
         required : true
     },
 
-     price:{
+    price:{
         type:String,
         required : true
     },
 
-      duration:{
+    duration:{
         type:String,
         required : true
     },
@@ -53,17 +53,17 @@ const markertdata = new Scheme({
         required : true
     },
 
-      interestedin:{
+    interestedin:{
         type:String,
         required : true
     },
 
-     height:{
+    height:{
         type:String,
         required : true
     },
 
-      weight:{
+    weight:{
         type:String,
         required : true
     },
@@ -78,7 +78,7 @@ const markertdata = new Scheme({
         required : true
     },
 
-      timeava:{
+    timeava:{
         type:String,
         required : true
     },
@@ -88,7 +88,7 @@ const markertdata = new Scheme({
         required : true
     },
 
-     photolink:{
+    photolink:{
         type:String,
         required : true
     },
