@@ -59,10 +59,6 @@ router.route('/')
   // Set CORS headers (Express-CORS handles most of this, but be explicit if needed)
   res.setHeader('Access-Control-Allow-Methods', allowedMethods.join(', '));
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  // res.setHeader('Access-Control-Max-Age', '3600'); // Optional
-
-  // Respond with a 204 No Content status for OPTIONS requests
-  res.sendStatus(204);
 }, upload.single('postFile'), handleRefresh, createPost)
 .post(editPost)
 .patch(deletePost)
