@@ -1,5 +1,6 @@
 const express = require('express')
 const router = express.Router();
+const cors = require('cors');
 const createPost = require('../../../Controller/Post/userpost')
 const editPost = require('../../../Controller/Post/Editpost')
 const deletePost =  require('../../../Controller/Post/Removepost')
@@ -24,6 +25,13 @@ const storage = multer.diskStorage({
   },
 });
 
+const corsOptions = {
+  origin: 'https://mmeko.com', // Replace with your frontend's actual origin
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+  allowedHeaders: 'Content-Type', // Add any other headers your PUT request uses
+  maxAge: 86400, // Optional: Cache preflight response for 24 hours
+};
+
 const upload = multer({ storage: storage });
 
 router.route('/')
@@ -45,7 +53,7 @@ router.route('/')
 //   // Respond with a 204 No Content status for OPTIONS requests
 //   res.sendStatus(204);
 // })
-.put((req, res) => {
+.put((req, res, next) => {
   // Determine the allowed methods for this endpoint
   const allowedMethods = ['GET', 'POST', 'OPTIONS', 'PATCH'];
 
@@ -59,6 +67,8 @@ router.route('/')
   // Set CORS headers (Express-CORS handles most of this, but be explicit if needed)
   res.setHeader('Access-Control-Allow-Methods', allowedMethods.join(', '));
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  next();
 }, upload.single('postFile'), handleRefresh, createPost)
 .post(editPost)
 .patch(deletePost)
