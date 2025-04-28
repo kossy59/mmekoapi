@@ -35,7 +35,7 @@ const corsOptions = {
 const upload = multer({ storage: storage });
 
 router.route('/')
-.options((req, res) => {
+/*.options((req, res) => {
   // Determine the allowed methods for this endpoint
   const allowedMethods = ['PUT', 'GET', 'POST', 'OPTIONS', 'PATCH'];
 
@@ -52,7 +52,7 @@ router.route('/')
 
   // Respond with a 204 No Content status for OPTIONS requests
   res.sendStatus(204);
-})
+})*/
 .put(/*(req, res, next) => {
   // Determine the allowed methods for this endpoint
   const allowedMethods = ['GET', 'POST', 'PUT' 'OPTIONS', 'PATCH'];
