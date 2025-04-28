@@ -69,7 +69,7 @@ router.route('/')
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   next();
-}, *//*upload.single('postFile'), */handleRefresh, createPost)
+}, */ /*upload.single('postFile'), handleRefresh,*/ createPost)
 .post(editPost)
 .patch(deletePost)
 
