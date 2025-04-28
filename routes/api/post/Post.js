@@ -34,6 +34,9 @@ router.route('/')
   // Set the 'Allow' header
   res.setHeader('Allow', allowedMethods.join(', '));
 
+  res.setHeader('access-control-allow-credentials', true);
+  res.setHeader('access-control-allow-origin', 'https://mmeko.com');
+
   // Set CORS headers (Express-CORS handles most of this, but be explicit if needed)
   res.setHeader('Access-Control-Allow-Methods', allowedMethods.join(', '));
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
