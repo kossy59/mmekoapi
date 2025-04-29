@@ -59,14 +59,14 @@ const saveFile = async (file, filePath, folder = "assets") => {
 const uploadToCloudinary = async (file, folder = "assets") => {
   console.log("file: ", file);
 
-  const result = {
+  /*const result = {
     public_id: "",
     file_link: "",
   }
   // If user did not include any post file, return empty file metadata
   if (!file) {
     return result
-  }
+  }*/
 
   try {
     // Try the file upload to Cloudinary
@@ -96,7 +96,7 @@ const uploadToCloudinary = async (file, folder = "assets") => {
     console.log("An error occurred while uploading your image cloudinary: ", error);
   }
 
-  return result;
+  // return result;
 };
 
 
