@@ -59,14 +59,14 @@ const saveFile = async (file, filePath, folder = "assets") => {
 const uploadToCloudinary = async (file, folder = "assets") => {
   console.log("file: ", file);
 
-  /*const result = {
+  const result = {
     public_id: "",
     file_link: "",
   }
   // If user did not include any post file, return empty file metadata
   if (!file) {
     return result
-  }*/
+  }
 
   try {
     // Try the file upload to Cloudinary
@@ -83,8 +83,6 @@ const uploadToCloudinary = async (file, folder = "assets") => {
         }
       });
 
-      return res.status(200).json({ "ok": false, 'message': 'I see it o' })
-
       streamifier.createReadStream(file.buffer).pipe(stream);
     });
 
@@ -96,10 +94,10 @@ const uploadToCloudinary = async (file, folder = "assets") => {
     };
   } catch(error) {
     console.log("An error occurred while uploading your image cloudinary: ", error);
-    return res.status(400).json({ "ok": false, 'message': 'An error occurred while uploading your image cloudinary' })
+    // return res.status(400).json({ "ok": false, 'message': 'An error occurred while uploading your image cloudinary' })
   }
 
-  // return result;
+  return result;
 };
 
 
