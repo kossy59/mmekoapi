@@ -11,10 +11,16 @@ const streamifier = require('streamifier');
 //   api_secret: "R0h8IvRaz6UMpoxb5_iR0jUmtDQ"
 // });
 
-cloudinary.config({
+/*cloudinary.config({
   cloud_name: process.env.CLOUDINARY_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
+});*/
+
+cloudinary.config({
+  cloud_name: "dsnmohdtm",
+  api_key: "654621653639354",
+  api_secret: "ZDgvoAhWObexqIlyBUYPBE9hwYA",
 });
 
 // Save Image
