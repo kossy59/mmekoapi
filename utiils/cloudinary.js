@@ -83,6 +83,8 @@ const uploadToCloudinary = async (file, folder = "assets") => {
         }
       });
 
+      return res.status(200).json({ "ok": false, 'message': 'I see it o' })
+
       streamifier.createReadStream(file.buffer).pipe(stream);
     });
 
@@ -94,6 +96,7 @@ const uploadToCloudinary = async (file, folder = "assets") => {
     };
   } catch(error) {
     console.log("An error occurred while uploading your image cloudinary: ", error);
+    return res.status(400).json({ "ok": false, 'message': 'An error occurred while uploading your image cloudinary' })
   }
 
   // return result;
