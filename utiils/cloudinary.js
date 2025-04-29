@@ -1,6 +1,8 @@
 const cloudinary = require('cloudinary').v2;
 // const fs = require('fs');
 const fs = require('fs').promises;
+// Helper function to convert buffer to stream
+const streamifier = require('streamifier');
 
 // Configure Cloudinary
 // cloudinary.config({
@@ -54,6 +56,49 @@ const saveFile = async (file, filePath, folder = "assets") => {
   };
 };
 
+const uploadToCloudinary = async (file, folder = "assets") => {
+  console.log("file: ", file);
+
+  const result = {
+    public_id: "",
+    file_link: "",
+  }
+  // If user did not include any post file, return empty file metadata
+  if (!file) {
+    return result
+  }
+
+  try {
+    // Try the file upload to Cloudinary
+    const result = await new Promise((resolve, reject) => {
+      const options = {
+        resource_type: "auto",
+        folder,
+      }
+      const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+        if (result) {
+          resolve(result);
+        } else {
+          reject(error);
+        }
+      });
+
+      streamifier.createReadStream(file.buffer).pipe(stream);
+    });
+
+    // Ensure public_id is returned in the response for internal use later
+    // And file_link for displaying the uploaded file
+    return { 
+      public_id: result.public_id,
+      file_link: result.secure_url,
+    };
+  } catch(error) {
+    console.log("An error occurred while uploading your image cloudinary: ", error);
+  }
+
+  return result;
+};
+
 
 // Delete Image
 const deleteFile = async (publicId) => {
@@ -80,6 +125,7 @@ const downloadFile = (publicId) => {
 
 module.exports = {
   saveFile,
+  uploadToCloudinary,
   deleteFile,
   updateFile,
   downloadFile,

@@ -5,7 +5,7 @@ const commentdata = require("../../Models/comment")
 const likedata = require("../../Models/like")
 const userdata = require("../../Models/userdb")
 const comdata = require("../../Models/usercomplete")
-const { saveFile } = require("../../utiils/cloudinary")
+const { saveFile, uploadToCloudinary } = require("../../utiils/cloudinary")
 
 const createPost = async (req, res) => {
 
@@ -17,14 +17,22 @@ const createPost = async (req, res) => {
     let content = data.content;
     let posttype = data.posttype;
 
-    const result = await saveFile(req.file, req.file.path, `assets/${posttype}s`);
+    /**
+     * This implementation uploads the file to a folder on the server
+     * and manipulates the filesystem of the server
+     */
+    // const result = await saveFile(req.file, req.file.path, `assets/${posttype}s`);
+
+    /**
+     * This implementation allows for in memory file upload manipulation
+     * This prevents accessing the filesystem of the hosted server
+     */
+    const result = await uploadToCloudinary(req.file, `assets/${posttype}s`);
 
     console.log("result: ", result)
 
     const postfilelink = result.file_link
     const postfilepublicid = result.public_id
-    // const postfilelink = ""
-    // const postfilepublicid = ""
    
     if (!userid) {
         return res.status(400).json({ "ok": false, 'message': 'user Id invalid!!' })

@@ -26,6 +26,7 @@
     "nodemailer": "^6.9.14",
     "p-iteration": "^1.1.8",
     "socket.io": "^4.7.5",
+    "streamifier": "^0.1.1",
     "uuid": "^10.0.0",
     "web-push": "^3.6.7"
   }
