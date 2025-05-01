@@ -8,6 +8,8 @@ const handleRefresh = async (req,res,next)=>{
     token = req.body.token
     //let data = await connectdatabase()
 
+    // console.log("Token is: ", token, req.body);
+
     if(!token){
         return res.status(401).json({"message":`token not found!!!`})
     }

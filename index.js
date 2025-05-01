@@ -30,9 +30,9 @@ const imageRoutes = require("./routes/imageRoutes");
 
 
 
-let myurl = "https://mmeko.com"
+// let myurl = "https://mmeko.com"
 // let myurl = "http://localhost:3000"
-// let myurl = "http://192.168.43.112:3000"
+let myurl = "http://192.168.43.112:3000"
 
 const corsOptions = {
   credentials: true,
@@ -40,7 +40,7 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-// 
+//
 //
 
 
@@ -83,7 +83,7 @@ app.use('/subpushid', require('./routes/api/profile/postUserPushNote'))
 io.on('connection', (socket) => {
   socket.on('online', async (userid) => {
     if (userid) {
-       
+
       await checkuser(userid)
       await deletecallOffline(userid)
       socket.id = userid
@@ -95,7 +95,7 @@ io.on('connection', (socket) => {
     }
   })
 
-  
+
   socket.on("message", async (data) => {
 
     console.log("1");
@@ -111,12 +111,12 @@ io.on('connection', (socket) => {
       await sendEmail(data.toid, `New message from ${name}`)
       await pushnotify(data.toid, `New message from ${name}`, "messageicon")
       // console.log("name "+name+" photolink "+photolink)
-          
+
     }
-      
+
     //socket.to("LiveChat").emit(data)
     socket.broadcast.emit("LiveChat", { name, photolink, data: data })
-         
+
 
   })
 
@@ -152,7 +152,7 @@ io.on('connection', (socket) => {
         data.message = `incomming call ${callname}`
         console.log("calling user " + data.sdp_c_offer)
         if (data.sdp_c_offer) {
-           
+
           let info = calloffer.find(value => {
             return value.callerid === data.caller_id && value.answerid === data.answer_id
           })
@@ -165,15 +165,15 @@ io.on('connection', (socket) => {
             }
 
             calloffer.push(datas)
-              
+
           }
-            
+
         }
 
         if (data.offer_can) {
           console.log("sending offer can")
           socket.broadcast.emit(`${answerid}_calloffer`, { offer: data.offer_can })
-           
+
           socket.broadcast.emit(`${answerid}_offer`, data.offer_can)
 
           //  let info = calloffer.find(value=>{
@@ -187,9 +187,9 @@ io.on('connection', (socket) => {
           // }
 
           // calloffer.push(datas)
-              
+
           // }
-           
+
         }
         socket.broadcast.emit(answerid, { data: data })
 
@@ -205,7 +205,7 @@ io.on('connection', (socket) => {
 
 
     if (answerid === video_user) {
-        
+
       let responds = await check_connected(answerid)
       if (data.answer_message === "reject") {
         console.log("inside anser reject test " + data.answer_message)
@@ -227,35 +227,35 @@ io.on('connection', (socket) => {
         //   console.log("sending offer sdp")
         //   let info = {
         //   sdp_c_offer : datas.sdp_c_offer
-          
+
         //  }
         //   arkFunction(info)
 
         //  }
-          
+
         // }
 
         if (data.sdp_a_offer && data.answer_can) {
-           
+
           socket.broadcast.emit(`${myid}_answeroffer`, { sdp: data.sdp_a_offer, offer: data.answer_can })
 
         }
 
-        
+
 
         // if(data.answer_can){
         //   let offer = data.answer_can
-          
+
         //   socket.broadcast.emit(`${myid}_answerice`,data.answer_can)
 
         // }
 
         socket.broadcast.emit(myid, { data: data })
-         
+
       } else if (responds === true) {
         console.log("answer sdp " + data.sdp_a_offer)
         console.log("answer sdp " + data.answer_can)
-          
+
         //  let datas = calloffer.find(value=>{
         //    return value.callerid === data.caller_id && value.answerid === data.answer_id
 
@@ -267,21 +267,21 @@ io.on('connection', (socket) => {
 
         //   let info = {
         //   sdp_c_offer : datas.sdp_c_offer
-          
+
         //  }
         //   arkFunction(info)
 
         //  }
-          
+
         // }
         // if(data.sdp_a_offer){
-           
+
         //    socket.broadcast.emit(`${myid}_answeroffer`,{sdp:data.sdp_a_offer,offer:""})
 
         // }
 
         if (data.answer_can) {
-           
+
           socket.broadcast.emit(`${myid}_answeroffer`, { offer: data.answer_can })
 
         }
@@ -296,7 +296,7 @@ io.on('connection', (socket) => {
       }
     }
 
-      
+
 
   })
 
@@ -315,8 +315,8 @@ io.on('connection', (socket) => {
       let responds = await Check_caller(answerid, myid)
 
       if (data.amount) {
-         
-          
+
+
         console.log("sending amount")
         if (parseFloat(data.amount) > 0) {
           await pay_model(data.fromid, data.toid, data.amount)
@@ -324,9 +324,9 @@ io.on('connection', (socket) => {
           socket.broadcast.emit(`pvc_${data.toid}_amount`, { amount: data.amount })
           data.amount = ""
         }
-         
-         
-         
+
+
+
       }
 
       if (data.answer_message === "reject") {
@@ -349,7 +349,7 @@ io.on('connection', (socket) => {
         data.message = `private show ${callname}`
         //console.log("calling user "+data.sdp_c_offer)
         if (data.sdp_c_offer) {
-           
+
           let info = calloffer.find(value => {
             return value.callerid === data.caller_id && value.answerid === data.answer_id
           })
@@ -362,15 +362,15 @@ io.on('connection', (socket) => {
             }
 
             calloffer.push(datas)
-              
+
           }
-            
+
         }
 
         if (data.offer_can) {
           console.log("sending offer can")
           socket.broadcast.emit(`${answerid}_calloffer`, { offer: data.offer_can })
-          
+
           socket.broadcast.emit(`${answerid}_offer`, data.offer_can)
 
           //  let info = calloffer.find(value=>{
@@ -384,9 +384,9 @@ io.on('connection', (socket) => {
           // }
 
           // calloffer.push(datas)
-            
+
           // }
-          
+
         }
         socket.broadcast.emit(answerid, { data: data })
 
@@ -427,35 +427,35 @@ io.on('connection', (socket) => {
         //   console.log("sending offer sdp")
         //   let info = {
         //   sdp_c_offer : datas.sdp_c_offer
-          
+
         //  }
         //   arkFunction(info)
 
         //  }
-          
+
         // }
 
         if (data.sdp_a_offer && data.answer_can) {
-           
+
           socket.broadcast.emit(`${myid}_answeroffer`, { sdp: data.sdp_a_offer, offer: data.answer_can })
 
         }
 
-        
+
 
         // if(data.answer_can){
         //   let offer = data.answer_can
-          
+
         //   socket.broadcast.emit(`${myid}_answerice`,data.answer_can)
 
         // }
 
         socket.broadcast.emit(myid, { data: data })
-         
+
       } else if (responds === true) {
         console.log("answer sdp " + data.sdp_a_offer)
         console.log("answer sdp " + data.answer_can)
-          
+
         //  let datas = calloffer.find(value=>{
         //    return value.callerid === data.caller_id && value.answerid === data.answer_id
 
@@ -467,15 +467,15 @@ io.on('connection', (socket) => {
 
         //   let info = {
         //   sdp_c_offer : datas.sdp_c_offer
-          
+
         //  }
         //   arkFunction(info)
 
         //  }
-          
+
         // }
         if (data.sdp_a_offer) {
-           
+
           socket.broadcast.emit(`${myid}_answeroffer`, { sdp: data.sdp_a_offer, offer: "" })
 
         }
@@ -496,7 +496,7 @@ io.on('connection', (socket) => {
       }
     }
 
-      
+
 
   })
 
@@ -513,7 +513,7 @@ io.on('connection', (socket) => {
   //   }
   // })
 
- 
+
 
   socket.on('disconnect', async () => {
     await userdisconnect(socket.id)
@@ -522,7 +522,7 @@ io.on('connection', (socket) => {
     console.log('user disconnected ' + socket.id)
 
   })
-   
+
 });
 
 
@@ -540,19 +540,22 @@ app.use('/getverifymodel', require('./routes/api/model/getlivemodel'))
 app.use('/getmodelbyid', require('./routes/api/model/getmodelbyid'))
 app.use('/searchuser', require('./routes/api/profile/getallUser'))
 app.use('/post', require('./routes/api/post/Post'))
+app.use('/editmoreprofile', require('./routes/api/Profilemore/editprofilemore'))
+app.use('/model', require('./routes/api/model/models'))
+app.use('/postdocument', require('./routes/api/model/postdocument'))
 app.use(handleRefresh);
 
 app.use(verifyJwt)
-app.use('/exclusive', require('./routes/api/Exclusive/exclusive')) //(put) exclusive content (post) buy exclusive content 
+app.use('/exclusive', require('./routes/api/Exclusive/exclusive')) //(put) exclusive content (post) buy exclusive content
 //(patch)delete exclusive content
 app.use('/exclusivecontent', require('./routes/api/Exclusive/allexclusive'))  //(put) get my purshased exclusive (post) delete my purshased exclusive
-app.use('/model', require('./routes/api/model/models'))
+// app.use('/model', require('./routes/api/model/models'))
 app.use('/deleteaccount', require('./routes/api/profile/deleteprofile')) // (post) to delete user account (put) get  block users with user your userid input
 //(patch) to remove block user with id input
 app.use('/setting', require('./routes/api/profile/setting')) //(post) setting input-> userid , emailnot,pushnot
 app.use('/follow', require('./routes/api/follow/follower'))
 app.use('/getfollowers', require('./routes/api/follow/get_followers'))
-app.use('/postdocument', require('./routes/api/model/postdocument'))
+// app.use('/postdocument', require('./routes/api/model/postdocument'))
 app.use('/editmodel', require('./routes/api/model/editemodel'))
 app.use('/getadminhost', require('./routes/api/model/hostforadmin'))
 app.use('/deletemodel', require('./routes/api/model/deletemodel'))
@@ -561,7 +564,7 @@ app.use('/comment', require('./routes/api/comment/Comment'))
 app.use('/like', require('./routes/api/like/Like'))
 app.use('/sharepost', require('./routes/api/share/share'))
 app.use('/editprofile', require('./routes/api/profile/Editprofile'))
-app.use('/editmoreprofile', require('./routes/api/Profilemore/editprofilemore'))
+// app.use('/editmoreprofile', require('./routes/api/Profilemore/editprofilemore'))
 app.use('/rejectmodel', require('./routes/api/model/rejectmodel'))
 app.use('/verifymodel', require('./routes/api/model/verifymodel'))
 app.use('/getcurrentchat', require('./routes/api/chat/getchat'))
@@ -570,7 +573,7 @@ app.use('/updatenotify', require('./routes/api/chat/updatenotify'))
 app.use('/bookhost', require('./routes/api/booking/book'))
 app.use('/pendingrequest', require('./routes/api/booking/getpendingbook'))
 app.use('/cancelrequest', require('./routes/api/booking/cancelmyrequest'))
- 
+
 app.use('/acceptbook', require('./routes/api/booking/acceptbooking'))
 app.use('/declinebook', require('./routes/api/booking/declinebooking'))
 app.use('/getrequeststats', require('./routes/api/booking/requeststat'))
@@ -598,18 +601,18 @@ app.use('/deletecrush', require('./routes/api/model/deletecrush'))
 
 
 
- 
- 
+
+
 mongoose.connection.once("open",()=>{
   console.log("Database connected")
-    server.listen(PORT, () => {   
+    server.listen(PORT, () => {
     console.log('listening on *:3500');
   });
 })
-  
-// server.listen(PORT, () => {   
+
+// server.listen(PORT, () => {
 //   console.log('listening on *:3500');
 // });
 
-  
-  
+
+

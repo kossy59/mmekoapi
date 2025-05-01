@@ -3,12 +3,9 @@ const router = express.Router();
 const cors = require('cors');
 const createPost = require('../../../Controller/Post/userpost')
 const editPost = require('../../../Controller/Post/Editpost')
-const deletePost =  require('../../../Controller/Post/Removepost')
+const deletePost = require('../../../Controller/Post/Removepost')
 const multer = require('multer')
-const fs = require('fs').promises;
-const path = require('path')
 const handleRefresh = require('../../../Middleware/refresh')
-const verifyJwt = require('../../../Middleware/verify')
 
 /**
  * This implementation uploads the file to a folder on the server
@@ -45,9 +42,52 @@ router.route('/')
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
+/*const handleSingleFileUpload = (req, res, next) => {
+  // Determine the dynamic field name
+  const fieldName = req.body.uploadFieldName; // Example: get from request body
+
+  // Create the Multer middleware dynamically
+  const uploadSingle = upload.single(fieldName);
+
+  // Execute the Multer middleware
+  uploadSingle(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      return res.status(500).json({ error: 'Multer error', details: err });
+    } else if (err) {
+      return res.status(500).json({ error: 'Unknown error', details: err });
+    }
+    // 4. If no Multer error, proceed to the next middleware (handleRefresh)
+    next();
+  })
+}*/
+
+/**
+ * The handleRefresh middleware is used to intersect the result of file manipulation
+ * by multer which exposes the token for it
+ * Without this, authorization fails!
+ */
 router.route('/')
-.put(upload.single('postFile'), handleRefresh, createPost)
-.post(editPost)
-.patch(deletePost)
+  .put(upload.single('postFile'), handleRefresh, createPost)
+  .post(editPost)
+  .patch(deletePost)
 
 module.exports = router;
+
+/*router.post('/', (req, res, next) => {
+    // 1. Determine the dynamic field name
+    const dynamicFieldName = req.body.uploadFieldName || 'postFile'; // Example: get from request body
+
+    // 2. Create the Multer middleware dynamically
+    const uploadSingle = upload.single(dynamicFieldName);
+
+    // 3. Execute the Multer middleware
+    uploadSingle(req, res, (err) => {
+        if (err instanceof multer.MulterError) {
+            return res.status(500).json({ error: 'Multer error', details: err });
+        } else if (err) {
+            return res.status(500).json({ error: 'Unknown error', details: err });
+        }
+        // 4. If no Multer error, proceed to the next middleware (handleRefresh)
+        next();
+    });
+}, handleRefresh, Editprofile);*/

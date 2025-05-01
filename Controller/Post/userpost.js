@@ -5,7 +5,7 @@ const commentdata = require("../../Models/comment")
 const likedata = require("../../Models/like")
 const userdata = require("../../Models/userdb")
 const comdata = require("../../Models/usercomplete")
-const { saveFile, uploadToCloudinary } = require("../../utiils/cloudinary")
+const { saveFile, uploadSingleFileToCloudinary } = require("../../utiils/cloudinary")
 
 const createPost = async (req, res) => {
 
@@ -27,7 +27,7 @@ const createPost = async (req, res) => {
      * This implementation allows for in memory file upload manipulation
      * This prevents accessing the filesystem of the hosted server
      */
-    const result = await uploadToCloudinary(req.file, `assets/${posttype}s`);
+    const result = await uploadSingleFileToCloudinary(req.file, `assets/${posttype}s`);
 
     console.log("result: ", result)
 

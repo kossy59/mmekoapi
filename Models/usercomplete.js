@@ -3,32 +3,37 @@ const Scheme = mongoose.Schema;
 
 const markertdata = new Scheme({
 
-     useraccountId:{
-        type:String,
-        required : true
-    },
+   useraccountId: {
+      type: String,
+      required: true
+   },
 
-     interestedIn:{
-        type:String,
-        required : false
-    },
+   interestedIn: {
+      type: String,
+      required: false
+   },
 
-     photoLink:{
-        type:String,
-        required : false
-    },
+   photoLink: {
+      type: String,
+      required: false
+   },
 
-    relationshipType:{
-        type:String,
-        required : false
-    },
+   photoID: {
+      type: String,
+      required: false
+   },
 
-    details:{
-        type:String,
-        required : true
-    },
+   relationshipType: {
+      type: String,
+      required: false
+   },
+
+   details: {
+      type: String,
+      required: true
+   },
 
    
 })
 
-module.exports = mongoose.model('UserInfo',markertdata);
+module.exports = mongoose.model('UserInfo', markertdata);
