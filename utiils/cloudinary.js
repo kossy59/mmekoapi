@@ -171,6 +171,36 @@ const deleteFile = async (publicId) => {
   }
 };
 
+const deleteManyFiles = async (publicIds) => {
+  try {
+    // Try the file upload to Cloudinary
+    const deletePromises = publicIds.map(async (publicId) => {
+      console.log(`Deleting: ${publicId}`);
+      // Save file to Cloudinary
+      return new Promise((resolve, reject) => {
+        const options = {
+          resource_type: "auto",
+        }
+        // Iinitiate the upload
+        const result = cloudinary.uploader.destroy(publicId, (error, result) => {
+          if (result) {
+            resolve(result);
+          } else {
+            reject(error);
+          }
+        })
+      });
+    })
+
+    return await Promise.all(deletePromises);
+
+    // return uploadedFiles
+  } catch (error) {
+    console.log("An error occurred while deleting your old image: ", error);
+    // return res.status(502).json({ "ok": false, 'message': 'An error occurred while uploading your files to cloudinary' })
+  }
+};
+
 // Update Image
 const updateFile = async (publicId, file, filePath, folder = "assets") => {
   // Delete the old image
@@ -188,6 +218,17 @@ const updateSingleFileToCloudinary = async (publicId, file, folder = "assets") =
   return await uploadSingleFileToCloudinary(file, folder);
 }
 
+const updateManyFileToCloudinary = async (publicIds, files, folder = "assets") => {
+  console.log("publicIds: ", publicIds)
+  // Delete the old image
+  if (publicIds.length > 0) {
+    const deletionData = await deleteManyFiles(publicIds);
+    console.log("deletionData: ", deletionData);
+  }
+  // Upload the new image
+  return await uploadManyFilesToCloudinary(files, folder);
+}
+
 // Generate download URL
 const downloadFile = (publicId) => {
   return cloudinary.url(publicId, {
@@ -200,6 +241,7 @@ module.exports = {
   uploadSingleFileToCloudinary,
   updateSingleFileToCloudinary,
   uploadManyFilesToCloudinary,
+  updateManyFileToCloudinary,
   deleteFile,
   updateFile,
   downloadFile,

@@ -542,6 +542,7 @@ app.use('/searchuser', require('./routes/api/profile/getallUser'))
 app.use('/post', require('./routes/api/post/Post'))
 app.use('/editmoreprofile', require('./routes/api/Profilemore/editprofilemore'))
 app.use('/model', require('./routes/api/model/models'))
+app.use('/editmodel', require('./routes/api/model/editemodel'))
 app.use('/postdocument', require('./routes/api/model/postdocument'))
 app.use('/exclusive', require('./routes/api/Exclusive/exclusive')) //(put) exclusive content (post) buy exclusive content
 app.use(handleRefresh);
@@ -557,7 +558,7 @@ app.use('/setting', require('./routes/api/profile/setting')) //(post) setting in
 app.use('/follow', require('./routes/api/follow/follower'))
 app.use('/getfollowers', require('./routes/api/follow/get_followers'))
 // app.use('/postdocument', require('./routes/api/model/postdocument'))
-app.use('/editmodel', require('./routes/api/model/editemodel'))
+// app.use('/editmodel', require('./routes/api/model/editemodel'))
 app.use('/getadminhost', require('./routes/api/model/hostforadmin'))
 app.use('/deletemodel', require('./routes/api/model/deletemodel'))
 // app.use('/post', require('./routes/api/post/Post'))

@@ -1,7 +1,7 @@
-// const {connectdatabase} = require('../../config/connectDB');
-// const sdk = require("node-appwrite");
-
 const models = require("../../Models/models")
+const {
+  updateManyFileToCloudinary
+} = require("../../utiils/cloudinary")
 
 const createModel = async (req, res) => {
     console.log("req.body.data", req.body.data);
@@ -29,8 +29,29 @@ const createModel = async (req, res) => {
     if (!hostid) {
         return res.status(400).json({
             "ok": false,
-            'message': 'user Id invalid!!'
+            'message': 'User Id invalid!!'
         })
+    }
+
+    let currentuser = await models.findOne({
+        _id: hostid
+    }).exec()
+
+    if (!currentuser) {
+        return res.status(409).json({
+            "ok": false,
+            "message": `User can not edit model`
+        })
+    }
+
+    let publicIDs = []
+
+    if (currentuser.modelfiles.length > 0) {
+        const modelfilepublicids = currentuser.modelfiles.map(modelfile => {
+            return modelfile.modelfilepublicid;
+        })
+
+        publicIDs = modelfilepublicids
     }
 
     /**
@@ -40,7 +61,7 @@ const createModel = async (req, res) => {
     let results = []
 
     if (req.files || req.files.length > 2) {
-        results = await uploadManyFilesToCloudinary(req.files, `assets/models`);
+        results = await updateManyFileToCloudinary(publicIDs, req.files, `assets/models`);
     }
 
     console.log("results: ", results)
@@ -63,34 +84,22 @@ const createModel = async (req, res) => {
     //let data = await connectdatabase()
 
     try {
-        let currentuser = await models.findOne({
-            _id: hostid
-        }).exec()
-
-
-
-        if (!currentuser) {
-            return res.status(409).json({
-                "ok": false,
-                "message": `user can not edit model`
-            })
-        }
-
-        let age1 = currentuser.age
-        let location1 = currentuser.location
-        let price1 = currentuser.price
-        let duration1 = currentuser.duration
-        let bodytype1 = currentuser.bodytype
-        let smoke1 = currentuser.smoke
-        let interestedin1 = currentuser.interestedin
-        let height1 = currentuser.height
-        let weight1 = currentuser.weight
-        let description1 = currentuser.description
-        let gender1 = currentuser.gender
-        let timeava1 = currentuser.timeava
-        let daysava1 = currentuser.daysava
-        let drink1 = currentuser.drink
-        let hosttype1 = currentuser.hosttype
+        const age1 = currentuser.age
+        const location1 = currentuser.location
+        const price1 = currentuser.price
+        const duration1 = currentuser.duration
+        const bodytype1 = currentuser.bodytype
+        const smoke1 = currentuser.smoke
+        const interestedin1 = currentuser.interestedin
+        const height1 = currentuser.height
+        const weight1 = currentuser.weight
+        const description1 = currentuser.description
+        const gender1 = currentuser.gender
+        const timeava1 = currentuser.timeava
+        const daysava1 = currentuser.daysava
+        const drink1 = currentuser.drink
+        const hosttype1 = currentuser.hosttype
+        const initialModelFiles = currentuser.modelfiles
 
         if (!age) {
             age = age1
@@ -137,6 +146,9 @@ const createModel = async (req, res) => {
         }
         if (!hosttype) {
             hosttype = hosttype1
+        }
+        if (!modelfiles) {
+            currentuser.modelfiles = initialModelFiles
         }
 
         currentuser.age = age;

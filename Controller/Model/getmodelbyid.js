@@ -55,6 +55,7 @@ const createModel = async (req, res) => {
       _id: currentuser.userid
     }).exec()
 
+    console.log("currentuser.modelfiles: ", currentuser.modelfiles)
     const photolink = currentuser.modelfiles.map(photolink => {
       return photolink?.modelfilelink
     })
