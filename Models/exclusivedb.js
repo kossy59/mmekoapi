@@ -1,7 +1,31 @@
 const mongoose = require('mongoose');
-const Scheme = mongoose.Schema;
+const Schema = mongoose.Schema;
 
-const markertdata = new Scheme({
+const contentfile = Schema({
+    contentfilelink: {
+        type: String,
+        required: false,
+    },
+
+    contentfilepublicid: {
+        type: String,
+        required: false
+    },
+})
+
+const thumbnailfile = Schema({
+    thumbnaillink: {
+        type: String,
+        required: false
+    },
+
+    thumbnailpublicid: {
+        type: String,
+        required: false
+    },
+})
+
+const markertdata = new Schema({
 
     userid: {
         type: String,
@@ -12,10 +36,7 @@ const markertdata = new Scheme({
         type: String,
         required: true
     },
-    contentlink: {
-        type: String,
-        required: true
-    },
+
     contentname: {
         type: String,
         required: true
@@ -25,13 +46,8 @@ const markertdata = new Scheme({
         required: true
     },
 
-    thumblink: {
-        type: String,
-        required: true
-    },
-
-
-
+    contentfile: contentfile,
+    thumbnailfile: thumbnailfile,
 })
 
 module.exports = mongoose.model('Exclusive', markertdata);

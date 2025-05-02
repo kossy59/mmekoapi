@@ -1,31 +1,87 @@
 let exclusivedb = require("../../Models/exclusivedb")
-const postexclusive = async(req,res)=>{
+const {
+    uploadManyFilesToCloudinary
+} = require("../../utiils/cloudinary")
 
-    let userid = req.body.userid;
-    let content_type = req.body.content_type;
-    let contentlink = req.body.contentlink;
-    let contentname = req.body.contentname;
-    let price = req.body.price;
-    let thumblink = req.body.thumblink;
+const postexclusive = async (req, res) => {
+    // console.log("Trying to verify a form: ", req.body)
+    const data = JSON.parse(req.body.data);
+    console.log("data", data);
 
-   
-    if(!userid || !content_type || !contentlink || !contentname || !price || !thumblink){
-        return res.status(400).json({"ok":false,'message': 'Invalid post details!!'})
+    // If user did not all the needed documents, return an error
+    if (!req.files || req.files.length !== 2) {
+        return res.status(400).json({
+            "ok": false,
+            'message': 'You must upload all documents'
+        })
     }
 
-    let data = {
+    const userid = data.userid;
+    const content_type = data.content_type;
+    // const contentlink = data.contentlink;
+    const contentname = data.contentname;
+    const price = data.price;
+    // const thumblink = data.thumblink;
+
+    if (!userid || !content_type || !contentname || !price) {
+        return res.status(400).json({
+            "ok": false,
+            'message': 'Invalid post details!!'
+        })
+    }
+
+    /**
+     * This implementation allows for in memory file upload manipulation
+     * This prevents accessing the filesystem of the hosted server
+     */
+    let results = await uploadManyFilesToCloudinary(req.files, `assets/exclusive/${content_type}s`);
+
+    console.log("results from cloudinary: ", results)
+
+    let contentfile = {}
+    let thumbnailfile = {}
+
+    // Get uploaded file details
+    if (results && results.length > 1) {
+        results.forEach(result => {
+            if (result.filename === "contentlink") {
+                contentfile = {
+                    contentfilelink: result.file_link,
+                    contentfilepublicid: result.public_id,
+                }
+            } else if (result.filename === "thumbnailfile") {
+                thumbnailfile = {
+                    thumbnaillink: result.file_link,
+                    thumbnailpublicid: result.public_id,
+                }
+            }
+        })
+    } else {
+        // The file upload wasn't successful
+        return res.status(400).json({
+            "ok": false,
+            'message': 'Network error. Retry!'
+        })
+    }
+
+    console.log("holdingIdPhotofile: ", contentfile, "idPhotofile: ", thumbnailfile)
+
+    let exclusive_data = {
         userid,
         content_type,
-        contentlink,
+        contentfile,
         contentname,
         price,
-        thumblink
+        thumbnailfile
     }
 
-    await exclusivedb.create(data)
+    await exclusivedb.create(exclusive_data)
 
 
-    return res.status(200).json({"ok":true,'message': 'exclusive post successfully!!'})
+    return res.status(200).json({
+        "ok": true,
+        'message': 'exclusive post successfully!!'
+    })
 
 }
 

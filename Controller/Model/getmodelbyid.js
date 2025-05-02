@@ -21,7 +21,6 @@ const createModel = async (req, res) => {
   //let data = await connectdatabase()
 
   try {
-
     //  let userdb = data.databar.listDocuments(data.dataid,data.modelCol)
     //  let currentuser = (await userdb).documents.find(value=>{
     //   return value.$id === hostid
@@ -56,9 +55,14 @@ const createModel = async (req, res) => {
       _id: currentuser.userid
     }).exec()
 
+    const photolink = currentuser.modelfiles.map(photolink => {
+      return photolink?.modelfilelink
+    })
+
     let host = {
       hostid: currentuser._id,
-      photolink: currentuser.modelfiles[0].modelfilelink,
+      // photolink: currentuser.modelfiles[0].modelfilelink,
+      photolink,
       verify: currentuser.verify,
       name: currentuser.name,
       age: currentuser.age,
@@ -68,13 +72,13 @@ const createModel = async (req, res) => {
       bodytype: currentuser.bodytype,
       smoke: currentuser.smoke,
       drink: currentuser.drink,
-      interestedin: currentuser.interestedin,
+      interestedin: currentuser.interestedin.join(" "),
       height: currentuser.height,
       weight: currentuser.weight,
       description: currentuser.description,
       gender: currentuser.gender,
-      timeava: currentuser.timeava,
-      daysava: currentuser.daysava,
+      timeava: currentuser.timeava.join(" "),
+      daysava: currentuser.daysava.join(" "),
       hosttype: currentuser.hosttype,
       userid: currentuser.userid,
       add: added,

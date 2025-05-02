@@ -107,6 +107,10 @@ const readProfile = async (req, res) => {
           data = value.toObject()
           data.buy = false
         }
+
+        data.contentlink = data?.contentfile?.contentfilelink
+        data.thumblink = data?.thumbnailfile?.thumbnaillink
+
         user.exclusive_content.push(data)
       })
 

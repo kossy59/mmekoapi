@@ -42,7 +42,7 @@ const markertdata = new Schema({
 
     location: {
         type: String,
-        required: true
+        required: false
     },
 
     price: {
@@ -66,7 +66,7 @@ const markertdata = new Schema({
     },
 
     interestedin: {
-        type: String,
+        type: [String],
         required: true
     },
 
@@ -91,12 +91,12 @@ const markertdata = new Schema({
     },
 
     timeava: {
-        type: String,
+        type: [String],
         required: true
     },
 
     daysava: {
-        type: String,
+        type: [String],
         required: true
     },
 
@@ -104,9 +104,9 @@ const markertdata = new Schema({
         type: String,
         required: true
     },
-    
+
     modelfiles: [modelfileschema]
-    
+
 })
 
 module.exports = mongoose.model('Model', markertdata);

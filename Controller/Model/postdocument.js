@@ -1,6 +1,8 @@
 const documentdb = require("../../Models/document")
 const admindb = require("../../Models/admindb")
-const { uploadManyFilesToCloudinary } = require("../../utiils/cloudinary")
+const {
+    uploadManyFilesToCloudinary
+} = require("../../utiils/cloudinary")
 
 const createModel = async (req, res) => {
     console.log("Trying to verify a form: ", req.body)
@@ -28,8 +30,6 @@ const createModel = async (req, res) => {
     // let holdingIdPhotofile = req.body.holdingIdPhotofile
     // let idPhotofile = req.body.idPhotofile
     let idexpire = data.idexpire
-
-
 
     if (!userid && !firstname && !lastname && !email && !dob && !country && !city && !address && !documentType && !idexpire) {
         return res.status(400).json({
@@ -60,11 +60,9 @@ const createModel = async (req, res) => {
                     holdingIdPhotofilepublicid: result.public_id,
                 }
             } else if (result.filename === "idPhotofile") {
-                if (result.filename === "idPhotofile") {
-                    idPhotofile = {
-                        idPhotofilelink: result.file_link,
-                        idPhotofilepublicid: result.public_id,
-                    }
+                idPhotofile = {
+                    idPhotofilelink: result.file_link,
+                    idPhotofilepublicid: result.public_id,
                 }
             }
         })

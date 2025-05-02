@@ -543,10 +543,11 @@ app.use('/post', require('./routes/api/post/Post'))
 app.use('/editmoreprofile', require('./routes/api/Profilemore/editprofilemore'))
 app.use('/model', require('./routes/api/model/models'))
 app.use('/postdocument', require('./routes/api/model/postdocument'))
+app.use('/exclusive', require('./routes/api/Exclusive/exclusive')) //(put) exclusive content (post) buy exclusive content
 app.use(handleRefresh);
 
 app.use(verifyJwt)
-app.use('/exclusive', require('./routes/api/Exclusive/exclusive')) //(put) exclusive content (post) buy exclusive content
+// app.use('/exclusive', require('./routes/api/Exclusive/exclusive')) //(put) exclusive content (post) buy exclusive content
 //(patch)delete exclusive content
 app.use('/exclusivecontent', require('./routes/api/Exclusive/allexclusive'))  //(put) get my purshased exclusive (post) delete my purshased exclusive
 // app.use('/model', require('./routes/api/model/models'))

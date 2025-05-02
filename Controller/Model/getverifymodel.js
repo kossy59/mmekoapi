@@ -2,22 +2,20 @@ const models = require("../../Models/models")
 const userdb = require("../../Models/userdb")
 
 const createModel = async (req, res) => {
-  
-
     try {
-      
-
-        let currentuser = await models.find({ verify: "live" }).exec()
-           
+        let currentuser = await models.find({
+            verify: "live"
+        }).exec()
 
         let useronline = await userdb.find().exec()
-          
 
         if (!currentuser[0]) {
-            return res.status(200).json({ "ok": false, "message": `user host empty`, host: [] })
+            return res.status(200).json({
+                "ok": false,
+                "message": `user host empty`,
+                host: []
+            })
         }
-
-          
 
         let host = []
 
@@ -40,13 +38,13 @@ const createModel = async (req, res) => {
                         bodytype: currentuser[j].bodytype,
                         smoke: currentuser[j].smoke,
                         drink: currentuser[j].drink,
-                        interestedin: currentuser[j].interestedin,
+                        interestedin: currentuser[j].interestedin.join(" "),
                         height: currentuser[j].height,
                         weight: currentuser[j].weight,
                         description: currentuser[j].description,
                         gender: currentuser[j].gender,
-                        timeava: currentuser[j].timeava,
-                        daysava: currentuser[j].daysava,
+                        timeava: currentuser[j].timeava.join(" "),
+                        daysava: currentuser[j].daysava.join(" "),
                         hosttype: currentuser[j].hosttype,
                         online: useronline[i].active,
                         userid: currentuser[j].userid,
@@ -58,15 +56,22 @@ const createModel = async (req, res) => {
                 }
             }
         }
-            
 
-          
 
-        return res.status(200).json({ "ok": true, "message": `Model Fetched successfully`, host })
-      
-          
+
+
+        return res.status(200).json({
+            "ok": true,
+            "message": `Model Fetched successfully`,
+            host
+        })
+
+
     } catch (err) {
-        return res.status(500).json({ "ok": false, 'message': `${err.message}!` });
+        return res.status(500).json({
+            "ok": false,
+            'message': `${err.message}!`
+        });
     }
 }
 
