@@ -42,7 +42,7 @@ const markertdata = new Schema({
 
     location: {
         type: String,
-        required: true
+        required: false
     },
 
     price: {
