@@ -23,11 +23,7 @@ const createLike = async (req,res)=>{
             return String(value.status) === "accepted"  || String(value.status) === "decline"
          })
 
-          //console.log('under user pending')
-
-         
-
-         
+          //console.log('under user pending')        
 
          if(!user[0]) {
              return res.status(200).json({"ok":false,'message': 'you have 0 approved request!!',approve:[]})
@@ -38,10 +34,10 @@ const createLike = async (req,res)=>{
          for(let i = 0; i < user.length; i++){
             let image = await modeldb.findOne({_id:user[i].modelid}).exec()
             if (image){
-                let photo = image.photolink.split(",")
+                let photo = image.modelfiles[0].modelfilelink;
 
                 approve.push({
-                    photolink : photo[0],
+                    photolink : photo,
                     name : image.name,
                     status : user[i].status,
                     type : user[i].type,

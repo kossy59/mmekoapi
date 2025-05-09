@@ -1,4 +1,5 @@
 let exclusivedb = require("../../Models/exclusivePurshase")
+
 const postexclusive = async(req,res)=>{
 
     let id = req.body.id;

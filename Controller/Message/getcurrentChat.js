@@ -11,9 +11,9 @@ const createModel = async (req,res)=>{
     const clientid = req.body.clientid
     const mychat = req.body.mychat
 
-    
-   
-   
+
+
+
     if(!userid){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
@@ -39,7 +39,7 @@ const createModel = async (req,res)=>{
                 }else {
                     username = `${clientinfo.firstname} ${clientinfo.lastname}`
                 }
-               
+
                 chatInfo.name = username
                 chatInfo.photolink = image
                 chatInfo.value = "client"
@@ -47,8 +47,8 @@ const createModel = async (req,res)=>{
                 chatInfo.firstname = clientinfo.firstname
             }
 
-        
-       
+
+
 
         // console.log("this is chatinfo "+chatInfo)
         //    let Chats = await data.databar.listDocuments(data.dataid,data.msgCol,[sdk.Query.limit(200), sdk.Query.and([
@@ -62,12 +62,12 @@ const createModel = async (req,res)=>{
              return ((value.toid === userid || value.fromid === userid) && (value.fromid === clientid || value.toid  === clientid))
            })
 
-          
-           console.log("number of chats now "+Chats.length)
-         
-      
 
-          
+           console.log("number of chats now "+Chats.length)
+
+
+
+
 
            if(!Chats[0]){
             return res.status(200).json({"ok":true,"message":`user host empty`,chats:[],chatInfo})
@@ -75,23 +75,23 @@ const createModel = async (req,res)=>{
            // fecting unviewed notification chats
             let unviewing = Chats.filter(value =>{
                 return value.notify === true && String(value.toid) === String(clientid)
-            
-            })
-            
-           
-           console.log("list of unview chat "+unviewing.length)
-          
 
-                
+            })
+
+
+           console.log("list of unview chat "+unviewing.length)
+
+
+
                     for(let i = 0; i < unviewing.length; i++){
-                       
+
                             unviewing[i].notify = false;
                            await unviewing[i].save()
-                        
+
                       }
 
-            
-             
+
+
 
             //let msg = await data.databar.listDocuments(data.dataid,data.msgCol)
             let msglist = Chats.sort((a,b)=>{
@@ -118,9 +118,9 @@ const createModel = async (req,res)=>{
 
             //now let marshal my chat names and photolink as ordinary client user
 
-          
+
             for(let i = 0; i < myChat.length; i++){
-               
+
                      //let usernames = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[myChat[i].fromid])])
                      //let photos = await data.databar.listDocuments(data.dataid,data.userincol, [sdk.Query.equal("useraccountId",[myChat[i].fromid])])
                      let usernames = await userdb.findOne({_id:myChat[i].fromid}).exec()
@@ -143,17 +143,17 @@ const createModel = async (req,res)=>{
 
                          Listchat.push(chat)
                      }
-                
+
             }
 
 
-           
+
             console.log('under  my chat names and photolink as ordinary client user ')
 
 
             //now let marshal my chat names and photolink as a model user
 
-        
+
             // for(let i = 0; i < myChat.length; i++){
             //     if(myChat[i].client === false){
             //         //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[myChat[i].fromid])])
@@ -170,14 +170,14 @@ const createModel = async (req,res)=>{
             //             Listchat.push(chat)
             //     }
             // }
-           
+
 
 
 
             // now let marshal our client chat names and photolink as ordinary client user
 
-           
-            
+
+
             for(let i = 0; i <  clientchat.length; i++){
 
                      //let usernames = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[clientchat[i].fromid])])
@@ -201,13 +201,13 @@ const createModel = async (req,res)=>{
 
                          Listchat.push(chat)
                      }
-                
+
             }
            // console.log('under  our client chat names and photolink as ordinary client user')
 
             // now marshal our client chat names and photolink as a model client user
 
-          
+
             // for(let i = 0; i < clientchat.length; i++){
 
             //     if(clientchat[i].client === false){
@@ -228,21 +228,21 @@ const createModel = async (req,res)=>{
             //          }
             //     }
             // }
-          
+
             // console.log('under  our client chat names and photolink as ordinary client user')
-            //      console.log(Listchat) 
+            //      console.log(Listchat)
                  let allchat = Listchat.sort((a,b)=>{
                 return Number(a.date) - Number(b.date)
-            }) 
+            })
             console.log("all chat "+allchat.length)
           return res.status(200).json({"ok":true,"message":`Model Fetched successfully`,chats:allchat,chatInfo})
 
-          
+
           }catch(err){
             console.log("message erro "+err)
            return res.status(500).json({"ok":false,'message': `${err.message}!`});
 
-           
+
        }
 }
 

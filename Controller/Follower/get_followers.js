@@ -13,8 +13,6 @@ const createModel = async (req,res)=>{
     }
 
     try{
-
-
         let follows = {
             followers : [],
             following : []
@@ -35,7 +33,7 @@ const createModel = async (req,res)=>{
                
                 if(username){
                    let photo = await photodb.findOne({useraccountId:followers[i].followerid}).exec()
-                    if(model){
+                    if (model) {
                         canmessage = true
                         modelid = model._id
                     }

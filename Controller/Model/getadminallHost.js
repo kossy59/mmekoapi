@@ -16,7 +16,6 @@ const createModel = async (req,res)=>{
     //let data = await connectdatabase()
 
     try{
-
         let host = []
         let unverify_host = await documentdb.find({}).exec()
         
@@ -55,8 +54,8 @@ const createModel = async (req,res)=>{
                 city:value.city,
                 resident_address:value.address,
                 documentType:value.documentType,
-                holdingIdPhoto:value.holdingIdPhoto,
-                idPhoto:value.idPhoto,
+                holdingIdPhoto:value.holdingIdPhotofile.holdingIdPhotofilelink,
+                idPhoto:value.idPhotofile.idPhotofilelink,
                 idexpire:value.idexpire,
                 id:value._id,
                 username,

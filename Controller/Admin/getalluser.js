@@ -3,7 +3,7 @@ let admindb = require("../../Models/admindb")
 let userphoto = require("../../Models/usercomplete")
 
 const updatePost = async (req,res)=>{
-    
+
 
     try{
 
@@ -15,7 +15,7 @@ const updatePost = async (req,res)=>{
                let suppend_user = []
 
                admin.forEach(value =>{
-                 
+
                  if(value.suspend === true){
                     let user = {
                         userid:value.userid
@@ -54,11 +54,11 @@ const updatePost = async (req,res)=>{
 
 
 
-               
+
 
             return res.status(200).json({"ok":true,"message":`Post updated Successfully`,users:alluser})
-      
-          
+
+
        }catch(err){
            return res.status(500).json({"ok":false,'message': `${err.message}!`});
        }

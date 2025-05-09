@@ -37,7 +37,7 @@ const createLike = async (req,res)=>{
          for(let i = 0; i < user.length; i++){
 
             const modelid = await modeldb.findOne({_id:user[i].modelid}).exec()
-             let image = modelid.photolink.split(",")
+             let image = modelid.modelfiles[0].modelfilelink;
 
                listinfos.push(
                     { 
@@ -45,7 +45,7 @@ const createLike = async (req,res)=>{
                     type : user[i].type,
                     date : user[i].date,
                     time : user[i].time,
-                    photolink : image[0],
+                    photolink : image,
                     modelid : modelid._id,
                     id: user[i]._id
                     }

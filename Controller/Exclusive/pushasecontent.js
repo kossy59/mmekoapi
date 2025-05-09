@@ -5,7 +5,7 @@ let historydb = require("../../Models/mainbalance")
 let sendEmail = require("../../utiils/sendEmailnot")
 let sendpushnote = require("../../utiils/sendPushnot")
 
-const postexclusive = async(req,res)=>{
+const postexclusive = async(req, res)=>{
 
     let userid = req.body.userid;
     let exclusiveid = req.body.exclusiveid;
@@ -17,11 +17,8 @@ const postexclusive = async(req,res)=>{
     console.log("userid "+userid)
     console.log("exclusiveid "+exclusiveid)
     console.log("price "+price)
-    console.log("pricebalance "+pricebalance)
-   
+    console.log("pricebalance "+pricebalance) 
     
-    
-
     if(!userid || !exclusiveid || !price){
         console.log("failed to buy")
         return res.status(400).json({"ok":false,'message': 'Invalid exclusive ID!!'})
@@ -50,7 +47,7 @@ const postexclusive = async(req,res)=>{
             paid:true,
             exclusivename,
             exclusivelink,
-            contenttype:content_price.content_type
+            contenttype: content_price.content_type
         }  
 
         userprice.balance = `${pricebalance}`
