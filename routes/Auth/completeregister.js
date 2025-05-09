@@ -2,7 +2,7 @@ const express = require('express')
 const router = express.Router();
 const newUsers = require('../../Controller/Auth/completeregisters');
 const multer = require('multer')
-const handleRefresh = require('../../../Middleware/refresh')
+const handleRefresh = require('../../Middleware/refresh')
 
 /**
  * This implementation allows for in memory file upload manipulation
