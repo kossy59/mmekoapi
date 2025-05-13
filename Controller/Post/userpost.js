@@ -7,6 +7,19 @@ const userdata = require("../../Models/userdb")
 const comdata = require("../../Models/usercomplete")
 const { saveFile, uploadSingleFileToCloudinary } = require("../../utiils/cloudinary")
 
+// configuring fluent-ffmpeg
+
+const ffmpegPath = require('@ffmpeg-installer/ffmpeg').path;
+const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegPath);
+
+const fs = require('fs');
+const path = require('path');
+const os = require('os');
+const mime = require('mime-types');
+
+
+
 const createPost = async (req, res) => {
 
     console.log("req.body.data", req.body.data);
@@ -16,6 +29,25 @@ const createPost = async (req, res) => {
     const userid = data.userid;
     let content = data.content;
     let posttype = data.posttype;
+
+    // Get the buffer and MIME type
+    let fileBuffer = req.file.buffer;
+    let mimeType = req.file.mimetype;
+
+    // If it's a video and longer than 3 minutes, trim it
+    if (mimeType && mimeType.startsWith("video/")) {
+        try {
+            console.log("Trimming video...");
+            fileBuffer = await trimVideoBufferTo3Min(fileBuffer);
+        } catch (err) {
+            console.error("Failed to trim video:", err.message);
+            return res.status(500).json({ ok: false, message: "Error trimming video" });
+        }
+    }
+
+    // Now pass req.file directly
+    const result = await uploadSingleFileToCloudinary(req.file, `assets/${posttype}s`);
+    
 
     /**
      * This implementation uploads the file to a folder on the server
@@ -27,7 +59,9 @@ const createPost = async (req, res) => {
      * This implementation allows for in memory file upload manipulation
      * This prevents accessing the filesystem of the hosted server
      */
-    const result = await uploadSingleFileToCloudinary(req.file, `assets/${posttype}s`);
+    // const result = await uploadSingleFileToCloudinary(req.file, `assets/${posttype}s`);
+
+
 
     console.log("result: ", result)
 
@@ -144,5 +178,25 @@ const createPost = async (req, res) => {
         return res.status(500).json({ "ok": false, 'message': `${err.message}!` });
     }
 }
+
+
+const trimVideoBufferTo3Min = (buffer) => {
+    return new Promise((resolve, reject) => {
+        const ffmpegProcess = ffmpeg()
+            .input(buffer)
+            .inputFormat('mp4')  // adjust format based on video type
+            .outputOptions('-t 180') // Trim to 3 minutes
+            .outputFormat('mp4')
+            .on('end', () => {
+                resolve(ffmpegProcess); // Return the trimmed video buffer
+            })
+            .on('error', (err) => {
+                reject(err);
+            });
+
+        ffmpegProcess.pipe();
+    });
+};
+
 
 module.exports = createPost

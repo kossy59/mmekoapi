@@ -66,7 +66,7 @@ app.use(express.json({ limit: "10mb" })); // Handle JSON data
 
 // Routes
 app.use("/api/image", imageRoutes);
-app.use('/', require('./routes/api/post/getpost'))
+app.use('/', require('./routes/api/post/Post'))
 
 app.use('/getallpost', require('./routes/api/post/getpost'))
 app.use('/getalluserpost', require('./routes/api/post/getalluserPost'))
