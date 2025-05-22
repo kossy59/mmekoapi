@@ -31,12 +31,12 @@ const imageRoutes = require("./routes/imageRoutes");
 
 
 let myurl = "https://mmeko.com"
-// let myurl = "http://localhost:3000"
+let myurl2 = "http://localhost:3000"
 // let myurl = "http://192.168.43.112:3000"
 
 const corsOptions = {
   credentials: true,
-  origin: [`${myurl}`] // Whitelist the domains you want to allow
+  origin: [`${myurl}`,myurl2] // Whitelist the domains you want to allow
 };
 
 app.use(cors(corsOptions));
