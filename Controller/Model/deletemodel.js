@@ -1,7 +1,7 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
 const models = require("../../Models/models");
-const { deleteFile } = require("../../utiils/cloudinary");
+const { deleteFile } = require("../../utiils/appwrite");
 
 const createModel = async (req, res) => {
 
@@ -44,7 +44,7 @@ const createModel = async (req, res) => {
       _id: hostid
     }).exec()
 
-    // Delete model images from cloudinary
+    // Delete model images from appwrite
     if (currentuser.modelfiles) {
       currentuser.modelfiles.forEach(async modelfile => {
         const id = modelfile.modelfilepublicid

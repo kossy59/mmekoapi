@@ -1,7 +1,7 @@
 const models = require("../../Models/models")
 const {
-  updateManyFileToCloudinary
-} = require("../../utiils/cloudinary")
+  updateManyFileToAppwrite
+} = require("../../utiils/appwrite")
 
 const createModel = async (req, res) => {
     console.log("req.body.data", req.body.data);
@@ -61,7 +61,7 @@ const createModel = async (req, res) => {
     let results = []
 
     if (req.files || req.files.length > 2) {
-        results = await updateManyFileToCloudinary(publicIDs, req.files, `assets/models`);
+        results = await updateManyFileToAppwrite(publicIDs, req.files, `model`);
     }
 
     console.log("results: ", results)

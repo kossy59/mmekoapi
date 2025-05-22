@@ -3,8 +3,8 @@
 const models = require("../../Models/models")
 const userdb = require("../../Models/userdb")
 const {
-  uploadManyFilesToCloudinary
-} = require("../../utiils/cloudinary")
+  uploadManyFilesToAppwrite
+} = require("../../utiils/appwrite")
 
 const createModel = async (req, res) => {
   console.log("req.body.data", req.body.data);
@@ -61,7 +61,7 @@ const createModel = async (req, res) => {
    * This implementation allows for in memory file upload manipulation
    * This prevents accessing the filesystem of the hosted server
    */
-  const results = await uploadManyFilesToCloudinary(req.files, `assets/models`);
+  const results = await uploadManyFilesToAppwrite(req.files, `model`);
 
   console.log("result: ", results)
 

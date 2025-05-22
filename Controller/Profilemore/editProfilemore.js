@@ -3,7 +3,7 @@
 
 const completedb = require("../../Models/usercomplete")
 const userdb = require("../../Models/userdb")
-const { updateSingleFileToCloudinary } = require("../../utiils/cloudinary")
+const { updateSingleFileToAppwrite } = require("../../utiils/appwrite")
 
 const updatePost = async (req, res) => {
     console.log("req.body.data", req.body.data);
@@ -26,7 +26,7 @@ const updatePost = async (req, res) => {
      * This implementation allows for in memory file upload manipulation
      * This prevents accessing the filesystem of the hosted server
      */
-    const result = await updateSingleFileToCloudinary(deletePhotoID, req.file, `assets/profile/images`);
+    const result = await updateSingleFileToAppwrite(deletePhotoID, req.file, `profile`);
 
     console.log("result: ", result)
 

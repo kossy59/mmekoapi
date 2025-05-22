@@ -1,7 +1,7 @@
 let exclusivedb = require("../../Models/exclusivedb")
 const {
-    uploadManyFilesToCloudinary
-} = require("../../utiils/cloudinary")
+    uploadManyFilesToAppwrite
+} = require("../../utiils/appwrite")
 
 const postexclusive = async (req, res) => {
     // console.log("Trying to verify a form: ", req.body)
@@ -34,9 +34,9 @@ const postexclusive = async (req, res) => {
      * This implementation allows for in memory file upload manipulation
      * This prevents accessing the filesystem of the hosted server
      */
-    let results = await uploadManyFilesToCloudinary(req.files, `assets/exclusive/${content_type}s`);
+    let results = await uploadManyFilesToAppwrite(req.files, `post`);
 
-    console.log("results from cloudinary: ", results)
+    console.log("results from appwrite: ", results)
 
     let contentfile = {}
     let thumbnailfile = {}
