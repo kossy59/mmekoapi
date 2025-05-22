@@ -31,8 +31,8 @@ const imageRoutes = require("./routes/imageRoutes");
 
 
 let myurl = "https://mmeko.com"
-// let myurl = "http://localhost:3000"
-// let myurl = "http://192.168.43.112:3000"
+// myurl = "http://localhost:3000"
+// myurl = "http://192.168.43.112:3000"
 
 const corsOptions = {
   credentials: true,

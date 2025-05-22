@@ -24,12 +24,12 @@ const handleNewUser = async (req, res) => {
      * This implementation allows for in memory file upload manipulation
      * This prevents accessing the filesystem of the hosted server
      */
-    const result = await uploadSingleFileToCloudinary(req.file, `assets/users`);
+    // const result = await uploadSingleFileToCloudinary(req.file, `assets/users`);
 
-    console.log("result: ", result)
+    // console.log("result: ", result)
 
-    const photoLink = result.file_link
-    const photoID = result.public_id
+    // const photoLink = result.file_link
+    // const photoID = result.public_id
 
     try {
         let du = await userdb.findOne({ useraccountId: useraccountId }).exec()
@@ -44,8 +44,8 @@ const handleNewUser = async (req, res) => {
             interestedIn,
             relationshipType,
             details,
-            photoLink,
-            photoID,
+            photoLink:data.photoLink,
+            photoID: data.photoLink,
         }
 
         await userdb.create(moreuser)
