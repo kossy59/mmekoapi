@@ -3,7 +3,7 @@
 
 const completedb = require("../../Models/usercomplete")
 const userdb = require("../../Models/userdb")
-const { updateSingleFileToCloudinary } = require("../../utiils/cloudinary")
+const { updateSingleFileToCloudinary } = require("../../utiils/appwrite")
 
 const updatePost = async (req, res) => {
     console.log("req.body.data", req.body.data);

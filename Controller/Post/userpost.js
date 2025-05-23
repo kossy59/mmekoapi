@@ -5,7 +5,7 @@ const commentdata = require("../../Models/comment")
 const likedata = require("../../Models/like")
 const userdata = require("../../Models/userdb")
 const comdata = require("../../Models/usercomplete")
-const { saveFile, uploadSingleFileToCloudinary } = require("../../utiils/cloudinary")
+const { saveFile, uploadSingleFileToCloudinary } = require("../../utiils/appwrite")
 
 // configuring fluent-ffmpeg
 

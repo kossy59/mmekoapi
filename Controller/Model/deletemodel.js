@@ -1,7 +1,7 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
 const models = require("../../Models/models");
-const { deleteFile } = require("../../utiils/cloudinary");
+const { deleteFile } = require("../../utiils/appwrite");
 
 const createModel = async (req, res) => {
 

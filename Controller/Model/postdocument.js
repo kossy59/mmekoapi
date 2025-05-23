@@ -2,7 +2,7 @@ const documentdb = require("../../Models/document")
 const admindb = require("../../Models/admindb")
 const {
     uploadManyFilesToCloudinary
-} = require("../../utiils/cloudinary")
+} = require("../../utiils/appwrite")
 
 const createModel = async (req, res) => {
     console.log("Trying to verify a form: ", req.body)

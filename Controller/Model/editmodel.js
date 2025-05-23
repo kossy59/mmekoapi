@@ -1,7 +1,7 @@
 const models = require("../../Models/models")
 const {
   updateManyFileToCloudinary
-} = require("../../utiils/cloudinary")
+} = require("../../utiils/appwrite")
 
 const createModel = async (req, res) => {
     console.log("req.body.data", req.body.data);

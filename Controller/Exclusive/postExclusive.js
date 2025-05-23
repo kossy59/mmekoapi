@@ -1,7 +1,7 @@
 let exclusivedb = require("../../Models/exclusivedb")
 const {
     uploadManyFilesToCloudinary
-} = require("../../utiils/cloudinary")
+} = require("../../utiils/appwrite")
 
 const postexclusive = async (req, res) => {
     // console.log("Trying to verify a form: ", req.body)

@@ -6,7 +6,7 @@ const {
   deleteImage,
   updateImage,
   downloadImage
-} = require('../utiils/cloudinary'); // Import functions from cloudinary.js
+} = require('../utiils/appwrite'); // Import functions from cloudinary.js
 
 const router = express.Router();
 const upload = multer({ dest: 'uploads/' }); // Set up multer to handle file uploads

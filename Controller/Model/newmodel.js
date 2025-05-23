@@ -4,7 +4,7 @@ const models = require("../../Models/models")
 const userdb = require("../../Models/userdb")
 const {
   uploadManyFilesToCloudinary
-} = require("../../utiils/cloudinary")
+} = require("../../utiils/appwrite")
 
 const createModel = async (req, res) => {
   console.log("req.body.data", req.body.data);
