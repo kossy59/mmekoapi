@@ -9,6 +9,11 @@ const storage = new sdk.Storage(client);
 const id = new sdk.ID();
 
 const BUCKET_ID = process.env.APPWRITE_BUCKET_ID || "default"; // Set your bucket id
+const PROJECT_ID = process.env.APPWRITE_PROJECT_ID || "668f9f8c0011a761d118"; // Set your project id
+
+function getFileViewUrl(fileId) {
+  return `https://cloud.appwrite.io/v1/storage/buckets/${BUCKET_ID}/files/${fileId}/view?project=${PROJECT_ID}`;
+}
 
 // Save Image
 const saveFile = async (file, filePath, folder = "assets") => {
@@ -34,7 +39,7 @@ const saveFile = async (file, filePath, folder = "assets") => {
 
     return {
       public_id: response.$id,
-      file_link: response.$id, // Use downloadFile to get URL
+      file_link: getFileViewUrl(response.$id),
     };
   } catch (error) {
     console.log("[saveFile] Error:", error);
@@ -64,11 +69,11 @@ const uploadSingleFileToCloudinary = async (file, folder = "assets") => {
       [sdk.Permission.read(sdk.Role.any())],
       [sdk.Permission.write(sdk.Role.any())]
     );
-    console.log("[uploadSingleFileToCloudinary] File created. Response:", response);
-
+    // Get the download URL from Appwrite
+    const downloadUrl = (await storage.getFileDownload(BUCKET_ID, response.$id)).href;
     return {
       public_id: response.$id,
-      file_link: response.$id,
+      file_link: getFileViewUrl(response.$id),
     };
   } catch (error) {
     console.log("[uploadSingleFileToCloudinary] Error:", error);
@@ -95,7 +100,7 @@ const uploadManyFilesToCloudinary = async (files, folder = "assets") => {
         console.log(`[uploadManyFilesToCloudinary] File uploaded: ${file.originalname}, Response:`, response);
         return {
           public_id: response.$id,
-          file_link: response.$id,
+          file_link: getFileViewUrl(response.$id),
           filename: file.fieldname,
         };
       } catch (error) {
