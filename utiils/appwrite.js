@@ -194,6 +194,21 @@ const downloadFile = (publicId) => {
     });
 };
 
+
+const previewFile = (publicId) => {
+  console.log("[previewFile] Called with publicId:", publicId);
+  // Returns a URL to preview the file
+  return storage.getFilePreview(BUCKET_ID, publicId)
+    .then(response => {
+      console.log("[previewFile] Preview URL generated:", response.href);
+      return response.href;
+    })
+    .catch(error => {
+      console.log("[previewFile] Error generating preview URL:", error);
+      return "";
+    });
+};
+
 module.exports = {
   saveFile,
   uploadSingleFileToCloudinary,
@@ -202,5 +217,6 @@ module.exports = {
   updateManyFileToCloudinary,
   deleteFile,
   updateFile,
-  downloadFile,
+    downloadFile,
+    previewFile
 };
