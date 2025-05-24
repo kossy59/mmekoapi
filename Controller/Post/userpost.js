@@ -69,7 +69,7 @@ const createPost = async (req, res) => {
 
 
 
-    console.log("result: ", result)
+    // console.log("result: ", result)
 
     const postfilelink = result.file_link
     const postfilepublicid = result.public_id
