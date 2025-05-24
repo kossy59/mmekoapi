@@ -31,8 +31,8 @@ const createPost = async (req, res) => {
     let posttype = data.posttype;
 
     // Get the buffer and MIME type
-    let fileBuffer = req.file.buffer;
-    let mimeType = req.file.mimetype;
+    let fileBuffer = req?.file?.buffer||'';
+    let mimeType = req?.file?.mimetype||'';
 
     // If it's a video and longer than 3 minutes, trim it
     if (mimeType && mimeType.startsWith("video/")) {
@@ -46,8 +46,14 @@ const createPost = async (req, res) => {
     }
 
     // Now pass req.file directly
-    const result = await uploadSingleFileToCloudinary(req.file, `assets/${posttype}s`);
+    const result = await uploadSingleFileToCloudinary(req.file, `post`);
     
+    if (!result.file_link && !result.public_id) {
+        return res.status(500).json({
+            "ok": false,
+            'message': 'Something went wrong'
+        })
+    }
 
     /**
      * This implementation uploads the file to a folder on the server
@@ -180,23 +186,40 @@ const createPost = async (req, res) => {
 }
 
 
+const stream = require('stream');
+
 const trimVideoBufferTo3Min = (buffer) => {
     return new Promise((resolve, reject) => {
-        const ffmpegProcess = ffmpeg()
-            .input(buffer)
-            .inputFormat('mp4')  // adjust format based on video type
-            .outputOptions('-t 180') // Trim to 3 minutes
-            .outputFormat('mp4')
-            .on('end', () => {
-                resolve(ffmpegProcess); // Return the trimmed video buffer
-            })
-            .on('error', (err) => {
-                reject(err);
-            });
+        const inputStream = new stream.PassThrough();
+        inputStream.end(buffer);
 
-        ffmpegProcess.pipe();
+        const tmpInputPath = path.join(os.tmpdir(), `input-${Date.now()}.mp4`);
+        const tmpOutputPath = path.join(os.tmpdir(), `output-${Date.now()}.mp4`);
+
+        // Write buffer to a file first
+        fs.writeFile(tmpInputPath, buffer, (err) => {
+            if (err) return reject(err);
+
+            ffmpeg(tmpInputPath)
+            .outputOptions('-ss', '0', '-t', '180', '-c', 'copy') // 3 minutes
+                .output(tmpOutputPath)
+                .on('end', () => {
+                    fs.readFile(tmpOutputPath, (err, data) => {
+                        if (err) return reject(err);
+
+                        // Cleanup temp files
+                        fs.unlink(tmpInputPath, () => {});
+                        fs.unlink(tmpOutputPath, () => {});
+                        resolve(data);
+                    });
+                })
+                .on('error', (err) => {
+                    fs.unlink(tmpInputPath, () => {});
+                    fs.unlink(tmpOutputPath, () => {});
+                    reject(new Error(`FFmpeg failed: ${err.message}`));
+                })
+                .run();
+        });
     });
 };
-
-
 module.exports = createPost

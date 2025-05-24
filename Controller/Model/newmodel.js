@@ -61,8 +61,13 @@ const createModel = async (req, res) => {
    * This implementation allows for in memory file upload manipulation
    * This prevents accessing the filesystem of the hosted server
    */
-  const results = await uploadManyFilesToCloudinary(req.files, `assets/models`);
-
+  const results = await uploadManyFilesToCloudinary(req.files, `model`);
+  if (!results.file_link && !results.public_id) {
+    return res.status(500).json({
+        "ok": false,
+        'message': 'Something went wrong'
+    })
+}
   console.log("result: ", results)
 
   let modelfiles = [];

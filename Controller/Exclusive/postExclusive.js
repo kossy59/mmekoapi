@@ -34,12 +34,14 @@ const postexclusive = async (req, res) => {
      * This implementation allows for in memory file upload manipulation
      * This prevents accessing the filesystem of the hosted server
      */
-    let results = await uploadManyFilesToCloudinary(req.files, `assets/exclusive/${content_type}s`);
+    let results = await uploadManyFilesToCloudinary(req.files, `post`);
 
     console.log("results from cloudinary: ", results)
 
     let contentfile = {}
     let thumbnailfile = {}
+
+     
 
     // Get uploaded file details
     if (results && results.length > 1) {

@@ -24,7 +24,14 @@ const handleNewUser = async (req, res) => {
      * This implementation allows for in memory file upload manipulation
      * This prevents accessing the filesystem of the hosted server
      */
-    const result = await uploadSingleFileToCloudinary(req.file, `assets/users`);
+    const result = await uploadSingleFileToCloudinary(req.file, `profile`);
+
+    if (!result.file_link && !results.public_id) {
+        return res.status(500).json({
+            "ok": false,
+            'message': 'Something went wrong'
+        })
+    }
 
     console.log("result: ", result)
 

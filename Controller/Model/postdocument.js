@@ -44,8 +44,8 @@ const createModel = async (req, res) => {
      * This implementation allows for in memory file upload manipulation
      * This prevents accessing the filesystem of the hosted server
      */
-    let results = await uploadManyFilesToCloudinary(req.files, `assets/document/${documentType}s`);
-
+    let results = await uploadManyFilesToCloudinary(req.files, `post`);
+     
     console.log("results from cloudinary: ", results)
 
     let holdingIdPhotofile = {}
