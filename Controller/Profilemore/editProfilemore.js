@@ -26,7 +26,7 @@ const updatePost = async (req, res) => {
      * This implementation allows for in memory file upload manipulation
      * This prevents accessing the filesystem of the hosted server
      */
-    const result = await updateSingleFileToCloudinary(deletePhotoID, req.file, `assets/profile/images`);
+    const result = await updateSingleFileToCloudinary(deletePhotoID, req.file, `profile`);
 
     console.log("result: ", result)
 

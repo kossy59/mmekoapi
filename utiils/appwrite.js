@@ -141,7 +141,7 @@ const ensureTempDir = () => {
 
  async function uploadManyFilesToCloudinary (files, folder = "assets")  {
   console.log("[uploadManyFilesToAppwrite] Called with files:", files ? files.map(f => f.originalname) : null, "folder:", folder);
-  const tempDir = ensureTempDir();
+  // const tempDir = ensureTempDir();
   try {
     const uploadPromises = files.map(async (file) => {
       // const tempFilePath = path.join(tempDir, `${Date.now()}-${file.originalname}`);
@@ -228,20 +228,20 @@ const ensureTempDir = () => {
 // Update Image
  async function updateFile (publicId, file, filePath, folder = "default")  {
   console.log("[updateFile] Called with publicId:", publicId, "file:", file ? file.originalname : null, "filePath:", filePath, "folder:", folder);
-  await deleteFile(publicId);
+  await deleteFile(publicId,folder);
   return await saveFile(file, filePath, folder);
 };
 
  async function updateSingleFileToCloudinary (publicId, file, folder = "default")  {
   console.log("[updateSingleFileToAppwrite] Called with publicId:", publicId, "file:", file ? file.originalname : null, "folder:", folder);
-  await deleteFile(publicId);
+  await deleteFile(publicId,folder);
   return await uploadSingleFileToCloudinary(file, folder);
 };
 
  async function updateManyFileToCloudinary (publicIds, files, folder = "default")  {
   console.log("[updateManyFileToAppwrite] Called with publicIds:", publicIds, "files:", files ? files.map(f => f.originalname) : null, "folder:", folder);
   if (publicIds.length > 0) {
-    await deleteManyFiles(publicIds);
+    await deleteManyFiles(publicIds,folder);
   }
   return await uploadManyFilesToCloudinary(files, folder);
 };
@@ -263,10 +263,10 @@ const downloadFile = (publicId) => {
 };
 
 
-function previewFile (publicId) {
+function previewFile (publicId,folder) {
   console.log("[previewFile] Called with publicId:", publicId);
   // Returns a URL to preview the file
-  return storage.getFilePreview(BUCKET_ID, publicId)
+  return storage.getFilePreview(folder, publicId)
     .then(response => {
       console.log("[previewFile] Preview URL generated:", response.href);
       return response.href;

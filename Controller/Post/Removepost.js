@@ -5,6 +5,7 @@
 const postdata = require('../../Models/post')
 const commentdata = require('../../Models/comment')
 const likedata = require('../../Models/like')
+const { deleteFile } = require('../../utiils/appwrite')
 
 
 const deletePost = async (req, res) => {
@@ -48,7 +49,7 @@ const deletePost = async (req, res) => {
     const postID = du._id
     await postdata.deleteMany({ _id: postid }).exec()
 
-    await deleteFile(photoID)
+    await deleteFile(photoID,'post')
 
     return res
       .status(200)
