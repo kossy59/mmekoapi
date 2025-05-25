@@ -96,26 +96,29 @@ io.on('connection', (socket) => {
   })
 
 
-  socket.on("message", async (data) => {
+  socket.on("message", async (newdata) => {
+    let info = await MYID(newdata.fromid)
+    const data = { ...newdata, ...info }
 
+    console.log(data)
     console.log("1");
-    await Livechats(data)
+
+    await Livechats({ ...data })
+    
+    console.log(data)
+
     console.log("2");
-    let info = await MYID(data.fromid)
-    console.log("3");
-    let name;
-    let photolink;
+
     if (info) {
-      name = info.name;
-      photolink = info.photolink;
-      await sendEmail(data.toid, `New message from ${name}`)
-      await pushnotify(data.toid, `New message from ${name}`, "messageicon")
+      console.log(info)
+      await sendEmail(data.toid, `New message from ${info?.name}`)
+      await pushnotify(data.toid, `New message from ${info?.name}`, "messageicon")
       // console.log("name "+name+" photolink "+photolink)
 
     }
-
+    console.log("3");
     //socket.to("LiveChat").emit(data)
-    socket.broadcast.emit("LiveChat", { name, photolink, data: data })
+    socket.broadcast.emit("LiveChat", { name: info?.name, photolink: info?.photolink||'', data: data })
 
 
   })

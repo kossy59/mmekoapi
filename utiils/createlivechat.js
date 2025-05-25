@@ -7,8 +7,10 @@ const Livechats = async(newdata)=>{
         //  let Chats = await data.databar.listDocuments(data.dataid,data.msgCol);
 
           //console.log("Message length 1st "+Chats.documents.length)
-         // await data.databar.createDocument(data.dataid,data.msgCol,sdk.ID.unique(),newdata)
-         await messagedb.create(newdata)
+  // await data.databar.createDocument(data.dataid,data.msgCol,sdk.ID.unique(),newdata)
+  // console.log(newdata)
+  await messagedb.create(newdata)
+  
           //console.log(id.$id)
           //console.log("Message length 2nd "+Chats.documents.length)
          //console.log( "inside new message "+newdata.toid)
@@ -23,7 +25,6 @@ const Livechats = async(newdata)=>{
          })
 
          //console.log(listchat)
-   
 
 }
 

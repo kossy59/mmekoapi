@@ -189,6 +189,7 @@ const createModel = async (req,res)=>{
                         if(clientchat[i].coin){
                             coin = clientchat[i].coin
                         }
+                         console.log(photos)
                          let chat = {
                                 id: clientchat[i].fromid,
                                 content:  clientchat[i].content,
