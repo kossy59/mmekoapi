@@ -100,7 +100,6 @@ io.on('connection', (socket) => {
     let info = await MYID(newdata.fromid)
     const data = { ...newdata, ...info }
 
-    console.log(data)
     console.log("1");
 
     await Livechats({ ...data })
@@ -119,8 +118,6 @@ io.on('connection', (socket) => {
     console.log("3");
     //socket.to("LiveChat").emit(data)
     socket.broadcast.emit("LiveChat", { name: info?.name, photolink: info?.photolink||'', data: data })
-
-
   })
 
   socket.on("videocall", async (data, arkFunction) => {
