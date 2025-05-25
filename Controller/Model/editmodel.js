@@ -61,7 +61,7 @@ const createModel = async (req, res) => {
     let results = []
 
     if (req.files || req.files.length > 2) {
-        results = await updateManyFileToCloudinary(publicIDs, req.files, `assets/models`);
+        results = await updateManyFileToCloudinary(publicIDs, req.files, `model`);
     }
 
     console.log("results: ", results)

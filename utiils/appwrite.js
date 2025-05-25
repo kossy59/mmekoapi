@@ -166,7 +166,7 @@ const ensureTempDir = () => {
         return {
           public_id: response.$id,
           file_link: getFileViewUrl(response.$id,folder),
-          filename: file.fieldname,
+          filename: file.originalname,
         };
       } catch (error) {
         console.log(`[uploadManyFilesToAppwrite] Error uploading file: ${file.originalname}`, error);
@@ -176,7 +176,7 @@ const ensureTempDir = () => {
         return {
           public_id: "",
           file_link: "",
-          filename: file.fieldname,
+          filename: file.originalname,
         };
       }
     });
@@ -191,7 +191,7 @@ const ensureTempDir = () => {
 };
 
 // Delete Image
- async function deleteFile (publicId,folder) {
+ async function deleteFile (publicId,folder='default')  {
   console.log("[deleteFile] Called with publicId:", publicId);
   try {
     await storage.deleteFile(folder, publicId);

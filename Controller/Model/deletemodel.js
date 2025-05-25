@@ -49,7 +49,7 @@ const createModel = async (req, res) => {
       currentuser.modelfiles.forEach(async modelfile => {
         const id = modelfile.modelfilepublicid
         if (modelfile.modelfilepublicid) {
-          await deleteFile(id);
+          await deleteFile(id, 'model');
         }
       })
     }
