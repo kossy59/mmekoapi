@@ -51,7 +51,7 @@ const postexclusive = async (req, res) => {
                     contentfilelink: result.file_link,
                     contentfilepublicid: result.public_id,
                 }
-            } else if (result.filename === "thumbnailfile") {
+            } else if (result.filename === "thumbnaillink") {
                 thumbnailfile = {
                     thumbnaillink: result.file_link,
                     thumbnailpublicid: result.public_id,

@@ -36,7 +36,7 @@ let myurl2 = "http://localhost:3000"
 
 const corsOptions = {
   credentials: true,
-  origin: [`${myurl}`,myurl2] // Whitelist the domains you want to allow
+  origin: [`${myurl}`] // Whitelist the domains you want to allow
 };
 
 app.use(cors(corsOptions));

@@ -166,7 +166,7 @@ const ensureTempDir = () => {
         return {
           public_id: response.$id,
           file_link: getFileViewUrl(response.$id,folder),
-          filename: file.originalname,
+          filename: file.fieldname,
         };
       } catch (error) {
         console.log(`[uploadManyFilesToAppwrite] Error uploading file: ${file.originalname}`, error);
@@ -176,13 +176,12 @@ const ensureTempDir = () => {
         return {
           public_id: "",
           file_link: "",
-          filename: file.originalname,
+          filename: file.fieldname,
         };
       }
     });
 
     const results = await Promise.all(uploadPromises);
-    console.log("[uploadManyFilesToAppwrite] All uploads complete. Results:", results);
     return results;
   } catch (error) {
     console.log("[uploadManyFilesToAppwrite] Error:", error);
