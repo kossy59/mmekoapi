@@ -32,7 +32,7 @@ const updatebalance = require("./utiils/deductPVC");
 const pushnotify = require("./utiils/sendPushnot");
 
 const imageRoutes = require("./routes/imageRoutes");
-const dev = true;
+const dev = false;
 // let myurl = "https://mmeko.com"
 const myurl = dev ? "http://localhost:3000" : "https://mmeko.com";
 // let myurl = "http://192.168.43.112:3000"
