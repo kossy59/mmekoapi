@@ -29,6 +29,7 @@
     "nodemailer": "^6.9.14",
     "nodemon": "^3.1.10",
     "p-iteration": "^1.1.8",
+    "sharp": "^0.34.2",
     "socket.io": "^4.7.5",
     "streamifier": "^0.1.1",
     "uuid": "^10.0.0",
