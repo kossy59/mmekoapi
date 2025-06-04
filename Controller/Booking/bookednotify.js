@@ -1,134 +1,123 @@
-const bookingdb = require("../../Models/book")
-const userdb = require("../../Models/userdb")
-const completedb = require("../../Models/usercomplete")
-const admindb = require("../../Models/admindb")
-const modeldb = require("../../Models/models")
+const bookingdb = require("../../Models/book");
+const userdb = require("../../Models/userdb");
+const completedb = require("../../Models/usercomplete");
+const admindb = require("../../Models/admindb");
+const modeldb = require("../../Models/models");
 
-const createLike = async (req,res)=>{
-     
-   
-    const userid = req.body.userid
+const createLike = async (req, res) => {
+  const userid = req.body.userid;
 
-    // console.log("notificationsss1")
+  // console.log("notificationsss1")
 
-     
-    
-   
-    if(!userid){
-        return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
+  if (!userid) {
+    return res.status(400).json({ ok: false, message: "user Id invalid!!" });
+  }
+  // console.log("notificationsss2")
+
+  //let data = await connectdatabase()
+
+  let isModel = await modeldb.findOne({ userid: userid }).exec();
+  let users = [];
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  if (isModel) {
+    console.log("this is model");
+    users = await bookingdb
+      .find({
+        modelid: isModel._id,
+        date: { $gte: thirtyDaysAgo, $lte: now },
+      })
+      .exec();
+    console.log("this is model not " + users.length);
+  }
+
+  const adminmessage = await admindb.find({ userid: userid }).exec();
+
+  let model_list = [];
+
+  let user = users.filter((value) => {
+    return (
+      value.status === "pending" ||
+      value.status === "accepted" ||
+      value.status === "decline"
+    );
+  });
+
+  let listinfos = [];
+
+  // console.log("notificationsss")
+
+  let modelast = 0;
+  let adminlast = 0;
+  let admintext = "";
+  let modelmessage = "";
+
+  for (let i = 0; i < user.length; i++) {
+    const client = await userdb.findOne({ _id: user[i].userid }).exec();
+    const clientphoto = await completedb
+      .findOne({ useraccountId: user[i].userid })
+      .exec();
+
+    if (modelast < user[i]._id.getTimestamp().getTime()) {
+      modelast = user[i]._id.getTimestamp().getTime();
+      modelmessage = `model notification from ${client.firstname}`;
     }
-    // console.log("notificationsss2")
 
-   
+    model_list.push({
+      name: client.firstname,
+      type: user[i].type,
+      date: user[i].date,
+      time: user[i].time,
+      photolink: clientphoto.photoLink,
+      clientid: client._id,
+      place: user[i].place,
+      modelid: user[i].modelid,
+      status: user[i].status,
+      ismessage: false,
+      notification: false,
+    });
+  }
 
+  adminmessage.forEach((value) => {
+    if (value.seen) {
+      if (adminlast < value._id.getTimestamp().getTime()) {
+        adminlast = value._id.getTimestamp().getTime();
+        admintext = value.message;
+      }
 
-    //let data = await connectdatabase()
+      let data = {
+        message: value.message,
+        time: `${value._id.getTimestamp().getTime()}`,
+        ismessage: true,
+        id: value._id,
+        admindb: true,
+        notification: false,
+      };
 
-    
-        let isModel = await modeldb.findOne({userid:userid}).exec()
-        let users = []
-        if(isModel){
-            console.log("this is model")
-            users  = await bookingdb.find({modelid:isModel._id}).exec()
-            console.log("this is model not "+users.length)
-        }
-        
-         const adminmessage = await admindb.find({userid:userid}).exec()
+      listinfos.push(data);
+    }
+  });
 
-         let model_list = []
+  let lastmessage = "";
 
-         let user = users.filter(value =>{
-            return value.status === "pending" || value.status === "accepted" || value.status === "decline"
-         })
+  if (modelast > adminlast) {
+    lastmessage = modelmessage;
+  } else if (adminlast > modelast) {
+    lastmessage = admintext;
+  }
 
-         
+  // console.log("notification length "+listinfos.length)
+  return res
+    .status(200)
+    .json({
+      ok: true,
+      message: ` Success`,
+      data: { model: model_list, notify: listinfos, lastmessage: lastmessage },
+    });
 
-         
+  //    catch(err){
+  //        return res.status(500).json({"ok":false,'message': `${err.message}!`});
+  //    }
+};
 
-         let listinfos = []
-
-         // console.log("notificationsss")
-
-         let modelast = 0
-         let adminlast = 0
-         let admintext = ""
-         let modelmessage = ""
-
-        
-         for(let i = 0; i < user.length; i++){
-
-            const client = await userdb.findOne({_id:user[i].userid}).exec()
-            const clientphoto = await completedb.findOne({useraccountId:user[i].userid}).exec()
-
-            if(modelast < user[i]._id.getTimestamp().getTime()){
-                modelast = user[i]._id.getTimestamp().getTime()
-                modelmessage = `model notification from ${client.firstname}`
-            }
-            
-
-               model_list.push(
-                    { 
-                    name : client.firstname,
-                    type : user[i].type,
-                    date : user[i].date,
-                    time : user[i].time,
-                    photolink : clientphoto.photoLink,
-                    clientid : client._id,
-                    place: user[i].place ,
-                    modelid: user[i].modelid,
-                    status : user[i].status,
-                    ismessage:false,
-                    notification:false
-                    }
-               )
-
-             
-            
-         }
-
-        adminmessage.forEach(value=>{
-
-           
-
-        if(value.seen){
-
-            if(adminlast < value._id.getTimestamp().getTime()){
-                adminlast = value._id.getTimestamp().getTime()
-                admintext = value.message
-            }
-
-            let data = {
-            message : value.message,
-            time : `${value._id.getTimestamp().getTime()}`,
-            ismessage:true,
-            id:value._id,
-            admindb:true,
-            notification:false
-
-            }
-
-            listinfos.push(data)
-        }
-        
-        })
-
-        let lastmessage = ''
-   
-         if(modelast > adminlast ){
-            lastmessage = modelmessage
-         }else if(adminlast > modelast ){
-            lastmessage = admintext
-         }
-
-         
-
-           // console.log("notification length "+listinfos.length)
-            return res.status(200).json({"ok":true,"message":` Success`,data:{model:model_list,notify:listinfos, lastmessage:lastmessage}})
-      
-          
-    //    catch(err){
-    //        return res.status(500).json({"ok":false,'message': `${err.message}!`});
-    //    }
-}
-
-module.exports = createLike
+module.exports = createLike;

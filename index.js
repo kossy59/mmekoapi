@@ -32,14 +32,18 @@ const updatebalance = require("./utiils/deductPVC");
 const pushnotify = require("./utiils/sendPushnot");
 
 const imageRoutes = require("./routes/imageRoutes");
-const dev = false;
+const dev = true;
 // let myurl = "https://mmeko.com"
 const myurl = dev ? "http://localhost:3000" : "https://mmeko.com";
 // let myurl = "http://192.168.43.112:3000"
 
 const corsOptions = {
   credentials: true,
-  origin: [`${myurl}`], // Whitelist the domains you want to allow
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://mmeko.com",
+  ], // Whitelist the domains you want to allow
 };
 
 app.use(cors(corsOptions));
