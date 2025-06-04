@@ -20,26 +20,19 @@ const createLike = async (req, res) => {
     const adminmessage = await admindb.find({ userid: userid }).exec();
 
     let model = [];
-
-    if (modelid) {
-      // Get current date and date 30 days ago
-      const now = new Date();
-      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-      // Fetch bookings for the modelid within the last 30 days
-      let mod = await bookingdb
-        .find({
-          modelid: modelid,
-          date: { $gte: thirtyDaysAgo, $lte: now },
-        })
-        .exec();
-      model = mod.filter((value) => {
-        return (
-          String(value.status) === "pending" ||
-          String(value.status) === "accepted"
-        );
-      });
-    }
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    let mod = await bookingdb
+      .find({
+        modelid: modelid,
+      })
+      .exec();
+    mod = mod.filter((u) => {
+      const created = new Date(u.createdAt);
+      return created >= thirtyDaysAgo && created <= now;
+    });
+    model = [...mod];
+    console.log("model", model);
 
     let user = users.filter((value) => {
       return (
@@ -59,20 +52,20 @@ const createLike = async (req, res) => {
       let image1 = await photoLink
         .findOne({ useraccountId: model[i].userid })
         .exec();
-      if (username) {
-        approve.push({
-          photolink: image1.photoLink,
-          name: username.firstname,
-          status: model[i].status,
-          type: model[i].type,
-          date: model[i].date,
-          time: model[i].time,
-          modelid: model[i].modelid,
-          id: model[i]._id,
-          place: model[i].place,
-          clientid: model[i].userid,
-        });
-      }
+      // if (username) {
+      approve.push({
+        photolink: image1.photoLink,
+        name: username.firstname,
+        status: model[i].status,
+        type: model[i].type,
+        date: model[i].date,
+        time: model[i].time,
+        modelid: model[i].modelid,
+        id: model[i]._id,
+        place: model[i].place,
+        clientid: model[i].userid,
+      });
+      // }
     }
 
     for (let i = 0; i < user.length; i++) {
@@ -118,8 +111,7 @@ const createLike = async (req, res) => {
         approve: [],
       });
     }
-
-    approve.reverse();
+    approve = [...approve, ...model.reverse()];
     return res.status(200).json({ ok: true, message: ` Success`, approve });
   } catch (err) {
     return res.status(500).json({ ok: false, message: `${err.message}!` });

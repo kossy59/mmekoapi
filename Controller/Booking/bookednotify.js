@@ -7,8 +7,6 @@ const modeldb = require("../../Models/models");
 const createLike = async (req, res) => {
   const userid = req.body.userid;
 
-  // console.log("notificationsss1")
-
   if (!userid) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
   }
@@ -21,13 +19,17 @@ const createLike = async (req, res) => {
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
   if (isModel) {
-    console.log("this is model");
     users = await bookingdb
       .find({
-        modelid: isModel._id,
-        date: { $gte: thirtyDaysAgo, $lte: now },
+        modelid: isModel._id.toString(),
       })
       .exec();
+    users = users
+      .filter((u) => {
+        const created = new Date(u.createdAt);
+        return created >= thirtyDaysAgo && created <= now;
+      })
+      .reverse();
     console.log("this is model not " + users.length);
   }
 
@@ -107,13 +109,11 @@ const createLike = async (req, res) => {
   }
 
   // console.log("notification length "+listinfos.length)
-  return res
-    .status(200)
-    .json({
-      ok: true,
-      message: ` Success`,
-      data: { model: model_list, notify: listinfos, lastmessage: lastmessage },
-    });
+  return res.status(200).json({
+    ok: true,
+    message: ` Success`,
+    data: { model: model_list, notify: listinfos, lastmessage: lastmessage },
+  });
 
   //    catch(err){
   //        return res.status(500).json({"ok":false,'message': `${err.message}!`});

@@ -1,50 +1,45 @@
 const mongoose = require("mongoose");
 const Scheme = mongoose.Schema;
 
-const markertdata = new Scheme({
-  modelid: {
-    type: String,
-    required: true,
-  },
+const markertdata = new Scheme(
+  {
+    modelid: {
+      type: String,
+      required: true,
+    },
 
-  type: {
-    type: String,
-    required: false,
-  },
+    type: {
+      type: String,
+      required: false,
+    },
 
-  time: {
-    type: String,
-    required: false,
-  },
+    time: {
+      type: String,
+      required: false,
+    },
 
-  place: {
-    type: String,
-    required: true,
-  },
+    place: {
+      type: String,
+      required: true,
+    },
 
-  userid: {
-    type: String,
-    required: true,
-  },
+    userid: {
+      type: String,
+      required: true,
+    },
 
-  status: {
-    type: String,
-    require: false,
-    default: "pending",
-  },
+    status: {
+      type: String,
+      require: false,
+      default: "pending",
+    },
 
-  date: {
-    type: String,
-    required: false,
+    date: {
+      type: String,
+      required: false,
+    },
   },
-  createdAt: {
-    type: String,
-    default: Date.now(),
-  },
-  updatedAt: {
-    type: String,
-    default: Date.now(),
-  },
-});
+  { timestamps: true }
+);
 
 module.exports = mongoose.model("Booking", markertdata);
