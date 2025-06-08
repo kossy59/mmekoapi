@@ -39,7 +39,11 @@ const myurl = dev ? "http://localhost:3000" : "https://mmeko.com";
 
 const corsOptions = {
   credentials: true,
-  origin: [`${myurl}`], // Whitelist the domains you want to allow
+  origin: [
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "https://mmeko.com",
+  ], // Whitelist the domains you want to allow
 };
 
 app.use(cors(corsOptions));
