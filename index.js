@@ -46,7 +46,7 @@ const corsOptions = {
   ], // Whitelist the domains you want to allow
 };
 
-app.use(cors(corsOptions));
+app.use(cors());
 //
 //
 
@@ -591,6 +591,7 @@ app.use("/getcrush", require("./routes/api/model/getcrush"));
 app.use("/deleteMsg", require("./routes/api/Admin/deleteMsg"));
 app.use("/deletecrush", require("./routes/api/model/deletecrush"));
 
+app.use("/models", require("./routes/api/model/updateView"));
 mongoose.connection.once("open", () => {
   console.log("Database connected");
   server.listen(PORT, () => {

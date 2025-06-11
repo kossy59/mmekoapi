@@ -1,44 +1,37 @@
-let userdb = require("../../Models/userdb")
-let documentdb = require("../../Models/document")
-let admindb = require("../../Models/admindb")
+let userdb = require("../../Models/userdb");
+let documentdb = require("../../Models/document");
+let admindb = require("../../Models/admindb");
 
-const createModel = async (req,res)=>{
+const createModel = async (req, res) => {
+  const userid = req.body.userid;
+  const docID = req.body.docid;
 
-    const userid = req.body.userid;
-    const docID = req.body.docid
-    
-   
-    if(!userid && !docID){
-        return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
-    }
-     
- 
+  if (!userid && !docID) {
+    return res.status(400).json({ ok: false, message: "user Id invalid!!" });
+  }
 
-    try{
-      
-      let user = await userdb.findOne({_id:userid}).exec()
+  try {
+    let user = await userdb.findOne({ _id: userid }).exec();
 
-      user.exclusive_verify = true
-      await user.save()
+    user.exclusive_verify = true;
+    await user.save();
 
-      await documentdb.deleteOne({_id:docID}).exec()
+    await documentdb.deleteOne({ _id: docID }).exec();
 
-      let respond = {
-        userid:userid,
-        message:`Congratulation! Your model application has been approve`,
-        seen:true
-    }
+    let respond = {
+      userid: userid,
+      message: `Congratulation! Your model application has been approve`,
+      seen: true,
+    };
 
-   await admindb.create(respond)
-       
+    await admindb.create(respond);
 
+    return res
+      .status(200)
+      .json({ ok: true, message: `host Updated successfully`, hostid: docID });
+  } catch (err) {
+    return res.status(500).json({ ok: false, message: `${err.message}!` });
+  }
+};
 
-            return res.status(200).json({"ok":true,"message":`host Updated successfully`,hostid: docID})
-      
-          
-          }catch(err){
-           return res.status(500).json({"ok":false,'message': `${err.message}!`});
-       }
-}
-
-module.exports = createModel
+module.exports = createModel;
