@@ -89,7 +89,7 @@ const createLike = async (req, res) => {
     for (let i = 0; i < user.length; i++) {
       let image = await modeldb.findOne({ _id: user[i].modelid }).exec();
 
-      if (image) {
+      if (image?.photolink) {
         let photo = image.photolink.split(",");
 
         approve.push({
