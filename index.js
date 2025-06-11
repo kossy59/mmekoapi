@@ -46,7 +46,7 @@ const corsOptions = {
   ], // Whitelist the domains you want to allow
 };
 
-app.use(cors());
+app.use(cors(corsOptions));
 //
 //
 

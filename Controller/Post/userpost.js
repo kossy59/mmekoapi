@@ -30,23 +30,6 @@ const createPost = async (req, res) => {
   let content = data.content;
   let posttype = data.posttype;
 
-  // Get the buffer and MIME type
-  let fileBuffer = req?.file?.buffer || "";
-  let mimeType = req?.file?.mimetype || "";
-
-  // If it's a video and longer than 3 minutes, trim it
-  if (mimeType && mimeType.startsWith("video/")) {
-    try {
-      console.log("Trimming video...");
-      fileBuffer = await trimVideoBufferTo3Min(fileBuffer);
-    } catch (err) {
-      console.error("Failed to trim video:", err.message);
-      return res
-        .status(500)
-        .json({ ok: false, message: "Error trimming video" });
-    }
-  }
-
   // Now pass req.file directly
   const result = await uploadSingleFileToCloudinary(req.file, `post`);
 
