@@ -1,15 +1,14 @@
 const models = require("../../Models/models");
-const userdb = require("../../Models/userdb");
 
-const createModel = async (req, res) => {
+const updateView = async (req, res) => {
   const { modelId, userId } = req.body;
   console.log(modelId, userId);
-  if (!userId) {
-    return res.status(400).json({
-      ok: false,
-      message: "Invalid Request",
-    });
-  }
+  // if (!userId) {
+  //   return res.status(400).json({
+  //     ok: false,
+  //     message: "Invalid Request",
+  //   });
+  // }
 
   const currentModel = await models
     .find({
@@ -26,17 +25,19 @@ const createModel = async (req, res) => {
 
   try {
     let currentViews = currentModel[0].views;
-    if (!currentViews.includes(userId)) {
-      currentViews.push(userId);
-      try {
-        await models.findByIdAndUpdate(currentModel[0]._id, {
-          views: currentViews,
-        });
-      } catch (error) {
-        return res.status(500).json({
-          ok: false,
-          message: `${error.message}!`,
-        });
+    if (userId) {
+      if (!currentViews.includes(userId)) {
+        currentViews.push(userId);
+        try {
+          await models.findByIdAndUpdate(currentModel[0]._id, {
+            views: currentViews,
+          });
+        } catch (error) {
+          return res.status(500).json({
+            ok: false,
+            message: `${error.message}!`,
+          });
+        }
       }
     }
 
@@ -55,4 +56,4 @@ const createModel = async (req, res) => {
   }
 };
 
-module.exports = createModel;
+module.exports = updateView;
