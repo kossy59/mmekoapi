@@ -30,35 +30,25 @@ const createPost = async (req, res) => {
   let content = data.content;
   let posttype = data.posttype;
 
-  // Now pass req.file directly
-  const result = await uploadSingleFileToCloudinary(req.file, `post`);
+  let postfilelink = "";
+  let postfilepublicid = "";
 
-  if (!result.file_link && !result.public_id) {
-    console.log("Problem here");
-    return res.status(500).json({
-      ok: false,
-      message: "Something went wrong",
-    });
+  if (req.file) {
+    const result = await uploadSingleFileToCloudinary(req.file, `post`);
+
+    if (!result.file_link && !result.public_id) {
+      console.log("Problem here");
+      return res.status(500).json({
+        ok: false,
+        message: "Something went wrong",
+      });
+    }
+    postfilelink = result.file_link;
+    postfilepublicid = result.public_id;
   }
 
-  /**
-   * This implementation uploads the file to a folder on the server
-   * and manipulates the filesystem of the server
-   */
-  // const result = await saveFile(req.file, req.file.path, `assets/${posttype}s`);
-
-  /**
-   * This implementation allows for in memory file upload manipulation
-   * This prevents accessing the filesystem of the hosted server
-   */
-  // const result = await uploadSingleFileToCloudinary(req.file, `assets/${posttype}s`);
-
-  // console.log("result: ", result)
-
-  const postfilelink = result.file_link;
-  const postfilepublicid = result.public_id;
-
   if (!userid) {
+    console.log("No user id");
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
   }
 
