@@ -1,39 +1,39 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 const Scheme = mongoose.Schema;
 
-const markertdata = new Scheme({
-
-   useraccountId: {
+const markertdata = new Scheme(
+  {
+    useraccountId: {
       type: String,
-      required: true
-   },
+      required: true,
+    },
 
-   interestedIn: {
+    interestedIn: {
       type: String,
-      required: false
-   },
+      required: false,
+    },
 
-   photoLink: {
+    photoLink: {
       type: String,
-      required: false
-   },
+      required: false,
+    },
 
-   photoID: {
+    photoID: {
       type: String,
-      required: false
-   },
+      required: false,
+    },
 
-   relationshipType: {
+    relationshipType: {
       type: String,
-      required: false
-   },
+      required: false,
+    },
 
-   details: {
+    details: {
       type: String,
-      required: true
-   },
+      required: true,
+    },
+  },
+  { timestamps: true }
+);
 
-   
-})
-
-module.exports = mongoose.model('UserInfo', markertdata);
+module.exports = mongoose.model("UserInfo", markertdata);

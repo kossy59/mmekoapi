@@ -22,12 +22,12 @@ const createLike = async (req, res) => {
     if (modelid) {
       let mod = await bookingdb.find({ modelid: modelid }).exec();
       model = mod
-        .filter((value) => {
-          return (
-            String(value.status) === "pending" ||
-            String(value.status) === "accepted"
-          );
-        })
+        // .filter((value) => {
+        //   return (
+        //     String(value.status) === "pending" ||
+        //     String(value.status) === "accepted"
+        //   );
+        // })
         .reverse();
     }
 
@@ -103,6 +103,8 @@ const createLike = async (req, res) => {
           id: user[i]._id,
           modeluserid: image.userid,
           amount: image.price,
+          createdAt: user[i].createdAt,
+          updatedAt: user[i].updatedAt,
         });
       }
     }
@@ -122,6 +124,29 @@ const createLike = async (req, res) => {
       }
     });
 
+    for (let i = 0; i < user.length; i++) {
+      let image = await modeldb.findOne({ _id: user[i].modelid }).exec();
+      if (image) {
+        let photo = image.modelfiles[0]?.modelfilelink || "";
+
+        approve.push({
+          photolink: photo,
+          name: image.name,
+          status: user[i].status,
+          type: user[i].type,
+          date: user[i].date,
+          time: user[i].time,
+          modelid: user[i].modelid,
+          accepted: "accepted",
+          id: user[i]._id,
+          modeluserid: image.userid,
+          amount: image.price,
+          createdAt: user[i].createdAt,
+          updatedAt: user[i].updatedAt,
+        });
+      }
+    }
+
     if (!approve[0]) {
       return res.status(200).json({
         ok: false,
@@ -130,7 +155,9 @@ const createLike = async (req, res) => {
       });
     }
 
-    // approve.reverse()
+    approve = approve.sort(
+      (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    );
     return res.status(200).json({ ok: true, message: ` Success`, approve });
   } catch (err) {
     console.log(err);

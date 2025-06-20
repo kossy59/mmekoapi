@@ -141,38 +141,4 @@ const createPost = async (req, res) => {
 
 const stream = require("stream");
 
-const trimVideoBufferTo3Min = (buffer) => {
-  return new Promise((resolve, reject) => {
-    const inputStream = new stream.PassThrough();
-    inputStream.end(buffer);
-
-    const tmpInputPath = path.join(os.tmpdir(), `input-${Date.now()}.mp4`);
-    const tmpOutputPath = path.join(os.tmpdir(), `output-${Date.now()}.mp4`);
-
-    // Write buffer to a file first
-    fs.writeFile(tmpInputPath, buffer, (err) => {
-      if (err) return reject(err);
-
-      ffmpeg(tmpInputPath)
-        .outputOptions("-ss", "0", "-t", "180", "-c", "copy") // 3 minutes
-        .output(tmpOutputPath)
-        .on("end", () => {
-          fs.readFile(tmpOutputPath, (err, data) => {
-            if (err) return reject(err);
-
-            // Cleanup temp files
-            fs.unlink(tmpInputPath, () => {});
-            fs.unlink(tmpOutputPath, () => {});
-            resolve(data);
-          });
-        })
-        .on("error", (err) => {
-          fs.unlink(tmpInputPath, () => {});
-          fs.unlink(tmpOutputPath, () => {});
-          reject(new Error(`FFmpeg failed: ${err.message}`));
-        })
-        .run();
-    });
-  });
-};
 module.exports = createPost;

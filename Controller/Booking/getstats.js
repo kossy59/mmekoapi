@@ -12,7 +12,15 @@ const createLike = async (req, res) => {
   //let data = await connectdatabase()
 
   try {
-    const users = await bookingdb.find({ userid: userid }).exec();
+    let users = await bookingdb.find({ userid: userid }).exec();
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Filter model array for bookings created within the last 30 days
+    users = users.filter((m) => {
+      const created = new Date(m.createdAt);
+      return created >= thirtyDaysAgo && created <= now;
+    });
 
     let user = users.filter((value) => {
       return (
