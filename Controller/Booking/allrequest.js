@@ -82,6 +82,7 @@ const createLike = async (req, res) => {
           clientid: model[i].userid,
           createdAt: model[i].createdAt,
           updatedAt: model[i].updatedAt,
+          modeluserid: username.id,
         });
       }
     }
@@ -105,6 +106,7 @@ const createLike = async (req, res) => {
           amount: image.price,
           createdAt: user[i].createdAt,
           updatedAt: user[i].updatedAt,
+          recUserId: user[i].id,
         });
       }
     }
@@ -143,6 +145,7 @@ const createLike = async (req, res) => {
           amount: image.price,
           createdAt: user[i].createdAt,
           updatedAt: user[i].updatedAt,
+          recUserId: user[i].id,
         });
       }
     }

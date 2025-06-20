@@ -1,9 +1,7 @@
-const express = require('express')
+const express = require("express");
 const router = express.Router();
-const booked = require('../../../Controller/Booking/cancelrequest');
+const cancelRequest = require("../../../Controller/Booking/cancelbooking");
 
-
-router.route('/')
-.put(booked)
+router.route("/").put(cancelRequest);
 
 module.exports = router;
