@@ -35,17 +35,17 @@ const createLike = async (req, res) => {
 
     for (let i = 0; i < user.length; i++) {
       const modelid = await modeldb.findOne({ _id: user[i].modelid }).exec();
-      let image = modelid.modelfiles[0]?.modelfilelink || "";
-
-      listinfos.push({
-        name: modelid.name,
-        type: user[i].type,
-        date: user[i].date,
-        time: user[i].time,
-        photolink: image,
-        modelid: modelid._id,
-        id: user[i]._id,
-      });
+      let image = modelid?.modelfiles[0]?.modelfilelink || "";
+      if (modelid)
+        listinfos.push({
+          name: modelid?.name,
+          type: user[i].type,
+          date: user[i].date,
+          time: user[i].time,
+          photolink: image,
+          modelid: modelid._id,
+          id: user[i]._id,
+        });
     }
 
     // console.log("modeil "+modelinfo)
