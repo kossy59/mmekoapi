@@ -1,14 +1,7 @@
 const models = require("../../Models/models");
-
+const userdb = require("../../Models/userdb");
 const updateView = async (req, res) => {
   const { modelId, userId } = req.body;
-  console.log(modelId, userId);
-  // if (!userId) {
-  //   return res.status(400).json({
-  //     ok: false,
-  //     message: "Invalid Request",
-  //   });
-  // }
 
   const currentModel = await models
     .find({

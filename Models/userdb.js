@@ -86,6 +86,16 @@ const markertdata = new Scheme(
       type: String,
       required: false,
     },
+    isModel: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    modelId: {
+      type: String,
+      required: false,
+      default: "",
+    },
   },
   { timestamps: true }
 );

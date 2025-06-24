@@ -98,6 +98,8 @@ const handleNewUser = async (req, res) => {
           message: "Login Success",
           id: du._id,
           token: refreshToken,
+          modelId: du.modelId,
+          isModel: du.isModel,
         });
       } else {
         res.status(401).json({ ok: false, message: "Password mismatch" });
