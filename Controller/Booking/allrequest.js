@@ -35,7 +35,8 @@ const createLike = async (req, res) => {
       return (
         String(value.status) === "accepted" ||
         String(value.status) === "decline" ||
-        String(value.status) === "pending"
+        String(value.status) === "pending" ||
+        String(value.status) === "completed"
       );
     });
 

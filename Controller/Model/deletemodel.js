@@ -1,18 +1,17 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
 const models = require("../../Models/models");
+const userdb = require("../../Models/userdb");
 const { deleteFile } = require("../../utiils/appwrite");
 
 const createModel = async (req, res) => {
-
   const hostid = req.body.hostid;
-
 
   if (!hostid) {
     return res.status(400).json({
-      "ok": false,
-      'message': 'user Id invalid!!'
-    })
+      ok: false,
+      message: "user Id invalid!!",
+    });
   }
 
   //  let data = await connectdatabase()
@@ -24,49 +23,54 @@ const createModel = async (req, res) => {
     //     return value.$id === hostid
     //    })
 
-    let currentuser = await models.findOne({
-      _id: hostid
-    }).exec()
-
-
+    let currentuser = await models
+      .findOne({
+        _id: hostid,
+      })
+      .exec();
 
     if (!currentuser) {
       return res.status(409).json({
-        "ok": false,
-        "message": `user can not edit model`
-      })
+        ok: false,
+        message: `user can not edit model`,
+      });
     }
-
+    const user = await userdb.findOne({ modelId: hostid }).exec();
+    await user
+      .updateOne({
+        isModel: false,
+        modelId: "",
+      })
+      .exec();
 
     //await data.databar.deleteDocument(data.dataid,data.modelCol,currentuser.$id)
 
-    await models.deleteOne({
-      _id: hostid
-    }).exec()
+    await models
+      .deleteOne({
+        _id: hostid,
+      })
+      .exec();
 
     // Delete model images from cloudinary
     if (currentuser.modelfiles) {
-      currentuser.modelfiles.forEach(async modelfile => {
-        const id = modelfile.modelfilepublicid
+      currentuser.modelfiles.forEach(async (modelfile) => {
+        const id = modelfile.modelfilepublicid;
         if (modelfile.modelfilepublicid) {
-          await deleteFile(id, 'model');
+          await deleteFile(id, "model");
         }
-      })
+      });
     }
 
-
     return res.status(200).json({
-      "ok": true,
-      "message": `Model Deleted successfully`
-    })
-
-
+      ok: true,
+      message: `Model Deleted successfully`,
+    });
   } catch (err) {
     return res.status(500).json({
-      "ok": false,
-      'message': `${err.message}!`
+      ok: false,
+      message: `${err.message}!`,
     });
   }
-}
+};
 
-module.exports = createModel
+module.exports = createModel;

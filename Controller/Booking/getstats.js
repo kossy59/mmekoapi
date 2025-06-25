@@ -25,7 +25,8 @@ const createLike = async (req, res) => {
     let user = users.filter((value) => {
       return (
         String(value.status) === "accepted" ||
-        String(value.status) === "decline"
+        String(value.status) === "decline" ||
+        String(value.status) === "completed"
       );
     });
 
