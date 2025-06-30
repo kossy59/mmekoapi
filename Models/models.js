@@ -108,6 +108,10 @@ const markertdata = new Schema(
       type: [String],
       default: [],
     },
+    earnings: {
+      type: Number,
+      default: 0,
+    },
 
     modelfiles: [modelfileschema],
   },
