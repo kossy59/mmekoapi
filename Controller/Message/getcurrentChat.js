@@ -27,7 +27,7 @@ const createModel = async (req, res) => {
         .exec();
       console.log(photos);
       let image = "";
-      if (photos) {
+      if (photos?.photoLink) {
         image = photos.photoLink;
       }
 
@@ -122,7 +122,7 @@ const createModel = async (req, res) => {
           content: myChat[i].content,
           date: myChat[i].date,
           name: usernames.firstname,
-          photolink: photos.photoLink,
+          photolink: photos?.photoLink,
           client: myChat[i].client,
           coin: coin,
         };
@@ -174,7 +174,7 @@ const createModel = async (req, res) => {
           content: clientchat[i].content,
           date: clientchat[i].date,
           name: usernames.firstname,
-          photolink: photos.photoLink,
+          photolink: photos?.photoLink,
           client: clientchat[i].client,
           coin: coin,
         };
