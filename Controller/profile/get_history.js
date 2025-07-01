@@ -19,7 +19,6 @@ const readHistory = async (req, res) => {
   let currentModel = await modeldb.find({
     userid: userid,
   });
-  console.log("£~~~~~~~ balance: ", model[0].balance);
 
   console.log("inside history");
 
