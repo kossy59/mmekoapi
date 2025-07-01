@@ -328,7 +328,7 @@ const MsgNotify = async (req, res) => {
         .findOne({ useraccountId: userINfo._id })
         .exec();
       if (photo?.photoLink) {
-        photolink = photo.photoLink;
+        photolink = photo?.photoLink || "";
       }
       let data = {
         username: `${userINfo.firstname} ${userINfo.lastname} `,
@@ -365,8 +365,8 @@ const MsgNotify = async (req, res) => {
         let photo = await completedb
           .findOne({ useraccountId: userINfo._id })
           .exec();
-        if (photo.photoLink) {
-          photolink = photo.photoLink;
+        if (photo?.photoLink) {
+          photolink = photo?.photoLink || "";
         }
         let data = {
           fromid: recent_message_without_uread[i].fromid,
@@ -393,8 +393,8 @@ const MsgNotify = async (req, res) => {
         let photo = await completedb
           .findOne({ useraccountId: userINfo._id })
           .exec();
-        if (photo.photoLink) {
-          photolink = photo.photoLink;
+        if (photo?.photoLink) {
+          photolink = photo?.photoLink || "";
         }
         let data = {
           fromid: recent_message_without_uread[i].fromid,

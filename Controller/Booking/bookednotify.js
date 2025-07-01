@@ -68,7 +68,7 @@ const createLike = async (req, res) => {
       type: user[i].type,
       date: user[i].date,
       time: user[i].time,
-      photolink: clientphoto.photoLink,
+      photolink: clientphoto?.photoLink || "",
       clientid: client._id,
       place: user[i].place,
       modelid: user[i].modelid,
@@ -107,13 +107,11 @@ const createLike = async (req, res) => {
   }
 
   // console.log("notification length "+listinfos.length)
-  return res
-    .status(200)
-    .json({
-      ok: true,
-      message: ` Success`,
-      data: { model: model_list, notify: listinfos, lastmessage: lastmessage },
-    });
+  return res.status(200).json({
+    ok: true,
+    message: ` Success`,
+    data: { model: model_list, notify: listinfos, lastmessage: lastmessage },
+  });
 
   //    catch(err){
   //        return res.status(500).json({"ok":false,'message': `${err.message}!`});
