@@ -28,7 +28,7 @@ const createModel = async (req, res) => {
       console.log(photos);
       let image = "";
       if (photos?.photoLink) {
-        image = photos.photoLink;
+        image = photos?.photoLink || "";
       }
 
       let username = "";
