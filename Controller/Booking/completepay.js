@@ -55,8 +55,21 @@ const createLike = async (req, res) => {
         income: `${price}`,
         date: `${Date.now().toString()}`,
       };
+      let userpaymenthistory = {
+        userid: userid,
+        details: `Completed transaction history. ${price} coins was deducted`,
+        spent: `${price}`,
+        income: "0",
+        date: `${Date.now().toString()}`,
+      };
 
       await historydb.create(modelpaymenthistory);
+      await historydb.create(userpaymenthistory);
+      const earnings = Number(model.earnings) + Number(price);
+      console.log("Model Earnings: ", earnings);
+
+      model.earnings = earnings;
+      await model.save();
 
       if (!modelwitdraw) {
         modelwitdraw = 0;
