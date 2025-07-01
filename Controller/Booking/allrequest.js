@@ -71,7 +71,7 @@ const createLike = async (req, res) => {
         .exec();
       if (username) {
         approve.push({
-          photolink: image1.photoLink,
+          photolink: image1?.photoLink || "",
           name: username.firstname,
           status: model[i].status,
           type: model[i].type,
