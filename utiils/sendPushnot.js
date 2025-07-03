@@ -12,8 +12,7 @@ const pushmessage = async (userid, message, icon) => {
     let datasend = JSON.stringify({
       message: message,
       userid: userid,
-      icon,
-      icon,
+      icon: icon, // fixed duplicate key
     });
 
     let options = {
@@ -29,15 +28,16 @@ const pushmessage = async (userid, message, icon) => {
 
     if (subinfo) {
       try {
-        console.log(JSON.parse(subinfo.subinfo) + " subinfo");
-        webpush.sendNotification(
-          JSON.parse(subinfo.subinfo),
-          datasend,
-          options
-        );
+        let subscription = JSON.parse(subinfo.subinfo);
+        await webpush.sendNotification(subscription, datasend, options);
         console.log("sent notification");
       } catch (err) {
-        console.log("error in sendimg push " + err);
+        console.error("Error sending push:", err.statusCode, err.body);
+
+        if (err.statusCode === 410 || err.statusCode === 404) {
+          console.log("Removing expired/unsubscribed push subscription");
+          await pushdb.deleteOne({ userid: userid }).exec();
+        }
       }
     }
   }
