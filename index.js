@@ -535,6 +535,7 @@ app.use("/editmodel", require("./routes/api/model/editemodel"));
 app.use("/postdocument", require("./routes/api/model/postdocument"));
 app.use("/exclusive", require("./routes/api/Exclusive/exclusive")); //(put) exclusive content (post) buy exclusive content
 app.use("/models", require("./routes/api/model/updateView"));
+app.use("/models", require("./routes/api/model/updateFollowers"));
 
 app.use(handleRefresh);
 

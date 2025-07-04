@@ -96,6 +96,11 @@ const markertdata = new Scheme(
       required: false,
       default: "",
     },
+    followers: {
+      type: [String],
+      required: false,
+      default: [],
+    },
   },
   { timestamps: true }
 );

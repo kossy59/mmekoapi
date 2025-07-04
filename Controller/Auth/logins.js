@@ -108,6 +108,7 @@ const handleNewUser = async (req, res) => {
       return res.status(400).json({ ok: false, message: "User Not Register" });
     }
   } catch (err) {
+    console.log(err);
     return res.status(500).json({ ok: false, message: `${err}!` });
   }
 };

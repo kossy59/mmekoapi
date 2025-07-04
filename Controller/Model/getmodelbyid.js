@@ -1,21 +1,19 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
 
-const models = require("../../Models/models")
-let crushdb = require("../../Models/crushdb")
-let userdb = require("../../Models/userdb")
+const models = require("../../Models/models");
+let crushdb = require("../../Models/crushdb");
+let userdb = require("../../Models/userdb");
 const createModel = async (req, res) => {
-
   const hostid = req.body.hostid;
-  const userid = req.body.userid
-  let added = false
-
+  const userid = req.body.userid;
+  let added = false;
 
   if (!hostid) {
     return res.status(400).json({
-      "ok": false,
-      'message': 'user Id invalid!!'
-    })
+      ok: false,
+      message: "user Id invalid!!",
+    });
   }
 
   //let data = await connectdatabase()
@@ -26,39 +24,44 @@ const createModel = async (req, res) => {
     //   return value.$id === hostid
     //  })
 
-    let currentuser = await models.findOne({
-      _id: hostid
-    }).exec()
+    let currentuser = await models
+      .findOne({
+        _id: hostid,
+      })
+      .exec();
 
     if (!currentuser) {
       return res.status(409).json({
-        "ok": false,
-        "message": `user host empty`
-      })
+        ok: false,
+        message: `user host empty`,
+      });
     }
 
-    let istrue = await crushdb.findOne({
-      modelid: currentuser._id
-    }).exec()
+    let istrue = await crushdb
+      .findOne({
+        modelid: currentuser._id,
+      })
+      .exec();
 
     if (userid) {
       if (istrue) {
-
         if (String(istrue.userid) === userid) {
-          added = true
+          added = true;
         }
       }
-
     }
 
-    let modState = await userdb.findOne({
-      _id: currentuser.userid
-    }).exec()
+    let modState = await userdb
+      .findOne({
+        _id: currentuser.userid,
+      })
+      .exec();
 
-    console.log("currentuser.modelfiles: ", currentuser.modelfiles)
-    const photolink = currentuser.modelfiles.map(photolink => {
-      return photolink?.modelfilelink
-    })
+    console.log("currentuser.modelfiles: ", currentuser.modelfiles);
+    const photolink = currentuser.modelfiles.map((photolink) => {
+      return photolink?.modelfilelink;
+    });
+    const isFollowingUser = modState.followers.includes(userid);
 
     let host = {
       hostid: currentuser._id,
@@ -83,27 +86,23 @@ const createModel = async (req, res) => {
       hosttype: currentuser.hosttype,
       userid: currentuser.userid,
       add: added,
-      active: modState.active
-
-    }
+      active: modState.active,
+      followingUser: isFollowingUser,
+    };
 
     //console.log("this is host "+host)
 
-
-
     return res.status(200).json({
-      "ok": true,
-      "message": `Model Fetched successfully`,
-      host
-    })
-
-
+      ok: true,
+      message: `Model Fetched successfully`,
+      host,
+    });
   } catch (err) {
     return res.status(500).json({
-      "ok": false,
-      'message': `${err.message}!`
+      ok: false,
+      message: `${err.message}!`,
     });
   }
-}
+};
 
-module.exports = createModel
+module.exports = createModel;
