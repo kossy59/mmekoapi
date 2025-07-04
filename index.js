@@ -536,10 +536,11 @@ app.use("/postdocument", require("./routes/api/model/postdocument"));
 app.use("/exclusive", require("./routes/api/Exclusive/exclusive")); //(put) exclusive content (post) buy exclusive content
 app.use("/models", require("./routes/api/model/updateView"));
 app.use("/models", require("./routes/api/model/updateFollowers"));
+app.use("/allrequest", require("./routes/api/booking/allrequestroute"));
 
-app.use(handleRefresh);
+// app.use(handleRefresh);
 
-app.use(verifyJwt);
+// app.use(verifyJwt);
 // app.use('/exclusive', require('./routes/api/Exclusive/exclusive')) //(put) exclusive content (post) buy exclusive content
 //(patch)delete exclusive content
 app.use("/exclusivecontent", require("./routes/api/Exclusive/allexclusive")); //(put) get my purshased exclusive (post) delete my purshased exclusive
@@ -572,7 +573,6 @@ app.use("/acceptbook", require("./routes/api/booking/acceptbooking"));
 app.use("/declinebook", require("./routes/api/booking/declinebooking"));
 app.use("/getrequeststats", require("./routes/api/booking/requeststat"));
 app.use("/paymodel", require("./routes/api/booking/paymodel"));
-app.use("/allrequest", require("./routes/api/booking/allrequestroute"));
 app.use("/reviewmodel", require("./routes/api/model/reviewmodel"));
 app.use("/getreviews", require("./routes/api/model/getmodelreview"));
 app.use("/deletereview", require("./routes/api/model/deletereview"));

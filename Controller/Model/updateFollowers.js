@@ -1,4 +1,8 @@
 const userdb = require("../../Models/userdb");
+const admindb = require("../../Models/admindb");
+let sendEmail = require("../../utiils/sendEmailnot");
+let sendpushnote = require("../../utiils/sendPushnot");
+
 const updateView = async (req, res) => {
   const { id, userId, action } = req.body;
 
@@ -11,6 +15,11 @@ const updateView = async (req, res) => {
   const userToFollow = await userdb
     .find({
       _id: id,
+    })
+    .exec();
+  const userFollowing = await userdb
+    .find({
+      _id: userId,
     })
     .exec();
 
@@ -29,10 +38,21 @@ const updateView = async (req, res) => {
       if (!isFollowing) {
         currentFollowers.push(userId);
         try {
-          (userToFollow[0].followers = currentFollowers),
-            await userToFollow[0].save();
-
+          userToFollow[0].followers = currentFollowers;
+          await userToFollow[0].save();
           isFollowing = true;
+
+          let respond = {
+            userid: id,
+            message: `${userFollowing[0].firstname} ${userFollowing[0].lastname} followed you`,
+            seen: true,
+          };
+
+          await admindb.create(respond);
+
+          await sendEmail(id, "you have new follower");
+          await sendpushnote(id, "you have new follower", "modelicon");
+
           console.log("Added follower successfully");
         } catch (error) {
           return res.status(500).json({
@@ -43,9 +63,19 @@ const updateView = async (req, res) => {
       } else {
         currentFollowers = currentFollowers.filter((id) => id !== userId);
         try {
-          (userToFollow[0].followers = currentFollowers),
-            await userToFollow[0].save();
+          userToFollow[0].followers = currentFollowers;
+          await userToFollow[0].save();
           console.log("Unfollowed successfully");
+          let respond = {
+            userid: id,
+            message: `${userFollowing[0].firstname} ${userFollowing[0].lastname} unfollowed you`,
+            seen: true,
+          };
+
+          await admindb.create(respond);
+
+          await sendEmail(id, "A user unfollowed you");
+          await sendpushnote(id, "A user unfollowed you", "modelicon");
 
           isFollowing = false;
         } catch (error) {

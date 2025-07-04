@@ -15,21 +15,17 @@ const createModel = async (req, res) => {
       followers: [],
       following: [],
     };
-
-    let followers = await followerdb.find({ userid: userid }).exec();
+    let users = await userdb.findById(userid).exec();
+    let followers = users?.followers || [];
     //console.log("getting follower")
-    if (followers) {
+    if (followers?.length) {
       // console.log("got the follower")
       for (let i = 0; i < followers.length; i++) {
         let canmessage = false;
         let modelid = "";
         let photolink = "";
-        let username = await userdb
-          .findOne({ _id: followers[i].followerid })
-          .exec();
-        let model = await modeldb
-          .findOne({ userid: followers[i].followerid })
-          .exec();
+        let username = await userdb.findOne({ _id: followers[i] }).exec();
+        let model = await modeldb.findOne({ userid: followers[i] }).exec();
 
         if (username) {
           let photo = await photodb
