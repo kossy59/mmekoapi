@@ -33,6 +33,7 @@ const updateView = async (req, res) => {
 
   try {
     let currentFollowers = userToFollow[0].followers;
+    let currentFollowing = userFollowing[0]?.following || [];
     isFollowing = currentFollowers.includes(userId);
     if (action === "update") {
       if (!isFollowing) {
@@ -40,6 +41,12 @@ const updateView = async (req, res) => {
         try {
           userToFollow[0].followers = currentFollowers;
           await userToFollow[0].save();
+
+          currentFollowing.push(id);
+          userFollowing[0].following = currentFollowing;
+          await userFollowing[0].save();
+          console.log(userFollowing[0]?.following);
+
           isFollowing = true;
 
           let respond = {
@@ -55,6 +62,7 @@ const updateView = async (req, res) => {
 
           console.log("Added follower successfully");
         } catch (error) {
+          console.log(error);
           return res.status(500).json({
             ok: false,
             message: `${error.message}!`,
@@ -65,6 +73,11 @@ const updateView = async (req, res) => {
         try {
           userToFollow[0].followers = currentFollowers;
           await userToFollow[0].save();
+          currentFollowing = currentFollowing.filter((item) => item !== id);
+
+          userFollowing[0].following = currentFollowing;
+          await userFollowing[0].save();
+          console.log(userFollowing[0]?.following);
           console.log("Unfollowed successfully");
           let respond = {
             userid: id,
@@ -79,6 +92,7 @@ const updateView = async (req, res) => {
 
           isFollowing = false;
         } catch (error) {
+          console.log(error);
           return res.status(500).json({
             ok: false,
             message: `${error.message}!`,
@@ -89,6 +103,7 @@ const updateView = async (req, res) => {
 
     return res.status(200).json({ isFollowing });
   } catch (err) {
+    console.log(err);
     return res.status(500).json({
       ok: false,
       message: `${err.message}!`,

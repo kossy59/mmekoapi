@@ -111,6 +111,7 @@ const readProfile = async (req, res) => {
 
         data.contentlink = data?.contentfile?.contentfilelink;
         data.thumblink = data?.thumbnailfile?.thumbnaillink;
+        data.createdAt = value?.createdAt || "";
 
         user.exclusive_content.push(data);
       });
@@ -175,6 +176,7 @@ const readProfile = async (req, res) => {
           comment: [],
           like: [],
           isfollow: postFollowed,
+          createdAt: value?.createdAt || "",
         };
         user.post.push(con);
       });

@@ -54,26 +54,23 @@ const createModel = async (req, res) => {
       }
     }
 
-    let followings = await followerdb.find({ followerid: userid }).exec();
-    // console.log("getting follower")
-    if (followings) {
+    let followings = users?.following || [];
+    console.log(followings);
+    if (followings?.length) {
       //console.log("got the followings")
+
       for (let i = 0; i < followings.length; i++) {
         let canmessage = false;
         let modelid = "";
         let photolink = "";
-        let username = await userdb
-          .findOne({ _id: followings[i].userid })
-          .exec();
-        let model = await modeldb
-          .findOne({ userid: followings[i].userid })
-          .exec();
+        let username = await userdb.findOne({ _id: followings[i] }).exec();
+        let model = await modeldb.findOne({ userid: followings[i] }).exec();
 
         // console.log("under following model")
         if (username) {
           // console.log("inside there is user")
           let photo = await photodb
-            .findOne({ useraccountId: followings[i].userid })
+            .findOne({ useraccountId: followings[i] })
             .exec();
           if (model) {
             // console.log("inside she is model")
@@ -104,6 +101,7 @@ const createModel = async (req, res) => {
       .status(200)
       .json({ ok: true, message: `followed successfully`, data: follows });
   } catch (err) {
+    console.log(err);
     return res.status(500).json({ ok: false, message: `${err.message}!` });
   }
 };

@@ -101,6 +101,11 @@ const markertdata = new Scheme(
       required: false,
       default: [],
     },
+    following: {
+      type: [String],
+      required: false,
+      default: [],
+    },
   },
   { timestamps: true }
 );

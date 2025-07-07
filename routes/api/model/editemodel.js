@@ -1,8 +1,8 @@
-const express = require('express')
+const express = require("express");
 const router = express.Router();
-const editmodel = require('../../../Controller/Model/editmodel');
-const multer = require('multer')
-const handleRefresh = require('../../../Middleware/refresh')
+const editmodel = require("../../../Controller/Model/editmodel");
+const multer = require("multer");
+const handleRefresh = require("../../../Middleware/refresh");
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -12,7 +12,6 @@ const upload = multer({ storage });
  * by multer which exposes the token for it
  * Without this, authorization fails!
  */
-router.route('/')
-.post(upload.any(), handleRefresh, editmodel)
+router.route("/").post(upload.any(), editmodel);
 
 module.exports = router;
