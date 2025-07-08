@@ -1,11 +1,11 @@
-const express = require('express')
+const express = require("express");
 const router = express.Router();
-const cors = require('cors');
-const createPost = require('../../../Controller/Post/userpost')
-const editPost = require('../../../Controller/Post/Editpost')
-const deletePost = require('../../../Controller/Post/Removepost')
-const multer = require('multer')
-const handleRefresh = require('../../../Middleware/refresh')
+const cors = require("cors");
+const createPost = require("../../../Controller/Post/userpost");
+const editPost = require("../../../Controller/Post/Editpost");
+const deletePost = require("../../../Controller/Post/Removepost");
+const multer = require("multer");
+const handleRefresh = require("../../../Middleware/refresh");
 
 /**
  * This implementation uploads the file to a folder on the server
@@ -66,10 +66,11 @@ const upload = multer({ storage });
  * by multer which exposes the token for it
  * Without this, authorization fails!
  */
-router.route('/')
-  .put(upload.single('postFile'), handleRefresh, createPost)
+router
+  .route("/")
+  .put(upload.single("postFile"), createPost)
   .post(editPost)
-  .patch(deletePost)
+  .patch(deletePost);
 
 module.exports = router;
 
