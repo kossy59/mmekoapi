@@ -69,10 +69,10 @@ const readProfile = async (req, res) => {
       firstname: du.firstname,
       lastname: du.lastname,
       exclusive_content: [],
-      followers: [],
+      followers: du.followers,
       joined_month: `${du._id.getTimestamp().getMonth()}`,
       joined_year: `${du._id.getTimestamp().getFullYear()}`,
-      following: false,
+      following: du?.following.includes(clientid),
       ismodel: false,
       modelid: "",
       modeltype: "",
@@ -117,25 +117,25 @@ const readProfile = async (req, res) => {
       });
     }
 
-    let followers = await followersdb
-      .find({
-        userid: userid,
-      })
-      .exec();
+    // let followers = await followersdb
+    //   .find({
+    //     userid: userid,
+    //   })
+    //   .exec();
 
-    if (followers) {
-      user.followers = followers;
-    }
+    // if (followers) {
+    //   user.followers = followers;
+    // }
 
-    if (clientid) {
-      let isFollowed = followers.find((value) => {
-        return String(value.followerid) === String(clientid);
-      });
+    // if (clientid) {
+    //   let isFollowed = followers.find((value) => {
+    //     return String(value.followerid) === String(clientid);
+    //   });
 
-      if (isFollowed) {
-        user.following = true;
-      }
-    }
+    //   if (isFollowed) {
+    //     user.following = true;
+    //   }
+    // }
 
     let ismodel = await modeldb
       .findOne({
