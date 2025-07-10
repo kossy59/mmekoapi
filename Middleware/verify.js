@@ -20,6 +20,8 @@ const verifyJwt = (req,res,next)=>{
                 return res.status(403).json({"message":err.message})
             }
             req.user = decode.UserInfo.username;
+            req.userId = decode.UserInfo.userId;
+            
             next()
         }
     );
