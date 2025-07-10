@@ -61,15 +61,33 @@ exports.handleWithdrawRequest = async (req, res) => {
 };
 
 
+// exports.getAllWithdrawRequests = async (req, res) => {
+//     try {
+//         const requests = await WithdrawRequest.find().sort({ createdAt: -1 });
+//         res.status(200).json({ requests });
+//     } catch (err) {
+//         console.error("Error fetching withdrawal requests:", err);
+//         res.status(500).json({ message: "Server error" });
+//     }
+// };
+
 exports.getAllWithdrawRequests = async (req, res) => {
-    try {
-        const requests = await WithdrawRequest.find().sort({ createdAt: -1 });
-        res.status(200).json({ requests });
-    } catch (err) {
-        console.error("Error fetching withdrawal requests:", err);
-        res.status(500).json({ message: "Server error" });
+  try {
+    // You already have req.userId from the token
+    const user = await User.findById(req.userId);
+
+    if (!user || !user.admin) {
+      return res.status(403).json({ message: "Forbidden. Admins only." });
     }
+
+    const requests = await WithdrawRequest.find().sort({ createdAt: -1 });
+    res.status(200).json({ requests });
+  } catch (err) {
+    console.error("Error fetching withdrawals:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
+
 
 exports.getWithdrawRequestById = async (req, res) => {
     try {

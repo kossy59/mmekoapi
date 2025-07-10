@@ -1,16 +1,3 @@
-// const express = require("express");
-// const router = express.Router();
-// const controller = require("../../../Controller/withdrawRequest/withdraw.controller");
-// const verifyJwt = require("../../../Middleware/verify");
-
-// router.post("/", verifyJwt, controller.handleWithdrawRequest);
-// router.get("/", controller.getAllWithdrawRequests);
-// router.get("/:id", controller.getWithdrawRequestById);
-// router.patch("/:id/pay", controller.markAsPaid);
-// router.delete("/:id", controller.deleteWithdrawRequest);
-
-// module.exports = router;
-
 const express = require("express");
 const router = express.Router();
 const controller = require("../../../Controller/withdrawRequest/withdraw.controller");
