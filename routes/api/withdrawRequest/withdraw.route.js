@@ -9,7 +9,7 @@ router.post("/", verifyJwt, controller.handleWithdrawRequest); // normal user ca
 // Only admin can perform the following:
 router.get("/", verifyJwt, isAdmin, controller.getAllWithdrawRequests);
 router.get("/:id", verifyJwt, isAdmin, controller.getWithdrawRequestById);
-router.patch("/:id/pay", verifyJwt, isAdmin, controller.markAsPaid);
+router.patch("/:id/pay",  controller.markAsPaid);
 router.delete("/:id", verifyJwt, isAdmin, controller.deleteWithdrawRequest);
 
 module.exports = router;
