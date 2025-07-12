@@ -11,5 +11,11 @@ router.get("/", verifyJwt, isAdmin, controller.getAllWithdrawRequests);
 router.get("/:id", verifyJwt, isAdmin, controller.getWithdrawRequestById);
 router.patch("/:id/pay",  controller.markAsPaid);
 router.delete("/:id", verifyJwt, isAdmin, controller.deleteWithdrawRequest);
+// 👇 NEW route for polling the withdraw status
+router.get("/status/:userId", verifyJwt, controller.getWithdrawStatusByUserId);
+// In your withdrawRequest routes
+
+
+
 
 module.exports = router;
