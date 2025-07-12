@@ -43,6 +43,7 @@ const corsOptions = {
     "http://localhost:3000",
     "http://localhost:3001",
     "https://mmeko.com",
+    "https://mmekosocial-dev-website.onrender.com",
   ], // Whitelist the domains you want to allow
 };
 
