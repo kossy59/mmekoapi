@@ -34,7 +34,7 @@ const pushnotify = require("./utiils/sendPushnot");
 const imageRoutes = require("./routes/imageRoutes");
 const dev = false;
 // let myurl = "https://mmeko.com"
-const myurl = dev ? "http://localhost:3000" : "https://mmeko.com";
+const myurl = dev ? "http://localhost:3000" : "https://mmekosocial-dev-website.onrender.com";
 // let myurl = "http://192.168.43.112:3000"
 
 const corsOptions = {
@@ -45,6 +45,7 @@ const corsOptions = {
     "https://mmeko.com",
     "https://mmekosocial-dev-website.onrender.com",
   ], // Whitelist the domains you want to allow
+   credentials: true,
 };
 
 app.use(cors(corsOptions));
