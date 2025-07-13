@@ -144,8 +144,8 @@
 // module.exports = createPost;
 
 
-// const {connectdatabase} = require('../../config/connectDB');
-// const sdk = require("node-appwrite");
+const {connectdatabase} = require('../../config/connectDB');
+const sdk = require("node-appwrite");
 const postdata = require("../../Models/post");
 const commentdata = require("../../Models/comment");
 const likedata = require("../../Models/like");

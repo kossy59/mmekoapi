@@ -38,7 +38,6 @@ const myurl = dev ? "http://localhost:3000" : "https://mmekosocial-dev-website.o
 // let myurl = "http://192.168.43.112:3000"
 
 const corsOptions = {
-  credentials: true,
   origin: [
     "http://localhost:3000",
     "http://localhost:3001",
@@ -48,8 +47,8 @@ const corsOptions = {
    credentials: true,
 };
 
-// app.use(cors(corsOptions));
-app.use(cors());
+app.use(cors(corsOptions));
+// app.use(cors());
 //
 //
 
