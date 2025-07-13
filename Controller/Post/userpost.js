@@ -235,6 +235,23 @@ const createPost = async (req, res) => {
       postfilepublicid = result.public_id;
     }
 
+    // --- Image Upload ---
+if (req.file && posttype === "image") {
+  if (!req.file.mimetype.startsWith("image/")) {
+    return res.status(400).json({ ok: false, message: "Invalid image file" });
+  }
+
+  const result = await uploadSingleFileToCloudinary(req.file, "post");
+
+  if (!result.file_link || !result.public_id) {
+    return res.status(500).json({ ok: false, message: "Image upload failed" });
+  }
+
+  postfilelink = result.file_link;
+  postfilepublicid = result.public_id;
+}
+
+
     if (!userid) {
       return res.status(400).json({ ok: false, message: "User ID is missing" });
     }
