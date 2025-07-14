@@ -100,7 +100,6 @@
 //   return user;
 // };
 
-
 const userdb = require("../../Models/userdb");
 const historydb = require("../../Models/mainbalance");
 const modeldb = require("../../Models/models");
@@ -115,13 +114,13 @@ const createModel = async (req, res) => {
 
   try {
     const user = await userdb.findOne({ _id: userid }).exec();
-    const withdraw = await userdb.findOne({ _id: modelid }).exec();
+    const modelUser = await modeldb.findOne({ userid: modelid }).exec();
 
     if (!user) {
       return res.status(400).json({ ok: false, message: "User not found!" });
     }
 
-    if (!withdraw) {
+    if (!modelUser) {
       return res.status(400).json({ ok: false, message: "Model user not found!" });
     }
 
@@ -132,7 +131,7 @@ const createModel = async (req, res) => {
       return res.status(400).json({ ok: false, message: "Insufficient balance. Please top up!" });
     }
 
-    // Deduct gift amount
+    // Deduct gift amount from user
     user_balance -= gold_amount;
     user.balance = user_balance.toFixed(2);
 
@@ -145,7 +144,7 @@ const createModel = async (req, res) => {
       date: Date.now().toString(),
     });
 
-    // Fetch model info (as a user inside `models` collection)
+    // Fetch model as user (earning field lives here)
     const model_as_user = await get_model_userID(modelid);
 
     if (!model_as_user) {
@@ -171,17 +170,21 @@ const createModel = async (req, res) => {
 
     console.log("Gift record created");
 
-    // Update withdraw balance
-    let withdraw_balance = parseFloat(withdraw.withdrawbalance) || 0;
+    // Update withdraw balance on modelUser
+    let withdraw_balance = parseFloat(modelUser.withdrawbalance) || 0;
     withdraw_balance += gold_amount;
-    withdraw.withdrawbalance = withdraw_balance.toFixed(2);
+    modelUser.withdrawbalance = withdraw_balance.toFixed(2);
 
     // Update model's earnings
     const currentEarnings = parseFloat(model_as_user.earnings) || 0;
     model_as_user.earnings = (currentEarnings + gold_amount).toFixed(2);
 
-    // Save all
-    await Promise.all([user.save(), withdraw.save(), model_as_user.save()]);
+    // Save all updated documents
+    await Promise.all([
+      user.save(),
+      modelUser.save(),
+      model_as_user.save()
+    ]);
 
     return res.status(200).json({ ok: true, message: "Gift sent successfully!" });
 
