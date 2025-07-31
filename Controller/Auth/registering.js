@@ -117,9 +117,9 @@ const handleNewUser = async (req, res) => {
       .json({ ok: false, message: `${err.message}! search dublicate` });
   }
 
-  if (!nickname) {
-    nickname = "";
-  }
+  // if (!nickname) {
+  //   nickname = "";
+  // }
 
   try {
     const hashPwd = await bcrypt.hash(password, 10);
@@ -151,7 +151,7 @@ const handleNewUser = async (req, res) => {
   } catch (err) {
     return res
       .status(500)
-      .json({ ok: false, message: `${err.message} register` });
+      .json({ ok: false, message: ` register` });
   }
 };
 

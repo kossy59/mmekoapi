@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
-require('dotenv').config();
+require('dotenv').config({ path: "./.env.local" });
+
 const username = encodeURIComponent()
 const password = encodeURIComponent()
 const connectDb = async()=>{

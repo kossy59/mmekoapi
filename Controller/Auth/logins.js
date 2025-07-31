@@ -140,7 +140,7 @@ const handleNewUser = async (req, res) => {
     if (emailbaned.delete === true) {
       return res
         .status(400)
-        .json({ ok: false, message: "You account have been banned" });
+        .json({ ok: false, message: "Your account have been banned" });
     }
 
     if (emailbaned.suspend === true) {
@@ -235,7 +235,7 @@ const handleNewUser = async (req, res) => {
         res.status(401).json({ ok: false, message: "Password mismatch" });
       }
     } else {
-      return res.status(400).json({ ok: false, message: "User Not Register" });
+      return res.status(400).json({ ok: false, message: "User Not Registered" });
     }
   } catch (err) {
     console.log(err);

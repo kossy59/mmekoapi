@@ -16,7 +16,6 @@ async function initalizeDB(memko_socialDB,database){
         UsersDB.$id,
         'firstname',
         255,true
-    
     )
     
     
@@ -144,8 +143,6 @@ async function initalizeDB(memko_socialDB,database){
     
     
    return UsersDB ;
-    
-
 }
 
 

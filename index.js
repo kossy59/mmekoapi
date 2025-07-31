@@ -1,8 +1,13 @@
+const express = require("express");
+const http = require("http");
 require("dotenv").config();
 const cookieParser = require("cookie-parser");
+const mongoose = require("mongoose");
+const { Server } = require("socket.io");
+const cors = require("cors");
+const { setInterval } = require("timers");
 // const credentials = require('./Middleware/credentials')
 // const corsOptions = require('./config/corsOptions')
-const mongoose = require("mongoose");
 const connect = require("./config/connectdataBase");
 const handleRefresh = require("./Middleware/refresh");
 const verifyJwt = require("./Middleware/verify");
@@ -12,14 +17,6 @@ const Livechats = require("./utiils/createlivechat");
 const getnotify = require("./utiils/getnotification");
 let sendEmail = require("./utiils/sendEmailnot");
 const MYID = require("./utiils/Getmyname");
-const PORT = process.env.PORT || 3500;
-const express = require("express");
-const app = express();
-const http = require("http");
-const server = http.createServer(app);
-const { Server } = require("socket.io");
-const cors = require("cors");
-const { setInterval } = require("timers");
 let {
   Check_caller,
   deletebyClient,
@@ -30,8 +27,12 @@ let {
 const pay_model = require("./utiils/payclient_PCALL");
 const updatebalance = require("./utiils/deductPVC");
 const pushnotify = require("./utiils/sendPushnot");
-
 const imageRoutes = require("./routes/imageRoutes");
+
+
+const PORT = process.env.PORT || 3500;
+const app = express();
+const server = http.createServer(app);
 const dev = false;
 // let myurl = "https://mmeko.com"
 const myurl = dev ? "http://localhost:3000" :  "https://mmeko.com";
@@ -48,14 +49,30 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 // app.use(cors());
 //
 //
 
 // app.use(credentials)
 // app.use(cors(corsOptions));
-app.use(express.urlencoded({ extended: false }));
+// app.use((req, res, next) => {
+//   let data = '';
+//   req.on('data', chunk => {
+//     data += chunk;
+//   });
+//   req.on('end', () => {
+//     console.log('Raw body:', data);
+//     next();
+//   });
+// });
+
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 const io = new Server(server, {
