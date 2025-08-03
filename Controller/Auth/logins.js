@@ -225,11 +225,7 @@ const handleNewUser = async (req, res) => {
         res.status(200).json({
           ok: true,
           message: "Login Success",
-          id: du._id,
-          token: refreshToken,
-          accessToken,
-          modelId: du.modelId,
-          isModel: du.isModel,
+          user: du
         });
       } else {
         res.status(401).json({ ok: false, message: "Password mismatch" });

@@ -14,7 +14,7 @@ const handleNewUser = async (req, res) => {
   const firstname = req.body.firstname;
   const lastname = req.body.lastname;
   const gender = req.body.gender;
-  let nickname = req.body.nickname;
+  let username = req.body.username;
   const email = req.body.email;
   const password = req.body.password;
   const age = req.body.age;
@@ -31,7 +31,7 @@ const handleNewUser = async (req, res) => {
     !password &&
     !age &&
     country &&
-    !nickname &&
+    !username &&
     !dob
   ) {
     return res
@@ -40,19 +40,14 @@ const handleNewUser = async (req, res) => {
   }
   //let dupplicate;
   let Email = email.toLowerCase().trim();
+  console.log({body: req.body})
 
   let emailbaned = await baneddb.findOne({ email: Email }).exec();
   let user_uncon = await userdb.findOne({ email: Email }).exec();
 
-  let nicknames = await userdb.find({}).exec();
+  let existingUser = await userdb.find({nickname: username}).exec();
 
-  let istrue = nicknames.find((value) => {
-    return (
-      value.nickname.toLowerCase().trim() === nickname.toLowerCase().trim()
-    );
-  });
-
-  if (istrue) {
+  if (existingUser.nickname) {
     return res
       .status(400)
       .json({ ok: false, message: "Nickname already taken!!" });
@@ -117,19 +112,19 @@ const handleNewUser = async (req, res) => {
       .json({ ok: false, message: `${err.message}! search dublicate` });
   }
 
-  // if (!nickname) {
-  //   nickname = "";
+  // if (!username) {
+  //   username = "";
   // }
 
   try {
     const hashPwd = await bcrypt.hash(password, 10);
 
     var db = {
-      firstname: firstname,
-      lastname: lastname,
-      gender: gender,
-      nickname: nickname,
-      email: Email,
+      firstname,
+      lastname,
+      gender,
+      nickname: username,
+      email,
       password: hashPwd,
       emailconfirm: "not",
       emailconfirmtime: "not",
@@ -151,7 +146,7 @@ const handleNewUser = async (req, res) => {
   } catch (err) {
     return res
       .status(500)
-      .json({ ok: false, message: ` register` });
+      .json({ ok: false, message: ` register: ${err}` });
   }
 };
 

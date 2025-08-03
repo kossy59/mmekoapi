@@ -30,7 +30,7 @@ const pushnotify = require("./utiils/sendPushnot");
 const imageRoutes = require("./routes/imageRoutes");
 
 
-const PORT = process.env.PORT || 3500;
+const PORT = process.env.PORT || 3100;
 const app = express();
 const server = http.createServer(app);
 const dev = false;
@@ -546,10 +546,7 @@ app.use("/searchuser", require("./routes/api/profile/getallUser"));
 app.use("/post", require("./routes/api/post/Post"));
 app.use("/addpayment", require("./routes/api/payment/payment.routes"));
 app.use("/withdraw-request", require("./routes/api/withdrawRequest/withdraw.route"));
-app.use(
-  "/editmoreprofile",
-  require("./routes/api/Profilemore/editprofilemore")
-);
+app.use("/editmoreprofile", require("./routes/api/Profilemore/editprofilemore"));
 app.use("/model", require("./routes/api/model/models"));
 app.use("/editmodel", require("./routes/api/model/editemodel"));
 app.use("/postdocument", require("./routes/api/model/postdocument"));
@@ -619,7 +616,7 @@ app.use("/deletecrush", require("./routes/api/model/deletecrush"));
 mongoose.connection.once("open", () => {
   console.log("Database connected");
   server.listen(PORT, () => {
-    console.log("listening on *:3500");
+    console.log("listening on *:" + PORT);
   });
 });
 

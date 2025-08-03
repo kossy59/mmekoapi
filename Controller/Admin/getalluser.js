@@ -4,64 +4,59 @@ let userphoto = require("../../Models/usercomplete")
 
 const updatePost = async (req,res)=>{
 
+  try{
+    let du = await userdb.find({}).exec()
+    let admin = await admindb.find({}).exec()
+    let photos = await userphoto.find({}).exec()
 
-    try{
+    let suppend_user = admin.filter(v=> v.suspend && v.userid)
 
+    // let suppend_user = []
 
-               let du = await userdb.find({}).exec()
-               let admin = await admindb.find({}).exec()
-               let photos = await userphoto.find({}).exec()
+    // admin.forEach(value =>{
 
-               let suppend_user = []
+    //   if(value.suspend === true){
+    //     let user = {
+    //         userid: value.userid
+    //     }
+    //     suppend_user.push(user)
+    //   }
+    // })
 
-               admin.forEach(value =>{
+    let list_user = []
 
-                 if(value.suspend === true){
-                    let user = {
-                        userid:value.userid
-                    }
-                    suppend_user.push(user)
-                 }
-               })
+    console.log("list of suspend user "+suppend_user.length)
 
-               let list_user = []
+    du.forEach(value1 => {
+      if(suppend_user.length > 0){
+        suppend_user.forEach(value =>{
+            if(String(value1._id) !== String(value.userid)){
+                list_user.push(value1)
+            }
+        })
+      }else{
+        list_user.push(value1)
+      }
+    })
 
-               console.log("list of suspend user "+suppend_user.length)
+    let alluser = []
 
-               du.forEach(value1 => {
-                 if(suppend_user.length > 0){
-                    suppend_user.forEach(value =>{
-                        if(String(value1._id) !== String(value.userid)){
-                            list_user.push(value1)
-                        }
-                    })
-                 }else{
-                    list_user.push(value1)
-                 }
-               })
+    list_user.forEach(value1=>{
+    photos.forEach(value2 =>{
+      if(String(value1._id) === String(value2.useraccountId)){
+        let obj = value1.toObject()
+        obj.photolink = value2.photoLink
+        alluser.push(obj)
+      }
+    })
+    })
 
-               let alluser = []
-
-               list_user.forEach(value1=>{
-                photos.forEach(value2 =>{
-                  if(String(value1._id) === String(value2.useraccountId)){
-                    let obj = value1.toObject()
-                    obj.photolink = value2.photoLink
-                    alluser.push(obj)
-                  }
-                })
-               })
-
-
-
+  return res.status(200).json({"ok":true,"message":`Post updated Successfully`, users: alluser})
 
 
-            return res.status(200).json({"ok":true,"message":`Post updated Successfully`,users:alluser})
-
-
-       }catch(err){
-           return res.status(500).json({"ok":false,'message': `${err.message}!`});
-       }
+}catch(err){
+    return res.status(500).json({"ok":false,'message': `${err.message}!`});
+}
 }
 
 module.exports = updatePost
