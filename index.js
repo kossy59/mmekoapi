@@ -33,10 +33,6 @@ const imageRoutes = require("./routes/imageRoutes");
 const PORT = process.env.PORT || 3100;
 const app = express();
 const server = http.createServer(app);
-const dev = false;
-// let myurl = "https://mmeko.com"
-const myurl = dev ? "http://localhost:3000" :  "https://mmeko.com";
-// let myurl = "http://192.168.43.112:3000"
 
 const corsOptions = {
   origin: [
@@ -54,22 +50,6 @@ app.use((req, res, next) => {
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });
-// app.use(cors());
-//
-//
-
-// app.use(credentials)
-// app.use(cors(corsOptions));
-// app.use((req, res, next) => {
-//   let data = '';
-//   req.on('data', chunk => {
-//     data += chunk;
-//   });
-//   req.on('end', () => {
-//     console.log('Raw body:', data);
-//     next();
-//   });
-// });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
