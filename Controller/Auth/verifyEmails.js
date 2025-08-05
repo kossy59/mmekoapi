@@ -79,11 +79,12 @@ const handleNewUser = async (req, res) => {
         await pushdb.create(notification);
         await match.deleteOne();
 
+        console.log({accessToken})
         return res.status(200)
         .cookie('auth_token', accessToken, {
           httpOnly: true,
-          secure: true,
-          sameSite: 'Strict',
+          secure: process.env.NODE_ENV === "production",
+          sameSite: 'Lax',
           path: '/',
         })
         .json({

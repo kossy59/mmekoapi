@@ -220,11 +220,12 @@ const handleNewUser = async (req, res) => {
         du.refreshtoken = refreshToken;
         du.save();
 
+        console.log({accessToken})
         res.status(200)
         .cookie('auth_token', accessToken, {
           httpOnly: true,
-          secure: true,
-          sameSite: 'Strict',
+          secure: process.env.NODE_ENV === "production",
+          sameSite: 'Lax',
           path: '/',
         }).json({
           ok: true,
