@@ -21,6 +21,27 @@ const handleNewUser = async (req, res) => {
       if (Number(match.emailconfirm) === Number(code)) {
         match.emailconfirm = `verify`;
 
+        // create tokens
+         const refreshToken = jwt.sign(
+          {
+            UserInfo: {
+              username: du.email,
+            },
+          },
+          process.env.refreshToken,
+          { expiresIn: "30d" }
+        );
+        const accessToken = jwt.sign(
+          {
+            UserInfo: {
+              username: du.email,
+              userId: du._id.toString() 
+            },
+          },
+          process.env.accessToken,  // secret key for access token
+          { expiresIn: "30d" }       // shorter life
+        )
+
         var db = {
           firstname: match.firstname,
           lastname: match.lastname,
@@ -32,7 +53,8 @@ const handleNewUser = async (req, res) => {
           emailconfirmtime: "not",
           active: false,
           country: match.country,
-          refreshtoken: "",
+          refreshtoken: refreshToken,
+          accessToken: accessToken,
           age: match.age,
           admin: false,
           passcode: match.passcode,
@@ -57,7 +79,14 @@ const handleNewUser = async (req, res) => {
         await pushdb.create(notification);
         await match.deleteOne();
 
-        return res.status(200).json({
+        return res.status(200)
+        .cookie('auth_token', accessToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'Strict',
+          path: '/',
+        })
+        .json({
           ok: true,
           message: `${user.firstname} ${user.lastname} Account Created Success`,
           ID: `${match._id}`,

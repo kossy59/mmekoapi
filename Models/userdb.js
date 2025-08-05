@@ -53,6 +53,11 @@ const markertdata = new Scheme(
       type: String,
       required: false,
     },
+    
+    accessToken: {
+      type: String,
+      required: false,
+    },
 
     age: {
       type: String,

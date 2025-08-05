@@ -202,8 +202,6 @@ const handleNewUser = async (req, res) => {
             UserInfo: {
               username: du.email,
               userId: du._id.toString() 
-              
-              
             },
           },
           process.env.accessToken,  // secret key for access token
@@ -222,7 +220,13 @@ const handleNewUser = async (req, res) => {
         du.refreshtoken = refreshToken;
         du.save();
 
-        res.status(200).json({
+        res.status(200)
+        .cookie('auth_token', accessToken, {
+          httpOnly: true,
+          secure: true,
+          sameSite: 'Strict',
+          path: '/',
+        }).json({
           ok: true,
           message: "Login Success",
           user: du
