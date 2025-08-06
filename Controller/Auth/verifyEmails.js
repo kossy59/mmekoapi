@@ -2,6 +2,8 @@ const PendingUser = require("../../Models/pendingUser");
 const userdb = require("../../Models/userdb");
 const usercompletedb = require("../../Models/usercomplete");
 let pushdb = require("../../Models/settingsdb");
+const jwt = require("jsonwebtoken");
+
 const handleNewUser = async (req, res) => {
   const code = req.body.code;
   const email = req.body.email;
