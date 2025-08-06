@@ -27,7 +27,7 @@ const handleNewUser = async (req, res) => {
          const refreshToken = jwt.sign(
           {
             UserInfo: {
-              username: du.email,
+              username: match.email,
             },
           },
           process.env.refreshToken,
@@ -36,8 +36,8 @@ const handleNewUser = async (req, res) => {
         const accessToken = jwt.sign(
           {
             UserInfo: {
-              username: du.email,
-              userId: du._id.toString() 
+              username: match.email,
+              userId: match._id.toString() 
             },
           },
           process.env.accessToken,  // secret key for access token
@@ -62,6 +62,7 @@ const handleNewUser = async (req, res) => {
           passcode: match.passcode,
           balance: match.balance,
           dob: match.dob,
+          _id: match._id
         };
         const user = await userdb.create(db);
         var moreuser = {
