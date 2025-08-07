@@ -125,7 +125,7 @@ const baneddb = require("../../Models/admindb");
 const handleNewUser = async (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  //    console.log('untop connecting to database')
+     console.log({email, password})
   //     let data = await connectdatabase()
   if (!email && !password) {
     return res
@@ -224,10 +224,16 @@ const handleNewUser = async (req, res) => {
         res.status(200)
         .cookie('auth_token', accessToken, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
+          secure: process.env.NODE_ENV === "production" ? true : false,
           sameSite: 'Lax',
           path: '/',
-        }).json({
+        })
+        // .setHeader('Set-Cookie', `auth_token=${accessToken}; Path=/; HttpOnly; Secure; SameSite=None`)
+        // .setHeader('Access-Control-Allow-Origin', 'http://localhost:3000')
+        // .setHeader('Access-Control-Allow-Credentials', 'true')
+        // .setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
+        // .setHeader('Access-Control-Allow-Headers', 'Content-Type')
+        .json({
           ok: true,
           message: "Login Success",
           user: du
