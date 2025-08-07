@@ -208,15 +208,6 @@ const handleNewUser = async (req, res) => {
           { expiresIn: "30d" }       // shorter life
         );
 
-        //  console.log('untop updating  database')
-        // await data.databar.updateDocument(
-        //     data.dataid,
-        //     data.colid,
-        //      du[0].$id,
-        //      {
-        //         refreshtoken:refreshToken
-        //      }
-        //  )
         du.refreshtoken = refreshToken;
         du.save();
 
@@ -224,10 +215,15 @@ const handleNewUser = async (req, res) => {
         res.status(200)
         .cookie('auth_token', accessToken, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production" ? true : false,
+          secure: true,
           sameSite: 'None',
           path: '/',
         })
+        .setHeader("Access-Control-Allow-Origin", "https://mmekowebsite.onrender.com") 
+        .setHeader("Access-Control-Allow-Credentials", "true")
+        .setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE")
+        .setHeader("Access-Control-Allow-Headers", "Content-Type")
+
         .json({
           ok: true,
           message: "Login Success",
