@@ -225,14 +225,9 @@ const handleNewUser = async (req, res) => {
         .cookie('auth_token', accessToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production" ? true : false,
-          sameSite: 'Lax',
+          sameSite: 'None',
           path: '/',
         })
-        // .setHeader('Set-Cookie', `auth_token=${accessToken}; Path=/; HttpOnly; Secure; SameSite=None`)
-        // .setHeader('Access-Control-Allow-Origin', 'http://localhost:3000')
-        // .setHeader('Access-Control-Allow-Credentials', 'true')
-        // .setHeader('Access-Control-Allow-Methods', 'GET,POST,OPTIONS')
-        // .setHeader('Access-Control-Allow-Headers', 'Content-Type')
         .json({
           ok: true,
           message: "Login Success",
