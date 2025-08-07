@@ -86,7 +86,7 @@ const handleNewUser = async (req, res) => {
         return res.status(200)
         .cookie('auth_token', accessToken, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === "production" ? true : false,
+          secure: true,
           sameSite: 'Lax',
           path: '/',
         })
