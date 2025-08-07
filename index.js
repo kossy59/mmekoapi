@@ -44,6 +44,8 @@ const corsOptions = {
    credentials: true,
 };
 const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
   "https://mmeko.com",
   "https://mmekowebsite.onrender.com",
 ];
