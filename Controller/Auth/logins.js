@@ -224,8 +224,8 @@ const handleNewUser = async (req, res) => {
         res.status(200)
         .cookie('auth_token', accessToken, {
           httpOnly: true,
-          secure: true,
-          sameSite: 'None',
+          secure: process.env.NODE_ENV === "production" ? true : false,
+          sameSite: 'Lax',
           path: '/',
         })
         // .setHeader('Set-Cookie', `auth_token=${accessToken}; Path=/; HttpOnly; Secure; SameSite=None`)
