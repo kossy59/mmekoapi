@@ -212,6 +212,20 @@ const handleNewUser = async (req, res) => {
         du.save();
 
         console.log({accessToken})
+
+        const allowedOrigins = [
+          "http://localhost:3000",
+          "https://mmeko.com",
+          "https://mmekowebsite.onrender.com",
+        ];
+
+        const origin = req.headers.origin;
+        if (allowedOrigins.includes(origin)) {
+          res.setHeader("Access-Control-Allow-Origin", origin);
+          res.setHeader("Access-Control-Allow-Credentials", "true");
+          res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE");
+          res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+        }
         res.status(200)
         .cookie('auth_token', accessToken, {
           httpOnly: true,
@@ -219,11 +233,6 @@ const handleNewUser = async (req, res) => {
           sameSite: 'None',
           path: '/',
         })
-        .setHeader("Access-Control-Allow-Origin", "https://mmekowebsite.onrender.com") 
-        .setHeader("Access-Control-Allow-Credentials", "true")
-        .setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE")
-        .setHeader("Access-Control-Allow-Headers", "Content-Type")
-
         .json({
           ok: true,
           message: "Login Success",
