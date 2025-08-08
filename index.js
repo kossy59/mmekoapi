@@ -41,7 +41,7 @@ const corsOptions = {
     "http://localhost:3001",
     "https://mmeko.com",
     "https://mmekowebsite.onrender.com",
-  ], // Whitelist the domains you want to allow
+  ],
    credentials: true,
 };
 const allowedOrigins = [
@@ -53,7 +53,7 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: "https://mmekowebsite.onrender.com",
+  origin: "http://localhost:3000",
   credentials: true
 }));
 // app.use((req,res, next)=>{
