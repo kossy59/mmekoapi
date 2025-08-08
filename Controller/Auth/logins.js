@@ -222,7 +222,7 @@ const handleNewUser = async (req, res) => {
         const origin = req.headers.origin;
         if (allowedOrigins.includes(origin)) {
           res.setHeader("Access-Control-Allow-Origin", origin);
-          res.setHeader("Access-Control-Allow-Credentials", "true");
+          res.setHeader("Access-Control-Allow-Credentials", true);
           res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE");
           res.setHeader("Access-Control-Allow-Headers", "Content-Type");
         }
@@ -232,6 +232,7 @@ const handleNewUser = async (req, res) => {
           secure: true,
           sameSite: 'None',
           path: '/',
+          crossSite: true
         })
         .json({
           ok: true,
