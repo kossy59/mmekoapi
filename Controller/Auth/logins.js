@@ -215,6 +215,7 @@ const handleNewUser = async (req, res) => {
 
         const allowedOrigins = [
           "http://localhost:3000",
+          "https://mmekoapi.onrender.com",
           "https://mmeko.com",
           "https://mmekowebsite.onrender.com",
         ];
@@ -232,7 +233,6 @@ const handleNewUser = async (req, res) => {
           secure: true,
           sameSite: 'None',
           path: '/',
-          crossSite: true
         })
         .json({
           ok: true,

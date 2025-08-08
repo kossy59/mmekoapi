@@ -85,6 +85,7 @@ const handleNewUser = async (req, res) => {
         console.log({accessToken})
         const allowedOrigins = [
           "http://localhost:3000",
+          "https://mmekoapi.onrender.com",
           "https://mmeko.com",
           "https://mmekowebsite.onrender.com",
         ];
