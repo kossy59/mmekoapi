@@ -7,7 +7,8 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const { setInterval } = require("timers");
 // const credentials = require('./Middleware/credentials')
-// const corsOptions = require('./config/corsOptions')
+// const {
+// } = require('./config/corsOptions')
 const connect = require("./config/connectdataBase");
 const handleRefresh = require("./Middleware/refresh");
 const verifyJwt = require("./Middleware/verify");
@@ -51,7 +52,10 @@ const allowedOrigins = [
   "https://mmekowebsite.onrender.com",
 ];
 
-app.use(cors(corsOptions));
+app.use(cors({
+  origin: "https://mmekowebsite.onrender.com",
+  credentials: true
+}));
 // app.use((req,res, next)=>{
 //   const origin = req.headers.origin;
 //   if (allowedOrigins.includes(origin)) {

@@ -227,13 +227,13 @@ const handleNewUser = async (req, res) => {
           res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE");
           res.setHeader("Access-Control-Allow-Headers", "Content-Type");
         }
+        res.cookie('auth_token', accessToken, {
+          httpOnly: true,       // Prevent access via JS
+          secure: true,         // Only send over HTTPS
+          sameSite: 'None',     // Required for cross-site cookies
+          maxAge: 2 * 60 * 60 * 1000 // 2h
+        });
         res.status(200)
-        .cookie('auth_token', accessToken, {
-          httpOnly: true,
-          secure: true,
-          sameSite: 'Strict',
-          path: '/',
-        })
         .json({
           ok: true,
           message: "Login Success",
@@ -252,3 +252,28 @@ const handleNewUser = async (req, res) => {
 };
 
 module.exports = handleNewUser;
+
+
+// const express = require('express');
+// const cors = require('cors');
+// const app = express();
+
+// // Allow credentials and specific origin
+// app.use(cors({
+//   origin: 'https://your-frontend-domain.com', // Replace with your actual frontend domain
+//   credentials: true
+// }));
+
+// app.use(express.json());
+
+// app.post('/login', (req, res) => {
+//   // Simulate login and set cookie
+//   res.cookie('auth_token', 'your_jwt_token_here', {
+//     httpOnly: true,       // Prevent access via JS
+//     secure: true,         // Only send over HTTPS
+//     sameSite: 'None',     // Required for cross-site cookies
+//     maxAge: 24 * 60 * 60 * 1000 // 1 day
+//   });
+
+//   res.status(200).json({ message: 'Login successful' });
+// });
