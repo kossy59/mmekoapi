@@ -101,7 +101,7 @@ const handleNewUser = async (req, res) => {
         .cookie('auth_token', accessToken, {
           httpOnly: true,
           secure: true,
-          sameSite: 'None',
+          sameSite: 'Lax',
           path: '/',
         })
         .json({
