@@ -82,26 +82,25 @@ const handleNewUser = async (req, res) => {
         await pushdb.create(notification);
         await match.deleteOne();
 
-        console.log({accessToken})
-        const allowedOrigins = [
-          "http://localhost:3000",
-          "https://mmekoapi.onrender.com",
-          "https://mmeko.com",
-          "https://mmekowebsite.onrender.com",
-        ];
+        // console.log({accessToken})
+        // const allowedOrigins = [
+        //   "https://mmekoapi.onrender.com",
+        //   "https://mmeko.com",
+        //   "https://mmekowebsite.onrender.com",
+        // ];
 
-        const origin = req.headers.origin;
-        if (allowedOrigins.includes(origin)) {
-          res.setHeader("Access-Control-Allow-Origin", origin);
-          res.setHeader("Access-Control-Allow-Credentials", true);
-          res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE");
-          res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-        }
+        // const origin = req.headers.origin;
+        // if (allowedOrigins.includes(origin)) {
+        //   res.setHeader("Access-Control-Allow-Origin", origin);
+        //   res.setHeader("Access-Control-Allow-Credentials", true);
+        //   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+        //   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+        // }
         res.cookie('auth_token', accessToken, {
           httpOnly: true,       // Prevent access via JS
           secure: true,         // Only send over HTTPS
           sameSite: 'None',     // Required for cross-site cookies
-          maxAge: 2 * 60 * 60 * 1000 // 2h
+          maxAge: 4 * 60 * 60 * 1000 // 2h
         });
         return res.status(200)
         .json({
