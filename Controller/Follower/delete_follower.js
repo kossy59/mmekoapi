@@ -41,7 +41,7 @@ const createModel = async (req, res) => {
     await sendEmail(userid, "user unfollow you");
     await sendpushnote(userid, "user unfollow you", "modelicon");
 
-    return res.status(200).json({ ok: true, message: `followed successfully` });
+    return res.status(200).json({ ok: true, message: `unfollowed successfully` });
   } catch (err) {
     return res.status(500).json({ ok: false, message: `${err.message}!` });
   }
