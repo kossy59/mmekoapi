@@ -69,13 +69,19 @@ const readHistory = async (req, res) => {
       request_count = "---";
     }
 
+    // Safely read model earnings to avoid crashes when model document is missing
+    let earningsVal = 0;
+    if (currentModel && Array.isArray(currentModel) && currentModel.length && typeof currentModel[0].earnings !== "undefined") {
+      earningsVal = Number(currentModel[0].earnings) || 0;
+    }
+
     let history = {
       gift: gift_count,
       request: request_count,
       earning: earning,
       like: like_count2,
-      coin: String(currentModel[0].earnings),
-      usd: String(currentModel[0].earnings * 0.05),
+      coin: String(earningsVal),
+      usd: String(earningsVal * 0.05),
     };
 
     for (let data in history) {

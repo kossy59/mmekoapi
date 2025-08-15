@@ -12,7 +12,7 @@ const Monthly_history = async (req, res) => {
   try {
     let Month = await gethistory(userid);
 
-    return res.status(200).json({ ok: true, message: `All Post`, Month });
+    return res.status(200).json({ ok: true, message: `Monthly history fetched`, Month });
   } catch (err) {
     return res.status(500).json({ ok: false, message: `${err.message}!` });
   }

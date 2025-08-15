@@ -29,7 +29,7 @@ const createModel = async (req, res) => {
 
         if (username) {
           let photo = await photodb
-            .findOne({ useraccountId: followers[i].followerid })
+            .findOne({ useraccountId: followers[i] })
             .exec();
           if (model) {
             canmessage = true;
@@ -75,7 +75,7 @@ const createModel = async (req, res) => {
           if (model) {
             // console.log("inside she is model")
             canmessage = true;
-            modelid = model.userid;
+            modelid = model._id;
           }
 
           if (photo) {
@@ -99,7 +99,7 @@ const createModel = async (req, res) => {
 
     return res
       .status(200)
-      .json({ ok: true, message: `followed successfully`, data: follows });
+      .json({ ok: true, message: `Fetched followers successfully`, data: follows });
   } catch (err) {
     console.log(err);
     return res.status(500).json({ ok: false, message: `${err.message}!` });
