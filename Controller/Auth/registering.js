@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 //const { Query } = require('node-appwrite');
 //const sdk = require("node-appwrite");
 const forgetHandler = require("../../helpers/sendemailAuth");
+const mongoose = require("mongoose");
 const userdb = require("../../Models/userdb");
 const baneddb = require("../../Models/admindb");
 const usercompletedb = require("../../Models/usercomplete");
@@ -23,31 +24,39 @@ const handleNewUser = async (req, res) => {
 
   //let data = await connectdatabase()
 
+  // Validate required fields (use OR so any missing field triggers the error)
   if (
-    !firstname &&
-    !lastname &&
-    !gender &&
-    !email &&
-    !password &&
-    !age &&
-    country &&
-    !username &&
+    !firstname ||
+    !lastname ||
+    !gender ||
+    !email ||
+    !password ||
+    !age ||
+    !country ||
+    !username ||
     !dob
   ) {
     return res
       .status(400)
-      .json({ ok: false, message: "Registeration not complete!!" });
+      .json({ ok: false, message: "Registration not complete!!" });
   }
   //let dupplicate;
   let Email = email.toLowerCase().trim();
-  console.log({body: req.body})
+  console.log("[register] payload received");
+
+  // Fast-fail if DB is not connected to avoid long hangs on server selection
+  if (mongoose.connection.readyState !== 1) {
+    return res
+      .status(503)
+      .json({ ok: false, message: "Database not connected. Please try again later." });
+  }
 
   let emailbaned = await baneddb.findOne({ email: Email }).exec();
   let user_uncon = await userdb.findOne({ email: Email }).exec();
 
-  let existingUser = await userdb.find({nickname: username}).exec();
-
-  if (existingUser.nickname) {
+  // Ensure nickname is unique
+  let existingUser = await userdb.findOne({ nickname: username }).exec();
+  if (existingUser) {
     return res
       .status(400)
       .json({ ok: false, message: "Nickname already taken!!" });
@@ -124,7 +133,7 @@ const handleNewUser = async (req, res) => {
       lastname,
       gender,
       nickname: username,
-      email,
+      email: Email,
       password: hashPwd,
       emailconfirm: "not",
       emailconfirmtime: "not",
@@ -138,7 +147,10 @@ const handleNewUser = async (req, res) => {
       dob: dob,
     };
 
-    await PendingUser.create(db);
+    const pending = await PendingUser.create(db);
+
+    // Respond success so the client doesn't hang
+    return res.status(201).json({ ok: true, message: "Registration created", pendingId: pending?._id });
 
     //await data.databar.createDocument(data.dataid,data.colid,sdk.ID.unique(),db)
     // await forgetHandler(req, res, Email);

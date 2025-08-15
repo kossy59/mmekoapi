@@ -41,6 +41,29 @@ const createModel = async (req, res) => {
     await sendEmail(userid, "user unfollow you");
     await sendpushnote(userid, "user unfollow you", "modelicon");
 
+    // Keep userdb arrays in sync so /getfollowers shows accurate data
+    try {
+      const target = await userdb.findById(userid).exec();
+      const actor = await userdb.findById(followerid).exec();
+
+      if (target && Array.isArray(target.followers)) {
+        target.followers = target.followers.filter(
+          (id) => String(id) !== String(followerid)
+        );
+        await target.save();
+      }
+
+      if (actor && Array.isArray(actor.following)) {
+        actor.following = actor.following.filter(
+          (id) => String(id) !== String(userid)
+        );
+        await actor.save();
+      }
+    } catch (syncErr) {
+      // Don't fail the main operation if sync fails, but log for debugging
+      console.log("[unfollow] sync arrays error:", syncErr?.message);
+    }
+
     return res.status(200).json({ ok: true, message: `unfollowed successfully` });
   } catch (err) {
     return res.status(500).json({ ok: false, message: `${err.message}!` });

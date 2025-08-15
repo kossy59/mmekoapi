@@ -17,6 +17,7 @@ const upload = multer({ storage });
  * Without this, authorization fails!
  */
 router.route('/')
+// Re-enabled handleRefresh to require a token for /completeregister
 .post(upload.single('registerFile'), handleRefresh, newUsers)
 
 module.exports = router;

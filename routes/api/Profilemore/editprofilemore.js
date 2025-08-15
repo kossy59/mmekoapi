@@ -3,6 +3,7 @@ const router = express.Router();
 const Editprofile = require('../../../Controller/Profilemore/editProfilemore');
 const multer = require('multer')
 const handleRefresh = require('../../../Middleware/refresh')
+const verifyJwt = require('../../../Middleware/verify');
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
@@ -13,7 +14,7 @@ const upload = multer({ storage });
  * Without this, authorization fails!
  */
 router.route('/')
-.post(upload.single('updatePhoto'), handleRefresh, Editprofile)
+.post(upload.single('updatePhoto'), handleRefresh, verifyJwt, Editprofile)
 
 
 module.exports = router;
