@@ -48,6 +48,31 @@ const createModel = async (req,res)=>{
         await sendEmail(userid, "you have new follower")
         await sendpushnote(userid,"you have new follower","modelicon")
 
+        // Keep userdb arrays in sync so /getfollowers shows accurate data
+        try {
+            const target = await userdb.findById(userid).exec();
+            const actor = await userdb.findById(followerid).exec();
+
+            if (target) {
+                target.followers = Array.isArray(target.followers) ? target.followers : [];
+                if (!target.followers.find((id) => String(id) === String(followerid))) {
+                    target.followers.push(followerid);
+                    await target.save();
+                }
+            }
+
+            if (actor) {
+                actor.following = Array.isArray(actor.following) ? actor.following : [];
+                if (!actor.following.find((id) => String(id) === String(userid))) {
+                    actor.following.push(userid);
+                    await actor.save();
+                }
+            }
+        } catch (syncErr) {
+            // Don't fail the main operation if sync fails, but log for debugging
+            console.log("[follow] sync arrays error:", syncErr?.message);
+        }
+
         return res.status(200).json({"ok":true,"message":`followed successfully`})
       
           

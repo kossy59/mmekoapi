@@ -5,7 +5,11 @@ const userdb = require("../Models/userdb");
 const handleRefresh = async (req, res, next) => {
   let token = "";
 
-  token = req.body.token;
+  // Try to get refresh token from multiple locations to be robust for multipart/form-data
+  const authHeader = req.headers["authorization"] || req.headers["Authorization"];
+  const bearerToken = authHeader && authHeader.startsWith("Bearer ") ? authHeader.substring(7) : undefined;
+
+  token = req.body?.token || req.headers["x-refresh-token"] || bearerToken || "";
   //let data = await connectdatabase()
 
   // console.log("Token is: ", token, req.body);

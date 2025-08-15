@@ -569,10 +569,10 @@ app.use("/paymodel", require("./routes/api/booking/paymodel"));
 app.use("/reviewmodel", require("./routes/api/model/reviewmodel"));
 app.use("/getreviews", require("./routes/api/model/getmodelreview"));
 app.use("/deletereview", require("./routes/api/model/deletereview"));
-app.use("/gethistory", require("./routes/api/profile/get_history"));
+app.use("/statistics", require("./routes/api/profile/get_statistics"));
 app.use(
-  "/getmonthlyhistory",
-  require("./routes/api/profile/get_historyByMonth")
+  "/statistics/monthly",
+  require("./routes/api/profile/get_statisticsByMonth")
 );
 
 app.use("/giftmodel", require("./routes/api/chat/giftGold"));

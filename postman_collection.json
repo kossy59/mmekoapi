@@ -1,0 +1,294 @@
+{
+  "info": {
+    "_postman_id": "2c6f5f8a-1a23-4d3e-8d7a-111111111111",
+    "name": "mmekoapi Backend Collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for the mmekoapi backend. Uses {{baseUrl}} and {{token}} variables."
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3100" },
+    { "key": "token", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/login", "host": ["{{baseUrl}}"], "path": ["login"] },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password\"\n}" }
+          }
+        },
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/register", "host": ["{{baseUrl}}"], "path": ["register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstname\": \"John\",\n  \"lastname\": \"Doe\",\n  \"gender\": \"male\",\n  \"username\": \"jdoe\",\n  \"email\": \"user@example.com\",\n  \"password\": \"password\",\n  \"age\": 25,\n  \"country\": \"US\",\n  \"dob\": \"1999-01-01\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let json;",
+                  "try { json = pm.response.json(); } catch (e) { json = null }",
+                  "if (json && json.token) { pm.environment.set('token', json.token); }",
+                  "if (json && (json.pendingId || (json.data && json.data.pendingId))) {",
+                  "  pm.environment.set('pendingId', json.pendingId || json.data.pendingId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete Register",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [
+              { "key": "x-refresh-token", "value": "{{token}}" }
+            ],
+            "url": { "raw": "{{baseUrl}}/completeregister", "host": ["{{baseUrl}}"], "path": ["completeregister"] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "registerFile", "type": "file", "src": [] },
+                { "key": "token", "type": "text", "value": "{{token}}" },
+                { "key": "data", "type": "text", "value": "{\n  \"interestedIn\": \"women\",\n  \"relationshipType\": \"serious\",\n  \"details\": \"About me...\",\n  \"useraccountId\": \"{{pendingId}}\"\n}" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "Get Profile (basic)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/getprofile", "host": ["{{baseUrl}}"], "path": ["getprofile"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\"\n}" }
+          }
+        },
+        {
+          "name": "Get Profile (detailed)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/getprofile", "host": ["{{baseUrl}}"], "path": ["getprofile"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<target-user-id>\",\n  \"clientid\": \"<viewer-user-id>\"\n}" }
+          }
+        },
+        {
+          "name": "Edit Profile",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/editprofile", "host": ["{{baseUrl}}"], "path": ["editprofile"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\",\n  \"firstname\": \"John\",\n  \"lastname\": \"Doe\",\n  \"nickname\": \"jdoe\",\n  \"state\": \"CA\"\n}" }
+          }
+        },
+        {
+          "name": "Statistics (summary)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/statistics", "host": ["{{baseUrl}}"], "path": ["statistics"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\",\n  \"modelid\": \"<model-id>\"\n}" }
+          }
+        },
+        {
+          "name": "Statistics (monthly)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/statistics/monthly", "host": ["{{baseUrl}}"], "path": ["statistics","monthly"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\"\n}" }
+          }
+        },
+        {
+          "name": "Update Settings",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/setting", "host": ["{{baseUrl}}"], "path": ["setting"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\",\n  \"emailnot\": true,\n  \"pushnot\": true\n}" }
+          }
+        },
+        {
+          "name": "Delete Account",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/deleteaccount", "host": ["{{baseUrl}}"], "path": ["deleteaccount"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\"\n}" }
+          }
+        },
+        {
+          "name": "Get Blocked Accounts",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/deleteaccount", "host": ["{{baseUrl}}"], "path": ["deleteaccount"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\"\n}" }
+          }
+        },
+        {
+          "name": "Remove Blocked User",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/deleteaccount", "host": ["{{baseUrl}}"], "path": ["deleteaccount"] },
+            "body": { "mode": "raw", "raw": "{\n  \"id\": \"<blocked-record-id>\"\n}" }
+          }
+        },
+        {
+          "name": "Topup",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/topup", "host": ["{{baseUrl}}"], "path": ["topup"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\",\n  \"amount\": 100\n}" }
+          }
+        },
+        {
+          "name": "Save Push Subscription ID",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/subpushid", "host": ["{{baseUrl}}"], "path": ["subpushid"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\",\n  \"subinfo\": {\n    \"endpoint\": \"<endpoint>\",\n    \"keys\": { \n      \"p256dh\": \"<key>\",\n      \"auth\": \"<auth>\"\n    }\n  }\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Messaging",
+      "item": [
+        {
+          "name": "Message Notifications (merged)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/messagenotification", "host": ["{{baseUrl}}"], "path": ["messagenotification"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\"\n}" }
+          }
+        },
+        {
+          "name": "Get Current Chat",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/getcurrentchat", "host": ["{{baseUrl}}"], "path": ["getcurrentchat"] },
+            "body": { "mode": "raw", "raw": "{\n  \"modelid\": \"<other-user-id>\",\n  \"clientid\": \"<current-user-id>\"\n}" }
+          }
+        },
+        {
+          "name": "Get Message Notifications (legacy)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/getmsgnotify", "host": ["{{baseUrl}}"], "path": ["getmsgnotify"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\"\n}" }
+          }
+        },
+        {
+          "name": "Update Notify Flag (by date)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/updatenotify", "host": ["{{baseUrl}}"], "path": ["updatenotify"] },
+            "body": { "mode": "raw", "raw": "{\n  \"date\": \"<message-date>\"\n}" }
+          }
+        },
+        {
+          "name": "Send Gift (Gold)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/giftmodel", "host": ["{{baseUrl}}"], "path": ["giftmodel"] },
+            "body": { "mode": "raw", "raw": "{\n  \"modelid\": \"<model-id>\",\n  \"userid\": \"<sender-id>\",\n  \"amount\": 10\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Follow",
+      "item": [
+        {
+          "name": "Follow/Unfollow",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/follow", "host": ["{{baseUrl}}"], "path": ["follow"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\",\n  \"modelid\": \"<model-id>\"\n}" }
+          }
+        },
+        {
+          "name": "Get Followers",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/getfollowers", "host": ["{{baseUrl}}"], "path": ["getfollowers"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Posts & Reactions (basic)",
+      "item": [
+        {
+          "name": "Create Post",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/", "host": ["{{baseUrl}}"], "path": [""] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\",\n  \"content\": \"Hello!\"\n}" }
+          }
+        },
+        {
+          "name": "Get All Posts (user)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/getalluserpost", "host": ["{{baseUrl}}"], "path": ["getalluserpost"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\"\n}" }
+          }
+        }
+      ]
+    }
+  ]
+}
