@@ -9,7 +9,6 @@ const userdb = require("../../Models/userdb");
 const baneddb = require("../../Models/admindb");
 const usercompletedb = require("../../Models/usercomplete");
 let pushdb = require("../../Models/settingsdb");
-const PendingUser = require("../../Models/pendingUser");
 
 const handleNewUser = async (req, res) => {
   const firstname = req.body.firstname;
@@ -135,9 +134,9 @@ const handleNewUser = async (req, res) => {
       nickname: username,
       email: Email,
       password: hashPwd,
-      emailconfirm: "not",
+      emailconfirm: "verify",
       emailconfirmtime: "not",
-      active: false,
+      active: true,
       country: country,
       refreshtoken: "",
       age: age,
@@ -147,10 +146,10 @@ const handleNewUser = async (req, res) => {
       dob: dob,
     };
 
-    const pending = await PendingUser.create(db);
+    const user = await userdb.create(db);
 
-    // Respond success so the client doesn't hang
-    return res.status(201).json({ ok: true, message: "Registration created", pendingId: pending?._id });
+    // Respond success with created user id
+    return res.status(201).json({ ok: true, message: "User registered", userId: user?._id });
 
     //await data.databar.createDocument(data.dataid,data.colid,sdk.ID.unique(),db)
     // await forgetHandler(req, res, Email);

@@ -1,0 +1,148 @@
+{
+  "info": {
+    "_postman_id": "7c85d7b0-4d55-4c3c-9d4a-1a2d54b3d0a1",
+    "name": "MMEKO Image API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Endpoints for uploading, updating, deleting, viewing and downloading images via Appwrite proxy."
+  },
+  "item": [
+    {
+      "name": "Upload Image",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/image/save",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "image", "save"]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "image",
+              "type": "file",
+              "src": []
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Image (replace file)",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/image/update",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "image", "update"]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "publicId",
+              "type": "text",
+              "value": ""
+            },
+            {
+              "key": "image",
+              "type": "file",
+              "src": []
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Image",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"}
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/image/delete",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "image", "delete"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"publicId\": \"\"\n}"
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "View Image (proxy)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/image/view?publicId={{publicId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "image", "view"],
+          "query": [
+            {"key": "publicId", "value": "{{publicId}}"}
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get View URL (string)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/image/download?publicId={{publicId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "image", "download"],
+          "query": [
+            {"key": "publicId", "value": "{{publicId}}"}
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Download File (proxy)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/image/download-file?publicId={{publicId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "image", "download-file"],
+          "query": [
+            {"key": "publicId", "value": "{{publicId}}"}
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "File Info (permissions)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/image/info?publicId={{publicId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "image", "info"],
+          "query": [
+            {"key": "publicId", "value": "{{publicId}}"}
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3100" },
+    { "key": "publicId", "value": "" }
+  ]
+}

@@ -165,9 +165,23 @@ const os = require("os");
 const mime = require("mime-types");
 
 const createPost = async (req, res) => {
-  console.log("req.body.data", req.body.data);
-  const data = JSON.parse(req.body.data);
-  console.log("data", data);
+  console.log("incoming body keys", Object.keys(req.body || {}));
+  // Support both: JSON string in req.body.data OR plain fields in req.body
+  let data;
+  if (req.body && typeof req.body.data === "string") {
+    try {
+      data = JSON.parse(req.body.data);
+    } catch (e) {
+      return res.status(400).json({ ok: false, message: "Invalid JSON in 'data' field" });
+    }
+  } else {
+    data = {
+      userid: req.body?.userid,
+      content: req.body?.content,
+      posttype: req.body?.posttype,
+    };
+  }
+  console.log("parsed data", data);
 
   const userid = data.userid;
   let content = data.content || "";

@@ -67,8 +67,7 @@ let getBlockuser = async(req, res)=>{
     }
   }
 
-    return res.status(200).json({"ok":true,'message': 'Account Delete Success'})
-
+    return res.status(200).json({"ok":true,'message': 'Settings updated successfully'})
 
 }
 
