@@ -7,7 +7,13 @@
   },
   "variable": [
     { "key": "baseUrl", "value": "http://localhost:3100" },
-    { "key": "token", "value": "" }
+    { "key": "token", "value": "" },
+    { "key": "accessToken", "value": "" },
+    { "key": "userid", "value": "" },
+    { "key": "purchasedContentId", "value": "" },
+    { "key": "exclusiveContentId", "value": "" },
+    { "key": "modelid", "value": "" },
+    { "key": "peerid", "value": "" }
   ],
   "item": [
     {
@@ -20,6 +26,36 @@
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "url": { "raw": "{{baseUrl}}/login", "host": ["{{baseUrl}}"], "path": ["login"] },
             "body": { "mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"password\"\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let json;",
+                  "try { json = pm.response.json(); } catch (e) { json = null }",
+                  "if (json && (json.token || (json.data && json.data.token))) {",
+                  "  pm.collectionVariables.set('token', json.token || json.data.token);",
+                  "}",
+                  "if (json && (json.accessToken || (json.data && json.data.accessToken))) {",
+                  "  pm.collectionVariables.set('accessToken', json.accessToken || json.data.accessToken);",
+                  "}",
+                  "if (json && (json.userid || json.userId || (json.data && (json.data.userid || json.data.userId)))) {",
+                  "  pm.collectionVariables.set('userid', json.userid || json.userId || json.data.userid || json.data.userId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/changepassword", "host": ["{{baseUrl}}"], "path": ["changepassword"] },
+            "body": { "mode": "raw", "raw": "{\n  \"id\": \"{{userid}}\",\n  \"password\": \"NewStrongPassword123!\",\n  \"isuser\": true\n}" }
           }
         },
         {
@@ -135,6 +171,31 @@
           }
         },
         {
+          "name": "Update Settings (with Push Subscription)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/setting", "host": ["{{baseUrl}}"], "path": ["setting"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\",\n  \"pushnot\": true,\n  \"subinfo\": {\n    \"endpoint\": \"https://example.com/endpoint\",\n    \"keys\": {\n      \"p256dh\": \"<key>\",\n      \"auth\": \"<auth>\"\n    }\n  }\n}" }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Settings updated', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "  let json; try { json = pm.response.json(); } catch (e) { json = {}; }",
+                  "  pm.expect(json.ok).to.eql(true);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Delete Account",
           "request": {
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
@@ -192,37 +253,37 @@
         {
           "name": "Message Notifications (merged)",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
             "method": "PUT",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "url": { "raw": "{{baseUrl}}/messagenotification", "host": ["{{baseUrl}}"], "path": ["messagenotification"] },
-            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\"\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\"\n}" }
           }
         },
         {
           "name": "Get Current Chat",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
             "method": "PUT",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "url": { "raw": "{{baseUrl}}/getcurrentchat", "host": ["{{baseUrl}}"], "path": ["getcurrentchat"] },
-            "body": { "mode": "raw", "raw": "{\n  \"modelid\": \"<other-user-id>\",\n  \"clientid\": \"<current-user-id>\"\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"modelid\": \"{{peerid}}\",\n  \"clientid\": \"{{userid}}\"\n}" }
           }
         },
         {
           "name": "Get Message Notifications (legacy)",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
             "method": "PUT",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "url": { "raw": "{{baseUrl}}/getmsgnotify", "host": ["{{baseUrl}}"], "path": ["getmsgnotify"] },
-            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\"\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\"\n}" }
           }
         },
         {
           "name": "Update Notify Flag (by date)",
           "request": {
-            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{accessToken}}", "type": "string" }] },
             "method": "PUT",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "url": { "raw": "{{baseUrl}}/updatenotify", "host": ["{{baseUrl}}"], "path": ["updatenotify"] },
@@ -237,6 +298,40 @@
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "url": { "raw": "{{baseUrl}}/giftmodel", "host": ["{{baseUrl}}"], "path": ["giftmodel"] },
             "body": { "mode": "raw", "raw": "{\n  \"modelid\": \"<model-id>\",\n  \"userid\": \"<sender-id>\",\n  \"amount\": 10\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Model",
+      "item": [
+        {
+          "name": "Create Model (Multipart with Refresh Token)",
+          "request": {
+            "method": "PUT",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [
+              { "key": "x-refresh-token", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "data", "type": "text", "value": "{\n  \"userid\": \"{{userid}}\",\n  \"name\": \"My Model Name\",\n  \"age\": \"25\",\n  \"location\": \"NY\",\n  \"price\": \"100\",\n  \"duration\": \"1h\",\n  \"bodytype\": \"average\",\n  \"smoke\": \"no\",\n  \"drink\": \"no\",\n  \"interestedin\": [\"women\"],\n  \"height\": \"170\",\n  \"weight\": \"65\",\n  \"description\": \"About me\",\n  \"gender\": \"female\",\n  \"timeava\": [\"evenings\"],\n  \"daysava\": [\"weekdays\"],\n  \"hosttype\": \"host\"\n}" },
+                { "key": "token", "type": "text", "value": "{{token}}" },
+                { "key": "doc1", "type": "file", "src": [] },
+                { "key": "doc2", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/model", "host": ["{{baseUrl}}"], "path": ["model"] }
+          }
+        },
+        {
+          "name": "Get My Model",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/model", "host": ["{{baseUrl}}"], "path": ["model"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\"\n}" }
           }
         }
       ]
@@ -286,6 +381,84 @@
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "url": { "raw": "{{baseUrl}}/getalluserpost", "host": ["{{baseUrl}}"], "path": ["getalluserpost"] },
             "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\"\n}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Collections",
+      "item": [
+        {
+          "name": "Get Collections (Content + Crush)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/exclusivecontent", "host": ["{{baseUrl}}"], "path": ["exclusivecontent"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\",\n  \"token\": \"{{token}}\"\n}" },
+            "description": "Returns data.data.allcontent and data.data.allcrush"
+          }
+        },
+        {
+          "name": "Delete Purchased Content",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/exclusivecontent", "host": ["{{baseUrl}}"], "path": ["exclusivecontent"] },
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{token}}\",\n  \"id\": \"{{purchasedContentId}}\"\n}" },
+            "description": "Deletes a purchased content item by its id"
+          }
+        },
+        {
+          "name": "Create Exclusive Content (Multipart)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PUT",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "data", "type": "text", "value": "{\"contentname\":\"Sample Name\",\"price\":25,\"content_type\":\"image\",\"userid\":\"{{userid}}\"}" },
+                { "key": "token", "type": "text", "value": "{{token}}" },
+                { "key": "contentlink", "type": "file", "src": [] },
+                { "key": "thumbnaillink", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/exclusive", "host": ["{{baseUrl}}"], "path": ["exclusive"] },
+            "description": "Multipart create"
+          }
+        },
+        {
+          "name": "Buy Exclusive Content",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/exclusive", "host": ["{{baseUrl}}"], "path": ["exclusive"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\",\n  \"token\": \"{{token}}\",\n  \"contentid\": \"{{exclusiveContentId}}\"\n}" },
+            "description": "Matches buy_exclusive_content in profile.js"
+          }
+        },
+        {
+          "name": "Delete Exclusive Content (Creator)",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "PATCH",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/exclusive", "host": ["{{baseUrl}}"], "path": ["exclusive"] },
+            "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{token}}\",\n  \"contentid\": \"{{exclusiveContentId}}\"\n}" },
+            "description": "Matches delete_exclusive_content in profile.js"
+          }
+        },
+        {
+          "name": "Remove Crush",
+          "request": {
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/deletecrush", "host": ["{{baseUrl}}"], "path": ["deletecrush"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\",\n  \"token\": \"{{token}}\",\n  \"modelid\": \"{{modelid}}\"\n}" },
+            "description": "Matches remove_Crush in modelSlice.js"
           }
         }
       ]
