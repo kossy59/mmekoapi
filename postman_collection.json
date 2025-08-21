@@ -333,6 +333,61 @@
             "url": { "raw": "{{baseUrl}}/model", "host": ["{{baseUrl}}"], "path": ["model"] },
             "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\"\n}" }
           }
+        },
+        {
+          "name": "Get My Models (All)",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/model/all", "host": ["{{baseUrl}}"], "path": ["model","all"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\"\n}" }
+          }
+        },
+        {
+          "name": "Edit Model (Multipart)",
+          "request": {
+            "method": "POST",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "data", "type": "text", "value": "{\n  \"userid\": \"{{userid}}\",\n  \"modelid\": \"{{modelid}}\",\n  \"name\": \"Updated Name\",\n  \"price\": \"120\"\n}" },
+                { "key": "token", "type": "text", "value": "{{token}}" },
+                { "key": "doc1", "type": "file", "src": [] },
+                { "key": "doc2", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/editmodel", "host": ["{{baseUrl}}"], "path": ["editmodel"] }
+          }
+        },
+        {
+          "name": "Post Documents (Multipart with Refresh Token)",
+          "request": {
+            "method": "PUT",
+            "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
+            "header": [
+              { "key": "x-refresh-token", "value": "{{token}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "data", "type": "text", "value": "{\n  \"userid\": \"{{userid}}\",\n  \"firstname\": \"Jane\",\n  \"lastname\": \"Doe\",\n  \"email\": \"jane@example.com\",\n  \"dob\": \"1995-05-05\",\n  \"country\": \"US\",\n  \"city\": \"NYC\",\n  \"address\": \"123 St\",\n  \"documentType\": \"passport\",\n  \"idexpire\": \"2030-01-01\"\n}" },
+                { "key": "token", "type": "text", "value": "{{token}}" },
+                { "key": "holdingIdPhotofile", "type": "file", "src": [] },
+                { "key": "idPhotofile", "type": "file", "src": [] }
+              ]
+            },
+            "url": { "raw": "{{baseUrl}}/postdocument", "host": ["{{baseUrl}}"], "path": ["postdocument"] }
+          }
+        },
+        {
+          "name": "Delete Model",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/deletemodel", "host": ["{{baseUrl}}"], "path": ["deletemodel"] },
+            "body": { "mode": "raw", "raw": "{\n  \"hostid\": \"{{modelid}}\"\n}" }
+          }
         }
       ]
     },
@@ -459,6 +514,101 @@
             "url": { "raw": "{{baseUrl}}/deletecrush", "host": ["{{baseUrl}}"], "path": ["deletecrush"] },
             "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\",\n  \"token\": \"{{token}}\",\n  \"modelid\": \"{{modelid}}\"\n}" },
             "description": "Matches remove_Crush in modelSlice.js"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Get Hosts for Admin",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/getadminhost", "host": ["{{baseUrl}}"], "path": ["getadminhost"] },
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        },
+        {
+          "name": "Verify Model",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/verifymodel", "host": ["{{baseUrl}}"], "path": ["verifymodel"] },
+            "body": { "mode": "raw", "raw": "{\n  \"modelid\": \"{{modelid}}\"\n}" }
+          }
+        },
+        {
+          "name": "Reject Model",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/rejectmodel", "host": ["{{baseUrl}}"], "path": ["rejectmodel"] },
+            "body": { "mode": "raw", "raw": "{\n  \"modelid\": \"{{modelid}}\",\n  \"reason\": \"<reason>\"\n}" }
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/getallusers", "host": ["{{baseUrl}}"], "path": ["getallusers"] },
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/deleteuser", "host": ["{{baseUrl}}"], "path": ["deleteuser"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\"\n}" }
+          }
+        },
+        {
+          "name": "Suspend User",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/suspenduser", "host": ["{{baseUrl}}"], "path": ["suspenduser"] },
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\"\n}" }
+          }
+        },
+        {
+          "name": "Send Admin Message",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/sendmessages", "host": ["{{baseUrl}}"], "path": ["sendmessages"] },
+            "body": { "mode": "raw", "raw": "{\n  \"toid\": \"<user-id>\",\n  \"message\": \"<message>\"\n}" }
+          }
+        },
+        {
+          "name": "Receive Admin Messages",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/recivemessage", "host": ["{{baseUrl}}"], "path": ["recivemessage"] },
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        },
+        {
+          "name": "Admin Notifications",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/adminnotify", "host": ["{{baseUrl}}"], "path": ["adminnotify"] },
+            "body": { "mode": "raw", "raw": "{}" }
+          }
+        },
+        {
+          "name": "Delete Admin Message",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "url": { "raw": "{{baseUrl}}/deleteMsg", "host": ["{{baseUrl}}"], "path": ["deleteMsg"] },
+            "body": { "mode": "raw", "raw": "{\n  \"msgid\": \"<message-id>\"\n}" }
           }
         }
       ]

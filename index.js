@@ -520,6 +520,7 @@ app.use("/getverifymodel", require("./routes/api/model/getlivemodel"));
 app.use("/getmodelbyid", require("./routes/api/model/getmodelbyid"));
 app.use("/searchuser", require("./routes/api/profile/getallUser"));
 app.use("/post", require("./routes/api/post/Post"));
+app.use("/model/all", require("./routes/api/model/mymodels"));
 app.use("/addpayment", require("./routes/api/payment/payment.routes"));
 app.use("/withdraw-request", require("./routes/api/withdrawRequest/withdraw.route"));
 app.use("/editmoreprofile", require("./routes/api/Profilemore/editprofilemore"));
