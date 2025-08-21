@@ -318,8 +318,8 @@
               "formdata": [
                 { "key": "data", "type": "text", "value": "{\n  \"userid\": \"{{userid}}\",\n  \"name\": \"My Model Name\",\n  \"age\": \"25\",\n  \"location\": \"NY\",\n  \"price\": \"100\",\n  \"duration\": \"1h\",\n  \"bodytype\": \"average\",\n  \"smoke\": \"no\",\n  \"drink\": \"no\",\n  \"interestedin\": [\"women\"],\n  \"height\": \"170\",\n  \"weight\": \"65\",\n  \"description\": \"About me\",\n  \"gender\": \"female\",\n  \"timeava\": [\"evenings\"],\n  \"daysava\": [\"weekdays\"],\n  \"hosttype\": \"host\"\n}" },
                 { "key": "token", "type": "text", "value": "{{token}}" },
-                { "key": "doc1", "type": "file", "src": [] },
-                { "key": "doc2", "type": "file", "src": [] }
+                { "key": "image1", "type": "file", "src": [] },
+                { "key": "image2", "type": "file", "src": [] }
               ]
             },
             "url": { "raw": "{{baseUrl}}/model", "host": ["{{baseUrl}}"], "path": ["model"] }
@@ -353,8 +353,8 @@
               "formdata": [
                 { "key": "data", "type": "text", "value": "{\n  \"userid\": \"{{userid}}\",\n  \"modelid\": \"{{modelid}}\",\n  \"name\": \"Updated Name\",\n  \"price\": \"120\"\n}" },
                 { "key": "token", "type": "text", "value": "{{token}}" },
-                { "key": "doc1", "type": "file", "src": [] },
-                { "key": "doc2", "type": "file", "src": [] }
+                { "key": "image1", "type": "file", "src": [] },
+                { "key": "image2", "type": "file", "src": [] }
               ]
             },
             "url": { "raw": "{{baseUrl}}/editmodel", "host": ["{{baseUrl}}"], "path": ["editmodel"] }
