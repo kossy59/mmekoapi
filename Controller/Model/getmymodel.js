@@ -31,6 +31,7 @@ const getMyModel = async (req, res) => {
       return {
         hostid: model._id,
         photolink,
+        modelfiles: model.modelfiles, // expose full file info for debugging/clients
         verify: model.verify,
         name: model.name,
         age: model.age,

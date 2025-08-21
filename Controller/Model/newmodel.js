@@ -58,24 +58,42 @@ const createModel = async (req, res) => {
   }
 
   /**
-   * This implementation allows for in memory file upload manipulation
-   * This prevents accessing the filesystem of the hosted server
+   * Validate incoming files and upload using in-memory buffers
    */
-  const results = (await uploadManyFilesToCloudinary(req.files, `model`)) || [];
+  const filesCount = Array.isArray(req.files) ? req.files.length : 0;
+  console.log("[createModel] Incoming files count:", filesCount);
+
+  if (!filesCount) {
+    return res.status(400).json({
+      ok: false,
+      message: "No files uploaded. Please attach at least one image file.",
+    });
+  }
+
+  // Use default APPWRITE_BUCKET_ID (from env) by not overriding folder
+  const results = (await uploadManyFilesToCloudinary(req.files)) || [];
 
   console.log("Uploader Succeded, Probably");
 
   let modelfiles = [];
 
-  // Clean up uploaded file for database storage
-
-  const databaseReady = results.map((result) => {
-    return {
-      modelfilelink: result.file_link,
-      modelfilepublicid: result.public_id,
-    };
-  });
+  // Clean up uploaded file for database storage, filter failed uploads
+  const databaseReady = results
+    .filter((result) => result && result.public_id && result.file_link)
+    .map((result) => {
+      return {
+        modelfilelink: result.file_link,
+        modelfilepublicid: result.public_id,
+      };
+    });
   modelfiles = databaseReady;
+
+  if (!modelfiles.length) {
+    return res.status(400).json({
+      ok: false,
+      message: "File upload failed. Please try again with valid image files.",
+    });
+  }
 
   console.log("modelfiles: ", modelfiles);
 
