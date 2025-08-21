@@ -51,7 +51,7 @@ const updatePost = async (req,res)=>{
     })
     })
 
-  return res.status(200).json({"ok":true,"message":`Post updated Successfully`, users: alluser})
+  return res.status(200).json({"ok":true,"message":`Fetched all users Successfully`, users: alluser})
 
 
 }catch(err){
