@@ -181,14 +181,13 @@ const createPost = async (req, res) => {
       posttype: req.body?.posttype,
     };
   }
-  console.log("parsed data", data);
 
   const userid = data.userid;
   let content = data.content || "";
   const posttype = data.posttype;
 
-  let postfilelink = "";
-  let postfilepublicid = "";
+  let postfilelink = req.body?.file_link||"";
+  let postfilepublicid = req.body?.public_id||"";
 
   try {
     // --- Video Upload & Trimming ---
@@ -197,49 +196,50 @@ const createPost = async (req, res) => {
         return res.status(400).json({ ok: false, message: "Invalid video file" });
       }
 
-      const tempDir = os.tmpdir();
-      const originalExt = mime.extension(req.file.mimetype);
-      const inputPath = path.join(tempDir, `input-${Date.now()}.${originalExt}`);
-      const outputPath = path.join(tempDir, `trimmed-${Date.now()}.mp4`);
+      // const tempDir = os.tmpdir();
+      // const originalExt = mime.extension(req.file.mimetype);
+      // const inputPath = path.join(tempDir, `input-${Date.now()}.${originalExt}`);
+      // const outputPath = path.join(tempDir, `trimmed-${Date.now()}.mp4`);
 
       // Write uploaded buffer to disk
-      fs.writeFileSync(inputPath, req.file.buffer);
+      // fs.writeFileSync(inputPath, req.file.buffer);
 
       // Trim video to 3 minutes
-      await new Promise((resolve, reject) => {
-        ffmpeg(inputPath)
-          .setStartTime("00:00:00")
-          .setDuration(180)
-          .videoCodec("libx264")
-          .audioCodec("aac")
-          .format("mp4")
-          .outputOptions([
-            "-preset veryfast",
-            "-movflags +faststart"
-          ])
-          .output(outputPath)
-          .on("end", resolve)
-          .on("error", (err) => {
-            console.error("FFmpeg error:", err.message);
-            reject(err);
-          })
-          .run();
-      });
+      // await new Promise((resolve, reject) => {
+      //   ffmpeg(inputPath)
+      //     .setStartTime("00:00:00")
+      //     .setDuration(180)
+      //     .videoCodec("libx264")
+      //     .audioCodec("aac")
+      //     .format("mp4")
+      //     .outputOptions([
+      //       "-preset veryfast",
+      //       "-movflags +faststart"
+      //     ])
+      //     .output(outputPath)
+      //     .on("end", resolve)
+      //     .on("error", (err) => {
+      //       console.error("FFmpeg error:", err.message);
+      //       reject(err);
+      //     })
+      //     .run();
+      // });
 
       // Read trimmed video into buffer
-      const trimmedBuffer = fs.readFileSync(outputPath);
-      const trimmedFile = {
-        originalname: req.file.originalname.replace(/\.\w+$/, ".mp4"),
-        mimetype: "video/mp4",
-        buffer: trimmedBuffer,
-      };
+      // const trimmedBuffer = fs.readFileSync(outputPath);
+      // const trimmedFile = {
+      //   originalname: req.file.originalname.replace(/\.\w+$/, ".mp4"),
+      //   mimetype: "video/mp4",
+      //   buffer: trimmedBuffer,
+      // };
 
       // Upload to Cloudinary
-      const result = await uploadSingleFileToCloudinary(trimmedFile, `post`);
+      // const result = await uploadSingleFileToCloudinary(trimmedFile, `post`);
+      const result = {...(req.body||{})};
 
       // Clean up
-      fs.unlinkSync(inputPath);
-      fs.unlinkSync(outputPath);
+      // fs.unlinkSync(inputPath);
+      // fs.unlinkSync(outputPath);
 
       if (!result.file_link || !result.public_id) {
         return res.status(500).json({ ok: false, message: "Upload failed" });
@@ -251,11 +251,11 @@ const createPost = async (req, res) => {
 
     // --- Image Upload ---
 if (req.file && posttype === "image") {
-  if (!req.file.mimetype.startsWith("image/")) {
-    return res.status(400).json({ ok: false, message: "Invalid image file" });
-  }
+  // if (!req.file.mimetype.startsWith("image/")) {
+  //   return res.status(400).json({ ok: false, message: "Invalid image file" });
+  // }
 
-  const result = await uploadSingleFileToCloudinary(req.file, "post");
+  const result = { ...(req.body || {}) };;
 
   if (!result.file_link || !result.public_id) {
     return res.status(500).json({ ok: false, message: "Image upload failed" });
