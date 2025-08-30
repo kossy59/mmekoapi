@@ -195,6 +195,7 @@ async function uploadSingleFileToCloudinary(file, folder = BUCKET_ID) {
       console.log("Compressing image...");
       processedBuffer = await compressImage(file.buffer);
     }
+    console.log("Processed buffer size:", processedBuffer.length);
 
     // Build REST multipart form-data
     const form = new FormData();

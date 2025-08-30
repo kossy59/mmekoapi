@@ -26,105 +26,84 @@ const readPost = async (req, res) => {
 
     // let  likedb = await data.databar.listDocuments(data.dataid,data.likeCol)
 
-    let postdb = await postdbs.find().exec();
-    let userdb = await userdbs.find().exec();
-    let comdb = await comdbs.find().exec();
-    let commentdb = await commentdbs.find().exec();
-    let likedb = await likedbs.find().exec();
-    let following = await followdb.find({}).exec();
+
+    const posts = await postdbs.aggregate([
+      // make ObjectId copy of userid for joins
+      {
+        $addFields: {
+          useridObj: { $toObjectId: "$userid" }
+        }
+      },
+
+      // join with users
+      {
+        $lookup: {
+          from: "userdbs", // your users collection name
+          localField: "useridObj",
+          foreignField: "_id",
+          as: "user"
+        }
+      },
+      { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+
+      // join with likes
+      {
+        $lookup: {
+          from: "likes", // your Like model collection
+          localField: "_id",
+          foreignField: "postid",
+          as: "likes"
+        }
+      },
+
+      // join with comments
+      {
+        $lookup: {
+          from: "comments", // your Comment model collection
+          localField: "_id",
+          foreignField: "postid",
+          as: "comments"
+        }
+      },
+      {
+        $project: {
+          userid: 1,
+          postfilelink: 1,
+          postfilepublicid: 1,
+          posttime: 1,
+          content: 1,
+          posttype: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          likes: 1,
+          comments: 1,
+          user: {
+            _id: 1,
+            firstname: 1,
+            lastname: 1,
+            nickname: 1,
+            gender: 1,
+            country: 1,
+            age: 1,
+            followers: 1,
+            following: 1,
+            isModel: 1,
+            modelId: 1,
+            exclusive_verify: 1
+          }
+        }
+      }
+    ]);
+    // let userdb = await userdbs.find().exec();
+    // let comdb = await comdbs.find().exec();
+    // let commentdb = await commentdbs.find().exec();
+    // let likedb = await likedbs.find().exec();
+    // let following = await followdb.find({}).exec();
 
     alldelete();
-
-    //console.log("number of post "+postdb.length)
-
-    let post = [];
-
-    for (let i = 0; i < postdb.length; i++) {
-      // console.log("list of post userid id "+ postdb[i].userid)
-      for (let j = 0; j < userdb.length; j++) {
-        //console.log("list of userdb id "+ userdb[j]._id)
-
-        for (let k = 0; k < comdb.length; k++) {
-          //console.log("list of comdb id "+ comdb[k].useraccountId)
-
-          if (
-            String(postdb[i].userid) === String(userdb[j]._id) &&
-            String(comdb[k].useraccountId) === String(userdb[j]._id)
-          ) {
-            //console.log("inside getting post")
-
-            let userpoto = "";
-
-            if (comdb[k].photoLink) {
-              userpoto = comdb[k].photoLink;
-            }
-
-            //   let isFollowing = following.find((value) => {
-            //     return (
-            //       String(value.userid) === String(postdb[i].userid) &&
-            //       String(value.followerid) === String(userid)
-            //     );
-            //   });
-
-            //   if (isFollowing) {
-            //     isfollow = true;
-            //   }
-
-            let con = {
-              username: `${userdb[j].firstname} ${userdb[j].lastname}`,
-              nickname: `${userdb[j].nickname}`,
-              userphoto: `${userpoto}`,
-              content: `${postdb[i].content}`,
-              postphoto: `${postdb[i].postfilelink}`,
-              posttime: `${postdb[i].posttime}`,
-              posttype: `${postdb[i].posttype}`,
-              postid: `${postdb[i]._id}`,
-              active: userdb[j].active,
-              like: [],
-              comment: [],
-              userid: userdb[j]._id,
-              followers: userdb[j]?.followers || [],
-            };
-            // console.log("post time "+con.posttime)
-
-            post.push(con);
-          }
-        }
-      }
-    }
-
-    //console.log("list of un verifyied post "+post.length)
-
-    for (let i = 0; i < post.length; i++) {
-      if (commentdb.length <= 0) {
-        continue;
-      } else {
-        for (let j = 0; j < commentdb.length; j++) {
-          if (post[i].postid === commentdb[j].postid) {
-            post[i].comment.push(commentdb[j]);
-          }
-        }
-      }
-    }
-
-    console.log(commentdb.length);
-    for (let i = 0; i < post.length; i++) {
-      if (likedb.length <= 0) {
-        continue;
-      } else {
-        for (let j = 0; j < likedb.length; j++) {
-          if (post[i].postid === likedb[j].postid) {
-            post[i].like.push(likedb[j]);
-          }
-        }
-      }
-    }
-
-    //console.log("list of post"+post.length)
-    post.reverse();
     return res
       .status(200)
-      .json({ ok: true, message: `Enter new password`, post: post });
+      .json({ ok: true, message: `Enter new password`, post: posts.reverse() });
   } catch (err) {
     console.log(err);
     return res.status(500).json({ ok: false, message: `${err.message}!` });

@@ -19,41 +19,48 @@ const BUCKET_ID = process.env.APPWRITE_BUCKET_ID || '68a1daf0002128242c30';
 const APPWRITE_API_KEY = process.env.APPWRITE_API_KEY || '';
 
 // POST route to upload an image and save it to Cloudinary
-router.post('/save', upload.single('image'), async (req, res) => {
-  try {
-    const file = req.file;  // Access uploaded file
-    if (!file) {
-      return res.status(400).json({ error: 'No file uploaded.' });
+router.post(
+  "/save",
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "video", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const file = req.files?.image?.[0] || req.files?.video?.[0];
+      if (!file) {
+        return res.status(400).json({ error: "No file uploaded." });
+      }
+
+      console.log("File received:", file);
+
+      const result = await uploadSingleFileToCloudinary(file);
+      console.log("Upload result:", result);
+      const publicId = result?.public_id;
+
+      if (!publicId) {
+        return res
+          .status(500)
+          .json({ error: "Failed to receive public_id from Appwrite" });
+      }
+
+      const baseUrl = `${req.protocol}://${req.get("host")}`;
+      const posttype = req.files?.image ? "image" : "video";
+      const proxy_view = `${baseUrl}/api/${posttype}/view?publicId=${publicId}`;
+      const proxy_download = `${baseUrl}/api/${posttype}/download-file?publicId=${publicId}`;
+
+      res.json({
+        public_id: publicId,
+        file_link: result?.file_link,
+        proxy_view,
+        proxy_download,
+      });
+    } catch (err) {
+      console.error("Error uploading file:", err);
+      res.status(500).json({ error: err.message });
     }
-
-    // Log the file object to check if the file is being uploaded
-    console.log("File received:", file);
-
-    // Upload image and get the public_id
-    const result = await uploadSingleFileToCloudinary(file);
-    const publicId = result?.public_id;
-
-    // Check if public_id is received
-    if (!publicId) {
-      console.error('Upload returned empty public_id. Service result:', result);
-      return res.status(500).json({ error: 'Failed to receive public_id from Appwrite' });
-    }
-
-    // Log the result of saveImage to verify
-    console.log("Appwrite response public_id:", publicId);
-
-    // Build proxy URLs for frontend usage
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const proxy_view = `${baseUrl}/api/image/view?publicId=${publicId}`;
-    const proxy_download = `${baseUrl}/api/image/download-file?publicId=${publicId}`;
-
-    // Return the public_id and URLs in the response
-    res.json({ public_id: publicId, file_link: result?.file_link, proxy_view, proxy_download });
-  } catch (err) {
-    console.error("Error uploading image:", err);
-    res.status(500).json({ error: err.message });
   }
-});
+);
 
 // GET route to fetch file metadata (checks permissions). Server-side only.
 router.get('/info', async (req, res) => {

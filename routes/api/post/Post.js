@@ -68,9 +68,9 @@ const upload = multer({ storage });
  */
 router
   .route("/")
-  .put(upload.single("postFile"), createPost)
-  .post(editPost)
-  .patch(deletePost);
+  .post(upload.single("postFile"), createPost)
+  .put(editPost)
+  .delete(deletePost);
 
 module.exports = router;
 
