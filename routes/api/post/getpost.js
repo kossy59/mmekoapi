@@ -137,7 +137,7 @@ router.route('/:pid')
             thePost?.postfilepublicid && (await deleteFile(thePost?.postfilepublicid, "post"));
             const del = await postdbs.deleteOne({ "_id": req.params.pid });
             if (del.deletedCount === 0) {
-                return res.status(404).send("No such post found");
+                return res.status(404).send("No such post");
             }
             res.status(200).json({ message: "Post deleted", result: del });
         } catch (err) {

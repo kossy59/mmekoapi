@@ -1,6 +1,6 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
-let documentdb = require("../../Models/document")
+const models = require("../../Models/models")
 let photodb = require("../../Models/usercomplete")
 let userdb = require("../../Models/userdb")
 
@@ -17,10 +17,10 @@ const createModel = async (req,res)=>{
 
     try{
         let host = []
-        let unverify_host = await documentdb.find({}).exec()
-        
+        let unverify_host = await models.find({}).exec()
+        console.log("unverify_host",unverify_host)
         let list_of_host = unverify_host.filter(value=>{
-            return value.verify === false
+            return !value.exclusive_verify
         })
 
         let image1 = await photodb.find({}).exec()
@@ -60,8 +60,6 @@ const createModel = async (req,res)=>{
                 id:value._id,
                 username,
                 address:value.address
-
-
             }
             host.push(data)
         })
