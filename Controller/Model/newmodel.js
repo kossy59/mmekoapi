@@ -108,7 +108,7 @@ const createModel = async (req, res) => {
     const model = {
       userid,
       modelfiles: databaseReady,
-      verify: "live",
+      verify: false,
       name,
       age,
       location,
