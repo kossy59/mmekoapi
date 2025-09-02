@@ -14,7 +14,7 @@ const upload = multer({ storage });
  * Without this, authorization fails!
  */
 router.route('/')
-.put(upload.any(), handleRefresh, createmodel)
+.put(upload.any(),/** handleRefresh ,*/ createmodel)
 .post(getmymodel)
 
 

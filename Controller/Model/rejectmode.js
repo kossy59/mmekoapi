@@ -1,6 +1,5 @@
-let userdb = require("../../Models/userdb")
-let documentdb = require("../../Models/document")
-let admindb = require("../../Models/admindb")
+let admindb = require("../../Models/admindb");
+const models = require("../../Models/models");
 
 const createModel = async (req,res)=>{
 
@@ -14,7 +13,7 @@ const createModel = async (req,res)=>{
  
     try{
       
-      await documentdb.deleteOne({_id:docID}).exec()
+      await models.deleteOne({_id:req.body.id}).exec()
 
       let respond = {
         userid:userid,

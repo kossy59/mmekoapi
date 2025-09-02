@@ -6,7 +6,7 @@ const { uploadManyFilesToCloudinary } = require("../../utiils/appwrite");
 
 const createModel = async (req, res) => {
   console.log("req.body.data", req.body.data);
-  const data = JSON.parse(req.body.data);
+  const data = req.body
   console.log("data", data);
 
   // if (!req.files || req.files.length !== 2) {
@@ -108,7 +108,7 @@ const createModel = async (req, res) => {
     const model = {
       userid,
       modelfiles: databaseReady,
-      verify: "live",
+      verify: false,
       name,
       age,
       location,
