@@ -48,7 +48,7 @@ const createLike = async (req,res)=>{
                date: `${Date.now().toString()}`
             }
 
-            if(total < 0 || total === 0 ) {
+            if (total < 0 || total === 0) {
                 return res.status(400).json({"ok":false,'message': 'insuffciate balance!!'})
             }
               

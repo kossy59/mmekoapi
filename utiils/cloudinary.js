@@ -215,7 +215,7 @@ const updateManyFileToCloudinary = async (publicIds, files, folder = "assets") =
   // Upload the new image
   return await uploadManyFilesToCloudinary(files, folder);
 }
-
+ 
 // Generate download URL
 const downloadFile = (publicId) => {
   return cloudinary.url(publicId, {
