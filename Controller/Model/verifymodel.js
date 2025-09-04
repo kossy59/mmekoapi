@@ -1,6 +1,7 @@
 let userdb = require("../../Models/userdb");
 let documentdb = require("../../Models/document");
 let admindb = require("../../Models/admindb");
+const models = require("../../Models/models");
 
 const createModel = async (req, res) => {
   const userid = req.body.userid;
@@ -15,6 +16,11 @@ const createModel = async (req, res) => {
 
     user.exclusive_verify = true;
     await user.save();
+    const theModel= await models.findOne({userid:userid}).exec();
+    if(theModel){
+      theModel.verify="live"
+      await theModel.save()
+    }
 
     await documentdb.deleteOne({ _id: docID }).exec();
 

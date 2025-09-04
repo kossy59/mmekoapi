@@ -1,281 +1,213 @@
+/**
+ * Appwrite Storage Helper (buffers + optional media processing)
+ * Works with REST uploads for reliability across node-appwrite versions.
+ */
+
 const sdk = require("node-appwrite");
-const { InputFile } = require("node-appwrite");
 const axios = require("axios");
 const FormData = require("form-data");
-const crypto = require("crypto");
 const { Readable } = require("stream");
 const fs = require("fs");
 const path = require("path");
-const { exec } = require("child_process");
 
 const { processVideo, compressImage } = require("./compress");
 
-const ENDPOINT = "https://cloud.appwrite.io/v1";
-const PROJECT_ID = process.env.APPWRITE_PROJECT_ID || "668f9f8c0011a761d118"; // Set your project id
-const APPWRITE_API_KEY =
-  process.env.APPWRITE_API_KEY ||
-  "standard_fbd7281db90f58951bb0ca146bfa7cc47c4307892be077e95a7d16983a006e694428a355ce72ea99fea67a0e204f227f193f2f8c401c142424dbf6ff6a831348aabbb281a502bc1f8ea116f95b0d2ecf16ee5dc8d4e003855073d9cbfd4ac3ddbdc7623e1946163ad65b46f1a75757846e74cda7a4ac91fd6e026fe637c32ab2";
+// -----------------------------
+// Configuration (env required)
+// -----------------------------
+const ENDPOINT = process.env.APPWRITE_ENDPOINT || "https://cloud.appwrite.io/v1";
+const PROJECT_ID = process.env.APPWRITE_PROJECT_ID;  // required
+const APPWRITE_API_KEY = process.env.APPWRITE_API_KEY; // required
+const BUCKET_ID = process.env.APPWRITE_BUCKET_ID || "post"; 
 
+if (!PROJECT_ID || !APPWRITE_API_KEY || !BUCKET_ID) {
+  // Fail fast so you notice misconfigurations early.
+  throw new Error(
+    "[Appwrite Config] Missing one of APPWRITE_PROJECT_ID / APPWRITE_API_KEY / APPWRITE_BUCKET_ID env vars."
+  );
+}
+
+// -----------------------------
+// Appwrite SDK client (for non-upload ops + quick URLs)
+// -----------------------------
 const client = new sdk.Client()
   .setEndpoint(ENDPOINT)
   .setProject(PROJECT_ID)
   .setKey(APPWRITE_API_KEY);
 
 const storage = new sdk.Storage(client);
-// Bucket ID: set via env var to avoid 404 bucket not found
-const BUCKET_ID = process.env.APPWRITE_BUCKET_ID || "68a1daf0002128242c30"; // Your actual bucket ID
-console.log("[DEBUG] Using BUCKET_ID:", BUCKET_ID, "from env:", process.env.APPWRITE_BUCKET_ID);
 
-function getFileViewUrl(fileId, folder = BUCKET_ID) {
-  return `https://cloud.appwrite.io/v1/storage/buckets/${folder}/files/${fileId}/view?project=${PROJECT_ID}`;
-}
+// -----------------------------
+// Utils
+// -----------------------------
+const getFileViewUrl = (fileId, bucket = BUCKET_ID) =>
+  `${ENDPOINT}/storage/buckets/${bucket}/files/${fileId}/view?project=${PROJECT_ID}`;
 
-// Ensure temp directory exists
+const getFileDownloadUrl = (fileId, bucket = BUCKET_ID) =>
+  `${ENDPOINT}/storage/buckets/${bucket}/files/${fileId}/download?project=${PROJECT_ID}`;
+
+const restHeaders = (extra = {}) => ({
+  ...extra,
+  "X-Appwrite-Project": PROJECT_ID,
+  "X-Appwrite-Key": APPWRITE_API_KEY,
+});
+
 const ensureTempDir = () => {
-  const tempDir = path.join(__dirname, "..", "temp");
-  if (!fs.existsSync(tempDir)) {
-    fs.mkdirSync(tempDir, { recursive: true });
-    console.log("[ensureTempDir] Created temp dir:", tempDir);
-  } else {
-    console.log("[ensureTempDir] Temp dir exists:", tempDir);
-  }
-  return tempDir;
+  const dir = path.join(__dirname, "..", "temp");
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  return dir;
 };
 
-// Build an Appwrite-compatible file payload across SDK versions
-function toAppwriteFile(buffer, filename) {
-  try {
-    if (InputFile && typeof InputFile.fromBuffer === "function") {
-      console.log("[toAppwriteFile] Using InputFile.fromBuffer (node-appwrite)");
-      return InputFile.fromBuffer(buffer, filename);
-    }
-    if (InputFile && typeof InputFile.fromStream === "function") {
-      console.log("[toAppwriteFile] Using InputFile.fromStream (node-appwrite)");
-      const readable = Readable.from(buffer);
-      return InputFile.fromStream(readable, filename, buffer.length);
-    }
-  } catch (_) {}
-  try {
-    if (sdk.InputFile && typeof sdk.InputFile.fromBuffer === "function") {
-      console.log("[toAppwriteFile] Using sdk.InputFile.fromBuffer");
-      return sdk.InputFile.fromBuffer(buffer, filename);
-    }
-    if (sdk.InputFile && typeof sdk.InputFile.fromStream === "function") {
-      console.log("[toAppwriteFile] Using sdk.InputFile.fromStream");
-      const readable = Readable.from(buffer);
-      return sdk.InputFile.fromStream(readable, filename, buffer.length);
-    }
-  } catch (_) {}
+// Cache bucket existence to avoid repeated API calls
+let _bucketChecked = false;
 
-  // Fallback: write to temp file and return a read stream
-  const tempDir = ensureTempDir();
-  const tempFilePath = path.join(tempDir, `${Date.now()}-${filename}`);
-  fs.writeFileSync(tempFilePath, buffer);
-  const stream = fs.createReadStream(tempFilePath);
-  // If InputFile.fromStream exists, prefer wrapping the fs stream with size
+async function ensureBucketExists(bucketId = BUCKET_ID) {
+  if (_bucketChecked) return;
   try {
-    const size = fs.statSync(tempFilePath).size;
-    if (InputFile && typeof InputFile.fromStream === "function") {
-      console.log("[toAppwriteFile] Fallback: InputFile.fromStream with fs stream");
-      const payload = InputFile.fromStream(stream, filename, size);
-      stream.on("close", () => {
-        fs.promises.rm(tempFilePath, { force: true }).catch(() => {});
-      });
-      return payload;
+    await storage.getBucket(bucketId);
+    _bucketChecked = true;
+  } catch (err) {
+    const type = err?.type || err?.response?.data?.type;
+    if (type === "storage_bucket_not_found" || err?.code === 404) {
+      throw new Error(
+        `[Appwrite] Storage bucket not found: "${bucketId}". Create it in Console → Storage → Buckets and use its *ID* (not the name).`
+      );
     }
-    if (sdk.InputFile && typeof sdk.InputFile.fromStream === "function") {
-      console.log("[toAppwriteFile] Fallback: sdk.InputFile.fromStream with fs stream");
-      const payload = sdk.InputFile.fromStream(stream, filename, size);
-      stream.on("close", () => {
-        fs.promises.rm(tempFilePath, { force: true }).catch(() => {});
-      });
-      return payload;
-    }
-  } catch (_) {}
-  // best-effort cleanup when stream closes
-  stream.on("close", () => {
-    fs.promises.rm(tempFilePath, { force: true }).catch(() => {});
-  });
-  console.log("[toAppwriteFile] Final fallback: raw fs stream payload");
-  return stream;
-}
-
-// Save Image
-async function saveFile(file, filePath, folder = BUCKET_ID) {
-  console.log(
-    "[saveFile] Called with file:",
-    file ? file.originalname : null,
-    "filePath:",
-    filePath,
-    "folder:",
-    folder
-  );
-  if (!file) {
-    console.log("[saveFile] No file provided.");
-    return {
-      public_id: "",
-      file_link: "",
-    };
-  }
-
-  const tempDir = ensureTempDir();
-  const tempFilePath = path.join(tempDir, `${Date.now()}-${file.originalname}`);
-
-  try {
-    const response = await storage.createFile(
-      folder,
-      sdk.ID.unique(),
-      processedBuffer,
-      [sdk.Permission.read(sdk.Role.any())],
-      [sdk.Permission.write(sdk.Role.user())]
+    // Other error (permissions/network)
+    throw new Error(
+      `[Appwrite] Could not validate bucket "${bucketId}": ${err?.message || "Unknown error"}`
     );
-
-    fs.unlinkSync(tempFilePath);
-
-    return {
-      public_id: response.$id,
-      file_link: getFileViewUrl(response.$id, folder),
-    };
-  } catch (error) {
-    console.log("[saveFile] Error:", error);
-    // if (fs.existsSync(tempFilePath)) {
-    //   fs.unlinkSync(tempFilePath);
-    // }
-    return {
-      public_id: "",
-      file_link: "",
-    };
   }
 }
 
-async function uploadSingleFileToCloudinary(file, folder = BUCKET_ID) {
-  console.log(
-    "[uploadSingleFileToAppwrite] Called with file:",
-    file ? file.originalname : null,
-    "folder:",
-    folder
-  );
+// Optional processing helper (images/videos)
+async function processBufferByMime(buffer, filename, mimetype) {
+  if (!buffer) return buffer;
+  if (mimetype?.startsWith("video/")) {
+    return processVideo(buffer, filename);
+  }
+  if (mimetype?.startsWith("image/")) {
+    return compressImage(buffer);
+  }
+  return buffer;
+}
 
-  if (!file) {
-    console.log("[uploadSingleFileToAppwrite] No file provided.");
+// -----------------------------
+// saveFile (from disk path)
+// -----------------------------
+// For cases where you've already written a file to disk and want to upload it.
+async function saveFile(file /* not used */, filePath, folder = BUCKET_ID) {
+  await ensureBucketExists(folder);
+  if (!filePath) {
     return { public_id: "", file_link: "" };
   }
 
-  // const tempDir = ensureTempDir();
-  // const tempFilePath = path.join(tempDir, `${Date.now()}-${file.originalname}`);
+  const bucket = folder && folder !== "default" ? folder : BUCKET_ID;
+  const originalname = path.basename(filePath);
+  const mimetype = undefined; // If you know it, pass it in via a different signature.
 
   try {
-    // Log buffer info
-    console.log(
-      "[DEBUG] Buffer type:",
-      typeof file.buffer,
-      "length:",
-      file.buffer ? file.buffer.length : "undefined"
-    );
-    // console.log("[DEBUG] Writing to:", tempFilePath);
+    // Read file into memory (so we can use same REST flow as buffers)
+    const buffer = fs.readFileSync(filePath);
+    const processedBuffer = await processBufferByMime(buffer, originalname, mimetype);
 
-    // Write file asynchronously
-    // await fs.promises.writeFile(tempFilePath, file.buffer);
-
-    // Confirm file exists and log size
-    // const exists = fs.existsSync(tempFilePath);
-    // const size = exists ? fs.statSync(tempFilePath).size : 0;
-    // console.log("[DEBUG] File exists after write:", exists, "Size:", size);
-
-    // List temp dir contents
-    // console.log("[DEBUG] Temp dir contents:", fs.readdirSync(tempDir));
-
-    // Prepare processed buffer and temp path
-    let processedBuffer = file.buffer;
-
-    if (file.mimetype.startsWith("video/")) {
-      console.log("Processing video...");
-      processedBuffer = await processVideo(file.buffer, file.originalname);
-    } else if (file.mimetype.startsWith("image/")) {
-      console.log("Compressing image...");
-      processedBuffer = await compressImage(file.buffer);
-    }
-    console.log("Processed buffer size:", processedBuffer.length);
-
-    // Build REST multipart form-data
     const form = new FormData();
     form.append("file", processedBuffer, {
-      filename: file.originalname,
-      contentType: file.mimetype,
+      filename: originalname,
+      contentType: mimetype,
       knownLength: processedBuffer.length,
     });
-    // Appwrite REST requires a fileId; use 'unique()' to auto-generate
     form.append("fileId", "unique()");
-    // Make file publicly readable (optional) to allow direct viewing
-    form.append("permissions[]", 'read("any")');
+    form.append('permissions[]', 'read("any")');
 
-    // Resolve bucket (ignore 'default' from routes and fallback to BUCKET_ID)
-    const bucket = folder && folder !== "default" ? folder : BUCKET_ID;
-   
     const url = `${ENDPOINT}/storage/buckets/${bucket}/files`;
-    console.log("[DEBUG] Upload URL (single):", url);
-    console.log("[DEBUG] Using PROJECT_ID:", PROJECT_ID);
-    const headers = {
-      ...form.getHeaders(),
-      "X-Appwrite-Project": PROJECT_ID,
-      "X-Appwrite-Key": APPWRITE_API_KEY,
-    };
-    const resp = await axios.post(url, form, { headers });
+    const resp = await axios.post(url, form, { headers: restHeaders(form.getHeaders()) });
+
+    // Clean up local file after upload (best-effort)
+    try { fs.unlinkSync(filePath); } catch (_) { }
 
     return {
       public_id: resp.data.$id,
       file_link: getFileViewUrl(resp.data.$id, bucket),
     };
   } catch (error) {
-    console.log("[uploadSingleFileToAppwrite] Error writing file:", error?.response?.data || error?.message || error);
+    console.error("[saveFile] Upload error:", error?.response?.data || error?.message || error);
+    // Do not throw to avoid breaking legacy callers; return empty object
     return { public_id: "", file_link: "" };
   }
 }
 
-async function uploadManyFilesToCloudinary(files, folder = BUCKET_ID) {
-  console.log(
-    "[uploadManyFilesToAppwrite] Called with files:",
-    files ? files.map((f) => f.originalname) : null,
-    "folder:",
-    folder
-  );
-  // const tempDir = ensureTempDir();
+// -----------------------------
+// uploadSingleFileToCloudinary (buffer → Appwrite)
+// -----------------------------
+async function uploadSingleFileToCloudinary(file, folder = BUCKET_ID) {
+  await ensureBucketExists(folder);
+  const bucket = folder && folder !== "default" ? folder : BUCKET_ID;
+
+  if (!file) return { public_id: "", file_link: "" };
+
   try {
-    const bucket = folder && folder !== "default" ? folder : BUCKET_ID;
-    console.log("[DEBUG] Using bucket for many uploads:", bucket);
-    const uploadPromises = files.map(async (file) => {
-      // const tempFilePath = path.join(tempDir, `${Date.now()}-${file.originalname}`);
+    const processedBuffer = await processBufferByMime(
+      file.buffer,
+      file.originalname,
+      file.mimetype
+    );
+
+    const form = new FormData();
+    form.append("file", processedBuffer, {
+      filename: file.originalname,
+      contentType: file.mimetype,
+      knownLength: processedBuffer.length,
+    });
+    form.append("fileId", "unique()");
+    form.append('permissions[]', 'read("any")');
+
+    const url = `${ENDPOINT}/storage/buckets/${bucket}/files`;
+    const resp = await axios.post(url, form, { headers: restHeaders(form.getHeaders()) });
+
+    return {
+      public_id: resp.data.$id,
+      file_link: getFileViewUrl(resp.data.$id, bucket),
+    };
+  } catch (error) {
+    console.error(
+      "[uploadSingleFileToAppwrite] Error:",
+      error?.response?.data || error?.message || error
+    );
+    return { public_id: "", file_link: "" };
+  }
+}
+
+// -----------------------------
+// uploadManyFilesToCloudinary (buffers → Appwrite)
+// -----------------------------
+async function uploadManyFilesToCloudinary(files, folder = BUCKET_ID) {
+  console.log("[uploader] Uploading %d files to appwrite",files.length)
+  await ensureBucketExists(folder);
+  const bucket = folder && folder !== "default" ? folder : BUCKET_ID;
+  if (!files || files.length === 0) return [];
+
+  const url = `${ENDPOINT}/storage/buckets/${bucket}/files`;
+
+  const results = await Promise.all(
+    files.map(async (file) => {
       try {
-        let processedBuffer = file.buffer;
+        const processedBuffer = await processBufferByMime(
+          file.buffer,
+          file.originalname,
+          file.mimetype
+        );
 
-        if (file.mimetype.startsWith("video/")) {
-          console.log("Processing video...");
-          processedBuffer = await processVideo(file.buffer, file.originalname);
-        } else if (file.mimetype.startsWith("image/")) {
-          console.log("Compressing image...");
-          processedBuffer = await compressImage(file.buffer);
-        }
-
-        // Build REST multipart per file
         const form = new FormData();
         form.append("file", processedBuffer, {
           filename: file.originalname,
           contentType: file.mimetype,
           knownLength: processedBuffer.length,
         });
-        // Appwrite REST requires a fileId; use 'unique()' to auto-generate
         form.append("fileId", "unique()");
-        // Make file publicly readable (optional) to allow direct viewing
-        form.append("permissions[]", 'read("any")');
-        const url = `${ENDPOINT}/storage/buckets/${bucket}/files`;
-        console.log("[DEBUG] Upload URL (many):", url);
-        console.log("[DEBUG] Using PROJECT_ID:", PROJECT_ID);
-        const headers = {
-          ...form.getHeaders(),
-          "X-Appwrite-Project": PROJECT_ID,
-          "X-Appwrite-Key": APPWRITE_API_KEY,
-        };
-        const resp = await axios.post(url, form, { headers });
+        form.append('permissions[]', 'read("any")');
+
+        const resp = await axios.post(url, form, { headers: restHeaders(form.getHeaders()) });
 
         return {
           public_id: resp.data.$id,
@@ -283,143 +215,106 @@ async function uploadManyFilesToCloudinary(files, folder = BUCKET_ID) {
           filename: file.fieldname,
         };
       } catch (error) {
-        console.log(
-          `[uploadManyFilesToAppwrite] Error uploading file: ${file.originalname}`,
+        console.error(
+          `[uploadManyFilesToAppwrite] Error uploading ${file.originalname}:`,
           error?.response?.data || error?.message || error
         );
-        // if (fs.existsSync(tempFilePath)) {
-        //   fs.unlinkSync(tempFilePath);
-        // }
         return {
           public_id: "",
           file_link: "",
           filename: file.fieldname,
         };
       }
-    });
+    })
+  );
 
-    const results = await Promise.all(uploadPromises);
-    return results;
-  } catch (error) {
-    console.log("[uploadManyFilesToAppwrite] Error:", error);
-    return [];
-  }
+  return results;
 }
 
-// Delete Image
+// -----------------------------
+// deleteFile (single)
+// -----------------------------
 async function deleteFile(publicId, folder = BUCKET_ID) {
-  console.log("[deleteFile] Called with publicId:", publicId);
+  await ensureBucketExists(folder);
+  const bucket = folder && folder !== "default" ? folder : BUCKET_ID;
+
   try {
-    await storage.deleteFile(folder, publicId);
-    console.log("[deleteFile] File deleted:", publicId);
+    await storage.deleteFile(bucket, publicId);
     return { public_id: publicId, deleted: true };
   } catch (error) {
-    console.log("[deleteFile] Error deleting file:", error);
+    console.error("[deleteFile] Error:", error?.response?.data || error?.message || error);
     return { public_id: publicId, deleted: false };
   }
 }
 
-async function deleteManyFiles(publicIds, folder) {
-  console.log("[deleteManyFiles] Called with publicIds:", publicIds);
-  try {
-    const deletePromises = publicIds.map(async (publicId) => {
+// -----------------------------
+// deleteManyFiles
+// -----------------------------
+async function deleteManyFiles(publicIds, folder = BUCKET_ID) {
+  await ensureBucketExists(folder);
+  const bucket = folder && folder !== "default" ? folder : BUCKET_ID;
+
+  if (!publicIds || publicIds.length === 0) return [];
+
+  const results = await Promise.all(
+    publicIds.map(async (id) => {
+      if (!id) return { public_id: id, deleted: false };
       try {
-        await storage.deleteFile(folder, publicId);
-        console.log(`[deleteManyFiles] File deleted: ${publicId}`);
-        return { public_id: publicId, deleted: true };
+        await storage.deleteFile(bucket, id);
+        return { public_id: id, deleted: true };
       } catch (error) {
-        console.log(
-          `[deleteManyFiles] Error deleting file: ${publicId}`,
-          error
-        );
-        return { public_id: publicId, deleted: false };
+        console.error(`[deleteManyFiles] Error deleting ${id}:`, error?.message || error);
+        return { public_id: id, deleted: false };
       }
-    });
-    const results = await Promise.all(deletePromises);
-    console.log("[deleteManyFiles] All deletions complete. Results:", results);
-    return results;
-  } catch (error) {
-    console.log("[deleteManyFiles] Error:", error);
-    return [];
-  }
+    })
+  );
+  return results;
 }
 
-// Update Image
-async function updateFile(publicId, file, filePath, folder = BUCKET_ID) {
-  console.log(
-    "[updateFile] Called with publicId:",
-    publicId,
-    "file:",
-    file ? file.originalname : null,
-    "filePath:",
-    filePath,
-    "folder:",
-    folder
-  );
+// -----------------------------
+// updateFile (disk path flow)
+// -----------------------------
+async function updateFile(publicId, file /* not used */, filePath, folder = BUCKET_ID) {
   await deleteFile(publicId, folder);
-  return await saveFile(file, filePath, folder);
+  return await saveFile(null, filePath, folder);
 }
 
-async function updateSingleFileToCloudinary(
-  publicId,
-  file,
-  folder = BUCKET_ID
-) {
-  console.log(
-    "[updateSingleFileToAppwrite] Called with publicId:",
-    publicId,
-    "file:",
-    file ? file.originalname : null,
-    "folder:",
-    folder
-  );
+// -----------------------------
+// updateSingleFileToCloudinary (buffer flow)
+// -----------------------------
+async function updateSingleFileToCloudinary(publicId, file, folder = BUCKET_ID) {
   await deleteFile(publicId, folder);
   return await uploadSingleFileToCloudinary(file, folder);
 }
 
-async function updateManyFileToCloudinary(
-  publicIds,
-  files,
-  folder = BUCKET_ID
-) {
-  console.log(
-    "[updateManyFileToAppwrite] Called with publicIds:",
-    publicIds,
-    "files:",
-    files ? files.map((f) => f.originalname) : null,
-    "folder:",
-    folder
-  );
-  if (publicIds.length > 0) {
+// -----------------------------
+// updateManyFileToCloudinary
+// -----------------------------
+async function updateManyFileToCloudinary(publicIds, files, folder = BUCKET_ID) {
+  if (publicIds && publicIds.length > 0) {
     await deleteManyFiles(publicIds, folder);
   }
   return await uploadManyFilesToCloudinary(files, folder);
 }
 
-// Generate download URL
-const downloadFile = (publicId) => {
-  console.log("[downloadFile] Called with publicId:", publicId);
-  // Returns a URL to download the file
-  // Note: getFileDownload returns a promise, so you should handle it as async
-  return storage
-    .getFileDownload(BUCKET_ID, publicId)
-    .then((response) => {
-      console.log("[downloadFile] Download URL generated:", response.href);
-      return response.href;
-    })
-    .catch((error) => {
-      console.log("[downloadFile] Error generating download URL:", error);
-      return "";
-    });
+// -----------------------------
+// downloadFile (returns direct download URL string)
+// -----------------------------
+const downloadFile = async (publicId, folder = BUCKET_ID) => {
+  await ensureBucketExists(folder);
+  const bucket = folder && folder !== "default" ? folder : BUCKET_ID;
+
+  // Either use SDK to fetch a signed URL, or return static URL:
+  // Using static URL here (works if permissions allow public read)
+  return getFileDownloadUrl(publicId, bucket);
 };
 
-function previewFile(publicId, folder) {
+// -----------------------------
+// previewFile (returns direct view URL string)
+// -----------------------------
+function previewFile(publicId, folder = BUCKET_ID) {
   const bucket = folder && folder !== "default" ? folder : BUCKET_ID;
-  console.log("[previewFile] Called with publicId:", publicId);
-  // Return a direct view URL (no image transformations)
-  const url = getFileViewUrl(publicId, bucket);
-  console.log("[previewFile] View URL:", url);
-  return Promise.resolve(url);
+  return getFileViewUrl(publicId, bucket);
 }
 
 module.exports = {
@@ -429,6 +324,7 @@ module.exports = {
   uploadManyFilesToCloudinary,
   updateManyFileToCloudinary,
   deleteFile,
+  deleteManyFiles,
   updateFile,
   downloadFile,
   previewFile,

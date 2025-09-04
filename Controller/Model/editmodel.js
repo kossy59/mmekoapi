@@ -33,7 +33,7 @@ const createModel = async (req, res) => {
 
   let currentuser = await models
     .findOne({
-      _id: hostid,
+      userid: hostid,
     })
     .exec();
 
@@ -61,8 +61,8 @@ const createModel = async (req, res) => {
   let results = [];
 
   if (req.files || req.files.length > 2) {
-    results = await updateManyFileToCloudinary(publicIDs, req.files, `model`);
-  }
+    results = await updateManyFileToCloudinary(publicIDs, req.files, "model");
+  } 
 
   console.log("results: ", results);
 

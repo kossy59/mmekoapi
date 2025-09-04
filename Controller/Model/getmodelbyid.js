@@ -23,13 +23,14 @@ const createModel = async (req, res) => {
     //  let currentuser = (await userdb).documents.find(value=>{
     //   return value.$id === hostid
     //  })
-
+    const allModels = await models.find({}).exec();
+    console.log("all models ", allModels);
     let currentuser = await models
       .findOne({
-        _id: hostid,
+        "_id": hostid,
       })
       .exec();
-
+    
     if (!currentuser) {
       return res.status(409).json({
         ok: false,
@@ -67,7 +68,7 @@ const createModel = async (req, res) => {
       hostid: currentuser._id,
       // photolink: currentuser.modelfiles[0].modelfilelink,
       photolink,
-      verify: currentuser.verify,
+      verify: modState.exclusive_verify,
       name: currentuser.name,
       age: currentuser.age,
       location: currentuser.location,
@@ -88,15 +89,20 @@ const createModel = async (req, res) => {
       add: added,
       active: modState.active,
       followingUser: isFollowingUser,
+      views: currentuser.views.length,
     };
 
     //console.log("this is host "+host)
 
-    return res.status(200).json({
+    res.status(200).json({
       ok: true,
       message: `Model Fetched successfully`,
       host,
     });
+    if (!currentuser.views.includes(userid)) {
+      currentuser.views.push(userid);
+      await currentuser.save();
+    }
   } catch (err) {
     return res.status(500).json({
       ok: false,
