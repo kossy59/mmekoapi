@@ -35,13 +35,11 @@ const createModel = async (req, res) => {
         message: `user can not edit model`,
       });
     }
-    const user = await userdb.findOne({ modelId: hostid }).exec();
-    await user
-      .updateOne({
-        isModel: false,
-        modelId: "",
-      })
-      .exec();
+    const user = (await userdb.findOne({ _id: currentuser.userid }).exec() || await userdb.findOne({ modelId: hostid }).exec());
+    user.isModel = false
+    user.modelId = "";
+    user.modelID = "";
+    await user.save()
 
     //await data.databar.deleteDocument(data.dataid,data.modelCol,currentuser.$id)
 
@@ -66,6 +64,7 @@ const createModel = async (req, res) => {
       message: `Model Deleted successfully`,
     });
   } catch (err) {
+    console.log("-----------------",err,"---------------")
     return res.status(500).json({
       ok: false,
       message: `${err.message}!`,

@@ -22,87 +22,87 @@ const markertdata = new Schema(
 
     verify: {
       type: String,
-      required: true,
+      required: false,
     },
 
     drink: {
       type: String,
-      required: true,
+      required: false,
     },
 
     name: {
       type: String,
-      required: true,
+      required: false,
     },
 
     age: {
       type: String,
-      required: true,
+      required: false,
     },
 
     location: {
       type: String,
-      required: true,
+      required: false,
     },
 
     price: {
       type: String,
-      required: true,
+      required: false,
     },
 
     duration: {
       type: String,
-      required: true,
+      required: false,
     },
 
     bodytype: {
       type: String,
-      required: true,
+      required: false,
     },
 
     smoke: {
       type: String,
-      required: true,
+      required: false,
     },
 
     interestedin: {
       type: [String],
-      required: true,
+      required: false,
     },
 
     height: {
       type: String,
-      required: true,
+      required: false,
     },
 
     weight: {
       type: String,
-      required: true,
+      required: false,
     },
 
     description: {
       type: String,
-      required: true,
+      required: false,
     },
 
     gender: {
       type: String,
-      required: true,
+      required: false,
     },
 
     timeava: {
       type: [String],
-      required: true,
+      required: false,
     },
 
     daysava: {
       type: [String],
-      required: true,
+      required: false,
     },
 
     hosttype: {
       type: String,
-      required: true,
+      required: false,
     },
     views: {
       type: [String],

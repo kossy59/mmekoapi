@@ -63,7 +63,7 @@ const createModel = async (req, res) => {
   const filesCount = Array.isArray(req.files) ? req.files.length : 0;
   console.log("[createModel] Incoming files count:", filesCount);
 
-  if (!filesCount) {
+  if (!filesCount && !currentuser?.exclusive_verify) {
     return res.status(400).json({
       ok: false,
       message: "No files uploaded. Please attach at least one image file.",
@@ -71,7 +71,7 @@ const createModel = async (req, res) => {
   }
 
   // Use default APPWRITE_BUCKET_ID (from env) by not overriding folder
-  const results = (await uploadManyFilesToCloudinary(req.files)) || [];
+  const results = currentuser?.exclusive_verify?[]:(await uploadManyFilesToCloudinary(req.files)) || [];
 
   console.log("Uploader Succeded, Probably");
 
@@ -88,7 +88,7 @@ const createModel = async (req, res) => {
     });
   modelfiles = databaseReady;
 
-  if (!modelfiles.length) {
+  if (!modelfiles.length && !currentuser?.exclusive_verify) {
     return res.status(400).json({
       ok: false,
       message: "File upload failed. Please try again with valid image files.",
@@ -138,7 +138,7 @@ const createModel = async (req, res) => {
         modelId: newModel._id,
       })
       .exec();
-
+    await currentuser.save();
     return res.status(200).json({
       ok: true,
       message: `Model Hosted successfully`,
