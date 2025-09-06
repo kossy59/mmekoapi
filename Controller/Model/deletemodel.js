@@ -23,11 +23,11 @@ const createModel = async (req, res) => {
     //     return value.$id === hostid
     //    })
 
-    let currentuser = await models
+    let currentuser =  await models
       .findOne({
         _id: hostid,
       })
-      .exec();
+      .exec();;
 
     if (!currentuser) {
       return res.status(409).json({

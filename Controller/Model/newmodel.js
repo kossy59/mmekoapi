@@ -71,7 +71,7 @@ const createModel = async (req, res) => {
   }
 
   // Use default APPWRITE_BUCKET_ID (from env) by not overriding folder
-  const results = currentuser?.exclusive_verify?[]:(await uploadManyFilesToCloudinary(req.files)) || [];
+  const results = currentuser?.exclusive_verify ? [] : (await uploadManyFilesToCloudinary(req.files)) || [];
 
   console.log("Uploader Succeded, Probably");
 
@@ -108,7 +108,7 @@ const createModel = async (req, res) => {
     const model = {
       userid,
       modelfiles: databaseReady,
-      verify: false,
+      verify: currentuser?.exclusive_verify ? "live" : "unverified",
       name,
       age,
       location,
@@ -136,12 +136,14 @@ const createModel = async (req, res) => {
       .updateOne({
         isModel: true,
         modelId: newModel._id,
+        modelID: newModel._id,
       })
       .exec();
     await currentuser.save();
     return res.status(200).json({
       ok: true,
       message: `Model Hosted successfully`,
+      id: newModel._id
     });
   } catch (err) {
     return res.status(500).json({
