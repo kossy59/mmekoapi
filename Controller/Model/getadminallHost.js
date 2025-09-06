@@ -19,7 +19,7 @@ const createModel = async (req,res)=>{
         let host = []
         let unverify_host = await models.find({}).exec()
         let list_of_host = unverify_host.filter(value=>{
-            return value!=="live"
+            return value.verify!=="live"
         })
         let image1 = await photodb.find({}).exec()
         let list_of_users = await userdb.find({}).exec()
