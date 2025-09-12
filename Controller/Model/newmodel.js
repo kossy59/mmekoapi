@@ -1,20 +1,11 @@
-// const {connectdatabase} = require('../../config/connectDB');
-// const sdk = require("node-appwrite");
 const models = require("../../Models/models");
 const userdb = require("../../Models/userdb");
 const { uploadManyFilesToCloudinary } = require("../../utiils/appwrite");
 
 const createModel = async (req, res) => {
   console.log("req.body.data", req.body.data);
-  const data = req.body
+  const data = req.body;
   console.log("data", data);
-
-  // if (!req.files || req.files.length !== 2) {
-  //   return res.status(400).json({
-  //     "ok": false,
-  //     'message': 'You must upload all documents'
-  //   })
-  // }
 
   const userid = data.userid;
   const name = data.name;
@@ -33,6 +24,7 @@ const createModel = async (req, res) => {
   const daysava = data.daysava;
   const drink = data.drink;
   const hosttype = data.hosttype;
+  const photolink = data.photolink || [];
 
   if (!userid) {
     return res.status(400).json({
@@ -43,11 +35,7 @@ const createModel = async (req, res) => {
 
   console.log("ontop checking user");
 
-  let currentuser = await userdb
-    .findOne({
-      _id: userid,
-    })
-    .exec();
+  let currentuser = await userdb.findOne({ _id: userid }).exec();
 
   if (!currentuser) {
     console.log("User failed ");
@@ -63,30 +51,35 @@ const createModel = async (req, res) => {
   const filesCount = Array.isArray(req.files) ? req.files.length : 0;
   console.log("[createModel] Incoming files count:", filesCount);
 
-  if (!filesCount && !currentuser?.exclusive_verify) {
+  if (!filesCount && !currentuser?.exclusive_verify && !photolink.length) {
     return res.status(400).json({
       ok: false,
       message: "No files uploaded. Please attach at least one image file.",
     });
   }
 
-  // Use default APPWRITE_BUCKET_ID (from env) by not overriding folder
-  const results = currentuser?.exclusive_verify ? [] : (await uploadManyFilesToCloudinary(req.files)) || [];
+  // Upload new files if not exclusive
+  const results = currentuser?.exclusive_verify
+    ? []
+    : (await uploadManyFilesToCloudinary(req.files)) || [];
 
-  console.log("Uploader Succeded, Probably");
+  console.log("Uploader succeeded");
 
-  let modelfiles = [];
-
-  // Clean up uploaded file for database storage, filter failed uploads
-  const databaseReady = results
+  // Merge uploaded files with any photolinks passed from frontend
+  const uploadedFiles = results
     .filter((result) => result && result.public_id && result.file_link)
-    .map((result) => {
-      return {
-        modelfilelink: result.file_link,
-        modelfilepublicid: result.public_id,
-      };
-    });
-  modelfiles = databaseReady;
+    .map((result) => ({
+      modelfilelink: result.file_link,
+      modelfilepublicid: result.public_id,
+    }));
+
+  // Merge photolinks that might have been passed directly in the request
+  const photolinksFromReq = photolink.map((link) => ({
+    modelfilelink: link,
+    modelfilepublicid: null,
+  }));
+
+  const modelfiles = [...uploadedFiles, ...photolinksFromReq];
 
   if (!modelfiles.length && !currentuser?.exclusive_verify) {
     return res.status(400).json({
@@ -97,17 +90,10 @@ const createModel = async (req, res) => {
 
   console.log("modelfiles: ", modelfiles);
 
-  //let data = await connectdatabase()
-
   try {
-    //  let userdb = data.databar.listDocuments(data.dataid,data.colid)
-    //  let currentuser = (await userdb).documents.find(value=>{
-    //   return value.$id === userid
-    //  })
-
     const model = {
       userid,
-      modelfiles: databaseReady,
+      modelfiles,
       verify: currentuser?.exclusive_verify ? "live" : "unverified",
       name,
       age,
@@ -129,9 +115,8 @@ const createModel = async (req, res) => {
 
     console.log("Creating model with: ", model);
 
-    //await data.databar.createDocument(data.dataid,data.modelCol,sdk.ID.unique(),model)
-
     const newModel = await models.create(model);
+
     await currentuser
       .updateOne({
         isModel: true,
@@ -139,11 +124,13 @@ const createModel = async (req, res) => {
         modelID: newModel._id,
       })
       .exec();
+
     await currentuser.save();
+
     return res.status(200).json({
       ok: true,
-      message: `Model Hosted successfully`,
-      id: newModel._id
+      message: `Model hosted successfully`,
+      id: newModel._id,
     });
   } catch (err) {
     return res.status(500).json({
