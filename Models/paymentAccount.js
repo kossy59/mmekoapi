@@ -1,32 +1,43 @@
 const mongoose = require("mongoose");
 
-const paymentAccountSchema = new mongoose.Schema(
+const paymentSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    method: {
+    invoiceId: {
       type: String,
-      enum: ["wise", "payoneer"],
       required: true,
     },
-    fullName: String,
-    email: String,
-    phone: String,
-    country: String,
-    currency: String,
-
-    // Wise-specific fields
-    bankName: String,
-    accountNumber: String,
-    accountHolder: String,
-
-    // Payoneer-specific
-    payoneerEmail: String,
+    paymentId: {
+      type: String,
+      required: true,
+    },
+    payAddress: {
+      type: String,
+      required: true,
+    },
+    payinExtraId: {
+      type: String,
+      default: null,
+    },
+    amount: {
+      type: Number,
+      required: true,
+    },
+    currency: {
+      type: String,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["waiting", "confirming", "confirmed", "sending", "partially_paid", "finished", "failed", "refunded", "expired"],
+      default: "waiting",
+    },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("PaymentAccount", paymentAccountSchema);
+module.exports = mongoose.model("Payment", paymentSchema);
