@@ -1,43 +1,48 @@
 const mongoose = require("mongoose");
 
-const paymentSchema = new mongoose.Schema(
+const paymentAccountSchema = new mongoose.Schema(
   {
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-    invoiceId: {
+    method: {
+      type: String,
+      enum: ["crypto"], // Only crypto method allowed
+      required: true,
+    },
+    fullName: {
       type: String,
       required: true,
     },
-    paymentId: {
+    email: {
       type: String,
-      required: true,
+      required: false,
     },
-    payAddress: {
+    phone: {
       type: String,
-      required: true,
+      required: false,
     },
-    payinExtraId: {
+    country: {
       type: String,
-      default: null,
-    },
-    amount: {
-      type: Number,
       required: true,
     },
     currency: {
       type: String,
       required: true,
     },
-    status: {
+    cryptoType: {
       type: String,
-      enum: ["waiting", "confirming", "confirmed", "sending", "partially_paid", "finished", "failed", "refunded", "expired"],
-      default: "waiting",
+      enum: ["BTC", "USDT_TRC20", "USDT_ERC20"],
+      required: true,
+    },
+    walletAddress: {
+      type: String,
+      required: true,
     },
   },
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Payment", paymentSchema);
+module.exports = mongoose.model("PaymentAccount", paymentAccountSchema);

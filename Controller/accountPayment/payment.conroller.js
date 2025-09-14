@@ -1,95 +1,97 @@
-const axios = require("axios");
+const PaymentAccount = require("../../Models/paymentAccount");
 const mongoose = require("mongoose");
 
-const NOWPAYMENTS_API_URL = process.env.NOWPAYMENTS_API_URL || "https://api-sandbox.nowpayments.io/v1/invoice-payment";
-const NOWPAYMENTS_API_KEY = process.env.NOWPAYMENTS_API_KEY; // Store in .env file
-
-// Create a payment invoice using NOWPayments
-exports.createCryptoPayment = async (req, res) => {
+exports.savePaymentAccount = async (req, res) => {
   try {
-    const { userId, amount, pay_currency = "usdtbep20", order_description, customer_email } = req.body;
+    const userId = req.userId;
+    const { method, fullName, email, phone, country, currency, cryptoType, walletAddress } = req.body;
 
-    // Validate required fields
-    if (!userId || !amount || !pay_currency) {
-      return res.status(400).json({ message: "Missing required fields: userId, amount, or pay_currency" });
+    // Validate required fields per the pattern
+    if (!method || !fullName || !email || !country || !currency || !cryptoType || !walletAddress) {
+      return res.status(400).json({
+        message: "Missing required fields: method, fullName, email, country, currency, cryptoType, or walletAddress",
+      });
     }
 
-    // Generate a unique invoice ID (can be a MongoDB ObjectId or custom)
-    const invoiceId = new mongoose.Types.ObjectId().toString();
+    // Validate method
+    if (method !== "crypto") {
+      return res.status(400).json({ message: "Only cryptocurrency accounts are supported" });
+    }
 
-    // Prepare payload for NOWPayments invoice-payment API
-    const payload = {
-      iid: invoiceId,
-      pay_currency: pay_currency.toLowerCase(), // e.g., "usdtbep20"
-      amount: parseFloat(amount).toFixed(2), // Ensure proper formatting
-      order_description: order_description || "Gold Pack Purchase",
-      customer_email: customer_email || null,
-      payout_currency: "usdtbep20", // Merchant payout currency
-      case: "success", // For testing, use "success" case
-    };
+    // Check if user already has a crypto account
+    const existing = await PaymentAccount.findOne({ userId, method });
+    if (existing) {
+      return res.status(400).json({ message: "You have already added a cryptocurrency account." });
+    }
 
-    // Make request to NOWPayments API
-    const response = await axios.post(`${NOWPAYMENTS_API_URL}/invoice-payment`, payload, {
-      headers: {
-        "x-api-key": NOWPAYMENTS_API_KEY,
-        "Content-Type": "application/json",
-      },
-    });
+    // Basic wallet address validation (adjust based on needs)
+    if (!walletAddress.match(/^[A-Za-z0-9]+$/)) {
+      return res.status(400).json({ message: "Invalid wallet address format" });
+    }
 
-    const { invoice_url, payment_id, pay_address, payin_extra_id } = response.data;
-
-    // Optionally, save payment details to your database for tracking
-    const paymentRecord = {
+    // Prepare account data
+    const accountData = {
       userId,
-      invoiceId,
-      paymentId: payment_id,
-      payAddress: pay_address,
-      payinExtraId: payin_extra_id || null,
-      amount,
-      currency: pay_currency,
-      status: "waiting", // Initial status
-      createdAt: new Date(),
+      method: "crypto",
+      fullName,
+      email,
+      phone,
+      country,
+      currency,
+      cryptoType,
+      walletAddress,
     };
 
-    // Assuming a new Payment model is created (see payment.js below)
-    const Payment = mongoose.model("Payment");
-    await Payment.create(paymentRecord);
+    // Save new payment method
+    const saved = await PaymentAccount.create(accountData);
 
-    return res.status(201).json({
-      message: "Payment invoice created",
-      checkoutUrl: invoice_url,
-      paymentId: payment_id,
-    });
+    return res.status(201).json({ message: "Account saved", data: saved });
   } catch (err) {
-    console.error("Error creating payment:", err.response?.data || err.message);
-    return res.status(500).json({ message: "Server error", error: err.message });
+    console.error("Error saving account:", err);
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
-// Optional: Check payment status
-exports.checkPaymentStatus = async (req, res) => {
+exports.checkIfPaymentAccountExists = async (req, res) => {
   try {
-    const { paymentId } = req.params;
+    const { userId } = req.params;
 
-    const response = await axios.get(`${NOWPAYMENTS_API_URL}/payment/${paymentId}`, {
-      headers: {
-        "x-api-key": NOWPAYMENTS_API_KEY,
-      },
-    });
+    // Validate userId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid userId format" });
+    }
 
-    const { payment_status } = response.data;
+    const account = await PaymentAccount.findOne({ userId });
 
-    // Update payment status in your database if needed
-    const Payment = mongoose.model("Payment");
-    await Payment.findOneAndUpdate(
-      { paymentId },
-      { status: payment_status },
-      { new: true }
-    );
+    if (!account) {
+      return res.status(404).json({ exists: false, message: "No payment account found" });
+    }
 
-    return res.status(200).json({ status: payment_status });
+    return res.status(200).json({ exists: true, account });
   } catch (err) {
-    console.error("Check payment status error:", err.response?.data || err.message);
+    console.error("Check account error:", err);
     return res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.deletePaymentAccount = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Validate userId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return res.status(400).json({ message: "Invalid userId format" });
+    }
+
+    const deleted = await PaymentAccount.findOneAndDelete({ userId });
+
+    if (!deleted) {
+      return res.status(404).json({ message: "No payment account found to delete" });
+    }
+
+    return res.status(200).json({ message: "Account deleted successfully" });
+  } catch (err) {
+    console.error("Delete account error:", err);
+    return res.status(500).json({ message: "Server error while deleting account" });
   }
 };

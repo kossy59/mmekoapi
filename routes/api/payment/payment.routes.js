@@ -1,12 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const verifyJwt = require("../../../Middleware/verify");
-const { createCryptoPayment, checkPaymentStatus } = require("../../../Controller/accountPayment/payment.conroller");
+const { savePaymentAccount, checkIfPaymentAccountExists, deletePaymentAccount } = require("../../../Controller/accountPayment/payment.conroller");
 
-// Create a new payment invoice (NOWPayments)
-router.post("/payment/create", createCryptoPayment);
-
-// Check payment status by paymentId
-router.get("/status/:paymentId", checkPaymentStatus);
+router.post("/", verifyJwt, savePaymentAccount);
+router.get("/check-account/:userId", checkIfPaymentAccountExists);
+router.delete("/:userId", verifyJwt, deletePaymentAccount); 
 
 module.exports = router;
