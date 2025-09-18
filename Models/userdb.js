@@ -23,19 +23,29 @@ const markertdata = new Scheme(
       required: false,
     },
 
-    email: {
-      type: String,
-      required: true,
-    },
+    // email: {
+    //   type: String,
+    //   required: true,
+    // },
 
     password: {
       type: String,
       required: true,
     },
 
-    emailconfirm: {
+    // emailconfirm: {
+    //   type: String,
+    //   required: true,
+    // },
+
+    secretPhrase: {
+      type: [String], // Array of 12 words (stored as plain text for recovery)
+      required: true
+    },
+    
+    secretPhraseHash: {
       type: String,
-      required: true,
+      required: false // No longer needed
     },
 
     active: {

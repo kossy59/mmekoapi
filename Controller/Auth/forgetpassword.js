@@ -1,79 +1,98 @@
-const nodeMailer = require('nodemailer')
-//const {connectdatabase} = require('../../config/connectDB');
-const userdb = require("../../Models/userdb")
+const userdb = require("../../Models/userdb");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
-require('dotenv').config()
+const forgetpass = async (req, res) => {
+  const { nickname, secretPhrase, newPassword } = req.body;
 
-const forgetpass = async (req,res)=>{
+  if (!nickname || !secretPhrase || !newPassword) {
+    return res.status(400).json({ 
+      ok: false, 
+      message: "Nickname, secret phrase and new password are required!" 
+    });
+  }
 
-    const email = req.body.email;
-   // let data = await connectdatabase()
-    if(!email){
-        return res.status(409).json({"ok":false,'message': `enter email address`});
+  if (!Array.isArray(secretPhrase) || secretPhrase.length !== 12) {
+    return res.status(400).json({ 
+      ok: false, 
+      message: "Secret phrase must be 12 words" 
+    });
+  }
+
+  try {
+    // Find user by nickname
+    const user = await userdb.findOne({ nickname: nickname }).exec();
+    if (!user) {
+      return res.status(404).json({ 
+        ok: false, 
+        message: "User not found" 
+      });
     }
 
-    let Email = email.toLowerCase().trim()
-
+    // Verify secret phrase (compare arrays directly)
+    const isPhraseValid = JSON.stringify(user.secretPhrase) === JSON.stringify(secretPhrase);
     
-    try{
-    //     let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
-
-    //     let du = dupplicate.documents.filter(value=>{
-    //     return value.email === email
-    //    })
-
-       let du = await userdb.findOne({email:Email}).exec()
-
-       if(du){
-        let smtpTransport = nodeMailer.createTransport({
-            service:'gmail',
-            auth:{
-                user:process.env.EMAIL,
-                pass:process.env.GOOGLEAPPKEY
-            }
-
-        });
-
-        let rand = Math.floor((Math.random()*100000)+100000);
-
-        let mailOption = {
-            to:email,
-            from:process.env.EMAIL,
-            subject:"Mmeko New Password",
-            text:`Please confirm your new  Password Authentication Code ${rand}`
-        }
-
-        du.passcode = `${String(rand)}`
-
-        // await data.databar.updateDocument(
-        //     data.dataid,
-        //     data.colid,
-        //      du[0].$id,
-        //     {
-        //         passcode:`${String(rand)}`
-        //     }
-        // )
-
-        du.save()
-
-      
-
-        smtpTransport.sendMail(mailOption,function(err){
-            if(err){
-               return res.status(200).json({"ok":true,"message":"code sent to your email"})
-            }else{
-                return res.status(200).json({"ok":true,"message":"code sent to your email"})
-            }
-        })
-       }else{
-        return res.status(401).json({"ok":false,"message":"failed to find mail for authentication"})
+    if (!isPhraseValid) {
+      return res.status(401).json({ 
+        ok: false, 
+        message: "Invalid secret phrase" 
+      });
     }
-        
-     }catch(err){
-         return res.status(500).json({"ok":false,'message': `${err.message}!`});
-     }
-   
-   
-}
+
+    // Update password
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedNewPassword;
+    
+    // Generate new tokens
+    const refreshToken = jwt.sign(
+      { UserInfo: { username: user.nickname } },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: "7d" }
+    );
+    
+    const accessToken = jwt.sign(
+      { 
+        UserInfo: { 
+          username: user.nickname, 
+          userId: user._id.toString() 
+        } 
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "15m" }
+    );
+    
+    user.refreshtoken = refreshToken;
+    user.accessToken = accessToken;
+    
+    await user.save();
+
+    // Set new auth cookies
+    res.cookie('auth_token', accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000
+    });
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    return res.status(200).json({
+      ok: true,
+      message: "Password updated successfully",
+      accessToken: accessToken
+    });
+
+  } catch (err) {
+    return res.status(500).json({ 
+      ok: false, 
+      message: `Recovery error: ${err.message}` 
+    });
+  }
+};
 
 module.exports = forgetpass;

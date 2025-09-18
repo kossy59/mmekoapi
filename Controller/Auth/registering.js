@@ -3,161 +3,173 @@
 const bcrypt = require("bcrypt");
 //const { Query } = require('node-appwrite');
 //const sdk = require("node-appwrite");
-const forgetHandler = require("../../helpers/sendemailAuth");
+//const forgetHandler = require("../../helpers/sendemailAuth");
+// const mongoose = require("mongoose");
+// const userdb = require("../../Models/userdb");
+// const baneddb = require("../../Models/admindb");
+// const usercompletedb = require("../../Models/usercomplete");
+// let pushdb = require("../../Models/settingsdb");
+
+//onst bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 const userdb = require("../../Models/userdb");
-const baneddb = require("../../Models/admindb");
 const usercompletedb = require("../../Models/usercomplete");
-let pushdb = require("../../Models/settingsdb");
+const pushdb = require("../../Models/settingsdb");
+const jwt = require("jsonwebtoken");
 
 const handleNewUser = async (req, res) => {
   const firstname = req.body.firstname;
   const lastname = req.body.lastname;
   const gender = req.body.gender;
-  let username = req.body.username;
-  const email = req.body.email;
+  const nickname = req.body.nickname;
   const password = req.body.password;
   const age = req.body.age;
   const country = req.body.country;
   const dob = req.body.dob;
+  const secretPhrase = req.body.secretPhrase; // Array of 12 words from frontend
 
-  //let data = await connectdatabase()
-
-  // Validate required fields (use OR so any missing field triggers the error)
+  // Validate required fields
   if (
     !firstname ||
     !lastname ||
     !gender ||
-    !email ||
     !password ||
     !age ||
     !country ||
-    !username ||
-    !dob
+    !nickname ||
+    !dob ||
+    !secretPhrase ||
+    !Array.isArray(secretPhrase) ||
+    secretPhrase.length !== 12
   ) {
-    return res
-      .status(400)
-      .json({ ok: false, message: "Registration not complete!!" });
+    return res.status(400).json({ 
+      ok: false, 
+      message: "Registration not complete! All fields including 12-word secret phrase are required." 
+    });
   }
-  //let dupplicate;
-  let Email = email.toLowerCase().trim();
-  console.log("[register] payload received");
 
-  // Fast-fail if DB is not connected to avoid long hangs on server selection
+  // Fast-fail if DB is not connected
   if (mongoose.connection.readyState !== 1) {
-    return res
-      .status(503)
-      .json({ ok: false, message: "Database not connected. Please try again later." });
+    return res.status(503).json({ 
+      ok: false, 
+      message: "Database not connected. Please try again later." 
+    });
   }
-
-  let emailbaned = await baneddb.findOne({ email: Email }).exec();
-  let user_uncon = await userdb.findOne({ email: Email }).exec();
 
   // Ensure nickname is unique
-  let existingUser = await userdb.findOne({ nickname: username }).exec();
-  if (existingUser) {
-    return res
-      .status(400)
-      .json({ ok: false, message: "Nickname already taken!!" });
-  }
-
-  if (user_uncon) {
-    if (user_uncon.emailconfirm !== "verify") {
-      await userdb.deleteOne({ _id: user_uncon._id });
-      await usercompletedb.deleteOne({ useraccountId: user_uncon._id });
-      await pushdb.deleteOne({ userid: user_uncon._id });
-    }
-  }
-
-  if (emailbaned) {
-    if (emailbaned.delete === true) {
-      return res
-        .status(400)
-        .json({ ok: false, message: "You account have been banned" });
-    }
-
-    if (emailbaned.suspend === true) {
-      let CDate = Date.now();
-      let endDate = new Date(Number(emailbaned.end_date));
-      let current_date = new Date(Number(CDate));
-
-      if (current_date.getTime() > endDate.getTime()) {
-        await baneddb.deleteOne({ email: Email });
-      }
-
-      if (current_date.getTime() < endDate.getTime()) {
-        const diffTime = Math.abs(endDate - current_date);
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-        return res.status(400).json({
-          ok: false,
-          message: `your account is suspended for ${diffDays}-Days`,
-        });
-      }
-    }
-  }
-
   try {
-    let dublicate = await userdb
-      .findOne({
-        email: Email,
-      })
-      .exec();
-    //let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
-
-    //    let du = dupplicate.documents.filter(value=>{
-    //     return value.email === email
-    //    })
-
-    if (dublicate) {
-      return res
-        .status(409)
-        .json({ ok: false, message: "User Already Register!!" });
+    const existingNickname = await userdb.findOne({ nickname: nickname }).exec();
+    if (existingNickname) {
+      return res.status(400).json({ 
+        ok: false, 
+        message: "Nickname already taken!" 
+      });
     }
   } catch (err) {
-    return res
-      .status(500)
-      .json({ ok: false, message: `${err.message}! search dublicate` });
+    return res.status(500).json({ 
+      ok: false, 
+      message: `Error checking nickname: ${err.message}` 
+    });
   }
 
-  // if (!username) {
-  //   username = "";
-  // }
-
   try {
+    // Hash password only (secret phrase is stored as plain text for recovery)
     const hashPwd = await bcrypt.hash(password, 10);
 
-    var db = {
+    // Create tokens
+    const refreshToken = jwt.sign(
+      { UserInfo: { username: nickname } },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: "7d" }
+    );
+    
+    const accessToken = jwt.sign(
+      { 
+        UserInfo: { 
+          username: nickname,
+          userId: "" // Will be updated after user creation
+        } 
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    // Create user with plain text secret phrase (for recovery)
+    const user = await userdb.create({
       firstname,
       lastname,
       gender,
-      nickname: username,
-      email: Email,
+      nickname,
       password: hashPwd,
-      emailconfirm: "verify",
-      emailconfirmtime: "not",
+      secretPhrase, // Store the 12 words as array (not hashed)
+      secretPhraseHash: "", // Not needed since we're storing plain text
       active: true,
-      country: country,
-      refreshtoken: "",
-      age: age,
+      country,
+      refreshtoken: refreshToken,
+      accessToken: accessToken,
+      age,
       admin: false,
       passcode: "",
-      balance: "",
-      dob: dob,
-    };
+      balance: "0",
+      dob,
+    });
 
-    const user = await userdb.create(db);
+    // Update token with user ID
+    const updatedAccessToken = jwt.sign(
+      { 
+        UserInfo: { 
+          username: nickname,
+          userId: user._id.toString()
+        } 
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "15m" }
+    );
+    
+    // Update user with new token
+    user.accessToken = updatedAccessToken;
+    await user.save();
 
-    // Respond success with created user id
-    return res.status(201).json({ ok: true, message: "User registered", userId: user?._id });
+    // Create user profile and settings
+    await usercompletedb.create({
+      useraccountId: user._id,
+      interestedIn: "Nothing",
+      details: "Hey, I am using our platform",
+    });
 
-    //await data.databar.createDocument(data.dataid,data.colid,sdk.ID.unique(),db)
-    // await forgetHandler(req, res, Email);
-    //await forgetHandler(req,res,)
+    await pushdb.create({
+      emailnot: false,
+      pushnot: true,
+      userid: user._id,
+    });
+
+    // Set auth cookie
+    res.cookie('auth_token', updatedAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000
+    });
+
+    res.cookie('refresh_token', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000
+    });
+
+    return res.status(201).json({ 
+      ok: true, 
+      message: "User registered successfully", 
+      userId: user._id,
+      accessToken: updatedAccessToken
+    });
+
   } catch (err) {
-    return res
-      .status(500)
-      .json({ ok: false, message: ` register: ${err}` });
+    return res.status(500).json({ 
+      ok: false, 
+      message: `Registration error: ${err.message}` 
+    });
   }
 };
 

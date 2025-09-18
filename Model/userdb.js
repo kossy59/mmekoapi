@@ -43,13 +43,13 @@ async function initalizeDB(memko_socialDB,database){
     
     )
     
-    await database.createStringAttribute(
-        memko_socialDB,
-        UsersDB.$id,
-        'email',
-        255,true
+    // await database.createStringAttribute(
+    //     memko_socialDB,
+    //     UsersDB.$id,
+    //     'email',
+    //     255,true
     
-    )
+    // )
     
     await database.createStringAttribute(
         memko_socialDB,
@@ -59,21 +59,21 @@ async function initalizeDB(memko_socialDB,database){
     
     )
     
-    await database.createStringAttribute(
-        memko_socialDB,
-        UsersDB.$id,
-        'emailconfirm',
-        255,false
+    // await database.createStringAttribute(
+    //     memko_socialDB,
+    //     UsersDB.$id,
+    //     'emailconfirm',
+    //     255,false
     
-    )
+    // )
     
-    await database.createStringAttribute(
-        memko_socialDB,
-        UsersDB.$id,
-        'emailconfirmtime',
-        255,false
+    // await database.createStringAttribute(
+    //     memko_socialDB,
+    //     UsersDB.$id,
+    //     'emailconfirmtime',
+    //     255,false
     
-    )
+    // )
     
     await database.createBooleanAttribute(
         memko_socialDB,
@@ -140,6 +140,14 @@ async function initalizeDB(memko_socialDB,database){
         255,false
     
     )
+
+    await database.createStringAttribute(
+        memko_socialDB,
+        UsersDB.$id,
+        'secretPhraseHash',
+        255,true
+    )
+
     
     
    return UsersDB ;
