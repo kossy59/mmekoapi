@@ -6,9 +6,6 @@ const mongoose = require("mongoose");
 const { Server } = require("socket.io");
 const cors = require("cors");
 const { setInterval } = require("timers");
-// const credentials = require('./Middleware/credentials')
-// const {
-// } = require('./config/corsOptions')
 const connect = require("./config/connectdataBase");
 const handleRefresh = require("./Middleware/refresh");
 const verifyJwt = require("./Middleware/verify");
@@ -30,45 +27,57 @@ const updatebalance = require("./utiils/deductPVC");
 const pushnotify = require("./utiils/sendPushnot");
 const imageRoutes = require("./routes/imageRoutes");
 
-
 const PORT = process.env.PORT || 3100;
 const app = express();
 const server = http.createServer(app);
 
+// Define allowed origins for CORS
+const allowedOrigins = [
+  process.env.NEXT_PUBLIC_URL,
+  "https://mmekowebsite.onrender.com",
+  "http://localhost:3000" // Add localhost for development
+].filter(Boolean); // Remove falsy values (e.g., undefined NEXT_PUBLIC_URL)
+
+// Configure CORS
 app.use(cors({
-  origin: process.env.NEXT_PUBLIC_URL||"https://mmekowebsite.onrender.com",
-  credentials: true
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g., mobile apps or curl) or from allowed origins
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, origin || '*');
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
 }));
 
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", process.env.NEXT_PUBLIC_URL|| "https://mmekowebsite.onrender.com");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  res.header("Access-Control-Allow-Credentials", "true");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-  next();
-});
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
 
+// Log requests for debugging
+app.use((req, res, next) => {
+  console.log(`${req.method} Request at ${req.url} with`, req.body);
+  next();
+});
+
 const io = new Server(server, {
-  cors: { origin: "*", methods: ["GET", "POST"] },
+  cors: {
+    origin: allowedOrigins,
+    methods: ["GET", "POST"],
+    credentials: true
+  },
 });
 
 connect();
 
 const IDS = {};
-app.use(express.urlencoded({ extended: true, limit: "10mb" })); // Handle URL-encoded data
-app.use(express.json({ limit: "10mb" })); // Handle JSON data
-app.use((req, res, next) => {
-  console.log(`${req.method} Request at ${req.url} with`, req.body)
-  next();
-})
 
 // Routes
 app.use("/api/image", imageRoutes);
 app.use("/", require("./routes/api/post/Post"));
-
 app.use("/getallpost", require("./routes/api/post/getpost"));
 app.use("/getalluserpost", require("./routes/api/post/getalluserPost"));
 app.use("/getallcomment", require("./routes/api/comment/Getallcomment"));
@@ -77,13 +86,77 @@ app.use("/getallsharepost", require("./routes/api/share/getallsharedpost"));
 app.use("/getsharepost", require("./routes/api/share/getsharepost"));
 app.use("/getprofile", require("./routes/api/profile/Profile"));
 app.use("/getmoreprofile", require("./routes/api/Profilemore/getProfilemore"));
-app.use(
-  "/messagenotification",
-  require("./routes/api/chat/getNotificationmsg")
-);
+app.use("/messagenotification", require("./routes/api/chat/getNotificationmsg"));
 app.use("/notifymodel", require("./routes/api/booking/notifybooking"));
 app.use("/subpushid", require("./routes/api/profile/postUserPushNote"));
+app.use("/verifyemail", require("./routes/Auth/verifyEmail"));
+app.use("/register", require("./routes/Auth/register"));
+app.use("/logout", require("./routes/Auth/logout"));
+app.use("/login", require("./routes/Auth/login"));
+app.use("/forgetpassword", require("./routes/Auth/forgetpassword"));
+app.use("/completeregister", require("./routes/Auth/completeregister"));
+app.use("/comfirmpasscode", require("./routes/Auth/comfirmpasscode"));
+app.use("/changepassword", require("./routes/Auth/changepassword"));
+app.use("/getpostcomment", require("./routes/api/comment/Getallcomment"));
+app.use("/getprofilebyid", require("./routes/api/profile/Profile"));
+app.use("/getverifymodel", require("./routes/api/model/getlivemodel"));
+app.use("/getmodelbyid", require("./routes/api/model/getmodelbyid"));
+app.use("/searchuser", require("./routes/api/profile/getallUser"));
+app.use("/post", require("./routes/api/post/Post"));
+app.use("/model/all", require("./routes/api/model/mymodels"));
+app.use("/addpayment", require("./routes/api/payment/payment.routes"));
+app.use("/withdraw-request", require("./routes/api/withdrawRequest/withdraw.route"));
+app.use("/editmoreprofile", require("./routes/api/Profilemore/editprofilemore"));
+app.use("/model", require("./routes/api/model/models"));
+app.use("/editmodel", require("./routes/api/model/editemodel"));
+app.use("/postdocument", require("./routes/api/model/postdocument"));
+app.use("/exclusive", require("./routes/api/Exclusive/exclusive"));
+app.use("/models", require("./routes/api/model/updateView"));
+app.use("/models", require("./routes/api/model/updateFollowers"));
+app.use("/allrequest", require("./routes/api/booking/allrequestroute"));
+app.use("/exclusivecontent", require("./routes/api/Exclusive/allexclusive"));
+app.use("/deleteaccount", require("./routes/api/profile/deleteprofile"));
+app.use("/setting", require("./routes/api/profile/setting"));
+app.use("/follow", require("./routes/api/follow/follower"));
+app.use("/getfollowers", require("./routes/api/follow/get_followers"));
+app.use("/getadminhost", require("./routes/api/model/hostforadmin"));
+app.use("/deletemodel", require("./routes/api/model/deletemodel"));
+app.use("/comment", require("./routes/api/comment/Comment"));
+app.use("/like", require("./routes/api/like/Like"));
+app.use("/sharepost", require("./routes/api/share/share"));
+app.use("/editprofile", require("./routes/api/profile/Editprofile"));
+app.use("/rejectmodel", require("./routes/api/model/rejectmodel"));
+app.use("/verifymodel", require("./routes/api/model/verifymodel"));
+app.use("/getcurrentchat", require("./routes/api/chat/getchat"));
+app.use("/getmsgnotify", require("./routes/api/chat/getmsgnotify"));
+app.use("/updatenotify", require("./routes/api/chat/updatenotify"));
+app.use("/bookhost", require("./routes/api/booking/book"));
+app.use("/pendingrequest", require("./routes/api/booking/getpendingbook"));
+app.use("/cancelrequest", require("./routes/api/booking/cancelmyrequest"));
+app.use("/acceptbook", require("./routes/api/booking/acceptbooking"));
+app.use("/declinebook", require("./routes/api/booking/declinebooking"));
+app.use("/getrequeststats", require("./routes/api/booking/requeststat"));
+app.use("/paymodel", require("./routes/api/booking/paymodel"));
+app.use("/reviewmodel", require("./routes/api/model/reviewmodel"));
+app.use("/getreviews", require("./routes/api/model/getmodelreview"));
+app.use("/deletereview", require("./routes/api/model/deletereview"));
+app.use("/statistics", require("./routes/api/profile/get_statistics"));
+app.use("/statistics/monthly", require("./routes/api/profile/get_statisticsByMonth"));
+app.use("/giftmodel", require("./routes/api/chat/giftGold"));
+app.use("/topup", require("./routes/api/profile/topup"));
+app.use("/getallusers", require("./routes/api/Admin/getallusers"));
+app.use("/deleteuser", require("./routes/api/Admin/deleteuser"));
+app.use("/suspenduser", require("./routes/api/Admin/suspenduser"));
+app.use("/sendmessages", require("./routes/api/Admin/sendmessage"));
+app.use("/recivemessage", require("./routes/api/Admin/recivemessage"));
+app.use("/adminnotify", require("./routes/api/Admin/adminnotify"));
+app.use("/useredit", require("./routes/api/Profilemore/getuseredit"));
+app.use("/addcrush", require("./routes/api/model/addcrush"));
+app.use("/getcrush", require("./routes/api/model/getcrush"));
+app.use("/deleteMsg", require("./routes/api/Admin/deleteMsg"));
+app.use("/deletecrush", require("./routes/api/model/deletecrush"));
 
+// Socket.IO connection handling
 io.on("connection", (socket) => {
   socket.on("online", async (userid) => {
     if (userid) {
@@ -116,10 +189,8 @@ io.on("connection", (socket) => {
         `New message from ${info?.name}`,
         "messageicon"
       );
-      // console.log("name "+name+" photolink "+photolink)
     }
     console.log("3");
-    //socket.to("LiveChat").emit(data)
     socket.broadcast.emit("LiveChat", {
       name: info?.name,
       photolink: info?.photolink || "",
@@ -134,8 +205,6 @@ io.on("connection", (socket) => {
     let callname = data.name;
 
     let calloffer = [];
-
-    // set caller socket
 
     if (myid === video_user) {
       let responds = await Check_caller(answerid, myid);
@@ -182,20 +251,6 @@ io.on("connection", (socket) => {
           });
 
           socket.broadcast.emit(`${answerid}_offer`, data.offer_can);
-
-          //  let info = calloffer.find(value=>{
-          //   return value.callerid === data.caller_id && value.answerid === data.answer_id
-          // })
-          // if(!info){
-          //   let datas = {
-          //   callerid : data.caller_id,
-          //   answerid : data.answer_id,
-          //   answer_can : data.offer_can
-          // }
-
-          // calloffer.push(datas)
-
-          // }
         }
         socket.broadcast.emit(answerid, { data: data });
       } else if (responds === "user_busy") {
@@ -217,25 +272,6 @@ io.on("connection", (socket) => {
         console.log("answer sdp " + data.sdp_a_offer);
         console.log("answer sdp " + data.answer_can);
 
-        // let datas = calloffer.find(value=>{
-        //    return value.callerid === data.caller_id && value.answerid === data.answer_id
-
-        // })
-
-        // if(datas){
-        //  if(datas.sdp_c_offer){
-
-        //   console.log("sending offer sdp")
-        //   let info = {
-        //   sdp_c_offer : datas.sdp_c_offer
-
-        //  }
-        //   arkFunction(info)
-
-        //  }
-
-        // }
-
         if (data.sdp_a_offer && data.answer_can) {
           socket.broadcast.emit(`${myid}_answeroffer`, {
             sdp: data.sdp_a_offer,
@@ -243,41 +279,10 @@ io.on("connection", (socket) => {
           });
         }
 
-        // if(data.answer_can){
-        //   let offer = data.answer_can
-
-        //   socket.broadcast.emit(`${myid}_answerice`,data.answer_can)
-
-        // }
-
         socket.broadcast.emit(myid, { data: data });
       } else if (responds === true) {
         console.log("answer sdp " + data.sdp_a_offer);
         console.log("answer sdp " + data.answer_can);
-
-        //  let datas = calloffer.find(value=>{
-        //    return value.callerid === data.caller_id && value.answerid === data.answer_id
-
-        // })
-
-        // if(datas){
-        //  if(datas.sdp_c_offer){
-        //   console.log("sending offer sdp")
-
-        //   let info = {
-        //   sdp_c_offer : datas.sdp_c_offer
-
-        //  }
-        //   arkFunction(info)
-
-        //  }
-
-        // }
-        // if(data.sdp_a_offer){
-
-        //    socket.broadcast.emit(`${myid}_answeroffer`,{sdp:data.sdp_a_offer,offer:""})
-
-        // }
 
         if (data.answer_can) {
           socket.broadcast.emit(`${myid}_answeroffer`, {
@@ -285,12 +290,6 @@ io.on("connection", (socket) => {
           });
         }
 
-        // if(data.answer_can){
-        //   console.log("sending  answer ice can offer")
-        //   let offer = data.answer_can
-        //   socket.broadcast.emit(`${myid}_answerice`,offer)
-
-        // }
         socket.broadcast.emit(myid, { data: data });
       }
     }
@@ -303,8 +302,6 @@ io.on("connection", (socket) => {
     let callname = data.name;
 
     let calloffer = [];
-
-    // set caller socket
 
     if (myid === video_user) {
       let responds = await Check_caller(answerid, myid);
@@ -343,7 +340,6 @@ io.on("connection", (socket) => {
       } else if (responds === "calling") {
         data.answer_message = "calling";
         data.message = `private show ${callname}`;
-        //console.log("calling user "+data.sdp_c_offer)
         if (data.sdp_c_offer) {
           let info = calloffer.find((value) => {
             return (
@@ -370,20 +366,6 @@ io.on("connection", (socket) => {
           });
 
           socket.broadcast.emit(`${answerid}_offer`, data.offer_can);
-
-          //  let info = calloffer.find(value=>{
-          //   return value.callerid === data.caller_id && value.answerid === data.answer_id
-          // })
-          // if(!info){
-          //   let datas = {
-          //   callerid : data.caller_id,
-          //   answerid : data.answer_id,
-          //   answer_can : data.offer_can
-          // }
-
-          // calloffer.push(datas)
-
-          // }
         }
         socket.broadcast.emit(answerid, { data: data });
       } else if (responds === "user_busy") {
@@ -408,25 +390,6 @@ io.on("connection", (socket) => {
         console.log("answer sdp " + data.sdp_a_offer);
         console.log("answer sdp " + data.answer_can);
 
-        // let datas = calloffer.find(value=>{
-        //    return value.callerid === data.caller_id && value.answerid === data.answer_id
-
-        // })
-
-        // if(datas){
-        //  if(datas.sdp_c_offer){
-
-        //   console.log("sending offer sdp")
-        //   let info = {
-        //   sdp_c_offer : datas.sdp_c_offer
-
-        //  }
-        //   arkFunction(info)
-
-        //  }
-
-        // }
-
         if (data.sdp_a_offer && data.answer_can) {
           socket.broadcast.emit(`${myid}_answeroffer`, {
             sdp: data.sdp_a_offer,
@@ -434,36 +397,11 @@ io.on("connection", (socket) => {
           });
         }
 
-        // if(data.answer_can){
-        //   let offer = data.answer_can
-
-        //   socket.broadcast.emit(`${myid}_answerice`,data.answer_can)
-
-        // }
-
         socket.broadcast.emit(myid, { data: data });
       } else if (responds === true) {
         console.log("answer sdp " + data.sdp_a_offer);
         console.log("answer sdp " + data.answer_can);
 
-        //  let datas = calloffer.find(value=>{
-        //    return value.callerid === data.caller_id && value.answerid === data.answer_id
-
-        // })
-
-        // if(datas){
-        //  if(datas.sdp_c_offer){
-        //   console.log("sending offer sdp")
-
-        //   let info = {
-        //   sdp_c_offer : datas.sdp_c_offer
-
-        //  }
-        //   arkFunction(info)
-
-        //  }
-
-        // }
         if (data.sdp_a_offer) {
           socket.broadcast.emit(`${myid}_answeroffer`, {
             sdp: data.sdp_a_offer,
@@ -478,29 +416,10 @@ io.on("connection", (socket) => {
           });
         }
 
-        // if(data.answer_can){
-        //   console.log("sending  answer ice can offer")
-        //   let offer = data.answer_can
-        //   socket.broadcast.emit(`${myid}_answerice`,offer)
-
-        // }
         socket.broadcast.emit(myid, { data: data });
       }
     }
   });
-
-  // socket.on('notify',async (data)=>{
-  //  // console.log("Inside notification")
-  //   if(data){
-  //      console.log("Inside notification")
-  //     setInterval(async ()=>{
-  //       let note = await getnotify(data)
-  //       console.log(note)
-  //        socket.emit(data+`notify`,note)
-  //     },20000)
-
-  //   }
-  // })
 
   socket.on("disconnect", async () => {
     await userdisconnect(socket.id);
@@ -510,97 +429,9 @@ io.on("connection", (socket) => {
   });
 });
 
-app.use("/verifyemail", require("./routes/Auth/verifyEmail"));
-app.use("/register", require("./routes/Auth/register"));
-app.use("/logout", require("./routes/Auth/logout"));
-app.use("/login", require("./routes/Auth/login"));
-app.use("/forgetpassword", require("./routes/Auth/forgetpassword"));
-app.use("/completeregister", require("./routes/Auth/completeregister"));
-app.use("/comfirmpasscode", require("./routes/Auth/comfirmpasscode"));
-app.use("/changepassword", require("./routes/Auth/changepassword"));
-app.use("/getpostcomment", require("./routes/api/comment/Getallcomment"));
-app.use("/getprofilebyid", require("./routes/api/profile/Profile"));
-app.use("/getverifymodel", require("./routes/api/model/getlivemodel"));
-app.use("/getmodelbyid", require("./routes/api/model/getmodelbyid"));
-app.use("/searchuser", require("./routes/api/profile/getallUser"));
-app.use("/post", require("./routes/api/post/Post"));
-app.use("/model/all", require("./routes/api/model/mymodels"));
-app.use("/addpayment", require("./routes/api/payment/payment.routes"));
-app.use("/withdraw-request", require("./routes/api/withdrawRequest/withdraw.route"));
-app.use("/editmoreprofile", require("./routes/api/Profilemore/editprofilemore"));
-app.use("/model", require("./routes/api/model/models"));
-app.use("/editmodel", require("./routes/api/model/editemodel"));
-app.use("/postdocument", require("./routes/api/model/postdocument"));
-app.use("/exclusive", require("./routes/api/Exclusive/exclusive")); //(put) exclusive content (post) buy exclusive content
-app.use("/models", require("./routes/api/model/updateView"));
-app.use("/models", require("./routes/api/model/updateFollowers"));
-app.use("/allrequest", require("./routes/api/booking/allrequestroute"));
-
-// app.use(handleRefresh);
-
-// app.use(verifyJwt);
-// app.use('/exclusive', require('./routes/api/Exclusive/exclusive')) //(put) exclusive content (post) buy exclusive content
-//(patch)delete exclusive content
-app.use("/exclusivecontent", require("./routes/api/Exclusive/allexclusive")); //(put) get my purshased exclusive (post) delete my purshased exclusive
-// app.use('/model', require('./routes/api/model/models'))
-app.use("/deleteaccount", require("./routes/api/profile/deleteprofile")); // (post) to delete user account (put) get  block users with user your userid input
-//(patch) to remove block user with id input
-app.use("/setting", require("./routes/api/profile/setting")); //(post) setting input-> userid , emailnot,pushnot
-app.use("/follow", require("./routes/api/follow/follower"));
-app.use("/getfollowers", require("./routes/api/follow/get_followers"));
-// app.use('/postdocument', require('./routes/api/model/postdocument'))
-// app.use('/editmodel', require('./routes/api/model/editemodel'))
-app.use("/getadminhost", require("./routes/api/model/hostforadmin"));
-app.use("/deletemodel", require("./routes/api/model/deletemodel"));
-// app.use('/post', require('./routes/api/post/Post'))
-app.use("/comment", require("./routes/api/comment/Comment"));
-app.use("/like", require("./routes/api/like/Like"));
-app.use("/sharepost", require("./routes/api/share/share"));
-app.use("/editprofile", require("./routes/api/profile/Editprofile"));
-// app.use('/editmoreprofile', require('./routes/api/Profilemore/editprofilemore'))
-app.use("/rejectmodel", require("./routes/api/model/rejectmodel"));
-app.use("/verifymodel", require("./routes/api/model/verifymodel"));
-app.use("/getcurrentchat", require("./routes/api/chat/getchat"));
-app.use("/getmsgnotify", require("./routes/api/chat/getmsgnotify"));
-app.use("/updatenotify", require("./routes/api/chat/updatenotify"));
-app.use("/bookhost", require("./routes/api/booking/book"));
-app.use("/pendingrequest", require("./routes/api/booking/getpendingbook"));
-app.use("/cancelrequest", require("./routes/api/booking/cancelmyrequest"));
-
-app.use("/acceptbook", require("./routes/api/booking/acceptbooking"));
-app.use("/declinebook", require("./routes/api/booking/declinebooking"));
-app.use("/getrequeststats", require("./routes/api/booking/requeststat"));
-app.use("/paymodel", require("./routes/api/booking/paymodel"));
-app.use("/reviewmodel", require("./routes/api/model/reviewmodel"));
-app.use("/getreviews", require("./routes/api/model/getmodelreview"));
-app.use("/deletereview", require("./routes/api/model/deletereview"));
-app.use("/statistics", require("./routes/api/profile/get_statistics"));
-app.use(
-  "/statistics/monthly",
-  require("./routes/api/profile/get_statisticsByMonth")
-);
-
-app.use("/giftmodel", require("./routes/api/chat/giftGold"));
-app.use("/topup", require("./routes/api/profile/topup"));
-app.use("/getallusers", require("./routes/api/Admin/getallusers"));
-app.use("/deleteuser", require("./routes/api/Admin/deleteuser"));
-app.use("/suspenduser", require("./routes/api/Admin/suspenduser"));
-app.use("/sendmessages", require("./routes/api/Admin/sendmessage"));
-app.use("/recivemessage", require("./routes/api/Admin/recivemessage"));
-app.use("/adminnotify", require("./routes/api/Admin/adminnotify"));
-app.use("/useredit", require("./routes/api/Profilemore/getuseredit"));
-app.use("/addcrush", require("./routes/api/model/addcrush"));
-app.use("/getcrush", require("./routes/api/model/getcrush"));
-app.use("/deleteMsg", require("./routes/api/Admin/deleteMsg"));
-app.use("/deletecrush", require("./routes/api/model/deletecrush"));
-
 mongoose.connection.once("open", () => {
   console.log("Database connected");
   server.listen(PORT, () => {
     console.log("listening on *:" + PORT);
   });
 });
-
-// server.listen(PORT, () => {
-//   console.log('listening on *:3500');
-// });

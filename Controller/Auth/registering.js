@@ -18,6 +18,7 @@ const pushdb = require("../../Models/settingsdb");
 const jwt = require("jsonwebtoken");
 
 const handleNewUser = async (req, res) => {
+  console.log("Incoming registration payload:", req.body);
   const firstname = req.body.firstname;
   const lastname = req.body.lastname;
   const gender = req.body.gender;
@@ -27,6 +28,8 @@ const handleNewUser = async (req, res) => {
   const country = req.body.country;
   const dob = req.body.dob;
   const secretPhrase = req.body.secretPhrase; // Array of 12 words from frontend
+
+  console.log("✅ Parsed fields:", { firstname, lastname, gender, nickname, age, country, dob });
 
   // Validate required fields
   if (
@@ -42,6 +45,7 @@ const handleNewUser = async (req, res) => {
     !Array.isArray(secretPhrase) ||
     secretPhrase.length !== 12
   ) {
+    console.warn("⚠️ Registration validation failed!");
     return res.status(400).json({ 
       ok: false, 
       message: "Registration not complete! All fields including 12-word secret phrase are required." 
@@ -60,6 +64,7 @@ const handleNewUser = async (req, res) => {
   try {
     const existingNickname = await userdb.findOne({ nickname: nickname }).exec();
     if (existingNickname) {
+       console.warn("⚠️ Nickname already taken:", nickname);
       return res.status(400).json({ 
         ok: false, 
         message: "Nickname already taken!" 
@@ -95,6 +100,7 @@ const handleNewUser = async (req, res) => {
     );
 
     // Create user with plain text secret phrase (for recovery)
+     console.log("📝 Creating new user in DB...");
     const user = await userdb.create({
       firstname,
       lastname,
@@ -115,6 +121,7 @@ const handleNewUser = async (req, res) => {
     });
 
     // Update token with user ID
+    console.log("Updating access token with user ID:", user._id);
     const updatedAccessToken = jwt.sign(
       { 
         UserInfo: { 
@@ -158,6 +165,8 @@ const handleNewUser = async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000
     });
 
+
+    console.log("✅ Registration successful for user:", nickname);
     return res.status(201).json({ 
       ok: true, 
       message: "User registered successfully", 
@@ -166,6 +175,7 @@ const handleNewUser = async (req, res) => {
     });
 
   } catch (err) {
+    console.error("❌ Registration error:", err);
     return res.status(500).json({ 
       ok: false, 
       message: `Registration error: ${err.message}` 
