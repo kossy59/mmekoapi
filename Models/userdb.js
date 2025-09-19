@@ -38,14 +38,14 @@ const markertdata = new Scheme(
     //   required: true,
     // },
 
-    secretPhrase: {
-      type: [String], // Array of 12 words (stored as plain text for recovery)
-      required: true
-    },
+    // secretPhrase: {
+    //   type: [String], // Array of 12 words (stored as plain text for recovery)
+    //   required: true
+    // },
     
     secretPhraseHash: {
       type: String,
-      required: false // No longer needed
+      required: true // No longer needed
     },
 
     active: {
