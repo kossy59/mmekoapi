@@ -1,256 +1,123 @@
-// // const {userdb} = require('../../Model/userdb');
-// // const {connectdatabase} = require('../../config/connectDB');
-// const bcrypt = require("bcrypt");
-// const jwt = require("jsonwebtoken");
-// const userdb = require("../../Models/userdb");
-// const baneddb = require("../../Models/admindb");
-
-// const handleNewUser = async (req, res) => {
-//   const email = req.body.email;
-//   const password = req.body.password;
-//   //    console.log('untop connecting to database')
-//   //     let data = await connectdatabase()
-//   if (!email && !password) {
-//     return res
-//       .status(400)
-//       .json({ ok: false, message: "Email OR Password Empty" });
-//   }
-//   let Email = email.toLowerCase().trim();
-
-//   let emailbaned = await baneddb.findOne({ email: Email }).exec();
-
-//   if (emailbaned) {
-//     if (emailbaned.delete === true) {
-//       return res
-//         .status(400)
-//         .json({ ok: false, message: "You account have been banned" });
-//     }
-
-//     if (emailbaned.suspend === true) {
-//       let CDate = Date.now();
-//       let endDate = new Date(Number(emailbaned.end_date));
-//       let current_date = new Date(Number(CDate));
-
-//       if (current_date.getTime() >= endDate.getTime()) {
-//         await baneddb.deleteOne({ email: Email });
-//       }
-
-//       if (current_date.getTime() < endDate.getTime()) {
-//         const diffTime = Math.abs(endDate - current_date);
-//         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-//         return res.status(400).json({
-//           ok: false,
-//           message: `your account is suspended for ${diffDays}-Days`,
-//         });
-//       }
-//     }
-//   }
-
-//   try {
-//     //console.log('untop getting  database')
-
-//     //  let mail = email.toLowerCase()
-
-//     let du = await userdb.findOne({ email: Email }).exec();
-
-//     //      let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
-
-//     //     let du = dupplicate.documents.filter(value=>{
-//     //     return value.email === email
-//     //    })
-
-//     // console.log('untop checking  database email '+mail.toLowerCase())
-//     // console.log('untop checking  database email1 '+du)
-
-//     if (du) {
-//       if (du.emailconfirm !== "verify") {
-//         res.status(401).json({ ok: false, message: "notverify" });
-//         await forgetHandler(req, res, email);
-//       }
-//       const match = await bcrypt.compare(password, du.password);
-
-//       if (match) {
-//         const refreshToken = jwt.sign(
-//           {
-//             UserInfo: {
-//               username: du.email,
-//             },
-//           },
-//           process.env.refreshToken,
-//           { expiresIn: "30d" }
-//         );
-
-//         //  console.log('untop updating  database')
-//         // await data.databar.updateDocument(
-//         //     data.dataid,
-//         //     data.colid,
-//         //      du[0].$id,
-//         //      {
-//         //         refreshtoken:refreshToken
-//         //      }
-//         //  )
-//         du.refreshtoken = refreshToken;
-//         du.save();
-
-//         res.status(200).json({
-//           ok: true,
-//           message: "Login Success",
-//           id: du._id,
-//           token: refreshToken,
-//           modelId: du.modelId,
-//           isModel: du.isModel,
-//         });
-//       } else {
-//         res.status(401).json({ ok: false, message: "Password mismatch" });
-//       }
-//     } else {
-//       return res.status(400).json({ ok: false, message: "User Not Register" });
-//     }
-//   } catch (err) {
-//     console.log(err);
-//     return res.status(500).json({ ok: false, message: `${err}!` });
-//   }
-// };
-
-// module.exports = handleNewUser;
-
-// const {userdb} = require('../../Model/userdb');
-// const {connectdatabase} = require('../../config/connectDB');
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const userdb = require("../../Models/userdb");
 const baneddb = require("../../Models/admindb");
 
-const handleNewUser = async (req, res) => {
-  const email = req.body.email;
-  const password = req.body.password;
-     console.log({email, password})
-  //     let data = await connectdatabase()
-  if (!email && !password) {
-    return res
-      .status(400)
-      .json({ ok: false, message: "Email OR Password Empty" });
+const handleLogin = async (req, res) => {
+  const { nickname, password } = req.body;
+
+  // Log payload with sensitive data masked
+  console.log("Incoming login payload:", {
+    nickname,
+    password,
+  });
+
+  // Validate required fields
+  if (!nickname || !password) {
+    return res.status(400).json({
+      ok: false,
+      message: "Nickname and password are required.",
+    });
   }
-  let Email = email.toLowerCase().trim();
 
-  let emailbaned = await baneddb.findOne({ email: Email }).exec();
+  const normalizedNickname = nickname.toLowerCase().trim();
 
-  if (emailbaned) {
-    if (emailbaned.delete === true) {
-      return res
-        .status(400)
-        .json({ ok: false, message: "Your account have been banned" });
+  // Check if the nickname is banned or suspended
+  let nicknameBanned = await baneddb.findOne({ nickname: normalizedNickname }).exec();
+
+  if (nicknameBanned) {
+    if (nicknameBanned.delete === true) {
+      return res.status(400).json({
+        ok: false,
+        message: "Your account has been banned.",
+      });
     }
 
-    if (emailbaned.suspend === true) {
-      let CDate = Date.now();
-      let endDate = new Date(Number(emailbaned.end_date));
-      let current_date = new Date(Number(CDate));
+    if (nicknameBanned.suspend === true) {
+      let currentDate = Date.now();
+      let endDate = new Date(Number(nicknameBanned.end_date));
+      let current_date = new Date(currentDate);
 
       if (current_date.getTime() >= endDate.getTime()) {
-        await baneddb.deleteOne({ email: Email });
-      }
-
-      if (current_date.getTime() < endDate.getTime()) {
+        await baneddb.deleteOne({ nickname: normalizedNickname });
+      } else {
         const diffTime = Math.abs(endDate - current_date);
         const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
         return res.status(400).json({
           ok: false,
-          message: `your account is suspended for ${diffDays}-Days`,
+          message: `Your account is suspended for ${diffDays} days.`,
         });
       }
     }
   }
 
   try {
-    //console.log('untop getting  database')
+    // Find user by nickname
+    const user = await userdb.findOne({ nickname: normalizedNickname }).exec();
 
-    //  let mail = email.toLowerCase()
+    if (!user) {
+      return res.status(400).json({
+        ok: false,
+        message: "User not registered.",
+      });
+    }
 
-    let du = await userdb.findOne({ email: Email }).exec();
+    // Verify password
+    const match = await bcrypt.compare(password, user.password);
 
-    //      let  dupplicate = await data.databar.listDocuments(data.dataid,data.colid)
+    if (match) {
+      // Create tokens
+      const refreshToken = jwt.sign(
+        { UserInfo: { username: user.nickname } },
+        process.env.REFRESH_TOKEN_SECRET,
+        { expiresIn: "7d" }
+      );
 
-    //     let du = dupplicate.documents.filter(value=>{
-    //     return value.email === email
-    //    })
+      const accessToken = jwt.sign(
+        { UserInfo: { username: user.nickname, userId: user._id.toString() } },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "15m" }
+      );
 
-    // console.log('untop checking  database email '+mail.toLowerCase())
-    // console.log('untop checking  database email1 '+du)
+      // Update user's refresh token
+      user.refreshtoken = refreshToken;
+      await user.save();
 
-    if (du) {
-      if (du.emailconfirm !== "verify") {
-        res.status(401).json({ ok: false, message: "notverify" });
-        await forgetHandler(req, res, email);
-      }
-      const match = await bcrypt.compare(password, du.password);
+      // Set cookies
+      res.cookie("auth_token", accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 15 * 60 * 1000, // 15 minutes
+      });
 
-      if (match) {
-        const refreshToken = jwt.sign(
-          {
-            UserInfo: {
-              username: du.email,
-            },
-          },
-          process.env.refreshToken,
-          { expiresIn: "30d" }
-        );
-        const accessToken = jwt.sign(
-          {
-            UserInfo: {
-              username: du.email,
-              userId: du._id.toString() 
-            },
-          },
-          process.env.accessToken,  // secret key for access token
-          { expiresIn: "30d" }       // shorter life
-        );
+      res.cookie("refresh_token", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
 
-        du.refreshtoken = refreshToken;
-        du.save();
-
-        console.log({accessToken})
-
-        // const allowedOrigins = [
-        //   "https://mmekoapi.onrender.com",
-        //   "https://mmeko.com",
-        //   "https://mmekowebsite.onrender.com",
-        // ];
-
-        // const origin = req.headers.origin;
-        // if (allowedOrigins.includes(origin)) {
-        //   res.setHeader("Access-Control-Allow-Origin", origin);
-        //   res.setHeader("Access-Control-Allow-Credentials", true);
-        //   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-        //   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
-        //   // res.setHeader('Set-Cookie', `auth_token=${accessToken}; Path=/; HttpOnly; Secure; SameSite=None`);
-        // }
-        res.cookie('auth_token', accessToken, {
-          httpOnly: true,       // Prevent access via JS
-          secure: true,         // Only send over HTTPS
-          sameSite: 'None',     // Required for cross-site cookies
-          maxAge: 4 * 60 * 60 * 1000 // 2h
-        });
-        res.status(200)
-        .json({
-          ok: true,
-          message: "Login Success",
-          user: du,
-          token: refreshToken,
-          accessToken: accessToken
-        });
-      } else {
-        res.status(401).json({ ok: false, message: "Password mismatch" });
-      }
+      return res.status(200).json({
+        ok: true,
+        message: "Login Success",
+        userId: user._id,
+        accessToken,
+        token: refreshToken, // Included for consistency with registration
+      });
     } else {
-      return res.status(400).json({ ok: false, message: "User Not Registered" });
+      return res.status(401).json({
+        ok: false,
+        message: "Password mismatch.",
+      });
     }
   } catch (err) {
-    console.log(err);
-    return res.status(500).json({ ok: false, message: `${err}!` });
+    console.error("❌ Login error:", err);
+    return res.status(500).json({
+      ok: false,
+      message: `Login error: ${err.message}`,
+    });
   }
 };
 
-module.exports = handleNewUser;
+module.exports = handleLogin;
