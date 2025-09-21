@@ -6,7 +6,7 @@ const removeblockeduser = require('../../../Controller/profile/deleteblockUser')
 // const verifyJwt = require('../../../Middleware/verify');
 
 router.route('/')
-.post(deletepro)
+.delete(deletepro)
 .put(blockedusers)
 .patch(removeblockeduser)
 
