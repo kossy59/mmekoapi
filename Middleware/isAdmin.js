@@ -1,5 +1,5 @@
 // Middleware/isAdmin.js// Adjust path if needed
-const User = require("../Models/userdb"); 
+const User = require("../Models/userdb");
 const isAdmin = async (req, res, next) => {
   try {
     const userId = req.userId;
@@ -14,7 +14,7 @@ const isAdmin = async (req, res, next) => {
       return res.status(403).json({ message: "Access denied. Admins only." });
     }
 
-    next(); 
+    next();
   } catch (err) {
     console.error("Admin check error:", err);
     res.status(500).json({ message: "Server error" });

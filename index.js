@@ -35,23 +35,31 @@ const server = http.createServer(app);
 const allowedOrigins = [
   process.env.NEXT_PUBLIC_URL,
   "https://mmekowebsite.onrender.com",
-  "http://localhost:3000" // Add localhost for development
+  "http://localhost:3000", // Add localhost for development
 ].filter(Boolean); // Remove falsy values (e.g., undefined NEXT_PUBLIC_URL)
 
 // Configure CORS
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (e.g., mobile apps or curl) or from allowed origins
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, origin || '*');
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g., mobile apps or curl) or from allowed origins
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, origin || "*");
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Origin",
+      "X-Requested-With",
+      "Content-Type",
+      "Accept",
+      "Authorization",
+    ],
+  })
+);
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
@@ -67,7 +75,7 @@ const io = new Server(server, {
   cors: {
     origin: allowedOrigins,
     methods: ["GET", "POST"],
-    credentials: true
+    credentials: true,
   },
 });
 
@@ -86,7 +94,10 @@ app.use("/getallsharepost", require("./routes/api/share/getallsharedpost"));
 app.use("/getsharepost", require("./routes/api/share/getsharepost"));
 app.use("/getprofile", require("./routes/api/profile/Profile"));
 app.use("/getmoreprofile", require("./routes/api/Profilemore/getProfilemore"));
-app.use("/messagenotification", require("./routes/api/chat/getNotificationmsg"));
+app.use(
+  "/messagenotification",
+  require("./routes/api/chat/getNotificationmsg")
+);
 app.use("/notifymodel", require("./routes/api/booking/notifybooking"));
 app.use("/subpushid", require("./routes/api/profile/postUserPushNote"));
 app.use("/verifyemail", require("./routes/Auth/verifyEmail"));
@@ -105,8 +116,14 @@ app.use("/searchuser", require("./routes/api/profile/getallUser"));
 app.use("/post", require("./routes/api/post/Post"));
 app.use("/model/all", require("./routes/api/model/mymodels"));
 app.use("/addpayment", require("./routes/api/payment/payment.routes"));
-app.use("/withdraw-request", require("./routes/api/withdrawRequest/withdraw.route"));
-app.use("/editmoreprofile", require("./routes/api/Profilemore/editprofilemore"));
+app.use(
+  "/withdraw-request",
+  require("./routes/api/withdrawRequest/withdraw.route")
+);
+app.use(
+  "/editmoreprofile",
+  require("./routes/api/Profilemore/editprofilemore")
+);
 app.use("/model", require("./routes/api/model/models"));
 app.use("/editmodel", require("./routes/api/model/editemodel"));
 app.use("/postdocument", require("./routes/api/model/postdocument"));
@@ -141,7 +158,10 @@ app.use("/reviewmodel", require("./routes/api/model/reviewmodel"));
 app.use("/getreviews", require("./routes/api/model/getmodelreview"));
 app.use("/deletereview", require("./routes/api/model/deletereview"));
 app.use("/statistics", require("./routes/api/profile/get_statistics"));
-app.use("/statistics/monthly", require("./routes/api/profile/get_statisticsByMonth"));
+app.use(
+  "/statistics/monthly",
+  require("./routes/api/profile/get_statisticsByMonth")
+);
 app.use("/giftmodel", require("./routes/api/chat/giftGold"));
 app.use("/topup", require("./routes/api/profile/topup"));
 app.use("/getallusers", require("./routes/api/Admin/getallusers"));
@@ -156,6 +176,8 @@ app.use("/getcrush", require("./routes/api/model/getcrush"));
 app.use("/deleteMsg", require("./routes/api/Admin/deleteMsg"));
 app.use("/deletecrush", require("./routes/api/model/deletecrush"));
 
+//request
+app.use("/request", require("./routes/api/requestmodel/requestRoutes"));
 // Socket.IO connection handling
 io.on("connection", (socket) => {
   socket.on("online", async (userid) => {

@@ -2,9 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const userdb = require("../../Models/userdb");
 const baneddb = require("../../Models/admindb");
-
-
-
+require("dotenv").config();
 const handleLogin = async (req, res) => {
   const { nickname, password } = req.body;
 
@@ -25,7 +23,9 @@ const handleLogin = async (req, res) => {
   const normalizedNickname = nickname.toLowerCase().trim();
 
   // Check if the nickname is banned or suspended
-  let nicknameBanned = await baneddb.findOne({ nickname: normalizedNickname }).exec();
+  let nicknameBanned = await baneddb
+    .findOne({ nickname: normalizedNickname })
+    .exec();
 
   if (nicknameBanned) {
     if (nicknameBanned.delete === true) {
@@ -80,10 +80,12 @@ const handleLogin = async (req, res) => {
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: "15m" }
       );
-
+      console.log("ACCESS:", process.env.ACCESS_TOKEN_SECRET);
+      console.log("REFRESH:", process.env.REFRESH_TOKEN_SECRET);
       // Update user's refresh token
       user.refreshtoken = refreshToken;
       await user.save();
+      // await fixUserFields();
 
       // Set cookies
       res.cookie("auth_token", accessToken, {
@@ -103,9 +105,10 @@ const handleLogin = async (req, res) => {
       return res.status(200).json({
         ok: true,
         message: "Login Success",
+        isAdmin: user.admin,
         userId: user._id,
         accessToken,
-        token: refreshToken, // Included for consistency with registration
+        token: refreshToken,
       });
     } else {
       return res.status(401).json({
@@ -123,3 +126,25 @@ const handleLogin = async (req, res) => {
 };
 
 module.exports = handleLogin;
+
+// update all user
+// async function fixUserFields() {
+//   try {
+//     const result = await userdb.updateMany(
+//       {},
+//       {
+//         $set: {
+//           Model_Application_status: "none",
+//           Model_Application: false,
+//         },
+//         $unset: {
+//           Model_Applicatio_status: "",
+//         },
+//       },
+//       { upsert: false }
+//     );
+//     console.log("Users updated:", result.modifiedCount);
+//   } catch (err) {
+//     console.error("Error updating users:", err);
+//   }
+// }

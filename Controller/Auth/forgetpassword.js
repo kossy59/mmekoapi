@@ -6,16 +6,16 @@ const forgetpass = async (req, res) => {
   const { nickname, secretPhrase, newPassword } = req.body;
 
   if (!nickname || !secretPhrase || !newPassword) {
-    return res.status(400).json({ 
-      ok: false, 
-      message: "Nickname, secret phrase and new password are required!" 
+    return res.status(400).json({
+      ok: false,
+      message: "Nickname, secret phrase and new password are required!",
     });
   }
 
   if (!Array.isArray(secretPhrase) || secretPhrase.length !== 12) {
-    return res.status(400).json({ 
-      ok: false, 
-      message: "Secret phrase must be 12 words" 
+    return res.status(400).json({
+      ok: false,
+      message: "Secret phrase must be 12 words",
     });
   }
 
@@ -28,10 +28,15 @@ const forgetpass = async (req, res) => {
 
     // 2️⃣ Verify secret phrase
     const phraseString = secretPhrase.join(" ");
-    const isPhraseValid = await bcrypt.compare(phraseString, user.secretPhraseHash);
+    const isPhraseValid = await bcrypt.compare(
+      phraseString,
+      user.secretPhraseHash
+    );
 
     if (!isPhraseValid) {
-      return res.status(401).json({ ok: false, message: "Invalid secret phrase" });
+      return res
+        .status(401)
+        .json({ ok: false, message: "Invalid secret phrase" });
     }
 
     // 3️⃣ Update password
@@ -44,7 +49,7 @@ const forgetpass = async (req, res) => {
       process.env.REFRESH_TOKEN_SECRET,
       { expiresIn: "7d" }
     );
-    
+
     const accessToken = jwt.sign(
       { UserInfo: { username: user.nickname, userId: user._id.toString() } },
       process.env.ACCESS_TOKEN_SECRET,
@@ -75,11 +80,10 @@ const forgetpass = async (req, res) => {
       message: "Password updated successfully",
       accessToken,
     });
-
   } catch (err) {
-    return res.status(500).json({ 
-      ok: false, 
-      message: `Recovery error: ${err.message}` 
+    return res.status(500).json({
+      ok: false,
+      message: `Recovery error: ${err.message}`,
     });
   }
 };
