@@ -15,10 +15,11 @@ const { processVideo, compressImage } = require("./compress");
 // -----------------------------
 // Configuration (env required)
 // -----------------------------
-const ENDPOINT = process.env.APPWRITE_ENDPOINT || "https://cloud.appwrite.io/v1";
-const PROJECT_ID = process.env.APPWRITE_PROJECT_ID;  // required
+const ENDPOINT =
+  process.env.APPWRITE_ENDPOINT || "https://cloud.appwrite.io/v1";
+const PROJECT_ID = process.env.APPWRITE_PROJECT_ID; // required
 const APPWRITE_API_KEY = process.env.APPWRITE_API_KEY; // required
-const BUCKET_ID = process.env.APPWRITE_BUCKET_ID || "post"; 
+const BUCKET_ID = process.env.APPWRITE_BUCKET_ID || "post";
 
 if (!PROJECT_ID || !APPWRITE_API_KEY || !BUCKET_ID) {
   // Fail fast so you notice misconfigurations early.
@@ -75,7 +76,9 @@ async function ensureBucketExists(bucketId = BUCKET_ID) {
     }
     // Other error (permissions/network)
     throw new Error(
-      `[Appwrite] Could not validate bucket "${bucketId}": ${err?.message || "Unknown error"}`
+      `[Appwrite] Could not validate bucket "${bucketId}": ${
+        err?.message || "Unknown error"
+      }`
     );
   }
 }
@@ -109,7 +112,11 @@ async function saveFile(file /* not used */, filePath, folder = BUCKET_ID) {
   try {
     // Read file into memory (so we can use same REST flow as buffers)
     const buffer = fs.readFileSync(filePath);
-    const processedBuffer = await processBufferByMime(buffer, originalname, mimetype);
+    const processedBuffer = await processBufferByMime(
+      buffer,
+      originalname,
+      mimetype
+    );
 
     const form = new FormData();
     form.append("file", processedBuffer, {
@@ -118,20 +125,27 @@ async function saveFile(file /* not used */, filePath, folder = BUCKET_ID) {
       knownLength: processedBuffer.length,
     });
     form.append("fileId", "unique()");
-    form.append('permissions[]', 'read("any")');
+    form.append("permissions[]", 'read("any")');
 
     const url = `${ENDPOINT}/storage/buckets/${bucket}/files`;
-    const resp = await axios.post(url, form, { headers: restHeaders(form.getHeaders()) });
+    const resp = await axios.post(url, form, {
+      headers: restHeaders(form.getHeaders()),
+    });
 
     // Clean up local file after upload (best-effort)
-    try { fs.unlinkSync(filePath); } catch (_) { }
+    try {
+      fs.unlinkSync(filePath);
+    } catch (_) {}
 
     return {
       public_id: resp.data.$id,
       file_link: getFileViewUrl(resp.data.$id, bucket),
     };
   } catch (error) {
-    console.error("[saveFile] Upload error:", error?.response?.data || error?.message || error);
+    console.error(
+      "[saveFile] Upload error:",
+      error?.response?.data || error?.message || error
+    );
     // Do not throw to avoid breaking legacy callers; return empty object
     return { public_id: "", file_link: "" };
   }
@@ -160,10 +174,12 @@ async function uploadSingleFileToCloudinary(file, folder = BUCKET_ID) {
       knownLength: processedBuffer.length,
     });
     form.append("fileId", "unique()");
-    form.append('permissions[]', 'read("any")');
+    form.append("permissions[]", 'read("any")');
 
     const url = `${ENDPOINT}/storage/buckets/${bucket}/files`;
-    const resp = await axios.post(url, form, { headers: restHeaders(form.getHeaders()) });
+    const resp = await axios.post(url, form, {
+      headers: restHeaders(form.getHeaders()),
+    });
 
     return {
       public_id: resp.data.$id,
@@ -182,7 +198,7 @@ async function uploadSingleFileToCloudinary(file, folder = BUCKET_ID) {
 // uploadManyFilesToCloudinary (buffers → Appwrite)
 // -----------------------------
 async function uploadManyFilesToCloudinary(files, folder = BUCKET_ID) {
-  console.log("[uploader] Uploading %d files to appwrite",files.length)
+  console.log("[uploader] Uploading %d files to appwrite", files.length);
   await ensureBucketExists(folder);
   const bucket = folder && folder !== "default" ? folder : BUCKET_ID;
   if (!files || files.length === 0) return [];
@@ -205,9 +221,11 @@ async function uploadManyFilesToCloudinary(files, folder = BUCKET_ID) {
           knownLength: processedBuffer.length,
         });
         form.append("fileId", "unique()");
-        form.append('permissions[]', 'read("any")');
+        form.append("permissions[]", 'read("any")');
 
-        const resp = await axios.post(url, form, { headers: restHeaders(form.getHeaders()) });
+        const resp = await axios.post(url, form, {
+          headers: restHeaders(form.getHeaders()),
+        });
 
         return {
           public_id: resp.data.$id,
@@ -242,7 +260,10 @@ async function deleteFile(publicId, folder = BUCKET_ID) {
     await storage.deleteFile(bucket, publicId);
     return { public_id: publicId, deleted: true };
   } catch (error) {
-    console.error("[deleteFile] Error:", error?.response?.data || error?.message || error);
+    console.error(
+      "[deleteFile] Error:",
+      error?.response?.data || error?.message || error
+    );
     return { public_id: publicId, deleted: false };
   }
 }
@@ -263,7 +284,10 @@ async function deleteManyFiles(publicIds, folder = BUCKET_ID) {
         await storage.deleteFile(bucket, id);
         return { public_id: id, deleted: true };
       } catch (error) {
-        console.error(`[deleteManyFiles] Error deleting ${id}:`, error?.message || error);
+        console.error(
+          `[deleteManyFiles] Error deleting ${id}:`,
+          error?.message || error
+        );
         return { public_id: id, deleted: false };
       }
     })
@@ -274,7 +298,12 @@ async function deleteManyFiles(publicIds, folder = BUCKET_ID) {
 // -----------------------------
 // updateFile (disk path flow)
 // -----------------------------
-async function updateFile(publicId, file /* not used */, filePath, folder = BUCKET_ID) {
+async function updateFile(
+  publicId,
+  file /* not used */,
+  filePath,
+  folder = BUCKET_ID
+) {
   await deleteFile(publicId, folder);
   return await saveFile(null, filePath, folder);
 }
@@ -282,7 +311,11 @@ async function updateFile(publicId, file /* not used */, filePath, folder = BUCK
 // -----------------------------
 // updateSingleFileToCloudinary (buffer flow)
 // -----------------------------
-async function updateSingleFileToCloudinary(publicId, file, folder = BUCKET_ID) {
+async function updateSingleFileToCloudinary(
+  publicId,
+  file,
+  folder = BUCKET_ID
+) {
   await deleteFile(publicId, folder);
   return await uploadSingleFileToCloudinary(file, folder);
 }
@@ -290,7 +323,11 @@ async function updateSingleFileToCloudinary(publicId, file, folder = BUCKET_ID) 
 // -----------------------------
 // updateManyFileToCloudinary
 // -----------------------------
-async function updateManyFileToCloudinary(publicIds, files, folder = BUCKET_ID) {
+async function updateManyFileToCloudinary(
+  publicIds,
+  files,
+  folder = BUCKET_ID
+) {
   if (publicIds && publicIds.length > 0) {
     await deleteManyFiles(publicIds, folder);
   }
