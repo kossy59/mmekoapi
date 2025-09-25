@@ -26,13 +26,12 @@ const readPost = async (req, res) => {
 
     // let  likedb = await data.databar.listDocuments(data.dataid,data.likeCol)
 
-
     const posts = await postdbs.aggregate([
       // make ObjectId copy of userid for joins
       {
         $addFields: {
-          useridObj: { $toObjectId: "$userid" }
-        }
+          useridObj: { $toObjectId: "$userid" },
+        },
       },
 
       // join with users
@@ -41,8 +40,8 @@ const readPost = async (req, res) => {
           from: "userdbs", // your users collection name
           localField: "useridObj",
           foreignField: "_id",
-          as: "user"
-        }
+          as: "user",
+        },
       },
       { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
 
@@ -52,8 +51,8 @@ const readPost = async (req, res) => {
           from: "likes", // your Like model collection
           localField: "_id",
           foreignField: "postid",
-          as: "likes"
-        }
+          as: "likes",
+        },
       },
 
       // join with comments
@@ -62,8 +61,8 @@ const readPost = async (req, res) => {
           from: "comments", // your Comment model collection
           localField: "_id",
           foreignField: "postid",
-          as: "comments"
-        }
+          as: "comments",
+        },
       },
       {
         $project: {
@@ -89,10 +88,10 @@ const readPost = async (req, res) => {
             following: 1,
             isModel: 1,
             modelId: 1,
-            exclusive_verify: 1
-          }
-        }
-      }
+            exclusive_verify: 1,
+          },
+        },
+      },
     ]);
     // let userdb = await userdbs.find().exec();
     // let comdb = await comdbs.find().exec();

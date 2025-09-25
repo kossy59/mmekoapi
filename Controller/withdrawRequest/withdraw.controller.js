@@ -1,66 +1,66 @@
-
 const WithdrawRequest = require("../../Models/withdrawRequest");
 const PaymentAccount = require("../../Models/paymentAccount");
 const User = require("../../Models/userdb"); // Ensure this is the correct path
 
 // Create Withdrawal Request
 exports.handleWithdrawRequest = async (req, res) => {
-    try {
-        // const { userId, amount, credentials } = req.body;
-        const amount = req.body.amount;
-        const credentials = req.body.credentials;
-        const userId = req.userId; // From token only
+  try {
+    // const { userId, amount, credentials } = req.body;
+    const amount = req.body.amount;
+    const credentials = req.body.credentials;
+    const userId = req.userId; // From token only
 
-
-        if (!userId || !amount || !credentials) {
-            return res.status(400).json({ message: "Missing fields" });
-        }
-
-        // ✅ Check if user exists
-        const userExists = await User.findById(userId);
-        if (!userExists) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        // ✅ Check if account exists for method
-        const accountExists = await PaymentAccount.findOne({
-            userId,
-            method: credentials.method,
-        });
-
-        if (!accountExists) {
-            return res.status(404).json({ message: `No ${credentials.method} account found for user` });
-        }
-
-        const existingRequest = await WithdrawRequest.findOne({
-            userId,
-            status: "pending",
-        });
-
-        if (existingRequest) {
-               console.log("Already has pending request");
-            return res.status(409).json({ message: "You already have a pending withdrawal request." });
-        }
-
-
-        const request = new WithdrawRequest({
-            userId,
-            amount,
-            credentials,
-        });
-
-        const saved = await request.save();
-
-        res.status(201).json({
-            message: "Withdrawal request submitted",
-            request: saved,
-        });
-    } catch (err) {
-        console.error("Withdraw error:", err);
-        res.status(500).json({ message: "Server error" });
+    if (!userId || !amount || !credentials) {
+      return res.status(400).json({ message: "Missing fields" });
     }
-};
 
+    // ✅ Check if user exists
+    const userExists = await User.findById(userId);
+    if (!userExists) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // ✅ Check if account exists for method
+    const accountExists = await PaymentAccount.findOne({
+      userId,
+      method: credentials.method,
+    });
+
+    if (!accountExists) {
+      return res
+        .status(404)
+        .json({ message: `No ${credentials.method} account found for user` });
+    }
+
+    const existingRequest = await WithdrawRequest.findOne({
+      userId,
+      status: "pending",
+    });
+
+    if (existingRequest) {
+      console.log("Already has pending request");
+      return res
+        .status(409)
+        .json({ message: "You already have a pending withdrawal request." });
+    }
+
+    const request = new WithdrawRequest({
+      userId,
+      amount,
+      credentials,
+    });
+
+    const saved = await request.save();
+
+    res.status(201).json({
+      message: "Withdrawal request submitted",
+      request: saved,
+    });
+  } catch (err) {
+    console.error("Withdraw error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 // exports.getAllWithdrawRequests = async (req, res) => {
 //     try {
@@ -89,21 +89,20 @@ exports.getAllWithdrawRequests = async (req, res) => {
   }
 };
 
-
 exports.getWithdrawRequestById = async (req, res) => {
-    try {
-        const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-        const request = await WithdrawRequest.findById(id);
-        if (!request) {
-            return res.status(404).json({ message: "Request not found" });
-        }
-
-        res.status(200).json({ request });
-    } catch (err) {
-        console.error("Error fetching request:", err);
-        res.status(500).json({ message: "Server error" });
+    const request = await WithdrawRequest.findById(id);
+    if (!request) {
+      return res.status(404).json({ message: "Request not found" });
     }
+
+    res.status(200).json({ request });
+  } catch (err) {
+    console.error("Error fetching request:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 };
 
 // Update status to paid
@@ -130,8 +129,6 @@ exports.getWithdrawRequestById = async (req, res) => {
 //     res.status(500).json({ message: "Server error" });
 //   }
 // };
-
-
 
 // exports.markAsPaid = async (req, res) => {
 //   try {
@@ -165,8 +162,6 @@ exports.getWithdrawRequestById = async (req, res) => {
 //   }
 // };
 
-
-
 exports.markAsPaid = async (req, res) => {
   try {
     const { id } = req.params;
@@ -191,7 +186,6 @@ exports.markAsPaid = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-  
     // if (user.balance < request.amount) {
     //   return res.status(400).json({ message: "Insufficient user balance" });
     // }
@@ -214,18 +208,19 @@ exports.markAsPaid = async (req, res) => {
   }
 };
 
-
-
-
 // Get latest withdrawal status for a user
 exports.getWithdrawStatusByUserId = async (req, res) => {
   try {
     const userId = req.params.userId;
 
-    const latestRequest = await WithdrawRequest.findOne({ userId }).sort({ createdAt: -1 });
+    const latestRequest = await WithdrawRequest.findOne({ userId }).sort({
+      createdAt: -1,
+    });
 
     if (!latestRequest) {
-      return res.status(404).json({ status: "none", message: "No withdrawal request found" });
+      return res
+        .status(404)
+        .json({ status: "none", message: "No withdrawal request found" });
     }
 
     return res.status(200).json({
@@ -238,20 +233,18 @@ exports.getWithdrawStatusByUserId = async (req, res) => {
   }
 };
 
-
-
 exports.deleteWithdrawRequest = async (req, res) => {
-    try {
-        const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-        const deleted = await WithdrawRequest.findByIdAndDelete(id);
-        if (!deleted) {
-            return res.status(404).json({ message: "Request not found" });
-        }
-
-        res.status(200).json({ message: "Request deleted", deleted });
-    } catch (err) {
-        console.error("Error deleting request:", err);
-        res.status(500).json({ message: "Server error" });
+    const deleted = await WithdrawRequest.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ message: "Request not found" });
     }
+
+    res.status(200).json({ message: "Request deleted", deleted });
+  } catch (err) {
+    console.error("Error deleting request:", err);
+    res.status(500).json({ message: "Server error" });
+  }
 };

@@ -42,10 +42,10 @@ const markertdata = new Scheme(
     //   type: [String], // Array of 12 words (stored as plain text for recovery)
     //   required: true
     // },
-    
+
     secretPhraseHash: {
       type: String,
-      required: true // No longer needed
+      required: true, // No longer needed
     },
 
     active: {
@@ -63,7 +63,7 @@ const markertdata = new Scheme(
       type: String,
       required: false,
     },
-    
+
     accessToken: {
       type: String,
       required: false,
@@ -106,6 +106,12 @@ const markertdata = new Scheme(
       required: false,
       default: false,
     },
+    Model_Application_status: {
+      type: String,
+      enum: ["none", "pending", "accepted", "rejected"],
+      default: "none",
+    },
+    // Model_Application: { type: Boolean, required: false, default: false },
     modelId: {
       type: String,
       required: false,

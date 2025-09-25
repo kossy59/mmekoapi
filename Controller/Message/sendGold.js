@@ -2,7 +2,7 @@ const userdb = require("../../Models/userdb");
 const historydb = require("../../Models/mainbalance");
 const modeldb = require("../../Models/models");
 const giftdb = require("../../Models/gift");
-const { model } = require("mongoose");
+// const { model } = require("mongoose");
 
 const createModel = async (req, res) => {
   const modelid = req.body.modelid;
