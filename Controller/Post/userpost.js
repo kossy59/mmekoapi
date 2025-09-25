@@ -186,8 +186,31 @@ const createPost = async (req, res) => {
   let content = data.content || "";
   const posttype = data.posttype;
 
+   // ------------------------------
+  // ✅ DAILY UPLOAD LIMIT CHECK
+  // ------------------------------
+  const startOfDay = new Date();
+  startOfDay.setHours(0, 0, 0, 0);
+
+  const endOfDay = new Date();
+  endOfDay.setHours(23, 59, 59, 999);
+
+  const todayCount = await postdata.countDocuments({
+    userid,
+    posttype,
+    posttime: { $gte: startOfDay.getTime().toString(), $lte: endOfDay.getTime().toString() },
+  });
+
+  if (posttype === "image" && todayCount >= 10) {
+    return res.status(400).json({ ok: false, message: "You can only upload 10 images per day." });
+  }
+  if (posttype === "video" && todayCount >= 5) {
+    return res.status(400).json({ ok: false, message: "You can only upload 5 videos per day." });
+  }
+
   let postfilelink = req.body?.file_link||"";
   let postfilepublicid = req.body?.public_id||"";
+  
 
   try {
     // --- Video Upload & Trimming ---
