@@ -41,27 +41,24 @@ const createModel = async (req, res) => {
     await sendEmail(userid, "user unfollow you");
     await sendpushnote(userid, "user unfollow you", "modelicon");
 
-    // Keep userdb arrays in sync so /getfollowers shows accurate data
+    // No need to sync userdb arrays - followers collection is the single source of truth
+
+    // Emit socket event for real-time updates
     try {
-      const target = await userdb.findById(userid).exec();
-      const actor = await userdb.findById(followerid).exec();
-
-      if (target && Array.isArray(target.followers)) {
-        target.followers = target.followers.filter(
-          (id) => String(id) !== String(followerid)
-        );
-        await target.save();
+      const io = req.app.get('io');
+      if (io) {
+        io.emit(`follow_update_${userid}`, {
+          action: 'unfollow',
+          follower: followerid
+        });
+        io.emit('follow_update', {
+          action: 'unfollow',
+          target: userid,
+          actor: followerid
+        });
       }
-
-      if (actor && Array.isArray(actor.following)) {
-        actor.following = actor.following.filter(
-          (id) => String(id) !== String(userid)
-        );
-        await actor.save();
-      }
-    } catch (syncErr) {
-      // Don't fail the main operation if sync fails, but log for debugging
-      console.log("[unfollow] sync arrays error:", syncErr?.message);
+    } catch (socketErr) {
+      console.log("[unfollow] socket emit error:", socketErr?.message);
     }
 
     return res.status(200).json({ ok: true, message: `unfollowed successfully` });

@@ -86,6 +86,19 @@ const readProfile = async (req, res) => {
     }
 
 
+    // Debug logging
+    console.log("📊 [getprofile] Returning profile data:", {
+      firstname: dues.firstname,
+      lastname: dues.lastname,
+      nickname: dues.nickname,
+      bio: dues.bio,
+      hasPhotolink: !!dues.photolink,
+      photolinkLength: dues.photolink?.length,
+      photolinkPreview: dues.photolink?.substring(0, 50) + '...',
+      hasPhotoID: !!dues.photoID,
+      photoID: dues.photoID
+    });
+
     // console.log('returning profile' + du)
     return res.status(200).json({
       "ok": true,

@@ -48,29 +48,24 @@ const createModel = async (req,res)=>{
         await sendEmail(userid, "you have new follower")
         await sendpushnote(userid,"you have new follower","modelicon")
 
-        // Keep userdb arrays in sync so /getfollowers shows accurate data
+        // No need to sync userdb arrays - followers collection is the single source of truth
+
+        // Emit socket event for real-time updates
         try {
-            const target = await userdb.findById(userid).exec();
-            const actor = await userdb.findById(followerid).exec();
-
-            if (target) {
-                target.followers = Array.isArray(target.followers) ? target.followers : [];
-                if (!target.followers.find((id) => String(id) === String(followerid))) {
-                    target.followers.push(followerid);
-                    await target.save();
-                }
+            const io = req.app.get('io');
+            if (io) {
+                io.emit(`follow_update_${userid}`, {
+                    action: 'follow',
+                    follower: followerid
+                });
+                io.emit('follow_update', {
+                    action: 'follow',
+                    target: userid,
+                    actor: followerid
+                });
             }
-
-            if (actor) {
-                actor.following = Array.isArray(actor.following) ? actor.following : [];
-                if (!actor.following.find((id) => String(id) === String(userid))) {
-                    actor.following.push(userid);
-                    await actor.save();
-                }
-            }
-        } catch (syncErr) {
-            // Don't fail the main operation if sync fails, but log for debugging
-            console.log("[follow] sync arrays error:", syncErr?.message);
+        } catch (socketErr) {
+            console.log("[follow] socket emit error:", socketErr?.message);
         }
 
         return res.status(200).json({"ok":true,"message":`followed successfully`})

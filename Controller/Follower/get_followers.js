@@ -15,9 +15,12 @@ const createModel = async (req, res) => {
       followers: [],
       following: [],
     };
-    let users = await userdb.findById(userid).exec();
-    let followers = users?.followers || [];
-    //console.log("getting follower")
+    
+    // Get followers from the followers collection (source of truth)
+    let followersFromDB = await followerdb.find({ userid: userid }).exec();
+    let followers = followersFromDB.map(f => f.followerid);
+    
+    console.log("Getting followers from followers collection:", followers.length);
     if (followers?.length) {
       // console.log("got the follower")
       for (let i = 0; i < followers.length; i++) {
@@ -54,8 +57,11 @@ const createModel = async (req, res) => {
       }
     }
 
-    let followings = users?.following || [];
-    console.log(followings);
+    // Get following from the followers collection (source of truth)
+    let followingFromDB = await followerdb.find({ followerid: userid }).exec();
+    let followings = followingFromDB.map(f => f.userid);
+    
+    console.log("Getting following from followers collection:", followings.length);
     if (followings?.length) {
       //console.log("got the followings")
 
