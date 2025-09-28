@@ -93,6 +93,7 @@ app.use("/getallpost", require("./routes/api/post/getpost"));
 app.use("/getalluserpost", require("./routes/api/post/getalluserPost"));
 app.use("/getallcomment", require("./routes/api/comment/Getallcomment"));
 app.use("/getalllike", require("./routes/api/like/alllike"));
+app.use("/like", require("./routes/api/like/getlikesbypost"));
 app.use("/getallsharepost", require("./routes/api/share/getallsharedpost"));
 app.use("/getsharepost", require("./routes/api/share/getsharepost"));
 app.use("/getprofile", require("./routes/api/profile/Profile"));
