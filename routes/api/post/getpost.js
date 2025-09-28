@@ -73,7 +73,9 @@ router.route('/:pid')
                             following: 1,
                             isModel: 1,
                             modelId: 1,
-                            exclusive_verify: 1
+                            exclusive_verify: 1,
+                            photolink: 1,
+                            photoID: 1
                         }
                     }
                 }

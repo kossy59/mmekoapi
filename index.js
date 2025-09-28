@@ -79,6 +79,9 @@ const io = new Server(server, {
   },
 });
 
+// Make io available to routes
+app.set('io', io);
+
 connect();
 
 const IDS = {};
@@ -142,6 +145,7 @@ app.use("/comment", require("./routes/api/comment/Comment"));
 app.use("/like", require("./routes/api/like/Like"));
 app.use("/sharepost", require("./routes/api/share/share"));
 app.use("/editprofile", require("./routes/api/profile/Editprofile"));
+app.use("/checkusername", require("./routes/api/profile/checkusername"));
 app.use("/rejectmodel", require("./routes/api/model/rejectmodel"));
 app.use("/verifymodel", require("./routes/api/model/verifymodel"));
 app.use("/getcurrentchat", require("./routes/api/chat/getchat"));
@@ -448,6 +452,13 @@ io.on("connection", (socket) => {
     await deletecallOffline(socket.id);
     socket.disconnect();
     console.log("user disconnected " + socket.id);
+  });
+  
+  // Handle follow/unfollow events from clients
+  socket.on('follow_update', (data) => {
+    console.log('follow_update received:', data);
+    // Broadcast to all clients
+    io.emit('follow_update', data);
   });
 });
 
