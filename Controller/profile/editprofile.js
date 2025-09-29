@@ -12,20 +12,7 @@ const updatePost = async (req,res)=>{
     const photolink = req.body.photolink;
     const photoID = req.body.photoID;
 
-    // Debug logging
-    console.log("📊 [editprofile] Received data:", {
-        userid,
-        firstname,
-        lastname,
-        nickname,
-        bio,
-        state,
-        hasPhotolink: !!photolink,
-        photolinkLength: photolink?.length,
-        photolinkPreview: photolink?.substring(0, 50) + '...',
-        hasPhotoID: !!photoID,
-        photoID
-    });
+  
 
 
     if(!userid){
@@ -77,7 +64,7 @@ const updatePost = async (req,res)=>{
             }
 
             if(state){
-                du.state = state;
+                du.country = state;
             }
 
             if(photolink){
@@ -105,19 +92,7 @@ const updatePost = async (req,res)=>{
 
             await du.save()
 
-            // Debug logging after save
-            console.log("📊 [editprofile] After save:", {
-                firstname: du.firstname,
-                lastname: du.lastname,
-                nickname: du.nickname,
-                bio: du.bio,
-                state: du.state,
-                hasPhotolink: !!du.photolink,
-                photolinkLength: du.photolink?.length,
-                photolinkPreview: du.photolink?.substring(0, 50) + '...',
-                hasPhotoID: !!du.photoID,
-                photoID: du.photoID
-            });
+          
 
             return res.status(200).json({"ok":true,"message":`Post updated Successfully`,profile:du})
       
