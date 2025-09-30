@@ -67,7 +67,6 @@ app.use(cookieParser());
 
 // Log requests for debugging
 app.use((req, res, next) => {
-  console.log(`${req.method} Request at ${req.url} with`, req.body);
   next();
 });
 
@@ -81,6 +80,9 @@ const io = new Server(server, {
 
 // Make io available to routes
 app.set('io', io);
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads'));
 
 connect();
 
@@ -182,7 +184,9 @@ app.use("/deleteMsg", require("./routes/api/Admin/deleteMsg"));
 app.use("/deletecrush", require("./routes/api/creator/deletecrush"));
 
 //request
-app.use("/request", require("./routes/api/requestcreator/requestRoutes"));
+app.use("/request", require("./routes/api/requestmodel/requestRoutes"));
+app.use("/upload-message-files", require("./routes/api/uploadMessageFiles"));
+app.use("/quickchat", require("./routes/api/quickchat"));
 // Socket.IO connection handling
 io.on("connection", (socket) => {
   socket.on("online", async (userid) => {
@@ -191,38 +195,35 @@ io.on("connection", (socket) => {
       await deletecallOffline(userid);
       socket.id = userid;
       IDS.userid = userid;
-      console.log("a user connected " + socket.id);
       socket.join("LiveChat");
     }
   });
 
   socket.on("message", async (newdata) => {
-    let info = await MYID(newdata.fromid);
-    const data = { ...newdata, ...info };
-
-    console.log("1");
-
-    await Livechats({ ...data });
-
-    console.log(data);
-
-    console.log("2");
-
-    if (info) {
-      console.log(info);
-      await sendEmail(data.toid, `New message from ${info?.name}`);
-      await pushnotify(
-        data.toid,
-        `New message from ${info?.name}`,
-        "messageicon"
-      );
+    
+    try {
+      let info = await MYID(newdata.fromid);
+      
+      const data = { ...newdata, ...info };
+      await Livechats({ ...data });
+      if (info) {
+        await sendEmail(data.toid, `New message from ${info?.name}`);
+        await pushnotify(
+          data.toid,
+          `New message from ${info?.name}`,
+          "messageicon"
+        );
+      }
+      
+      socket.broadcast.emit("LiveChat", {
+        name: info?.name,
+        photolink: info?.photolink || "",
+        data: data,
+      });
+      
+    } catch (error) {
+      console.error("❌ [BACKEND] Error processing message:", error);
     }
-    console.log("3");
-    socket.broadcast.emit("LiveChat", {
-      name: info?.name,
-      photolink: info?.photolink || "",
-      data: data,
-    });
   });
 
   socket.on("videocall", async (data, arkFunction) => {
@@ -243,7 +244,6 @@ io.on("connection", (socket) => {
         socket.broadcast.emit(answerid, { data: data });
       } else if (responds === "store_sdb") {
         if (data.offer_can) {
-          console.log("we got offer can");
           socket.broadcast.emit(`${answerid}_calloffer`, {
             offer: data.offer_can,
           });
@@ -251,7 +251,6 @@ io.on("connection", (socket) => {
       } else if (responds === "calling") {
         data.answer_message = "calling";
         data.message = `incomming call ${callname}`;
-        console.log("calling user " + data.sdp_c_offer);
         if (data.sdp_c_offer) {
           let info = calloffer.find((value) => {
             return (
@@ -260,7 +259,6 @@ io.on("connection", (socket) => {
             );
           });
           if (!info) {
-            console.log(" string offer sdp user");
             let datas = {
               callerid: data.caller_id,
               answerid: data.answer_id,
@@ -272,7 +270,6 @@ io.on("connection", (socket) => {
         }
 
         if (data.offer_can) {
-          console.log("sending offer can");
           socket.broadcast.emit(`${answerid}_calloffer`, {
             offer: data.offer_can,
           });
@@ -291,13 +288,10 @@ io.on("connection", (socket) => {
     if (answerid === video_user) {
       let responds = await check_connected(answerid);
       if (data.answer_message === "reject") {
-        console.log("inside anser reject test " + data.answer_message);
         await deletebyCallerid(answerid);
         data.answer_message = "reject";
         socket.broadcast.emit(myid, { data: data });
       } else if (responds === false) {
-        console.log("answer sdp " + data.sdp_a_offer);
-        console.log("answer sdp " + data.answer_can);
 
         if (data.sdp_a_offer && data.answer_can) {
           socket.broadcast.emit(`${myid}_answeroffer`, {
@@ -308,8 +302,6 @@ io.on("connection", (socket) => {
 
         socket.broadcast.emit(myid, { data: data });
       } else if (responds === true) {
-        console.log("answer sdp " + data.sdp_a_offer);
-        console.log("answer sdp " + data.answer_can);
 
         if (data.answer_can) {
           socket.broadcast.emit(`${myid}_answeroffer`, {
@@ -334,7 +326,6 @@ io.on("connection", (socket) => {
       let responds = await Check_caller(answerid, myid);
 
       if (data.amount) {
-        console.log("sending amount");
         if (parseFloat(data.amount) > 0) {
           await pay_creator(data.fromid, data.toid, data.amount);
           await updatebalance(
@@ -354,12 +345,10 @@ io.on("connection", (socket) => {
         await deletebyClient(myid);
         data.message = "call ended";
         data.answer_message = "reject";
-        console.log("sending caller reject");
         socket.broadcast.emit(`${answerid}_reject`, { data: "reject" });
         socket.broadcast.emit(answerid, { data: data });
       } else if (responds === "store_sdb") {
         if (data.offer_can) {
-          console.log("we got offer can");
           socket.broadcast.emit(`${answerid}_calloffer`, {
             offer: data.offer_can,
           });
@@ -375,7 +364,6 @@ io.on("connection", (socket) => {
             );
           });
           if (!info) {
-            console.log(" string offer sdp user");
             let datas = {
               callerid: data.caller_id,
               answerid: data.answer_id,
@@ -387,7 +375,6 @@ io.on("connection", (socket) => {
         }
 
         if (data.offer_can) {
-          console.log("sending offer can");
           socket.broadcast.emit(`${answerid}_calloffer`, {
             offer: data.offer_can,
           });
@@ -404,18 +391,13 @@ io.on("connection", (socket) => {
     }
 
     if (answerid === video_user) {
-      console.log("answer values ");
       let responds = await check_connected(answerid);
       if (data.answer_message === "reject") {
-        console.log("inside anser reject test " + data.answer_message);
         await deletebyCallerid(answerid);
         data.answer_message = "reject";
-        console.log("sending aner reject");
         socket.broadcast.emit(`${myid}_reject`, { data: "reject" });
         socket.broadcast.emit(myid, { data: data });
       } else if (responds === false) {
-        console.log("answer sdp " + data.sdp_a_offer);
-        console.log("answer sdp " + data.answer_can);
 
         if (data.sdp_a_offer && data.answer_can) {
           socket.broadcast.emit(`${myid}_answeroffer`, {
@@ -426,8 +408,6 @@ io.on("connection", (socket) => {
 
         socket.broadcast.emit(myid, { data: data });
       } else if (responds === true) {
-        console.log("answer sdp " + data.sdp_a_offer);
-        console.log("answer sdp " + data.answer_can);
 
         if (data.sdp_a_offer) {
           socket.broadcast.emit(`${myid}_answeroffer`, {
@@ -437,7 +417,6 @@ io.on("connection", (socket) => {
         }
 
         if (data.answer_can) {
-          console.log("there is answer candididate");
           socket.broadcast.emit(`${myid}_answeroffer`, {
             offer: data.answer_can,
           });
@@ -452,20 +431,16 @@ io.on("connection", (socket) => {
     await userdisconnect(socket.id);
     await deletecallOffline(socket.id);
     socket.disconnect();
-    console.log("user disconnected " + socket.id);
   });
   
   // Handle follow/unfollow events from clients
   socket.on('follow_update', (data) => {
-    console.log('follow_update received:', data);
     // Broadcast to all clients
     io.emit('follow_update', data);
   });
 });
 
 mongoose.connection.once("open", () => {
-  console.log("Database connected");
   server.listen(PORT, () => {
-    console.log("listening on *:" + PORT);
   });
 });

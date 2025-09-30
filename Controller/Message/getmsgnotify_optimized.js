@@ -54,7 +54,6 @@ const MsgNotify = async (req, res) => {
       userdb.find({ _id: { $in: allUserIds } }).exec(),
       completedb.find({ useraccountId: { $in: allUserIds } }).exec()
     ]);
-    
 
     // Create lookup maps for O(1) access
     let userMap = {};
@@ -78,7 +77,6 @@ const MsgNotify = async (req, res) => {
       const userInfo = userMap[otherUserId];
       const userPhoto = photoMap[otherUserId];
       
-      
       if (userInfo && conversation.latestMessage) {
         const messageData = {
           id: conversation.latestMessage._id,
@@ -91,8 +89,6 @@ const MsgNotify = async (req, res) => {
           files: conversation.latestMessage.files || [],
           fileCount: conversation.latestMessage.fileCount || 0,
           name: userInfo.firstname,
-          firstname: userInfo.firstname,
-          lastname: userInfo.lastname,
           photolink: userPhoto?.photoLink || "",
           unreadCount: conversation.unreadCount,
           lastActivity: conversation.lastActivity

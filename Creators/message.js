@@ -44,6 +44,18 @@ const markertdata = new Scheme({
         required : false
     },
 
+    // Add support for file attachments
+    files: [{
+        type: String,
+        required: false
+    }],
+    
+    fileCount: {
+        type: Number,
+        required: false,
+        default: 0
+    },
+
   
   
 })

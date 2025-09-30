@@ -63,7 +63,6 @@ const createCreator = async (req, res) => {
     };
 
     await giftdb.create(gift);
-    console.log("Under gift create");
 
     user.balance = `${user_balance}`;
     user.save();
@@ -75,7 +74,6 @@ const createCreator = async (req, res) => {
     }
 
     withdraw_balance = withdraw_balance + gold_amount;
-    console.log("gold sent " + withdraw_balance);
 
     withdraw.withdrawbalance = `${withdraw_balance}`;
     creator_as_user.earnings =
@@ -85,7 +83,6 @@ const createCreator = async (req, res) => {
 
     return res.status(200).json({ ok: true, message: "gift success!!" });
   } catch (err) {
-    console.log("message erro " + err);
     return res.status(500).json({ ok: false, message: `${err.message}!` });
   }
 };

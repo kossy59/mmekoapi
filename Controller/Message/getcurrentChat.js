@@ -5,27 +5,30 @@ const userdb = require("../../Creators/userdb");
 const completedb = require("../../Creators/usercomplete");
 const creators = require("../../Creators/creators");
 
-const createCreator = async (req, res) => {
-  const userid = req.body.creatorid;
-  const clientid = req.body.clientid;
+const createModel = async (req, res) => {
+  const userid = req.body.modelid; // This is the target user ID (the person we're chatting with)
+  const clientid = req.body.clientid; // This is the current user ID (the person logged in)
   const mychat = req.body.mychat;
+
 
   if (!userid) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
   }
 
-  //let data = await connectdatabase()
+  if (!clientid) {
+    return res.status(400).json({ ok: false, message: "client Id invalid!!" });
+  }
 
   try {
     let chatInfo = {};
 
     let clientinfo = await userdb.findOne({ _id: userid }).exec();
-    // console.log(clientinfo);
+    
     if (clientinfo) {
       let photos = await completedb
         .findOne({ useraccountId: clientinfo._id })
         .exec();
-      console.log(photos);
+      
       let image = "";
       if (photos?.photoLink) {
         image = photos?.photoLink || "";
@@ -43,6 +46,9 @@ const createCreator = async (req, res) => {
       chatInfo.value = "client";
       chatInfo.id = clientinfo._id;
       chatInfo.firstname = clientinfo.firstname;
+      
+    } else {
+      return res.status(404).json({ ok: false, message: "Target user not found" });
     }
 
     // console.log("this is chatinfo "+chatInfo)
@@ -51,176 +57,100 @@ const createCreator = async (req, res) => {
     //     sdk.Query.or([sdk.Query.equal("fromid",[userid]), sdk.Query.equal("fromid",[clientid])])
     //    ])])
 
-    let chating = await messagedb.find({}).exec();
+    
+    // OPTIMIZED: Use MongoDB query to directly fetch messages between users
+    // This is much faster than fetching all messages and filtering
+    let Chats = await messagedb.find({
+      $or: [
+        { toid: userid, fromid: clientid },
+        { fromid: userid, toid: clientid }
+      ]
+    })
+    .sort({ date: -1 }) // Sort by date descending (newest first)
+    .limit(30) // Limit to 30 messages directly in the query
+    .exec();
 
-    let Chats = chating.filter((value) => {
-      return (
-        (value.toid === userid || value.fromid === userid) &&
-        (value.fromid === clientid || value.toid === clientid)
-      );
-    });
-
-    console.log("number of chats now " + Chats.length);
 
     if (!Chats[0]) {
       return res
         .status(200)
         .json({ ok: true, message: `user host empty`, chats: [], chatInfo });
     }
-    // fecting unviewed notification chats
+
+    // Mark unread messages as read (batch update for better performance)
     let unviewing = Chats.filter((value) => {
       return value.notify === true && String(value.toid) === String(clientid);
     });
 
-    console.log("list of unview chat " + unviewing.length);
 
-    for (let i = 0; i < unviewing.length; i++) {
-      unviewing[i].notify = false;
-      await unviewing[i].save();
+    if (unviewing.length > 0) {
+      // OPTIMIZED: Batch update instead of individual saves
+      await messagedb.updateMany(
+        { 
+          _id: { $in: unviewing.map(msg => msg._id) },
+          notify: true,
+          toid: clientid
+        },
+        { $set: { notify: false } }
+      );
     }
 
-    //let msg = await data.databar.listDocuments(data.dataid,data.msgCol)
-    let msglist = Chats.sort((a, b) => {
-      return Number(b.date) - Number(a.date);
+    // OPTIMIZED: Get all unique sender IDs to fetch user info in batch
+    let senderIds = [...new Set(Chats.map(msg => msg.fromid))];
+
+    // OPTIMIZED: Batch fetch all user info and photos
+    let [allUsers, allPhotos] = await Promise.all([
+      userdb.find({ _id: { $in: senderIds } }).exec(),
+      completedb.find({ useraccountId: { $in: senderIds } }).exec()
+    ]);
+
+    // Create lookup maps for O(1) access
+    let userMap = {};
+    let photoMap = {};
+    
+    allUsers.forEach(user => {
+      userMap[user._id] = user;
     });
-    console.log("under sorting");
-
-    let chatslice = msglist.slice(0, 30);
-    console.log("under slice");
-
-    let Listchat = [];
-
-    //getting chats sent by me
-    let myChat = chatslice.filter((value) => {
-      return value.fromid === userid;
+    
+    allPhotos.forEach(photo => {
+      photoMap[photo.useraccountId] = photo;
     });
-    console.log("under chat sent by me");
 
-    //getting client chats
-    let clientchat = chatslice.filter((value) => {
-      return value.fromid === clientid;
-    });
-    console.log("under client chat " + clientchat);
 
-    //now let marshal my chat names and photolink as ordinary client user
-
-    for (let i = 0; i < myChat.length; i++) {
-      //let usernames = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[myChat[i].fromid])])
-      //let photos = await data.databar.listDocuments(data.dataid,data.userincol, [sdk.Query.equal("useraccountId",[myChat[i].fromid])])
-      let usernames = await userdb.findOne({ _id: myChat[i].fromid }).exec();
-      let photos = await completedb.findOne({
-        useraccountId: myChat[i].fromid,
-      });
-      let coin = false;
-
-      if (usernames) {
-        if (myChat[i].coin) {
-          coin = myChat[i].coin;
-        }
-        let chat = {
-          id: myChat[i].fromid,
-          content: myChat[i].content,
-          date: myChat[i].date,
-          name: usernames.firstname,
-          photolink: photos?.photoLink,
-          client: myChat[i].client,
-          coin: coin,
+    // OPTIMIZED: Process messages with cached data
+    let Listchat = Chats.map((message) => {
+      let senderInfo = userMap[message.fromid];
+      let senderPhoto = photoMap[message.fromid];
+      
+      if (senderInfo) {
+        return {
+          id: message.fromid,
+          content: message.content,
+          date: message.date,
+          name: senderInfo.firstname,
+          photolink: senderPhoto?.photoLink || "",
+          client: message.client,
+          coin: message.coin || false,
+          files: message.files || [],
+          fileCount: message.fileCount || 0
         };
-
-        Listchat.push(chat);
       }
-    }
+      return null;
+    }).filter(Boolean); // Remove null entries
 
-    console.log("under  my chat names and photolink as ordinary client user ");
-
-    //now let marshal my chat names and photolink as a creator user
-
-    // for(let i = 0; i < myChat.length; i++){
-    //     if(myChat[i].client === false){
-    //         //let Creator = await data.databar.listDocuments(data.dataid,data.creatorCol,[sdk.Query.equal("userid",[myChat[i].fromid])])
-    //         let Creator = await creators.findOne({userid:myChat[i].fromid})
-    //         let photolink = Creator.photolink.split(",")
-    //             let chat = {
-    //                 id: myChat[i].fromid,
-    //                 content:  myChat[i].content,
-    //                 date: myChat[i].date,
-    //                 photolink: photolink[0],
-    //                 name: Creator.name,
-    //                 client: myChat[i].client
-    //             }
-    //             Listchat.push(chat)
-    //     }
-    // }
-
-    // now let marshal our client chat names and photolink as ordinary client user
-
-    for (let i = 0; i < clientchat.length; i++) {
-      //let usernames = await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[clientchat[i].fromid])])
-      //let photos = await data.databar.listDocuments(data.dataid,data.userincol, [sdk.Query.equal("useraccountId",[clientchat[i].fromid])])
-      let usernames = await userdb
-        .findOne({ _id: clientchat[i].fromid })
-        .exec();
-      let photos = await completedb
-        .findOne({ useraccountId: clientchat[i].fromid })
-        .exec();
-      let coin = false;
-      if (usernames) {
-        if (clientchat[i].coin) {
-          coin = clientchat[i].coin;
-        }
-        console.log(photos);
-        let chat = {
-          id: clientchat[i].fromid,
-          content: clientchat[i].content,
-          date: clientchat[i].date,
-          name: usernames.firstname,
-          photolink: photos?.photoLink,
-          client: clientchat[i].client,
-          coin: coin,
-        };
-
-        Listchat.push(chat);
-      }
-    }
-    // console.log('under  our client chat names and photolink as ordinary client user')
-
-    // now marshal our client chat names and photolink as a creator client user
-
-    // for(let i = 0; i < clientchat.length; i++){
-
-    //     if(clientchat[i].client === false){
-
-    //        // let Creator = await data.databar.listDocuments(data.dataid,data.creatorCol,[sdk.Query.equal("userid",[clientchat[i].fromid])])
-    //        let Creator = await creators.findOne({userid:clientchat[i].fromid})
-    //          if(Creator){
-    //              let photolink = Creator.photolink.split(",")
-    //             let chat = {
-    //                 id: clientchat[i].fromid,
-    //                 content:  clientchat[i].content,
-    //                 date: clientchat[i].date,
-    //                 photolink: photolink[0],
-    //                 name: Creator.name,
-    //                 client: clientchat[i].client
-    //             }
-    //             Listchat.push(chat)
-    //          }
-    //     }
-    // }
-
-    // console.log('under  our client chat names and photolink as ordinary client user')
-    //      console.log(Listchat)
+    // Sort messages chronologically (oldest first for display)
     let allchat = Listchat.sort((a, b) => {
       return Number(a.date) - Number(b.date);
     });
-    console.log("all chat " + allchat.length);
+    
+    
     return res.status(200).json({
       ok: true,
-      message: `Creator Fetched successfully`,
+      message: `Chat fetched successfully`,
       chats: allchat,
       chatInfo,
     });
   } catch (err) {
-    console.log("message erro " + err);
     return res.status(500).json({ ok: false, message: `${err.message}!` });
   }
 };
