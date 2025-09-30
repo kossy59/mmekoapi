@@ -54,6 +54,19 @@ const readPost = async (req, res) => {
           as: "likes",
         },
       },
+      // Add likeCount and likedBy
+      {
+        $addFields: {
+          likeCount: { $size: "$likes" },
+          likedBy: {
+            $map: {
+              input: "$likes",
+              as: "like",
+              in: "$$like.userid"
+            }
+          }
+        }
+      },
 
       // join with comments
       {
@@ -74,7 +87,8 @@ const readPost = async (req, res) => {
           posttype: 1,
           createdAt: 1,
           updatedAt: 1,
-          likes: 1,
+          likeCount: 1,
+          likedBy: 1,
           comments: 1,
           user: {
             _id: 1,
@@ -89,6 +103,8 @@ const readPost = async (req, res) => {
             isModel: 1,
             modelId: 1,
             exclusive_verify: 1,
+            photolink: 1,
+            photoID: 1,
           },
         },
       },

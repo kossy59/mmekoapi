@@ -23,6 +23,21 @@ const markertdata = new Scheme(
       required: false,
     },
 
+    bio: {
+      type: String,
+      required: false,
+    },
+
+    photolink: {
+      type: String,
+      required: false,
+    },
+
+    photoID: {
+      type: String,
+      required: false,
+    },
+
     // email: {
     //   type: String,
     //   required: true,

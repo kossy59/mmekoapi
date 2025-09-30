@@ -25,7 +25,7 @@ const updatePost = async (req,res)=>{
 
     let list_user = []
 
-    console.log("list of suspend user "+suppend_user.length)
+  
 
     du.forEach(value1 => {
       if(suppend_user.length > 0){

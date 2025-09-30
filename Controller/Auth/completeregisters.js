@@ -3,7 +3,7 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // var sdk = require("node-appwrite");
 
-const userdb = require("../../Models/usercomplete")
+const usercompletedb = require("../../Models/usercomplete")
 
 
 const handleNewUser = async (req, res) => {
@@ -39,7 +39,7 @@ const handleNewUser = async (req, res) => {
     const photoID = result.public_id
 
     try {
-        let du = await userdb.findOne({ useraccountId: useraccountId }).exec()
+        let du = await usercompletedb.findOne({ useraccountId: useraccountId }).exec()
         
         if (du) {
             return res.status(409).json({ "ok": false, 'message': 'User Already Register!!' });
@@ -55,7 +55,7 @@ const handleNewUser = async (req, res) => {
             photoID,
         }
 
-        await userdb.create(moreuser)
+        await usercompletedb.create(moreuser)
             
 
         // await data.databar.createDocument(data.dataid,data.userincol,sdk.ID.unique(),moreuser)

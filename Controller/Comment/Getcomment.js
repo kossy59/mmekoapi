@@ -19,38 +19,43 @@ const readComment = async (req,res)=>{
         //    return value.postid === postid
         // })
 
-        let test = await commentdata.find({postid:postid}).exec()
+        let test = await commentdata.find({postid:postid}).sort({commenttime: -1}).exec()
          if(!test[0]){
-             return res.status(409).json({"ok":false,'message': `wrog comment id!`});
+             return res.status(200).json({"ok":true,"message":`no comments found`,comment:[]});
         }
 
         const comment = []
-
-    
-          
-           for(let i =0; i<test.length; i++){
-            for(let j = 0; j < userdb.length; j++){
-                for(let k =0; k<comdb.length; k++){
-                    if(String(test[i].userid) === String(userdb[j]._id) && String(test[i].userid) === String(comdb[k].useraccountId)
-                        ){
-
-                           
-                           let com = {
-                                commentuserphoto:comdb[k].photoLink,
-                                commentusername:`${userdb[j].firstname} ${userdb[j].lastname}`,
-                                content:test[i].content,
-                                commentid:test[i]._id,
-                                commenttime:test[i].commenttime,
-                                commentuserid:userdb[j]._id,
-                                commentnickname:userdb[j].nickname
-                            }
-
-                            comment.push(com)
-
-                        }
-                }
+        
+        // Create maps for faster lookup
+        const userMap = new Map();
+        const comMap = new Map();
+        
+        userdb.forEach(user => {
+            userMap.set(String(user._id), user);
+        });
+        
+        comdb.forEach(com => {
+            comMap.set(String(com.useraccountId), com);
+        });
+        
+        // Process comments with optimized lookup
+        for(let i = 0; i < test.length; i++){
+            const user = userMap.get(String(test[i].userid));
+            const com = comMap.get(String(test[i].userid));
+            
+            if(user && com){
+                let commentObj = {
+                    commentuserphoto: com.photoLink,
+                    commentusername: `${user.firstname} ${user.lastname}`,
+                    content: test[i].content,
+                    commentid: test[i]._id,
+                    commenttime: test[i].commenttime,
+                    commentuserid: user._id,
+                    commentnickname: user.nickname
+                };
+                comment.push(commentObj);
             }
-           }
+        }
 
         
           

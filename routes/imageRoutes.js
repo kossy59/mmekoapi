@@ -86,7 +86,10 @@ router.get("/info", async (req, res) => {
   } catch (err) {
     const status = err?.response?.status || 500;
     const data = err?.response?.data || err.message;
-    res.status(status).json({ error: data });
+    res.status(status).json({ 
+      error: typeof data === 'string' ? data : 'Request error',
+      status: status 
+    });
   }
 });
 
@@ -124,7 +127,10 @@ router.get("/download", async (req, res) => {
   } catch (err) {
     const status = err?.response?.status || 500;
     const data = err?.response?.data || err.message;
-    res.status(status).json({ error: data });
+    res.status(status).json({ 
+      error: typeof data === 'string' ? data : 'Request error',
+      status: status 
+    });
   }
 });
 
@@ -160,7 +166,10 @@ router.get("/view", async (req, res) => {
     const status = err?.response?.status || 500;
     const data = err?.response?.data || err.message;
     console.error("Error proxying file view:", data);
-    res.status(status).json({ error: data });
+    res.status(status).json({ 
+      error: typeof data === 'string' ? data : 'File view error',
+      status: status 
+    });
   }
 });
 
@@ -175,7 +184,10 @@ router.delete("/delete", async (req, res) => {
     await deleteFile(publicId); // Delete the image
     res.json({ message: "Image deleted successfully" });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ 
+      error: typeof err.message === 'string' ? err.message : 'Server error',
+      status: 500 
+    });
   }
 });
 
@@ -195,7 +207,10 @@ router.put("/update", upload.single("image"), async (req, res) => {
 
     res.json({ public_id: result?.public_id });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ 
+      error: typeof err.message === 'string' ? err.message : 'Server error',
+      status: 500 
+    });
   }
 });
 

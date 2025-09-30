@@ -8,6 +8,7 @@ const createLike = async (req, res) => {
   const userid = req.body.userid;
   let sharedid = req.body.sharedid;
   const postid = req.body.postid;
+  console.log("[BACKEND] Received like request:", { userid, sharedid, postid });
 
   if (!userid && !postid) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
@@ -29,7 +30,7 @@ const createLike = async (req, res) => {
     let du1 = (await du).find((value) => value.postid === postid);
     let postuser = postdbs.findOne({ _id: postid }).exec();
 
-    console.log("untop delete db");
+  
     if (du1) {
       await likedata.deleteOne({ _id: du1._id });
       if (postuser) {
@@ -40,17 +41,21 @@ const createLike = async (req, res) => {
           "modelicon"
         );
       }
-      // data.databar.deleteDocument(data.dataid,data.likeCol,du.$id)
+      // After unlike, return updated likeCount and likedBy
+      const likes = await likedata.find({ postid });
+      const likeCount = likes.length;
+      const likedBy = likes.map(like => like.userid);
+    
       return res
-        .status(409)
-        .json({ ok: false, message: "ulike post success!!" });
+        .status(200)
+        .json({ ok: true, message: "ulike post success!!", likeCount, likedBy });
     }
 
     if (!sharedid) {
       sharedid = "";
     }
 
-    console.log("like user id " + userid);
+  
 
     let like = {
       userid,
@@ -58,15 +63,19 @@ const createLike = async (req, res) => {
       postid,
     };
 
-    console.log("untop asign db");
+
     //data.databar.createDocument(data.dataid,data.likeCol,sdk.ID.unique(),like)
     await likedata.create(like);
     if (postuser) {
       await sendEmail(postuser.userid, "user like your Post");
       await sendpushnote(postuser.userid, "user like your Post", "modelicon");
     }
-    console.log("number of like " + (await likedata.find()).length);
-    return res.status(200).json({ ok: true, message: `like post Success` });
+    // After like, return updated likeCount and likedBy
+  const likes = await likedata.find({ postid });
+  const likeCount = likes.length;
+  const likedBy = likes.map(like => like.userid);
+  console.log(`[LIKE] PostID: ${postid}, LikeCount: ${likeCount}, LikedBy:`, likedBy);
+  return res.status(200).json({ ok: true, message: `like post Success`, likeCount, likedBy });
   } catch (err) {
     return res.status(500).json({ ok: false, message: `${err.message}!` });
   }

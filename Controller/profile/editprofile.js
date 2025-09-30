@@ -7,7 +7,12 @@ const updatePost = async (req,res)=>{
     const firstname = req.body.firstname;
     const lastname = req.body.lastname;
     const nickname = req.body.nickname;
+    const bio = req.body.bio;
     const state = req.body.state;
+    const photolink = req.body.photolink;
+    const photoID = req.body.photoID;
+
+  
 
 
     if(!userid){
@@ -35,23 +40,39 @@ const updatePost = async (req,res)=>{
                let Firstname = du.firstname;
                let Lastname = du.lastname;
                let Nickname = du.nickname;
+               let Bio = du.bio;
                let State = du.state;
+               let Photolink = du.photolink;
+               let PhotoID = du.photoID;
 
 
-            if(!firstname){
-                firstname = Firstname;
+            // Only update fields that are provided in the request
+            if(firstname){
+                du.firstname = firstname;
             }
 
-            if(!lastname){
-                lastname = Lastname;
+            if(lastname){
+                du.lastname = lastname;
             }
 
-            if(!nickname){
-                nickname = Nickname;
+            if(nickname){
+                du.nickname = nickname;
             }
 
-            if(!state){
-                state = State;
+            if(bio){
+                du.bio = bio;
+            }
+
+            if(state){
+                du.country = state;
+            }
+
+            if(photolink){
+                du.photolink = photolink;
+            }
+
+            if(photoID){
+                du.photoID = photoID;
             }
 
 
@@ -67,12 +88,11 @@ const updatePost = async (req,res)=>{
             //     }
             // )
 
-            du.firstname = firstname;
-            du.lastname = lastname;
-            du.nickname = nickname;
-            du.state = state;
+            // Fields are already updated above with conditional checks
 
-            du.save()
+            await du.save()
+
+          
 
             return res.status(200).json({"ok":true,"message":`Post updated Successfully`,profile:du})
       
