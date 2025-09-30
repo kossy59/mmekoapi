@@ -184,7 +184,7 @@ app.use("/deleteMsg", require("./routes/api/Admin/deleteMsg"));
 app.use("/deletecrush", require("./routes/api/creator/deletecrush"));
 
 //request
-app.use("/request", require("./routes/api/requestmodel/requestRoutes"));
+app.use("/request", require("./routes/api/requestcreator/requestRoutes"));
 app.use("/upload-message-files", require("./routes/api/uploadMessageFiles"));
 app.use("/quickchat", require("./routes/api/quickchat"));
 // Socket.IO connection handling
@@ -441,6 +441,12 @@ io.on("connection", (socket) => {
 });
 
 mongoose.connection.once("open", () => {
+  console.log("✅ Database connected successfully");
   server.listen(PORT, () => {
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
   });
+});
+
+mongoose.connection.on("error", (err) => {
+  console.error("❌ Database connection error:", err);
 });

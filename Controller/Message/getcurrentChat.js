@@ -5,7 +5,7 @@ const userdb = require("../../Creators/userdb");
 const completedb = require("../../Creators/usercomplete");
 const creators = require("../../Creators/creators");
 
-const createModel = async (req, res) => {
+const getcurrentChat = async (req, res) => {
   const userid = req.body.modelid; // This is the target user ID (the person we're chatting with)
   const clientid = req.body.clientid; // This is the current user ID (the person logged in)
   const mychat = req.body.mychat;
@@ -155,4 +155,4 @@ const createModel = async (req, res) => {
   }
 };
 
-module.exports = createCreator;
+module.exports = getcurrentChat;

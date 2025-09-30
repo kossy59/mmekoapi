@@ -4,7 +4,7 @@ const creatordb = require("../../Creators/creators");
 const giftdb = require("../../Creators/gift");
 // const { creator } = require("mongoose");
 
-const createCreator = async (req, res) => {
+const sendGold = async (req, res) => {
   const creatorid = req.body.creatorid;
   const userid = req.body.userid;
   const amount = req.body.amount;
@@ -87,7 +87,7 @@ const createCreator = async (req, res) => {
   }
 };
 
-module.exports = createCreator;
+module.exports = sendGold;
 
 const get_creator_userID = async (creatorid) => {
   let user = await creatordb.findOne({ userid: creatorid }).exec();

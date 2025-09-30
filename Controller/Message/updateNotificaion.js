@@ -3,7 +3,7 @@
 
 const messagedb = require("../../Creators/message")
 
-const getnotify = async(req,res)=>{
+const MsgNotify = async(req,res)=>{
 
      const date = req.body.date
 
@@ -33,4 +33,4 @@ const getnotify = async(req,res)=>{
 
     }
 
-    module.exports = getnotify;
+    module.exports = MsgNotify;

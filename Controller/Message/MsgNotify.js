@@ -3,7 +3,7 @@ const messagedb = require("../../Creators/message");
 const userdb = require("../../Creators/userdb");
 const completedb = require("../../Creators/usercomplete");
 
-const getnotify = async (req, res) => {
+const MsgNotify = async (req, res) => {
   const userid = req.body.userid;
 
   try {
@@ -113,4 +113,4 @@ const getnotify = async (req, res) => {
   }
 };
 
-module.exports = getnotify;
+module.exports = MsgNotify;
