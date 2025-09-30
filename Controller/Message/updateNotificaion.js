@@ -7,7 +7,6 @@ const getnotify = async(req,res)=>{
 
      const date = req.body.date
 
-      console.log("inside message notificaton "+date)
       //let data = await connectdatabase();
      
 

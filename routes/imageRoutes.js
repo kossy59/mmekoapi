@@ -15,7 +15,7 @@ const upload = multer({ storage: multer.memoryStorage() }); // Use memory storag
 // Appwrite API endpoint and project from env (fallbacks for local dev)
 const ENDPOINT = "https://cloud.appwrite.io/v1";
 const PROJECT_ID = process.env.APPWRITE_PROJECT_ID || "668f9f8c0011a761d118";
-const BUCKET_ID = process.env.APPWRITE_BUCKET_ID || "68a1daf0002128242c30";
+const BUCKET_ID = process.env.APPWRITE_BUCKET_ID || "post";
 const APPWRITE_API_KEY = process.env.APPWRITE_API_KEY || "";
 
 // POST route to upload an image and save it to Cloudinary
@@ -138,6 +138,7 @@ router.get("/download", async (req, res) => {
 router.get("/view", async (req, res) => {
   try {
     const { publicId, bucket } = req.query;
+    
     if (!publicId) {
       return res.status(400).json({ error: "Public ID is required." });
     }
@@ -165,7 +166,6 @@ router.get("/view", async (req, res) => {
   } catch (err) {
     const status = err?.response?.status || 500;
     const data = err?.response?.data || err.message;
-    console.error("Error proxying file view:", data);
     res.status(status).json({ 
       error: typeof data === 'string' ? data : 'File view error',
       status: status 

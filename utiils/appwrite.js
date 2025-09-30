@@ -230,7 +230,7 @@ async function uploadManyFilesToCloudinary(files, folder = BUCKET_ID) {
         return {
           public_id: resp.data.$id,
           file_link: getFileViewUrl(resp.data.$id, bucket),
-          filename: file.fieldname,
+          filename: file.originalname,
         };
       } catch (error) {
         console.error(
@@ -240,7 +240,7 @@ async function uploadManyFilesToCloudinary(files, folder = BUCKET_ID) {
         return {
           public_id: "",
           file_link: "",
-          filename: file.fieldname,
+          filename: file.originalname,
         };
       }
     })
