@@ -19,7 +19,7 @@ const readProfile = async (req, res) => {
 
   // let data = await connectdatabase()
 
-  let ISmodel;
+  let Creator_listing;
 
   // console.log('inside profile')
 
@@ -49,9 +49,9 @@ const readProfile = async (req, res) => {
     //  })
 
     if (modelava) {
-      ISmodel = true
+      Creator_listing = true
     } else {
-      ISmodel = false;
+      Creator_listing = false;
     }
 
     if (du.exclusive_verify) {
@@ -70,7 +70,7 @@ const readProfile = async (req, res) => {
 
     dues = du.toObject()
     dues.exclusive = exclusive;
-    dues.model = ISmodel;
+    dues.model = Creator_listing;
     dues.emailnot = emailnot;
     dues.pushnot = pushnot;
     if (modelava) {

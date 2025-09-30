@@ -100,7 +100,7 @@ const readPost = async (req, res) => {
             age: 1,
             followers: 1,
             following: 1,
-            isModel: 1,
+            creator_listing: 1,
             modelId: 1,
             exclusive_verify: 1,
             photolink: 1,

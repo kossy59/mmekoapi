@@ -119,7 +119,7 @@ const createModel = async (req, res) => {
 
     await currentuser
       .updateOne({
-        isModel: true,
+        creator_listing: true,
         modelId: newModel._id,
         modelID: newModel._id,
       })

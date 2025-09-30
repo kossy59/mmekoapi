@@ -116,7 +116,7 @@ const markertdata = new Scheme(
       type: String,
       required: false,
     },
-    isModel: {
+    creator_listing: {
       type: Boolean,
       required: false,
       default: false,

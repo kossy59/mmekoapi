@@ -23,7 +23,7 @@ const createModel = async (req, res) => {
     }
     const user = userdb.findOne({ "_id": userid })
     user.modelId = "";
-    user.isModel = false
+    user.creator_listing = false
     await user.save()
     await admindb.create(respond)
 

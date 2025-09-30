@@ -36,7 +36,7 @@ const createModel = async (req, res) => {
       });
     }
     const user = (await userdb.findOne({ _id: currentuser.userid }).exec() || await userdb.findOne({ modelId: hostid }).exec());
-    user.isModel = false
+    user.creator_listing = false
     user.modelId = "";
     user.modelID = "";
     await user.save()
