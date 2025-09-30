@@ -1,15 +1,15 @@
-const bookingdb = require("../../Models/book");
-const userdb = require("../../Models/userdb");
-const modeldb = require("../../Models/models");
-const historydb = require("../../Models/mainbalance");
+const bookingdb = require("../../Creators/book");
+const userdb = require("../../Creators/userdb");
+const creatordb = require("../../Creators/creators");
+const historydb = require("../../Creators/mainbalance");
 
 const createLike = async (req, res) => {
-  const modelid = req.body.modelid;
+  const creatorid = req.body.creatorid;
   const date = req.body.date;
   const time = req.body.time;
   const userid = req.body.userid;
 
-  if (!modelid) {
+  if (!creatorid) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
   }
   console.log("untop init db");
@@ -29,7 +29,7 @@ const createLike = async (req, res) => {
       return (
         (String(value.date) === String(date) &&
           String(value.time) === String(time) &&
-          String(value.modelid) === String(modelid) &&
+          String(value.creatorid) === String(creatorid) &&
           String(value.status) === "pending") ||
         String(value.status) === "decline"
       );
@@ -41,8 +41,8 @@ const createLike = async (req, res) => {
         .json({ ok: false, message: "you have 0 pending request!!" });
     }
 
-    let modeluser = await modeldb.findOne({ _id: modelid }).exec();
-    let modelprice = parseFloat(modeluser.price);
+    let creatoruser = await creatordb.findOne({ _id: creatorid }).exec();
+    let creatorprice = parseFloat(creatoruser.price);
 
     if (book.type !== "Private show") {
       let clientuser = await userdb.findOne({ _id: userid }).exec();
@@ -53,24 +53,24 @@ const createLike = async (req, res) => {
         clientbalance = 0;
       }
 
-      clientbalance = modelprice + clientbalance;
+      clientbalance = creatorprice + clientbalance;
       clientuser.balance = `${clientbalance}`;
       clientuser.save();
 
-      let modelpaymenthistory = {
+      let creatorpaymenthistory = {
         userid: userid,
-        details: "Refound issued; model cancellation confirmation",
+        details: "Refound issued; creator cancellation confirmation",
         spent: `${0}`,
-        income: `${modelprice}`,
+        income: `${creatorprice}`,
         date: `${Date.now().toString()}`,
       };
 
-      await historydb.create(modelpaymenthistory);
+      await historydb.create(creatorpaymenthistory);
     }
 
     await bookingdb.deleteOne({ _id: book._id }).exec();
 
-    // console.log("modeil "+modelinfo)
+    // console.log("modeil "+creatorinfo)
 
     return res.status(200).json({ ok: true, message: ` Success` });
   } catch (err) {

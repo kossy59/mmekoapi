@@ -1,14 +1,14 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
 
-const postdbs = require("../../Models/post");
-const userdbs = require("../../Models/userdb");
-const modelDB = require("../../Models/models");
-const comdbs = require("../../Models/usercomplete");
-const commentdbs = require("../../Models/comment");
-const likedbs = require("../../Models/like");
+const postdbs = require("../../Creators/post");
+const userdbs = require("../../Creators/userdb");
+const creatorDB = require("../../Creators/creators");
+const comdbs = require("../../Creators/usercomplete");
+const commentdbs = require("../../Creators/comment");
+const likedbs = require("../../Creators/like");
 const alldelete = require("../../utiils/Deletes/deleteAcceptsBook");
-const followdb = require("../../Models/followers");
+const followdb = require("../../Creators/followers");
 
 const readPost = async (req, res) => {
   // let data = await connectdatabase()
@@ -48,7 +48,7 @@ const readPost = async (req, res) => {
       // join with likes
       {
         $lookup: {
-          from: "likes", // your Like model collection
+          from: "likes", // your Like creator collection
           localField: "_id",
           foreignField: "postid",
           as: "likes",
@@ -71,7 +71,7 @@ const readPost = async (req, res) => {
       // join with comments
       {
         $lookup: {
-          from: "comments", // your Comment model collection
+          from: "comments", // your Comment creator collection
           localField: "_id",
           foreignField: "postid",
           as: "comments",
@@ -100,8 +100,8 @@ const readPost = async (req, res) => {
             age: 1,
             followers: 1,
             following: 1,
-            isModel: 1,
-            modelId: 1,
+            creator_listing: 1,
+            creatorId: 1,
             exclusive_verify: 1,
             photolink: 1,
             photoID: 1,

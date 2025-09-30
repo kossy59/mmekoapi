@@ -115,17 +115,17 @@ const getNotify = async(userid)=>{
 
      
 
-        //  getting user names from model as model
+        //  getting user names from creator as creator
 
         for(let i = 0; i < notificationbyuser.length; i++){
             if(notificationbyuser[i].client === false){
-               let Modeling = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[notificationbyuser[i].userid])])
-               if(Modeling.documents[0]){
+               let Creatoring = await data.databar.listDocuments(data.dataid,data.creatorCol,[sdk.Query.equal("userid",[notificationbyuser[i].userid])])
+               if(Creatoring.documents[0]){
 
-                  let photoLinks = Modeling.documents[0].photolink.split(",")
+                  let photoLinks = Creatoring.documents[0].photolink.split(",")
                       let notication = {
                                 photolink: photoLinks[0],
-                                username: Modeling.documents[0].name,
+                                username: Creatoring.documents[0].name,
                                 content: notificationbyuser[i].content,
                                 messagecount: notificationbyuser[i].notifycount,
                                 fromid: notificationbyuser[i].userid,

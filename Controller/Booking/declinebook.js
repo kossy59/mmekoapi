@@ -1,22 +1,22 @@
-const bookingdb = require("../../Models/book");
-const modeldb = require("../../Models/models");
-const userdb = require("../../Models/userdb");
+const bookingdb = require("../../Creators/book");
+const creatordb = require("../../Creators/creators");
+const userdb = require("../../Creators/userdb");
 let sendEmail = require("../../utiils/sendEmailnot");
 let sendpushnote = require("../../utiils/sendPushnot");
-const historydb = require("../../Models/mainbalance");
+const historydb = require("../../Creators/mainbalance");
 const createLike = async (req, res) => {
-  const modelid = req.body.modelid;
+  const creatorid = req.body.creatorid;
   const userid = req.body.userid;
   const date = req.body.date;
   const time = req.body.time;
 
-  if (!modelid) {
+  if (!creatorid) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
   }
   // console.log('untop init db')
 
   try {
-    const users = await bookingdb.find({ modelid: modelid }).exec();
+    const users = await bookingdb.find({ creatorid: creatorid }).exec();
 
     let user = users.find((value) => {
       return (
@@ -40,31 +40,31 @@ const createLike = async (req, res) => {
     status.save();
 
     if (status.type !== "Private show") {
-      let models = await modeldb.findOne({ _id: modelid }).exec();
-      let modelprice = parseFloat(models.price);
+      let creators = await creatordb.findOne({ _id: creatorid }).exec();
+      let creatorprice = parseFloat(creators.price);
       let clientuser = await userdb.findOne({ _id: userid }).exec();
 
       let clientbalance = parseFloat(clientuser.balance);
       if (!clientbalance || clientbalance <= 0) {
         clientbalance = 0;
       }
-      clientbalance = clientbalance + modelprice;
+      clientbalance = clientbalance + creatorprice;
       clientuser.balance = `${clientbalance}`;
       await clientuser.save();
 
-      let modelpaymenthistory = {
+      let creatorpaymenthistory = {
         userid: userid,
-        details: "Refound issued; model cancellation confirmation",
+        details: "Refound issued; creator cancellation confirmation",
         spent: `${0}`,
-        income: `${modelprice}`,
+        income: `${creatorprice}`,
         date: `${Date.now().toString()}`,
       };
 
-      await historydb.create(modelpaymenthistory);
+      await historydb.create(creatorpaymenthistory);
     }
 
-    await sendEmail(userid, "Model declined your Booking");
-    await sendpushnote(userid, "Model declined your Booking", "modelicon");
+    await sendEmail(userid, "Creator declined your Booking");
+    await sendpushnote(userid, "Creator declined your Booking", "creatoricon");
 
     return res.status(200).json({ ok: true, message: ` Success` });
   } catch (err) {

@@ -1,6 +1,6 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
-const userdb = require("../../Models/userdb")
+const userdb = require("../../Creators/userdb")
 const comfarm = async (req,res)=>{
 
     const code = req.body.code;

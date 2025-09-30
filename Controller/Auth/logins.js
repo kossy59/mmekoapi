@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const userdb = require("../../Models/userdb");
-const baneddb = require("../../Models/admindb");
+const userdb = require("../../Creators/userdb");
+const baneddb = require("../../Creators/admindb");
 require("dotenv").config();
 const handleLogin = async (req, res) => {
   const { nickname, password } = req.body;
@@ -137,11 +137,11 @@ module.exports = handleLogin;
 //       {},
 //       {
 //         $set: {
-//           Model_Application_status: "none",
-//           Model_Application: false,
+//           Creator_Application_status: "none",
+//           Creator_Application: false,
 //         },
 //         $unset: {
-//           Model_Applicatio_status: "",
+//           Creator_Applicatio_status: "",
 //         },
 //       },
 //       { upsert: false }

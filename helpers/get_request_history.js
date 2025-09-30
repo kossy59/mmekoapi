@@ -1,10 +1,10 @@
-let bookdb = require("../Models/book")
+let bookdb = require("../Creators/book")
 
- let request_history = async (modelid)=>{
+ let request_history = async (creatorid)=>{
 
   
 
-    let request = await bookdb.find({modelid:modelid}).exec() 
+    let request = await bookdb.find({creatorid:creatorid}).exec() 
 
   
 

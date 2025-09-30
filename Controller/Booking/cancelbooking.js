@@ -1,10 +1,10 @@
-const bookingdb = require("../../Models/book");
-const userdb = require("../../Models/userdb");
-const historydb = require("../../Models/mainbalance");
-const modeldb = require("../../Models/models");
+const bookingdb = require("../../Creators/book");
+const userdb = require("../../Creators/userdb");
+const historydb = require("../../Creators/mainbalance");
+const creatordb = require("../../Creators/creators");
 
 const createLike = async (req, res) => {
-  const { id, userid, modelid } = req.body;
+  const { id, userid, creatorid } = req.body;
 
   if (!id) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
@@ -13,23 +13,23 @@ const createLike = async (req, res) => {
   //let data = await connectdatabase()
 
   try {
-    let models = await modeldb.findOne({ _id: modelid }).exec();
-    let modelprice = parseFloat(models.price);
+    let creators = await creatordb.findOne({ _id: creatorid }).exec();
+    let creatorprice = parseFloat(creators.price);
     let clientuser = await userdb.findOne({ _id: userid }).exec();
-    let balance = parseFloat(clientuser?.balance || 0) + modelprice;
+    let balance = parseFloat(clientuser?.balance || 0) + creatorprice;
     clientuser.balance = `${balance}`;
     await clientuser.save();
-    let modelpaymenthistory = {
+    let creatorpaymenthistory = {
       userid: userid,
       details: "Refund issued; you cancelled the request",
       spent: `${0}`,
-      income: `${modelprice}`,
+      income: `${creatorprice}`,
       date: `${Date.now().toString()}`,
     };
 
-    await historydb.create(modelpaymenthistory);
+    await historydb.create(creatorpaymenthistory);
     const deletedBooking = await bookingdb.findByIdAndDelete(id).exec();
-    console.log(modelprice, "refunded to ", clientuser.firstname);
+    console.log(creatorprice, "refunded to ", clientuser.firstname);
 
     if (deletedBooking) {
       return res

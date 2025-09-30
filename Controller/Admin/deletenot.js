@@ -1,5 +1,5 @@
-const userdb = require("../../Models/userdb")
-const admindb = require("../../Models/admindb");
+const userdb = require("../../Creators/userdb")
+const admindb = require("../../Creators/admindb");
 
 const updatePost = async (req,res)=>{
    const id = req.body.id

@@ -1,5 +1,5 @@
-let likedb = require("../Models/like")
-let postdb = require("../Models/post")
+let likedb = require("../Creators/like")
+let postdb = require("../Creators/post")
 
   let likes_history = async (userid)=>{
   let like = [] 

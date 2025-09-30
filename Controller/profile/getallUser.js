@@ -1,5 +1,5 @@
-const userdb = require("../../Models/userdb");
-const usercom = require("../../Models/usercomplete");
+const userdb = require("../../Creators/userdb");
+const usercom = require("../../Creators/usercomplete");
 
 let deleteAcc = async (req, res) => {
   let list_of_users = await userdb.find({}).exec();

@@ -1,9 +1,9 @@
 const nodeMailer = require("nodemailer");
 const { connectdatabase } = require("../config/connectDB");
 
-// const userdb = require("../Models/userdb")
+// const userdb = require("../Creators/userdb")
 
-const userdb = require("../Models/pendingUser");
+const userdb = require("../Creators/pendingUser");
 require("dotenv").config();
 
 const forgetHandler = async (req, res, email) => {

@@ -12,7 +12,7 @@
     { "key": "userid", "value": "" },
     { "key": "purchasedContentId", "value": "" },
     { "key": "exclusiveContentId", "value": "" },
-    { "key": "modelid", "value": "" },
+    { "key": "creatorid", "value": "" },
     { "key": "peerid", "value": "" }
   ],
   "item": [
@@ -147,7 +147,7 @@
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "url": { "raw": "{{baseUrl}}/statistics", "host": ["{{baseUrl}}"], "path": ["statistics"] },
-            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\",\n  \"modelid\": \"<model-id>\"\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\",\n  \"creatorid\": \"<creator-id>\"\n}" }
           }
         },
         {
@@ -267,7 +267,7 @@
             "method": "PUT",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "url": { "raw": "{{baseUrl}}/getcurrentchat", "host": ["{{baseUrl}}"], "path": ["getcurrentchat"] },
-            "body": { "mode": "raw", "raw": "{\n  \"modelid\": \"{{peerid}}\",\n  \"clientid\": \"{{userid}}\"\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"creatorid\": \"{{peerid}}\",\n  \"clientid\": \"{{userid}}\"\n}" }
           }
         },
         {
@@ -296,17 +296,17 @@
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "method": "PUT",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": { "raw": "{{baseUrl}}/giftmodel", "host": ["{{baseUrl}}"], "path": ["giftmodel"] },
-            "body": { "mode": "raw", "raw": "{\n  \"modelid\": \"<model-id>\",\n  \"userid\": \"<sender-id>\",\n  \"amount\": 10\n}" }
+            "url": { "raw": "{{baseUrl}}/giftcreator", "host": ["{{baseUrl}}"], "path": ["giftcreator"] },
+            "body": { "mode": "raw", "raw": "{\n  \"creatorid\": \"<creator-id>\",\n  \"userid\": \"<sender-id>\",\n  \"amount\": 10\n}" }
           }
         }
       ]
     },
     {
-      "name": "Model",
+      "name": "Creator",
       "item": [
         {
-          "name": "Create Model (Multipart with Refresh Token)",
+          "name": "Create Creator (Multipart with Refresh Token)",
           "request": {
             "method": "PUT",
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
@@ -316,48 +316,48 @@
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "data", "type": "text", "value": "{\n  \"userid\": \"{{userid}}\",\n  \"name\": \"My Model Name\",\n  \"age\": \"25\",\n  \"location\": \"NY\",\n  \"price\": \"100\",\n  \"duration\": \"1h\",\n  \"bodytype\": \"average\",\n  \"smoke\": \"no\",\n  \"drink\": \"no\",\n  \"interestedin\": [\"women\"],\n  \"height\": \"170\",\n  \"weight\": \"65\",\n  \"description\": \"About me\",\n  \"gender\": \"female\",\n  \"timeava\": [\"evenings\"],\n  \"daysava\": [\"weekdays\"],\n  \"hosttype\": \"host\"\n}" },
+                { "key": "data", "type": "text", "value": "{\n  \"userid\": \"{{userid}}\",\n  \"name\": \"My Creator Name\",\n  \"age\": \"25\",\n  \"location\": \"NY\",\n  \"price\": \"100\",\n  \"duration\": \"1h\",\n  \"bodytype\": \"average\",\n  \"smoke\": \"no\",\n  \"drink\": \"no\",\n  \"interestedin\": [\"women\"],\n  \"height\": \"170\",\n  \"weight\": \"65\",\n  \"description\": \"About me\",\n  \"gender\": \"female\",\n  \"timeava\": [\"evenings\"],\n  \"daysava\": [\"weekdays\"],\n  \"hosttype\": \"host\"\n}" },
                 { "key": "token", "type": "text", "value": "{{token}}" },
                 { "key": "image1", "type": "file", "src": [] },
                 { "key": "image2", "type": "file", "src": [] }
               ]
             },
-            "url": { "raw": "{{baseUrl}}/model", "host": ["{{baseUrl}}"], "path": ["model"] }
+            "url": { "raw": "{{baseUrl}}/creator", "host": ["{{baseUrl}}"], "path": ["creator"] }
           }
         },
         {
-          "name": "Get My Model",
+          "name": "Get My Creator",
           "request": {
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": { "raw": "{{baseUrl}}/model", "host": ["{{baseUrl}}"], "path": ["model"] },
+            "url": { "raw": "{{baseUrl}}/creator", "host": ["{{baseUrl}}"], "path": ["creator"] },
             "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\"\n}" }
           }
         },
         {
-          "name": "Get My Models (All)",
+          "name": "Get My Creators (All)",
           "request": {
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": { "raw": "{{baseUrl}}/model/all", "host": ["{{baseUrl}}"], "path": ["model","all"] },
+            "url": { "raw": "{{baseUrl}}/creator/all", "host": ["{{baseUrl}}"], "path": ["creator","all"] },
             "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\"\n}" }
           }
         },
         {
-          "name": "Edit Model (Multipart)",
+          "name": "Edit Creator (Multipart)",
           "request": {
             "method": "POST",
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },
             "body": {
               "mode": "formdata",
               "formdata": [
-                { "key": "data", "type": "text", "value": "{\n  \"userid\": \"{{userid}}\",\n  \"modelid\": \"{{modelid}}\",\n  \"name\": \"Updated Name\",\n  \"price\": \"120\"\n}" },
+                { "key": "data", "type": "text", "value": "{\n  \"userid\": \"{{userid}}\",\n  \"creatorid\": \"{{creatorid}}\",\n  \"name\": \"Updated Name\",\n  \"price\": \"120\"\n}" },
                 { "key": "token", "type": "text", "value": "{{token}}" },
                 { "key": "image1", "type": "file", "src": [] },
                 { "key": "image2", "type": "file", "src": [] }
               ]
             },
-            "url": { "raw": "{{baseUrl}}/editmodel", "host": ["{{baseUrl}}"], "path": ["editmodel"] }
+            "url": { "raw": "{{baseUrl}}/editcreator", "host": ["{{baseUrl}}"], "path": ["editcreator"] }
           }
         },
         {
@@ -381,12 +381,12 @@
           }
         },
         {
-          "name": "Delete Model",
+          "name": "Delete Creator",
           "request": {
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": { "raw": "{{baseUrl}}/deletemodel", "host": ["{{baseUrl}}"], "path": ["deletemodel"] },
-            "body": { "mode": "raw", "raw": "{\n  \"hostid\": \"{{modelid}}\"\n}" }
+            "url": { "raw": "{{baseUrl}}/deletecreator", "host": ["{{baseUrl}}"], "path": ["deletecreator"] },
+            "body": { "mode": "raw", "raw": "{\n  \"hostid\": \"{{creatorid}}\"\n}" }
           }
         }
       ]
@@ -401,7 +401,7 @@
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "url": { "raw": "{{baseUrl}}/follow", "host": ["{{baseUrl}}"], "path": ["follow"] },
-            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\",\n  \"modelid\": \"<model-id>\"\n}" }
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"<user-id>\",\n  \"creatorid\": \"<creator-id>\"\n}" }
           }
         },
         {
@@ -512,8 +512,8 @@
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
             "url": { "raw": "{{baseUrl}}/deletecrush", "host": ["{{baseUrl}}"], "path": ["deletecrush"] },
-            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\",\n  \"token\": \"{{token}}\",\n  \"modelid\": \"{{modelid}}\"\n}" },
-            "description": "Matches remove_Crush in modelSlice.js"
+            "body": { "mode": "raw", "raw": "{\n  \"userid\": \"{{userid}}\",\n  \"token\": \"{{token}}\",\n  \"creatorid\": \"{{creatorid}}\"\n}" },
+            "description": "Matches remove_Crush in creatorSlice.js"
           }
         }
       ]
@@ -531,21 +531,21 @@
           }
         },
         {
-          "name": "Verify Model",
+          "name": "Verify Creator",
           "request": {
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": { "raw": "{{baseUrl}}/verifymodel", "host": ["{{baseUrl}}"], "path": ["verifymodel"] },
-            "body": { "mode": "raw", "raw": "{\n  \"modelid\": \"{{modelid}}\"\n}" }
+            "url": { "raw": "{{baseUrl}}/verifycreator", "host": ["{{baseUrl}}"], "path": ["verifycreator"] },
+            "body": { "mode": "raw", "raw": "{\n  \"creatorid\": \"{{creatorid}}\"\n}" }
           }
         },
         {
-          "name": "Reject Model",
+          "name": "Reject Creator",
           "request": {
             "method": "POST",
             "header": [ { "key": "Content-Type", "value": "application/json" } ],
-            "url": { "raw": "{{baseUrl}}/rejectmodel", "host": ["{{baseUrl}}"], "path": ["rejectmodel"] },
-            "body": { "mode": "raw", "raw": "{\n  \"modelid\": \"{{modelid}}\",\n  \"reason\": \"<reason>\"\n}" }
+            "url": { "raw": "{{baseUrl}}/rejectcreator", "host": ["{{baseUrl}}"], "path": ["rejectcreator"] },
+            "body": { "mode": "raw", "raw": "{\n  \"creatorid\": \"{{creatorid}}\",\n  \"reason\": \"<reason>\"\n}" }
           }
         },
         {

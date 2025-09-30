@@ -1,15 +1,15 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
 
-const userdb = require("../../Models/userdb");
-const completedb = require("../../Models/usercomplete");
-const commentdb = require("../../Models/comment");
-const likedb = require("../../Models/like");
-const postdb = require("../../Models/post");
-let exclusivedb = require("../../Models/exclusivedb");
-let followersdb = require("../../Models/followers");
-let modeldb = require("../../Models/models");
-let exclusive_pushasedb = require("../../Models/exclusivePurshase");
+const userdb = require("../../Creators/userdb");
+const completedb = require("../../Creators/usercomplete");
+const commentdb = require("../../Creators/comment");
+const likedb = require("../../Creators/like");
+const postdb = require("../../Creators/post");
+let exclusivedb = require("../../Creators/exclusivedb");
+let followersdb = require("../../Creators/followers");
+let creatordb = require("../../Creators/creators");
+let exclusive_pushasedb = require("../../Creators/exclusivePurshase");
 
 const readProfile = async (req, res) => {
   const userid = req.body.userid;
@@ -73,9 +73,9 @@ const readProfile = async (req, res) => {
       joined_month: `${du._id.getTimestamp().getMonth()}`,
       joined_year: `${du._id.getTimestamp().getFullYear()}`,
       following: du?.following.includes(clientid),
-      ismodel: false,
-      modelid: "",
-      modeltype: "",
+      creator_listing: false,
+      creatorid: "",
+      creatortype: "",
       dob: dob,
       likecount: 0,
     };
@@ -137,16 +137,16 @@ const readProfile = async (req, res) => {
     //   }
     // }
 
-    let ismodel = await modeldb
+    let creator_listing = await creatordb
       .findOne({
         userid: userid,
       })
       .exec();
 
-    if (ismodel) {
-      user.ismodel = true;
-      user.modelid = ismodel._id;
-      user.modeltype = ismodel.hosttype;
+    if (creator_listing) {
+      user.creator_listing = true;
+      user.creatorid = creator_listing._id;
+      user.creatortype = creator_listing.hosttype;
     }
 
     if (postDB.length > 0) {

@@ -1,4 +1,4 @@
-const blockuserdb = require("../../Models/BlockedDB")
+const blockuserdb = require("../../Creators/BlockedDB")
 
 let deleteAcc = async(req, res)=>{
     let id = req.body.id

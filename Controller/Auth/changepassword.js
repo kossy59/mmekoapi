@@ -1,6 +1,6 @@
 //const {connectdatabase} = require('../../config/connectDB');
 const bcrypt = require('bcrypt');
-const userdb = require("../../Models/userdb")
+const userdb = require("../../Creators/userdb")
 
 
 require('dotenv').config()

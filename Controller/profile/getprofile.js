@@ -1,9 +1,9 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
-const userdb = require("../../Models/userdb")
-const models = require("../../Models/models")
+const userdb = require("../../Creators/userdb")
+const creators = require("../../Creators/creators")
 //const history = require("../../helpers/earning_in_month")
-const settingdb = require("../../Models/settingsdb")
+const settingdb = require("../../Creators/settingsdb")
 
 
 const readProfile = async (req, res) => {
@@ -19,7 +19,7 @@ const readProfile = async (req, res) => {
 
   // let data = await connectdatabase()
 
-  let ISmodel;
+  let Creator_listing;
 
   // console.log('inside profile')
 
@@ -30,8 +30,8 @@ const readProfile = async (req, res) => {
     let du = await userdb.findOne({
       _id: userid
     }).exec()
-    //console.log('checking model database')
-    let modelava = await models.findOne({
+    //console.log('checking creator database')
+    let creatorava = await creators.findOne({
       userid: userid
     }).exec()
     let notificaton_turn = await settingdb.findOne({
@@ -44,14 +44,14 @@ const readProfile = async (req, res) => {
     }
 
 
-    //  let modelava = model.documents.find(value =>{
+    //  let creatorava = creator.documents.find(value =>{
     //   return value.userid === userid;
     //  })
 
-    if (modelava) {
-      ISmodel = true
+    if (creatorava) {
+      Creator_listing = true
     } else {
-      ISmodel = false;
+      Creator_listing = false;
     }
 
     if (du.exclusive_verify) {
@@ -70,18 +70,18 @@ const readProfile = async (req, res) => {
 
     dues = du.toObject()
     dues.exclusive = exclusive;
-    dues.model = ISmodel;
+    dues.creator = Creator_listing;
     dues.emailnot = emailnot;
     dues.pushnot = pushnot;
-    if (modelava) {
-      // let images = modelava.modelfiles.split(",")
-      if (modelava.modelfiles.length > 0) {
-        // Use the first model image
-        dues.modelphotolink = modelava.modelfiles[0].modelfilelink;
+    if (creatorava) {
+      // let images = creatorava.creatorfiles.split(",")
+      if (creatorava.creatorfiles.length > 0) {
+        // Use the first creator image
+        dues.creatorphotolink = creatorava.creatorfiles[0].creatorfilelink;
       }
-      dues.modelID = modelava._id
-      // dues.modelphotolink = images[0]
-      dues.modelname = modelava.name
+      dues.creatorID = creatorava._id
+      // dues.creatorphotolink = images[0]
+      dues.creatorname = creatorava.name
 
     }
 

@@ -1,4 +1,4 @@
-const pushdb = require("../../Models/pushnotifydb")
+const pushdb = require("../../Creators/pushnotifydb")
 
 let updatepush = async(req,res)=>{
 

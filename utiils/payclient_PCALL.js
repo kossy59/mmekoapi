@@ -1,53 +1,53 @@
-const modeldb = require("../Models/models")
-let bookdb = require("../Models/book")
-let userdb = require("../Models/userdb")
-historydb = require("../Models/mainbalance")
+const creatordb = require("../Creators/creators")
+let bookdb = require("../Creators/book")
+let userdb = require("../Creators/userdb")
+historydb = require("../Creators/mainbalance")
 const pay = async(userid,toid,amount)=>{
 
-    let modelid = await modeldb.findOne({userid:toid}).exec()
+    let creatorid = await creatordb.findOne({userid:toid}).exec()
 
-    if(modelid){
+    if(creatorid){
         let users = await bookdb.find({userid:userid}).exec()
 
         let user = users.find(value=>{
-            return String(value.modelid) === String(modelid._id ) && String(value.type) === "Private show"
+            return String(value.creatorid) === String(creatorid._id ) && String(value.type) === "Private show"
         })
 
         if(!user) {
             return 
         }
 
-          // getting model for knowing it booking price
-          //let model = await modeldb.findOne({_id:usmodelid}).exec()
+          // getting creator for knowing it booking price
+          //let creator = await creatordb.findOne({_id:uscreatorid}).exec()
           
-          //console.log("model price "+price)
+          //console.log("creator price "+price)
          let user_paying = await userdb.findOne({_id:userid}).exec()
         
 
-          // getting user of that model for adding the payment to it's account
-          let modeluser = await userdb.findOne({_id:modelid.userid}).exec()
-          let modelwitdraw = parseFloat( modeluser.withdrawbalance);
+          // getting user of that creator for adding the payment to it's account
+          let creatoruser = await userdb.findOne({_id:creatorid.userid}).exec()
+          let creatorwitdraw = parseFloat( creatoruser.withdrawbalance);
           
  
-          let modelpaymenthistory = {
-             userid:modelid.userid,
+          let creatorpaymenthistory = {
+             userid:creatorid.userid,
              details:`private call payment from ${user_paying.firstname} ${user_paying.lastname} `,
              spent: `${0}`,
              income: `${amount}`,
              date: `${Date.now().toString()}`
           }
  
-          await historydb.create(modelpaymenthistory)
+          await historydb.create(creatorpaymenthistory)
  
  
-          if(!modelwitdraw){
-             modelwitdraw = 0
+          if(!creatorwitdraw){
+             creatorwitdraw = 0
           }
  
-          modelwitdraw = modelwitdraw + parseFloat(amount)
+          creatorwitdraw = creatorwitdraw + parseFloat(amount)
  
-          modeluser.withdrawbalance = `${modelwitdraw}`
-          await modeluser.save()
+          creatoruser.withdrawbalance = `${creatorwitdraw}`
+          await creatoruser.save()
           user.status = "completed"
           await user.save()
 

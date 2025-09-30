@@ -22,7 +22,7 @@ let {
   check_connected,
   deletecallOffline,
 } = require("./utiils/check_caller");
-const pay_model = require("./utiils/payclient_PCALL");
+const pay_creator = require("./utiils/payclient_PCALL");
 const updatebalance = require("./utiils/deductPVC");
 const pushnotify = require("./utiils/sendPushnot");
 const imageRoutes = require("./routes/imageRoutes");
@@ -104,7 +104,7 @@ app.use(
   "/messagenotification",
   require("./routes/api/chat/getNotificationmsg")
 );
-app.use("/notifymodel", require("./routes/api/booking/notifybooking"));
+app.use("/notifycreator", require("./routes/api/booking/notifybooking"));
 app.use("/subpushid", require("./routes/api/profile/postUserPushNote"));
 app.use("/verifyemail", require("./routes/Auth/verifyEmail"));
 app.use("/register", require("./routes/Auth/register"));
@@ -116,11 +116,11 @@ app.use("/comfirmpasscode", require("./routes/Auth/comfirmpasscode"));
 app.use("/changepassword", require("./routes/Auth/changepassword"));
 app.use("/getpostcomment", require("./routes/api/comment/Getallcomment"));
 app.use("/getprofilebyid", require("./routes/api/profile/Profile"));
-app.use("/getverifymodel", require("./routes/api/model/getlivemodel"));
-app.use("/getmodelbyid", require("./routes/api/model/getmodelbyid"));
+app.use("/getverifycreator", require("./routes/api/creator/getlivecreator"));
+app.use("/getcreatorbyid", require("./routes/api/creator/getcreatorbyid"));
 app.use("/searchuser", require("./routes/api/profile/getallUser"));
 app.use("/post", require("./routes/api/post/Post"));
-app.use("/model/all", require("./routes/api/model/mymodels"));
+app.use("/creator/all", require("./routes/api/creator/mycreators"));
 app.use("/addpayment", require("./routes/api/payment/payment.routes"));
 app.use(
   "/withdraw-request",
@@ -130,27 +130,27 @@ app.use(
   "/editmoreprofile",
   require("./routes/api/Profilemore/editprofilemore")
 );
-app.use("/model", require("./routes/api/model/models"));
-app.use("/editmodel", require("./routes/api/model/editemodel"));
-app.use("/postdocument", require("./routes/api/model/postdocument"));
+app.use("/creator", require("./routes/api/creator/creators"));
+app.use("/editcreator", require("./routes/api/creator/editecreator"));
+app.use("/postdocument", require("./routes/api/creator/postdocument"));
 app.use("/exclusive", require("./routes/api/Exclusive/exclusive"));
-app.use("/models", require("./routes/api/model/updateView"));
-app.use("/models", require("./routes/api/model/updateFollowers"));
+app.use("/creators", require("./routes/api/creator/updateView"));
+app.use("/creators", require("./routes/api/creator/updateFollowers"));
 app.use("/allrequest", require("./routes/api/booking/allrequestroute"));
 app.use("/exclusivecontent", require("./routes/api/Exclusive/allexclusive"));
 app.use("/deleteaccount", require("./routes/api/profile/deleteprofile"));
 app.use("/setting", require("./routes/api/profile/setting"));
 app.use("/follow", require("./routes/api/follow/follower"));
 app.use("/getfollowers", require("./routes/api/follow/get_followers"));
-app.use("/getadminhost", require("./routes/api/model/hostforadmin"));
-app.use("/deletemodel", require("./routes/api/model/deletemodel"));
+app.use("/getadminhost", require("./routes/api/creator/hostforadmin"));
+app.use("/deletecreator", require("./routes/api/creator/deletecreator"));
 app.use("/comment", require("./routes/api/comment/Comment"));
 app.use("/like", require("./routes/api/like/Like"));
 app.use("/sharepost", require("./routes/api/share/share"));
 app.use("/editprofile", require("./routes/api/profile/Editprofile"));
 app.use("/checkusername", require("./routes/api/profile/checkusername"));
-app.use("/rejectmodel", require("./routes/api/model/rejectmodel"));
-app.use("/verifymodel", require("./routes/api/model/verifymodel"));
+app.use("/rejectcreator", require("./routes/api/creator/rejectcreator"));
+app.use("/verifycreator", require("./routes/api/creator/verifycreator"));
 app.use("/getcurrentchat", require("./routes/api/chat/getchat"));
 app.use("/getmsgnotify", require("./routes/api/chat/getmsgnotify"));
 app.use("/updatenotify", require("./routes/api/chat/updatenotify"));
@@ -160,16 +160,16 @@ app.use("/cancelrequest", require("./routes/api/booking/cancelmyrequest"));
 app.use("/acceptbook", require("./routes/api/booking/acceptbooking"));
 app.use("/declinebook", require("./routes/api/booking/declinebooking"));
 app.use("/getrequeststats", require("./routes/api/booking/requeststat"));
-app.use("/paymodel", require("./routes/api/booking/paymodel"));
-app.use("/reviewmodel", require("./routes/api/model/reviewmodel"));
-app.use("/getreviews", require("./routes/api/model/getmodelreview"));
-app.use("/deletereview", require("./routes/api/model/deletereview"));
+app.use("/paycreator", require("./routes/api/booking/paycreator"));
+app.use("/reviewcreator", require("./routes/api/creator/reviewcreator"));
+app.use("/getreviews", require("./routes/api/creator/getcreatorreview"));
+app.use("/deletereview", require("./routes/api/creator/deletereview"));
 app.use("/statistics", require("./routes/api/profile/get_statistics"));
 app.use(
   "/statistics/monthly",
   require("./routes/api/profile/get_statisticsByMonth")
 );
-app.use("/giftmodel", require("./routes/api/chat/giftGold"));
+app.use("/giftcreator", require("./routes/api/chat/giftGold"));
 app.use("/topup", require("./routes/api/profile/topup"));
 app.use("/getallusers", require("./routes/api/Admin/getallusers"));
 app.use("/deleteuser", require("./routes/api/Admin/deleteuser"));
@@ -178,10 +178,10 @@ app.use("/sendmessages", require("./routes/api/Admin/sendmessage"));
 app.use("/recivemessage", require("./routes/api/Admin/recivemessage"));
 app.use("/adminnotify", require("./routes/api/Admin/adminnotify"));
 app.use("/useredit", require("./routes/api/Profilemore/getuseredit"));
-app.use("/addcrush", require("./routes/api/model/addcrush"));
-app.use("/getcrush", require("./routes/api/model/getcrush"));
+app.use("/addcrush", require("./routes/api/creator/addcrush"));
+app.use("/getcrush", require("./routes/api/creator/getcrush"));
 app.use("/deleteMsg", require("./routes/api/Admin/deleteMsg"));
-app.use("/deletecrush", require("./routes/api/model/deletecrush"));
+app.use("/deletecrush", require("./routes/api/creator/deletecrush"));
 
 //request
 app.use("/request", require("./routes/api/requestmodel/requestRoutes"));
@@ -327,7 +327,7 @@ io.on("connection", (socket) => {
 
       if (data.amount) {
         if (parseFloat(data.amount) > 0) {
-          await pay_model(data.fromid, data.toid, data.amount);
+          await pay_creator(data.fromid, data.toid, data.amount);
           await updatebalance(
             data.fromid,
             data.toid,

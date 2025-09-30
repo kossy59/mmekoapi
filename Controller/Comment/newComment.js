@@ -1,7 +1,7 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
 
-const commentdata = require("../../Models/comment")
+const commentdata = require("../../Creators/comment")
 
 const createComment = async (req,res)=>{
 

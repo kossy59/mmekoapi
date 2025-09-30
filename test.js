@@ -4,7 +4,7 @@
 // "67077cdb15b063d46b93d956"
 
 
-//modelid
+//creatorid
 // "67077eb615b063d46b93d995"
 
 const test = require("./utiils/Deletes/deleteAcceptsBook")

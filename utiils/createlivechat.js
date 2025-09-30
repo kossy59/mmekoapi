@@ -1,4 +1,4 @@
-const messagedb = require("../Models/message")
+const messagedb = require("../Creators/message")
 
 const Livechats = async(newdata)=>{
     console.log("💾 [LIVECHATS] Starting to save message:", newdata);

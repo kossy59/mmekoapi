@@ -1,9 +1,9 @@
-// const {userdb} = require('../../Model/userdb');
-// const information = require('../../Model/usercomplete')
+// const {userdb} = require('../../Creator/userdb');
+// const information = require('../../Creator/usercomplete')
 // const {connectdatabase} = require('../../config/connectDB');
 // var sdk = require("node-appwrite");
 
-const usercompletedb = require("../../Models/usercomplete")
+const usercompletedb = require("../../Creators/usercomplete")
 
 
 const handleNewUser = async (req, res) => {

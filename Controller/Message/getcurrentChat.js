@@ -1,9 +1,9 @@
 // const {connectdatabase, client} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
-const messagedb = require("../../Models/message");
-const userdb = require("../../Models/userdb");
-const completedb = require("../../Models/usercomplete");
-const models = require("../../Models/models");
+const messagedb = require("../../Creators/message");
+const userdb = require("../../Creators/userdb");
+const completedb = require("../../Creators/usercomplete");
+const creators = require("../../Creators/creators");
 
 const createModel = async (req, res) => {
   const userid = req.body.modelid; // This is the target user ID (the person we're chatting with)
@@ -155,4 +155,4 @@ const createModel = async (req, res) => {
   }
 };
 
-module.exports = createModel;
+module.exports = createCreator;

@@ -1,19 +1,19 @@
-const userdb = require("../../Models/userdb");
-const historydb = require("../../Models/mainbalance");
-const modeldb = require("../../Models/models");
-const giftdb = require("../../Models/gift");
-// const { model } = require("mongoose");
+const userdb = require("../../Creators/userdb");
+const historydb = require("../../Creators/mainbalance");
+const creatordb = require("../../Creators/creators");
+const giftdb = require("../../Creators/gift");
+// const { creator } = require("mongoose");
 
-const createModel = async (req, res) => {
-  const modelid = req.body.modelid;
+const createCreator = async (req, res) => {
+  const creatorid = req.body.creatorid;
   const userid = req.body.userid;
   const amount = req.body.amount;
 
-  if (!userid && !modelid) {
+  if (!userid && !creatorid) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
   }
 
-  let withdraw = await userdb.findOne({ _id: modelid }).exec();
+  let withdraw = await userdb.findOne({ _id: creatorid }).exec();
 
   try {
     let user = await userdb.findOne({ _id: userid }).exec();
@@ -43,20 +43,20 @@ const createModel = async (req, res) => {
 
     await historydb.create(user_history);
 
-    let model_as_user = await get_model_userID(modelid);
-    // console.log("Under model convert "+model_as_user)
-    let model_history = {
-      userid: modelid,
+    let creator_as_user = await get_creator_userID(creatorid);
+    // console.log("Under creator convert "+creator_as_user)
+    let creator_history = {
+      userid: creatorid,
       details: "Receives gold gift",
       spent: "0",
       income: `${gold_amount}`,
       date: `${Date.now().toString()}`,
     };
 
-    await historydb.create(model_history);
+    await historydb.create(creator_history);
 
     let gift = {
-      modelid: modelid,
+      creatorid: creatorid,
       userid: userid,
       date: `${Date.now()}`,
       amount: `${gold_amount}`,
@@ -76,9 +76,9 @@ const createModel = async (req, res) => {
     withdraw_balance = withdraw_balance + gold_amount;
 
     withdraw.withdrawbalance = `${withdraw_balance}`;
-    model_as_user.earnings =
-      (model_as_user?.earnings ?? 0) + Number(gold_amount);
-    await model_as_user.save();
+    creator_as_user.earnings =
+      (creator_as_user?.earnings ?? 0) + Number(gold_amount);
+    await creator_as_user.save();
     withdraw.save();
 
     return res.status(200).json({ ok: true, message: "gift success!!" });
@@ -87,10 +87,10 @@ const createModel = async (req, res) => {
   }
 };
 
-module.exports = createModel;
+module.exports = createCreator;
 
-const get_model_userID = async (modelid) => {
-  let user = await modeldb.findOne({ userid: modelid }).exec();
+const get_creator_userID = async (creatorid) => {
+  let user = await creatordb.findOne({ userid: creatorid }).exec();
 
   //let userid = await userdb.findOne({_id : user.userid}).exec()
 
