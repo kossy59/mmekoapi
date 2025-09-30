@@ -1,6 +1,6 @@
-const messagedb = require("../../Models/message");
-const userdb = require("../../Models/userdb");
-const completedb = require("../../Models/usercomplete");
+const messagedb = require("../../Creators/message");
+const userdb = require("../../Creators/userdb");
+const completedb = require("../../Creators/usercomplete");
 
 const getConversations = async (req, res) => {
   const userid = req.body.userid;
