@@ -31,4 +31,4 @@ const markertdata = new Scheme(
   { timestamps: true }
 );
 
-module.exports = mongoose.creator("Comment", markertdata);
+module.exports = mongoose.model("Comment", markertdata);

@@ -78,4 +78,4 @@ const markertdata = new Schema({
     idPhotofile: idPhotofile,
 })
 
-module.exports = mongoose.creator('Document', markertdata);
+module.exports = mongoose.model('Document', markertdata);

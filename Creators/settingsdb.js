@@ -26,4 +26,4 @@ const markertdata = new Scheme({
   
 })
 
-module.exports = mongoose.creator('Setting',markertdata);
+module.exports = mongoose.model('Setting',markertdata);

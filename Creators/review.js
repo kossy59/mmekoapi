@@ -26,4 +26,4 @@ const markertdata = new Scheme({
     
 })
 
-module.exports = mongoose.creator('Review',markertdata);
+module.exports = mongoose.model('Review',markertdata);

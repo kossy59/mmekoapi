@@ -16,4 +16,4 @@ const markertdata = new Scheme({
   
 })
 
-module.exports = mongoose.creator('Follower',markertdata);
+module.exports = mongoose.model('Follower',markertdata);

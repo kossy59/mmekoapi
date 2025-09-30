@@ -52,4 +52,4 @@ const markertdata = new Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.creator("Exclusive", markertdata);
+module.exports = mongoose.model("Exclusive", markertdata);

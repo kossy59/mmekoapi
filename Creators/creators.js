@@ -122,4 +122,4 @@ const markertdata = new Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.creator("Creator", markertdata);
+module.exports = mongoose.model("Creator", markertdata);

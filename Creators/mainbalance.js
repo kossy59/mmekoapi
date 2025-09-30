@@ -32,4 +32,4 @@ const markertdata = new Scheme({
   
 })
 
-module.exports = mongoose.creator('Balancehistory',markertdata);
+module.exports = mongoose.model('Balancehistory',markertdata);

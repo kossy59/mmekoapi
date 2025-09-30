@@ -35,4 +35,4 @@ const markertdata = new Scheme(
   { timestamps: true }
 );
 
-module.exports = mongoose.creator("admindb", markertdata);
+module.exports = mongoose.model("admindb", markertdata);

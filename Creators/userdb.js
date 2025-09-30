@@ -146,4 +146,4 @@ const markertdata = new Scheme(
   { timestamps: true }
 );
 
-module.exports = mongoose.creator("UserDB", markertdata);
+module.exports = mongoose.model("UserDB", markertdata);

@@ -16,4 +16,4 @@ const markertdata = new Scheme({
   
 })
 
-module.exports = mongoose.creator('Subinfo',markertdata);
+module.exports = mongoose.model('Subinfo',markertdata);

@@ -33,4 +33,4 @@ const markertdata = new Scheme(
 );
 
 // Virtuals for likeCount and likedBy can be handled in aggregation
-module.exports = mongoose.creator("Post", markertdata);
+module.exports = mongoose.model("Post", markertdata);

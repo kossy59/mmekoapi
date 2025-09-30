@@ -39,4 +39,4 @@ const markertdata = new Scheme({
 
 })
 
-module.exports = mongoose.creator('Exclusivebuy',markertdata);
+module.exports = mongoose.model('Exclusivebuy',markertdata);

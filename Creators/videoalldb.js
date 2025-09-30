@@ -27,4 +27,4 @@ const markertdata = new Scheme({
     
 })
 
-module.exports = mongoose.creator('Videodb',markertdata);
+module.exports = mongoose.model('Videodb',markertdata);

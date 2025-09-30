@@ -16,4 +16,4 @@ const markertdata = new Scheme({
 
 })
 
-module.exports = mongoose.creator('Crush',markertdata);
+module.exports = mongoose.model('Crush',markertdata);

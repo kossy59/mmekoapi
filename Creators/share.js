@@ -26,4 +26,4 @@ const markertdata = new Scheme({
     
 })
 
-module.exports = mongoose.creator('Share',markertdata);
+module.exports = mongoose.model('Share',markertdata);

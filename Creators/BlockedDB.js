@@ -16,4 +16,4 @@ const markertdata = new Scheme({
 
 })
 
-module.exports = mongoose.creator('Blocked',markertdata);
+module.exports = mongoose.model('Blocked',markertdata);

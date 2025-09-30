@@ -100,4 +100,4 @@ const pendingUser = new Scheme(
   { timestamps: true }
 );
 
-module.exports = mongoose.creator("PendingUser", pendingUser);
+module.exports = mongoose.model("PendingUser", pendingUser);
