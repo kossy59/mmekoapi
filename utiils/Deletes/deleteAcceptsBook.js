@@ -1,7 +1,7 @@
-let bookingDB = require("../../Models/book")
-let userDB = require("../../Models/userdb")
-let modelDB = require("../../Models/models")
-let historyDB = require("../../Models/mainbalance")
+let bookingDB = require("../../Creators/book")
+let userDB = require("../../Creators/userdb")
+let creatorDB = require("../../Creators/creators")
+let historyDB = require("../../Creators/mainbalance")
 
 const deteletaccpts = async()=>{
 let allbookingss = await bookingDB.find({}).exec()
@@ -26,7 +26,7 @@ let allbookings = allbookingss.filter(value=>{
 
     if(diffDays >= 30){
         allUserID.push({
-            modelid:value.modelid,
+            creatorid:value.creatorid,
             userid:value.userid,
             id:value._id
         })
@@ -36,11 +36,11 @@ let allbookings = allbookingss.filter(value=>{
  for(let i = 0; i < allUserID.length; i++){
     let price = 0
     let userBalance = 0;
-    let modelprice = await modelDB.findOne({_id:allUserID[i].modelid}).exec()
+    let creatorprice = await creatorDB.findOne({_id:allUserID[i].creatorid}).exec()
     let user = await userDB.findOne({_id:allUserID[i].userid}).exec()
 
-    if(modelprice){
-        price = parseFloat(modelprice.price)
+    if(creatorprice){
+        price = parseFloat(creatorprice.price)
     }
 
     if(user){
@@ -48,7 +48,7 @@ let allbookings = allbookingss.filter(value=>{
 
         userBalance = userBalance + price
 
-          let modelpaymenthistory = {
+          let creatorpaymenthistory = {
             userid:allUserID[i].userid,
             details: "you got a refound from your expire host request",
             spent: `${0}`,
@@ -59,7 +59,7 @@ let allbookings = allbookingss.filter(value=>{
          user.balance = `${userBalance}`
          user.save()
         
-         await historyDB.create(modelpaymenthistory)
+         await historyDB.create(creatorpaymenthistory)
 
          
     }

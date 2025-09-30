@@ -1,9 +1,9 @@
 // const {connectdatabase} = require('../config/connectDB')
 // const sdk = require("node-appwrite");
 
-const models = require("../Models/models");
-const userdb = require("../Models/userdb");
-const completedb = require("../Models/usercomplete");
+const creators = require("../Creators/creators");
+const userdb = require("../Creators/userdb");
+const completedb = require("../Creators/usercomplete");
 
 const MYID = async (ID) => {
   //let data = await connectdatabase();
@@ -21,16 +21,16 @@ const MYID = async (ID) => {
 
     let clientPhoto = await completedb.findOne({ useraccountId: ID }).exec();
 
-    //  let modelInfo = Listofmodel.documents.find(value =>{
+    //  let creatorInfo = Listofcreator.documents.find(value =>{
     //     return value.$id === ID
     //  })
 
-    let modelInfo = await models.findOne({ _id: ID }).exec();
+    let creatorInfo = await creators.findOne({ _id: ID }).exec();
 
-    if (modelInfo) {
-      let image = modelInfo.photolink.split(",");
+    if (creatorInfo) {
+      let image = creatorInfo.photolink.split(",");
       return {
-        name: modelInfo.name,
+        name: creatorInfo.name,
         photolink: image[0],
       };
     } else if (name) {

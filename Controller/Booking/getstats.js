@@ -1,5 +1,5 @@
-const bookingdb = require("../../Models/book");
-const modeldb = require("../../Models/models");
+const bookingdb = require("../../Creators/book");
+const creatordb = require("../../Creators/creators");
 
 const createLike = async (req, res) => {
   const userid = req.body.userid;
@@ -16,7 +16,7 @@ const createLike = async (req, res) => {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // Filter model array for bookings created within the last 30 days
+    // Filter creator array for bookings created within the last 30 days
     users = users.filter((m) => {
       const created = new Date(m.createdAt);
       return created >= thirtyDaysAgo && created <= now;
@@ -43,9 +43,9 @@ const createLike = async (req, res) => {
     let approve = [];
 
     for (let i = 0; i < user.length; i++) {
-      let image = await modeldb.findOne({ _id: user[i].modelid }).exec();
+      let image = await creatordb.findOne({ _id: user[i].creatorid }).exec();
       if (image) {
-        let photo = image.modelfiles[0]?.modelfilelink || "";
+        let photo = image.creatorfiles[0]?.creatorfilelink || "";
 
         approve.push({
           photolink: photo,
@@ -54,10 +54,10 @@ const createLike = async (req, res) => {
           type: user[i].type,
           date: user[i].date,
           time: user[i].time,
-          modelid: user[i].modelid,
+          creatorid: user[i].creatorid,
           accepted: "accepted",
           id: user[i]._id,
-          modeluserid: image.userid,
+          creatoruserid: image.userid,
           amount: image.price,
         });
       }

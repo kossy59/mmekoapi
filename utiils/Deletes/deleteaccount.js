@@ -1,24 +1,24 @@
-let admindb = require("../../Models/admindb")
-let bookdb =  require("../../Models/book")
-let commentdb = require("../../Models/book")
-let crushdb = require("../../Models/crushdb")
-let follwerdb = require("../../Models/followers")
-let gift = require("../../Models/gift")
-let mainbalance = require("../../Models/mainbalance")
-let messagedb = require("../../Models/message")
-let reviewdb = require("../../Models/review")
-let userdb = require("../../Models/userdb")
-let videocalldb = require("../../Models/videoalldb")
-let postdb = require("../../Models/post")
+let admindb = require("../../Creators/admindb")
+let bookdb =  require("../../Creators/book")
+let commentdb = require("../../Creators/book")
+let crushdb = require("../../Creators/crushdb")
+let follwerdb = require("../../Creators/followers")
+let gift = require("../../Creators/gift")
+let mainbalance = require("../../Creators/mainbalance")
+let messagedb = require("../../Creators/message")
+let reviewdb = require("../../Creators/review")
+let userdb = require("../../Creators/userdb")
+let videocalldb = require("../../Creators/videoalldb")
+let postdb = require("../../Creators/post")
 let deletelike = require("../deleteLike")
 const deleteImage = require("../deleteImage")
-let exclusivedb = require("../../Models/exclusivedb")
-let completedb = require("../../Models/usercomplete")
-let exclusivepurchase = require("../../Models/exclusivePurshase")
-let modeldb = require("../../Models/models")
-let blockeddb = require("../../Models/BlockedDB")
-let settingdb = require("../../Models/settingsdb")
-let pushdb = require("../../Models/pushnotifydb")
+let exclusivedb = require("../../Creators/exclusivedb")
+let completedb = require("../../Creators/usercomplete")
+let exclusivepurchase = require("../../Creators/exclusivePurshase")
+let creatordb = require("../../Creators/creators")
+let blockeddb = require("../../Creators/BlockedDB")
+let settingdb = require("../../Creators/settingsdb")
+let pushdb = require("../../Creators/pushnotifydb")
 
 
 
@@ -44,7 +44,7 @@ let deletedbs = async(userid)=>{
  let list_of_post = await postdb.find({userid:userid}).exec()
  let list_of_exclusve = await exclusivedb.find({userid:userid}).exec()
  let userImage = await completedb.findOne({useraccountId:userid}).exec()
- let modelimage = await modeldb.findOne({userid:userid}).exec()
+ let creatorimage = await creatordb.findOne({userid:userid}).exec()
  
 
  for(let i = 0; i < list_of_post.length; i++){
@@ -93,17 +93,17 @@ let deletedbs = async(userid)=>{
  console.log("failtwo")
  await exclusivedb.deleteMany({userid:userid}).exec()
 
- if(modelimage){
+ if(creatorimage){
 
-    if(modelimage.photolink){
+    if(creatorimage.photolink){
 
-        let images = modelimage.photolink.split(",")
+        let images = creatorimage.photolink.split(",")
 
         for(let i = 0; i < images.length; i++){
          try{
-            await deleteImage("model",images[i])
+            await deleteImage("creator",images[i])
          }catch{
-           console.log("failed deleting model")
+           console.log("failed deleting creator")
          }
             
         }
@@ -112,7 +112,7 @@ let deletedbs = async(userid)=>{
    
  }
  console.log("failtree")
- await modeldb.deleteOne({userid:userid}).exec()
+ await creatordb.deleteOne({userid:userid}).exec()
 
 
  if(userImage){

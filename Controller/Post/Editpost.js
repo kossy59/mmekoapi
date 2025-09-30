@@ -2,11 +2,11 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
 
-const postdb = require("../../Models/post")
-const userdb = require("../../Models/userdb")
-const completedb = require("../../Models/usercomplete")
-const commentdb = require("../../Models/comment")
-const likedb = require("../../Models/like")
+const postdb = require("../../Creators/post")
+const userdb = require("../../Creators/userdb")
+const completedb = require("../../Creators/usercomplete")
+const commentdb = require("../../Creators/comment")
+const likedb = require("../../Creators/like")
 
 const updatePost = async (req, res) => {
 

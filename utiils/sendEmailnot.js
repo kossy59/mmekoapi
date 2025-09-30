@@ -1,5 +1,5 @@
-const userdb = require("../Models/userdb")
-const settingdb = require("../Models/settingsdb")
+const userdb = require("../Creators/userdb")
+const settingdb = require("../Creators/settingsdb")
 let sendTomail = require("./sendTomail")
 
 

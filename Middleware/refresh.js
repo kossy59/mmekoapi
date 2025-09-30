@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 //const {connectdatabase} = require('../config/connectDB');
-const userdb = require("../Models/userdb");
+const userdb = require("../Creators/userdb");
 
 const handleRefresh = async (req, res, next) => {
   let token = "";

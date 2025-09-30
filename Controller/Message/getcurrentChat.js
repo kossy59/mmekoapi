@@ -1,12 +1,12 @@
 // const {connectdatabase, client} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
-const messagedb = require("../../Models/message");
-const userdb = require("../../Models/userdb");
-const completedb = require("../../Models/usercomplete");
-const models = require("../../Models/models");
+const messagedb = require("../../Creators/message");
+const userdb = require("../../Creators/userdb");
+const completedb = require("../../Creators/usercomplete");
+const creators = require("../../Creators/creators");
 
-const createModel = async (req, res) => {
-  const userid = req.body.modelid;
+const createCreator = async (req, res) => {
+  const userid = req.body.creatorid;
   const clientid = req.body.clientid;
   const mychat = req.body.mychat;
 
@@ -133,19 +133,19 @@ const createModel = async (req, res) => {
 
     console.log("under  my chat names and photolink as ordinary client user ");
 
-    //now let marshal my chat names and photolink as a model user
+    //now let marshal my chat names and photolink as a creator user
 
     // for(let i = 0; i < myChat.length; i++){
     //     if(myChat[i].client === false){
-    //         //let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[myChat[i].fromid])])
-    //         let Model = await models.findOne({userid:myChat[i].fromid})
-    //         let photolink = Model.photolink.split(",")
+    //         //let Creator = await data.databar.listDocuments(data.dataid,data.creatorCol,[sdk.Query.equal("userid",[myChat[i].fromid])])
+    //         let Creator = await creators.findOne({userid:myChat[i].fromid})
+    //         let photolink = Creator.photolink.split(",")
     //             let chat = {
     //                 id: myChat[i].fromid,
     //                 content:  myChat[i].content,
     //                 date: myChat[i].date,
     //                 photolink: photolink[0],
-    //                 name: Model.name,
+    //                 name: Creator.name,
     //                 client: myChat[i].client
     //             }
     //             Listchat.push(chat)
@@ -184,22 +184,22 @@ const createModel = async (req, res) => {
     }
     // console.log('under  our client chat names and photolink as ordinary client user')
 
-    // now marshal our client chat names and photolink as a model client user
+    // now marshal our client chat names and photolink as a creator client user
 
     // for(let i = 0; i < clientchat.length; i++){
 
     //     if(clientchat[i].client === false){
 
-    //        // let Model = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[clientchat[i].fromid])])
-    //        let Model = await models.findOne({userid:clientchat[i].fromid})
-    //          if(Model){
-    //              let photolink = Model.photolink.split(",")
+    //        // let Creator = await data.databar.listDocuments(data.dataid,data.creatorCol,[sdk.Query.equal("userid",[clientchat[i].fromid])])
+    //        let Creator = await creators.findOne({userid:clientchat[i].fromid})
+    //          if(Creator){
+    //              let photolink = Creator.photolink.split(",")
     //             let chat = {
     //                 id: clientchat[i].fromid,
     //                 content:  clientchat[i].content,
     //                 date: clientchat[i].date,
     //                 photolink: photolink[0],
-    //                 name: Model.name,
+    //                 name: Creator.name,
     //                 client: clientchat[i].client
     //             }
     //             Listchat.push(chat)
@@ -215,7 +215,7 @@ const createModel = async (req, res) => {
     console.log("all chat " + allchat.length);
     return res.status(200).json({
       ok: true,
-      message: `Model Fetched successfully`,
+      message: `Creator Fetched successfully`,
       chats: allchat,
       chatInfo,
     });
@@ -225,4 +225,4 @@ const createModel = async (req, res) => {
   }
 };
 
-module.exports = createModel;
+module.exports = createCreator;

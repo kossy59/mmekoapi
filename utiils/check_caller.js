@@ -1,4 +1,4 @@
-let videocalldb = require("../Models/videoalldb")
+let videocalldb = require("../Creators/videoalldb")
 
 let Check_caller = async (answerid,callerid)=>{
     let user = await videocalldb.findOne({callerid:answerid}).exec()

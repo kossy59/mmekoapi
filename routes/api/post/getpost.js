@@ -2,7 +2,7 @@ const express = require('express');
 const mongoose = require('mongoose'); // <--- ADD THIS
 const router = express.Router();
 const readPost = require('../../../Controller/Post/Getpost');
-const postdbs = require("../../../Models/post");
+const postdbs = require("../../../Creators/post");
 const { deleteFile } = require('../../../utiils/appwrite');
 
 router.route('/')
@@ -72,7 +72,7 @@ router.route('/:pid')
                             followers: 1,
                             following: 1,
                             creator_listing: 1,
-                            modelId: 1,
+                            creatorId: 1,
                             exclusive_verify: 1,
                             photolink: 1,
                             photoID: 1

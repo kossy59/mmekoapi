@@ -1,6 +1,6 @@
-// const {userdb} = require('../../Model/userdb');
+// const {userdb} = require('../../Creator/userdb');
 // const {memko_socialDB,database} = require('../../config/connectDB')
-const userdb = require("../../Models/userdb");
+const userdb = require("../../Creators/userdb");
 
 const handleNewUser = async (req, res) => {
   const email = req.body.email;

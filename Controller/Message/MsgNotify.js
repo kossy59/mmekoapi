@@ -1,10 +1,10 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
 
-const messagedb = require("../../Models/message");
-const userdb = require("../../Models/userdb");
-const completedb = require("../../Models/usercomplete");
-const models = require("../../Models/models");
+const messagedb = require("../../Creators/message");
+const userdb = require("../../Creators/userdb");
+const completedb = require("../../Creators/usercomplete");
+const creators = require("../../Creators/creators");
 
 const getnotify = async (req, res) => {
   const userid = req.body.userid;
@@ -127,19 +127,19 @@ const getnotify = async (req, res) => {
       }
     }
 
-    //  getting user names from model as model
+    //  getting user names from creator as creator
 
     // for(let i = 0; i < notificationbyuser.length; i++){
     //     if(notificationbyuser[i].client === false){
-    //        //let Modeling = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[notificationbyuser[i].userid])])
-    //        let Modeling = await models.findOne({userid:notificationbyuser[i].userid}).exec()
+    //        //let Creatoring = await data.databar.listDocuments(data.dataid,data.creatorCol,[sdk.Query.equal("userid",[notificationbyuser[i].userid])])
+    //        let Creatoring = await creators.findOne({userid:notificationbyuser[i].userid}).exec()
     //         let Users = await userdb.findOne({_id:notificationbyuser[i].userid}).exec()
-    //        if(Modeling){
+    //        if(Creatoring){
 
-    //           let photoLinks = Modeling.photolink.split(",")
+    //           let photoLinks = Creatoring.photolink.split(",")
     //               let notication = {
     //                         photolink: photoLinks[0],
-    //                         username: Modeling.name,
+    //                         username: Creatoring.name,
     //                         content: notificationbyuser[i].content,
     //                         messagecount: notificationbyuser[i].notifycount,
     //                         fromid: notificationbyuser[i].userid,

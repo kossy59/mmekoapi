@@ -1,10 +1,10 @@
 // const {connectdatabase} = require('../../config/connectDB')
 // const sdk = require("node-appwrite");
 
-const messagedb = require("../../Models/message");
-const userdb = require("../../Models/userdb");
-const completedb = require("../../Models/usercomplete");
-const models = require("../../Models/models");
+const messagedb = require("../../Creators/message");
+const userdb = require("../../Creators/userdb");
+const completedb = require("../../Creators/usercomplete");
+const creators = require("../../Creators/creators");
 const deleteOldChats = require("../../utiils/Deletes/deletemessage");
 
 const MsgNotify = async (req, res) => {

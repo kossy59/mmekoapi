@@ -1,9 +1,9 @@
-let giftdb = require("../Models/gift")
+let giftdb = require("../Creators/gift")
 
-  let gift_history = async (modelid)=>{
+  let gift_history = async (creatorid)=>{
 
 
-    let gift = await giftdb.find({modelid : modelid}).exec() 
+    let gift = await giftdb.find({creatorid : creatorid}).exec() 
 
     let first1 = Date.now()
 

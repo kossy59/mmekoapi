@@ -1,6 +1,6 @@
-const userdb = require("../../Models/userdb")
-let admindb = require("../../Models/admindb")
-let userphoto = require("../../Models/usercomplete")
+const userdb = require("../../Creators/userdb")
+let admindb = require("../../Creators/admindb")
+let userphoto = require("../../Creators/usercomplete")
 
 const updatePost = async (req,res)=>{
 

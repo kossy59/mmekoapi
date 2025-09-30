@@ -1,15 +1,15 @@
-const bookingdb = require("../../Models/book");
+const bookingdb = require("../../Creators/book");
 let sendEmail = require("../../utiils/sendEmailnot");
 let sendpushnote = require("../../utiils/sendPushnot");
 
 const createLike = async (req, res) => {
-  const modelid = req.body.modelid;
+  const creatorid = req.body.creatorid;
   const userid = req.body.userid;
   const date = req.body.date;
   const time = req.body.time;
-  console.log("accept model " + modelid);
+  console.log("accept creator " + creatorid);
 
-  if (!modelid) {
+  if (!creatorid) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
   }
   console.log("untop init db");
@@ -17,7 +17,7 @@ const createLike = async (req, res) => {
   //let data = await connectdatabase()
 
   try {
-    const users = await bookingdb.find({ modelid: modelid }).exec();
+    const users = await bookingdb.find({ creatorid: creatorid }).exec();
 
     let user = users.find((value) => {
       return (
@@ -40,11 +40,11 @@ const createLike = async (req, res) => {
     // console.log('under user accepted')
     status.status = "accepted";
     status.save();
-    await sendEmail(status.userid, "model has accepted your booking request");
+    await sendEmail(status.userid, "creator has accepted your booking request");
     await sendpushnote(
       status.userid,
-      "model has accepted your booking request",
-      "modelicon"
+      "creator has accepted your booking request",
+      "creatoricon"
     );
     return res.status(200).json({ ok: true, message: ` Success` });
   } catch (err) {
@@ -54,19 +54,19 @@ const createLike = async (req, res) => {
 
 module.exports = createLike;
 
-// const bookingdb = require("../../Models/book");
+// const bookingdb = require("../../Creators/book");
 // let sendEmail = require("../../utiils/sendEmailnot");
 // let sendpushnote = require("../../utiils/sendPushnot");
 
 // const AcceptBooking = async (req, res) => {
-//   const { modelId, userId, date, time } = req.body;
+//   const { creatorId, userId, date, time } = req.body;
 
-//   if (!modelId) {
+//   if (!creatorId) {
 //     return res.status(404).json({ ok: false, message: "Invalid Modle Id!" });
 //   }
 
 //   try {
-//     const boookings = await bookingdb.find({ modelId: modelId }).exec();
+//     const boookings = await bookingdb.find({ creatorId: creatorId }).exec();
 
 //     let filteredBookings = boookings.find((value) => {
 //       return (
@@ -93,12 +93,12 @@ module.exports = createLike;
 //     await updatedBooking.save();
 //     await sendEmail(
 //       updatedBooking.userid,
-//       "model has accepted your booking request"
+//       "creator has accepted your booking request"
 //     );
 //     await sendpushnote(
 //       updatedBooking.userid,
-//       "model has accepted your booking request",
-//       "modelicon"
+//       "creator has accepted your booking request",
+//       "creatoricon"
 //     );
 //     return res.status(200).json({ ok: true, message: ` Success` });
 //   } catch (err) {

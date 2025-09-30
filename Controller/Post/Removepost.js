@@ -2,9 +2,9 @@
 // const sdk = require("node-appwrite");
 //we go also delete shared like and comment with this post id
 
-const postdata = require('../../Models/post')
-const commentdata = require('../../Models/comment')
-const likedata = require('../../Models/like')
+const postdata = require('../../Creators/post')
+const commentdata = require('../../Creators/comment')
+const likedata = require('../../Creators/like')
 const { deleteFile } = require('../../utiils/appwrite')
 
 

@@ -1,5 +1,5 @@
 // Middleware/isAdmin.js// Adjust path if needed
-const User = require("../Models/userdb");
+const User = require("../Creators/userdb");
 const isAdmin = async (req, res, next) => {
   try {
     const userId = req.userId;

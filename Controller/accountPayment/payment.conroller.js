@@ -1,4 +1,4 @@
-const PaymentAccount = require("../../Models/paymentAccount");
+const PaymentAccount = require("../../Creators/paymentAccount");
 const mongoose = require("mongoose");
 
 exports.savePaymentAccount = async (req, res) => {

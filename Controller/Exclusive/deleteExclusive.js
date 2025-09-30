@@ -1,4 +1,4 @@
-let exclusivedb = require("../../Models/exclusivedb")
+let exclusivedb = require("../../Creators/exclusivedb")
 const postexclusive = async(req,res)=>{
 
     let id = req.body.id;

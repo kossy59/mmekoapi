@@ -4,19 +4,19 @@ const getUSD = require("../../helpers/get_user_usd");
 const getEarning = require("../../helpers/earning_in_days");
 const getRequest = require("../../helpers/get_request_history");
 const getGift = require("../../helpers/gift_in_days");
-const userdb = require("../../Models/userdb");
-let modeldb = require("../../Models/models");
+const userdb = require("../../Creators/userdb");
+let creatordb = require("../../Creators/creators");
 const readHistory = async (req, res) => {
   const userid = req.body.userid;
-  const modelid = req.body.modelid;
+  const creatorid = req.body.creatorid;
 
   if (!userid) {
     return res.status(409).json({ ok: false, message: "No user ID!!" });
   }
-  const model = await userdb.find({
-    modelId: modelid,
+  const creator = await userdb.find({
+    creatorId: creatorid,
   });
-  let currentModel = await modeldb.find({
+  let currentCreator = await creatordb.find({
     userid: userid,
   });
 
@@ -53,7 +53,7 @@ const readHistory = async (req, res) => {
     console.log("inside gift");
     gift_count = String(await getGift(userid));
     console.log("inside request");
-    request_count = String(await getRequest(modelid));
+    request_count = String(await getRequest(creatorid));
     console.log("inside earning");
     earning = String(await getEarning(userid));
 
@@ -69,10 +69,10 @@ const readHistory = async (req, res) => {
       request_count = "---";
     }
 
-    // Safely read model earnings to avoid crashes when model document is missing
+    // Safely read creator earnings to avoid crashes when creator document is missing
     let earningsVal = 0;
-    if (currentModel && Array.isArray(currentModel) && currentModel.length && typeof currentModel[0].earnings !== "undefined") {
-      earningsVal = Number(currentModel[0].earnings) || 0;
+    if (currentCreator && Array.isArray(currentCreator) && currentCreator.length && typeof currentCreator[0].earnings !== "undefined") {
+      earningsVal = Number(currentCreator[0].earnings) || 0;
     }
 
     let history = {

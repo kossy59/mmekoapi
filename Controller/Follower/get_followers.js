@@ -1,9 +1,9 @@
-const followerdb = require("../../Models/followers");
-const userdb = require("../../Models/userdb");
-const modeldb = require("../../Models/models");
-const photodb = require("../../Models/usercomplete");
+const followerdb = require("../../Creators/followers");
+const userdb = require("../../Creators/userdb");
+const creatordb = require("../../Creators/creators");
+const photodb = require("../../Creators/usercomplete");
 
-const createModel = async (req, res) => {
+const createCreator = async (req, res) => {
   const userid = req.body.userid;
 
   if (!userid) {
@@ -25,18 +25,18 @@ const createModel = async (req, res) => {
       // console.log("got the follower")
       for (let i = 0; i < followers.length; i++) {
         let canmessage = false;
-        let modelid = "";
+        let creatorid = "";
         let photolink = "";
         let username = await userdb.findOne({ _id: followers[i] }).exec();
-        let model = await modeldb.findOne({ userid: followers[i] }).exec();
+        let creator = await creatordb.findOne({ userid: followers[i] }).exec();
 
         if (username) {
           let photo = await photodb
             .findOne({ useraccountId: followers[i] })
             .exec();
-          if (model) {
+          if (creator) {
             canmessage = true;
-            modelid = model._id;
+            creatorid = creator._id;
           }
 
           if (photo) {
@@ -47,7 +47,7 @@ const createModel = async (req, res) => {
             name: `${username.firstname} ${username.lastname}`,
             image: photolink,
             canmessage: canmessage,
-            modelid: modelid,
+            creatorid: creatorid,
             id: username._id,
             following: false,
           };
@@ -67,21 +67,21 @@ const createModel = async (req, res) => {
 
       for (let i = 0; i < followings.length; i++) {
         let canmessage = false;
-        let modelid = "";
+        let creatorid = "";
         let photolink = "";
         let username = await userdb.findOne({ _id: followings[i] }).exec();
-        let model = await modeldb.findOne({ userid: followings[i] }).exec();
+        let creator = await creatordb.findOne({ userid: followings[i] }).exec();
 
-        // console.log("under following model")
+        // console.log("under following creator")
         if (username) {
           // console.log("inside there is user")
           let photo = await photodb
             .findOne({ useraccountId: followings[i] })
             .exec();
-          if (model) {
-            // console.log("inside she is model")
+          if (creator) {
+            // console.log("inside she is creator")
             canmessage = true;
-            modelid = model._id;
+            creatorid = creator._id;
           }
 
           if (photo) {
@@ -93,7 +93,7 @@ const createModel = async (req, res) => {
             name: `${username.firstname} ${username.lastname}`,
             image: photolink,
             canmessage: canmessage,
-            modelid: modelid,
+            creatorid: creatorid,
             id: username._id,
             following: true,
           };
@@ -112,4 +112,4 @@ const createModel = async (req, res) => {
   }
 };
 
-module.exports = createModel;
+module.exports = createCreator;

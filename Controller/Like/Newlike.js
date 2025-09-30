@@ -1,7 +1,7 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
-const likedata = require("../../Models/like");
-const postdbs = require("../../Models/post");
+const likedata = require("../../Creators/like");
+const postdbs = require("../../Creators/post");
 let sendEmail = require("../../utiils/sendEmailnot");
 let sendpushnote = require("../../utiils/sendPushnot");
 const createLike = async (req, res) => {
@@ -38,7 +38,7 @@ const createLike = async (req, res) => {
         await sendpushnote(
           postuser.userid,
           "user unlike your Post",
-          "modelicon"
+          "creatoricon"
         );
       }
       // After unlike, return updated likeCount and likedBy
@@ -68,7 +68,7 @@ const createLike = async (req, res) => {
     await likedata.create(like);
     if (postuser) {
       await sendEmail(postuser.userid, "user like your Post");
-      await sendpushnote(postuser.userid, "user like your Post", "modelicon");
+      await sendpushnote(postuser.userid, "user like your Post", "creatoricon");
     }
     // After like, return updated likeCount and likedBy
   const likes = await likedata.find({ postid });

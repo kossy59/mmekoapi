@@ -1,5 +1,5 @@
 const month_list = require("./current_month")
-const earningdb = require("../Models/mainbalance")
+const earningdb = require("../Creators/mainbalance")
 
 let monthly_earning = async (userid)=>{
 

@@ -1,20 +1,20 @@
-//const {userdb} = require('../../Model/userdb');
+//const {userdb} = require('../../Creator/userdb');
 //const {connectdatabase} = require('../../config/connectDB');
 //const { Query } = require('node-appwrite');
 //const sdk = require("node-appwrite");
 //const forgetHandler = require("../../helpers/sendemailAuth");
 // const mongoose = require("mongoose");
-// const userdb = require("../../Models/userdb");
-//const baneddb = require("../../Models/admindb");
-// const usercompletedb = require("../../Models/usercomplete");
-// let pushdb = require("../../Models/settingsdb");
+// const userdb = require("../../Creators/userdb");
+//const baneddb = require("../../Creators/admindb");
+// const usercompletedb = require("../../Creators/usercomplete");
+// let pushdb = require("../../Creators/settingsdb");
 
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
-const userdb = require("../../Models/userdb");
-const usercompletedb = require("../../Models/usercomplete");
-const pushdb = require("../../Models/settingsdb");
+const userdb = require("../../Creators/userdb");
+const usercompletedb = require("../../Creators/usercomplete");
+const pushdb = require("../../Creators/settingsdb");
 
 const handleNewUser = async (req, res) => {
   console.log("Incoming registration payload:", req.body);

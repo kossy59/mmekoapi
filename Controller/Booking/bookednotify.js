@@ -1,8 +1,8 @@
-const bookingdb = require("../../Models/book");
-const userdb = require("../../Models/userdb");
-const completedb = require("../../Models/usercomplete");
-const admindb = require("../../Models/admindb");
-const modeldb = require("../../Models/models");
+const bookingdb = require("../../Creators/book");
+const userdb = require("../../Creators/userdb");
+const completedb = require("../../Creators/usercomplete");
+const admindb = require("../../Creators/admindb");
+const creatordb = require("../../Creators/creators");
 
 const createLike = async (req, res) => {
   const userid = req.body.userid;
@@ -16,21 +16,21 @@ const createLike = async (req, res) => {
 
   //let data = await connectdatabase()
 
-  let creator_listing = await modeldb.findOne({ userid: userid }).exec();
+  let creator_listing = await creatordb.findOne({ userid: userid }).exec();
   let users = [];
   if (creator_listing) {
-    console.log("this is model");
-    users = await bookingdb.find({ modelid: creator_listing._id }).exec();
-    console.log("this is model not " + users.length);
+    console.log("this is creator");
+    users = await bookingdb.find({ creatorid: creator_listing._id }).exec();
+    console.log("this is creator not " + users.length);
   }
 
   const adminmessage = await admindb.find({ userid: userid }).exec();
 
-  let model_list = [];
+  let creator_list = [];
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  // Filter model array for bookings created within the last 30 days
+  // Filter creator array for bookings created within the last 30 days
   users = users.filter((m) => {
     const created = new Date(m.createdAt);
     return created >= thirtyDaysAgo && created <= now;
@@ -47,10 +47,10 @@ const createLike = async (req, res) => {
 
   // console.log("notificationsss")
 
-  let modelast = 0;
+  let creatorast = 0;
   let adminlast = 0;
   let admintext = "";
-  let modelmessage = "";
+  let creatormessage = "";
 
   for (let i = 0; i < user.length; i++) {
     const client = await userdb.findOne({ _id: user[i].userid }).exec();
@@ -58,12 +58,12 @@ const createLike = async (req, res) => {
       .findOne({ useraccountId: user[i].userid })
       .exec();
 
-    if (modelast < user[i]._id.getTimestamp().getTime()) {
-      modelast = user[i]._id.getTimestamp().getTime();
-      modelmessage = `model notification from ${client.firstname}`;
+    if (creatorast < user[i]._id.getTimestamp().getTime()) {
+      creatorast = user[i]._id.getTimestamp().getTime();
+      creatormessage = `creator notification from ${client.firstname}`;
     }
 
-    model_list.push({
+    creator_list.push({
       name: client.firstname,
       type: user[i].type,
       date: user[i].date,
@@ -71,7 +71,7 @@ const createLike = async (req, res) => {
       photolink: clientphoto?.photoLink || "",
       clientid: client._id,
       place: user[i].place,
-      modelid: user[i].modelid,
+      creatorid: user[i].creatorid,
       status: user[i].status,
       ismessage: false,
       notification: false,
@@ -100,9 +100,9 @@ const createLike = async (req, res) => {
 
   let lastmessage = "";
 
-  if (modelast > adminlast) {
-    lastmessage = modelmessage;
-  } else if (adminlast > modelast) {
+  if (creatorast > adminlast) {
+    lastmessage = creatormessage;
+  } else if (adminlast > creatorast) {
     lastmessage = admintext;
   }
 
@@ -110,7 +110,7 @@ const createLike = async (req, res) => {
   return res.status(200).json({
     ok: true,
     message: ` Success`,
-    data: { model: model_list, notify: listinfos, lastmessage: lastmessage },
+    data: { creator: creator_list, notify: listinfos, lastmessage: lastmessage },
   });
 
   //    catch(err){
