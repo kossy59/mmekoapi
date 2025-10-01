@@ -131,6 +131,8 @@ app.use(
 app.use("/model", require("./routes/api/model/models"));
 app.use("/editmodel", require("./routes/api/model/editemodel"));
 app.use("/postdocument", require("./routes/api/model/postdocument"));
+app.use("/getdocument", require("./routes/api/model/getdocument"));
+app.use("/rejectdocument", require("./routes/api/model/rejectdocument"));
 app.use("/exclusive", require("./routes/api/Exclusive/exclusive"));
 app.use("/models", require("./routes/api/model/updateView"));
 app.use("/models", require("./routes/api/model/updateFollowers"));
