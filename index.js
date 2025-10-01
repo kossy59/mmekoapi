@@ -35,7 +35,9 @@ const server = http.createServer(app);
 const allowedOrigins = [
   process.env.NEXT_PUBLIC_URL,
   "https://mmekowebsite.onrender.com",
+]
   "https://mmekowebsite-eight.vercel.app", // Vercel deployment
+
   "http://localhost:3000", // Add localhost for development
 ].filter(Boolean); // Remove falsy values (e.g., undefined NEXT_PUBLIC_URL)
 
