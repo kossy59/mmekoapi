@@ -6,6 +6,24 @@ const completedb = require("../../Creators/usercomplete");
 const MsgNotify = async (req, res) => {
   let userid = req.body.userid;
 
+  // Validate userid parameter
+  if (!userid || userid === 'undefined' || userid === 'null') {
+    return res.status(400).json({
+      ok: false,
+      message: "User ID is required",
+      error: "Missing or invalid userid parameter"
+    });
+  }
+
+  // Validate userid is a valid ObjectId format
+  if (typeof userid !== 'string' || userid.length !== 24) {
+    return res.status(400).json({
+      ok: false,
+      message: "Invalid User ID format",
+      error: "User ID must be a valid 24-character string"
+    });
+  }
+
   try {
     // OPTIMIZED: Single query to get all messages involving this user
     let allMessages = await messagedb.find({
@@ -23,6 +41,12 @@ const MsgNotify = async (req, res) => {
     
     allMessages.forEach(msg => {
       const otherUserId = msg.fromid === userid ? msg.toid : msg.fromid;
+      
+      // Skip messages with invalid user IDs
+      if (!otherUserId || otherUserId === 'undefined' || otherUserId === 'null' || typeof otherUserId !== 'string' || otherUserId.length !== 24) {
+        console.log("⚠️ [GETMSGNOTIFY_OPTIMIZED] Skipping message with invalid otherUserId:", otherUserId, "from message:", msg._id);
+        return;
+      }
       
       if (!conversationMap.has(otherUserId)) {
         conversationMap.set(otherUserId, {
@@ -48,6 +72,17 @@ const MsgNotify = async (req, res) => {
 
     // OPTIMIZED: Get all unique user IDs for batch fetching
     let allUserIds = Array.from(conversationMap.keys());
+    
+    // Filter out invalid user IDs (undefined, null, empty strings)
+    allUserIds = allUserIds.filter(id => 
+      id && 
+      id !== 'undefined' && 
+      id !== 'null' && 
+      typeof id === 'string' && 
+      id.length === 24
+    );
+    
+    console.log("🔍 [GETMSGNOTIFY_OPTIMIZED] Filtered user IDs:", allUserIds);
 
     // OPTIMIZED: Batch fetch all user info and photos
     let [allUsers, allPhotos] = await Promise.all([

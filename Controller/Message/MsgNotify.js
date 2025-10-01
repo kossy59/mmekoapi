@@ -6,6 +6,24 @@ const completedb = require("../../Creators/usercomplete");
 const MsgNotify = async (req, res) => {
   const userid = req.body.userid;
 
+  // Validate userid parameter
+  if (!userid || userid === 'undefined' || userid === 'null') {
+    return res.status(400).json({
+      ok: false,
+      message: "User ID is required",
+      error: "Missing or invalid userid parameter"
+    });
+  }
+
+  // Validate userid is a valid ObjectId format
+  if (typeof userid !== 'string' || userid.length !== 24) {
+    return res.status(400).json({
+      ok: false,
+      message: "Invalid User ID format",
+      error: "User ID must be a valid 24-character string"
+    });
+  }
+
   try {
     // OPTIMIZED: Direct query for unread messages only
     let unreadMessages = await messagedb.find({ 
@@ -26,6 +44,17 @@ const MsgNotify = async (req, res) => {
 
     // OPTIMIZED: Get unique sender IDs for batch fetching
     let senderIds = [...new Set(unreadMessages.map(msg => msg.fromid))];
+    
+    // Filter out invalid sender IDs (undefined, null, empty strings)
+    senderIds = senderIds.filter(id => 
+      id && 
+      id !== 'undefined' && 
+      id !== 'null' && 
+      typeof id === 'string' && 
+      id.length === 24
+    );
+    
+    console.log("🔍 [MSGNOTIFY] Filtered sender IDs:", senderIds);
 
     // OPTIMIZED: Batch fetch all sender info and photos
     let [allSenders, allPhotos] = await Promise.all([
