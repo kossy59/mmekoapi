@@ -43,7 +43,6 @@ const MsgNotify = async (req, res) => {
     // Filter out messages from blocked users
     allMessages = await filterBlockedMessages(allMessages, userid);
 
-
     // OPTIMIZED: Group messages by conversation (other user ID)
     let conversationMap = new Map();
     

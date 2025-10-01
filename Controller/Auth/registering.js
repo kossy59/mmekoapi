@@ -67,8 +67,8 @@ const handleNewUser = async (req, res) => {
     const hashSecretPhrase = await bcrypt.hash(phraseString, 10);
 
     // Create tokens
-    const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET || "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6";
-    const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET || "z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g0f9e8d7c6b5a4";
+    const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET || "NEXT_PUBLIC_SECERET";
+    const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET || "NEXT_PUBLIC_SECERET";
     
     const refreshToken = jwt.sign(
       { UserInfo: { username: nickname } },

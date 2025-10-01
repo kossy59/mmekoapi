@@ -1,70 +1,153 @@
-const BlockUser = require("../Creators/blockuser");
+const BlockUser = require('../Creators/blockuser');
 
 /**
- * Filter out blocked users from a list of users
- * @param {Array} users - Array of user objects
- * @param {string} currentUserId - ID of the current user
- * @returns {Array} - Filtered array without blocked users
+ * Filters out messages where either the sender or receiver is blocked by the current user.
+ * Also filters out messages where the current user is blocked by the sender/receiver.
+ *
+ * @param {Array<Object>} messages - An array of message objects. Each message should have fromid and toid.
+ * @param {string} currentUserId - The ID of the currently logged-in user.
+ * @returns {Promise<Array<Object>>} A new array of messages with blocked conversations filtered out.
+ */
+const filterBlockedMessages = async (messages, currentUserId) => {
+  if (!messages || messages.length === 0 || !currentUserId) {
+    return messages;
+  }
+
+  try {
+    // Find all users blocked by the current user
+    const blockedByCurrentUser = await BlockUser.find({ blockerId: currentUserId }).select('blockedUserId').lean();
+    const blockedByUserIds = new Set(blockedByCurrentUser.map(block => block.blockedUserId.toString()));
+
+    // Find all users who have blocked the current user
+    const usersWhoBlockedCurrentUser = await BlockUser.find({ blockedUserId: currentUserId }).select('blockerId').lean();
+    const blockedMeIds = new Set(usersWhoBlockedCurrentUser.map(block => block.blockerId.toString()));
+
+    return messages.filter(msg => {
+      const fromId = msg.fromid.toString();
+      const toId = msg.toid.toString();
+
+      // Check if current user has blocked either participant in the message
+      const hasBlockedFrom = blockedByUserIds.has(fromId);
+      const hasBlockedTo = blockedByUserIds.has(toId);
+
+      // Check if either participant has blocked the current user
+      const fromBlockedMe = blockedMeIds.has(fromId);
+      const toBlockedMe = blockedMeIds.has(toId);
+
+      // A message is kept if:
+      // 1. The current user has not blocked either participant AND
+      // 2. Neither participant has blocked the current user
+      return !(hasBlockedFrom || hasBlockedTo || fromBlockedMe || toBlockedMe);
+    });
+  } catch (error) {
+    console.error('Error filtering blocked messages:', error);
+    return messages; // Return original messages if filtering fails
+  }
+};
+
+/**
+ * Filters out users from a list based on block relationships
+ *
+ * @param {Array<Object>} users - An array of user objects
+ * @param {string} currentUserId - The ID of the currently logged-in user
+ * @returns {Promise<Array<Object>>} A new array of users with blocked users filtered out
  */
 const filterBlockedUsers = async (users, currentUserId) => {
-  if (!users || !Array.isArray(users) || users.length === 0) {
-    return users;
-  }
-
-  if (!currentUserId) {
+  if (!users || users.length === 0 || !currentUserId) {
     return users;
   }
 
   try {
-    // Get all blocked user IDs for the current user
-    const blockedUsers = await BlockUser.find({ blockerId: currentUserId })
-      .select('blockedUserId');
-    
-    const blockedUserIds = blockedUsers.map(block => block.blockedUserId.toString());
+    // Find all users blocked by the current user
+    const blockedByCurrentUser = await BlockUser.find({ blockerId: currentUserId }).select('blockedUserId').lean();
+    const blockedByUserIds = new Set(blockedByCurrentUser.map(block => block.blockedUserId.toString()));
 
-    // Filter out blocked users
-    const filteredUsers = users.filter(user => {
-      const userId = user._id ? user._id.toString() : user.id ? user.id.toString() : user;
-      return !blockedUserIds.includes(userId);
+    // Find all users who have blocked the current user
+    const usersWhoBlockedCurrentUser = await BlockUser.find({ blockedUserId: currentUserId }).select('blockerId').lean();
+    const blockedMeIds = new Set(usersWhoBlockedCurrentUser.map(block => block.blockerId.toString()));
+
+    return users.filter(user => {
+      const userId = user._id.toString();
+      
+      // Check if current user has blocked this user
+      const hasBlockedUser = blockedByUserIds.has(userId);
+      
+      // Check if this user has blocked the current user
+      const userBlockedMe = blockedMeIds.has(userId);
+
+      // A user is kept if:
+      // 1. The current user has not blocked this user AND
+      // 2. This user has not blocked the current user
+      return !(hasBlockedUser || userBlockedMe);
     });
-
-    console.log(`🔒 [BLOCK_FILTER] Filtered ${users.length - filteredUsers.length} blocked users from ${users.length} total users`);
-    
-    return filteredUsers;
   } catch (error) {
-    console.error("❌ [BLOCK_FILTER] Error filtering blocked users:", error);
-    return users; // Return original array if filtering fails
+    console.error('Error filtering blocked users:', error);
+    return users; // Return original users if filtering fails
   }
 };
 
 /**
- * Check if a specific user is blocked by the current user
- * @param {string} currentUserId - ID of the current user
- * @param {string} targetUserId - ID of the user to check
- * @returns {boolean} - True if user is blocked
+ * Adds block filter to a MongoDB query
+ *
+ * @param {Object} query - The MongoDB query object
+ * @param {string} currentUserId - The ID of the currently logged-in user
+ * @returns {Promise<Object>} The query with block filters added
  */
-const isUserBlocked = async (currentUserId, targetUserId) => {
-  if (!currentUserId || !targetUserId) {
+const addBlockFilterToQuery = async (query, currentUserId) => {
+  if (!currentUserId) {
+    return query;
+  }
+
+  try {
+    // Find all users blocked by the current user
+    const blockedByCurrentUser = await BlockUser.find({ blockerId: currentUserId }).select('blockedUserId').lean();
+    const blockedByUserIds = blockedByCurrentUser.map(block => block.blockedUserId);
+
+    // Find all users who have blocked the current user
+    const usersWhoBlockedCurrentUser = await BlockUser.find({ blockedUserId: currentUserId }).select('blockerId').lean();
+    const blockedMeIds = usersWhoBlockedCurrentUser.map(block => block.blockerId);
+
+    // Add $nin (not in) filters to exclude blocked users
+    if (blockedByUserIds.length > 0) {
+      query._id = { ...query._id, $nin: blockedByUserIds };
+    }
+    if (blockedMeIds.length > 0) {
+      query._id = { ...query._id, $nin: [...(query._id?.$nin || []), ...blockedMeIds] };
+    }
+
+    return query;
+  } catch (error) {
+    console.error('Error adding block filter to query:', error);
+    return query; // Return original query if filtering fails
+  }
+};
+
+/**
+ * Check if a user is blocked by another user
+ *
+ * @param {string} blockerId - The ID of the user who might be blocking
+ * @param {string} blockedUserId - The ID of the user who might be blocked
+ * @returns {Promise<boolean>} True if blocked, false otherwise
+ */
+const isUserBlocked = async (blockerId, blockedUserId) => {
+  if (!blockerId || !blockedUserId) {
     return false;
   }
 
   try {
-    const block = await BlockUser.findOne({
-      blockerId: currentUserId,
-      blockedUserId: targetUserId
-    });
-
-    return !!block;
+    const blockExists = await BlockUser.findOne({ blockerId, blockedUserId });
+    return !!blockExists;
   } catch (error) {
-    console.error("❌ [IS_USER_BLOCKED] Error checking block status:", error);
+    console.error('Error checking if user is blocked:', error);
     return false;
   }
 };
 
 /**
- * Get blocked user IDs for a specific user
- * @param {string} userId - ID of the user
- * @returns {Array} - Array of blocked user IDs
+ * Get all user IDs that are blocked by a specific user
+ *
+ * @param {string} userId - The ID of the user
+ * @returns {Promise<Array<string>>} Array of blocked user IDs
  */
 const getBlockedUserIds = async (userId) => {
   if (!userId) {
@@ -72,81 +155,18 @@ const getBlockedUserIds = async (userId) => {
   }
 
   try {
-    const blockedUsers = await BlockUser.find({ blockerId: userId })
-      .select('blockedUserId');
-    
+    const blockedUsers = await BlockUser.find({ blockerId: userId }).select('blockedUserId').lean();
     return blockedUsers.map(block => block.blockedUserId.toString());
   } catch (error) {
-    console.error("❌ [GET_BLOCKED_USER_IDS] Error getting blocked user IDs:", error);
+    console.error('Error getting blocked user IDs:', error);
     return [];
   }
 };
 
-/**
- * Add block filtering to MongoDB query
- * @param {Object} query - MongoDB query object
- * @param {string} currentUserId - ID of the current user
- * @param {string} userField - Field name that contains user ID (default: '_id')
- * @returns {Object} - Modified query with block filtering
- */
-const addBlockFilterToQuery = async (query, currentUserId, userField = '_id') => {
-  if (!currentUserId) {
-    return query;
-  }
-
-  try {
-    const blockedUserIds = await getBlockedUserIds(currentUserId);
-    
-    if (blockedUserIds.length > 0) {
-      query[userField] = { $nin: blockedUserIds };
-    }
-
-    return query;
-  } catch (error) {
-    console.error("❌ [ADD_BLOCK_FILTER_TO_QUERY] Error adding block filter:", error);
-    return query;
-  }
-};
-
-/**
- * Filter messages to exclude those from blocked users
- * @param {Array} messages - Array of message objects
- * @param {string} currentUserId - ID of the current user
- * @returns {Array} - Filtered messages
- */
-const filterBlockedMessages = async (messages, currentUserId) => {
-  if (!messages || !Array.isArray(messages) || messages.length === 0) {
-    return messages;
-  }
-
-  if (!currentUserId) {
-    return messages;
-  }
-
-  try {
-    const blockedUserIds = await getBlockedUserIds(currentUserId);
-    
-    const filteredMessages = messages.filter(message => {
-      const fromId = message.fromid ? message.fromid.toString() : message.fromId ? message.fromId.toString() : null;
-      const toId = message.toid ? message.toid.toString() : message.toId ? message.toId.toString() : null;
-      
-      // Keep message if neither sender nor receiver is blocked
-      return !blockedUserIds.includes(fromId) && !blockedUserIds.includes(toId);
-    });
-
-    console.log(`🔒 [BLOCK_MESSAGE_FILTER] Filtered ${messages.length - filteredMessages.length} blocked messages from ${messages.length} total messages`);
-    
-    return filteredMessages;
-  } catch (error) {
-    console.error("❌ [BLOCK_MESSAGE_FILTER] Error filtering blocked messages:", error);
-    return messages;
-  }
-};
-
 module.exports = {
+  filterBlockedMessages,
   filterBlockedUsers,
+  addBlockFilterToQuery,
   isUserBlocked,
   getBlockedUserIds,
-  addBlockFilterToQuery,
-  filterBlockedMessages
 };

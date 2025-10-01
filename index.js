@@ -35,6 +35,7 @@ const server = http.createServer(app);
 const allowedOrigins = [
   process.env.NEXT_PUBLIC_URL,
   "https://mmekowebsite.onrender.com",
+  "https://mmekowebsite-eight.vercel.app", // Vercel deployment
   "http://localhost:3000", // Add localhost for development
 ].filter(Boolean); // Remove falsy values (e.g., undefined NEXT_PUBLIC_URL)
 
@@ -72,14 +73,39 @@ app.use((req, res, next) => {
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g., mobile apps) or from allowed origins
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log("❌ [Socket.IO] CORS blocked origin:", origin);
+        console.log("✅ [Socket.IO] Allowed origins:", allowedOrigins);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST"],
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
   },
+  // Additional production settings
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  transports: ["websocket", "polling"],
 });
 
 // Make io available to routes
 app.set('io', io);
+
+// Socket.IO connection logging
+io.on("connection", (socket) => {
+  console.log("✅ [Socket.IO] Client connected:", socket.id);
+  console.log("✅ [Socket.IO] Client origin:", socket.handshake.headers.origin);
+  console.log("✅ [Socket.IO] Client transport:", socket.conn.transport.name);
+  
+  socket.on("disconnect", (reason) => {
+    console.log("⚠️ [Socket.IO] Client disconnected:", socket.id, "Reason:", reason);
+  });
+});
 
 // Serve static files from uploads directory
 app.use('/uploads', express.static('uploads'));
@@ -205,17 +231,31 @@ io.on("connection", (socket) => {
   socket.on("message", async (newdata) => {
     
     try {
+      // Validate incoming message data
+      if (!newdata || !newdata.fromid || !newdata.toid) {
+        console.log("❌ [SOCKET] Invalid message data:", newdata);
+        return;
+      }
+
+      if (newdata.fromid === 'undefined' || newdata.toid === 'undefined' || 
+          newdata.fromid === 'null' || newdata.toid === 'null') {
+        console.log("❌ [SOCKET] Message contains undefined/null IDs:", newdata);
+        return;
+      }
+
       let info = await MYID(newdata.fromid);
       
       const data = { ...newdata, ...info };
       await Livechats({ ...data });
-      if (info) {
+      if (info && data.toid && data.toid !== 'undefined' && data.toid !== 'null' && typeof data.toid === 'string' && data.toid.length === 24) {
         await sendEmail(data.toid, `New message from ${info?.name}`);
         await pushnotify(
           data.toid,
           `New message from ${info?.name}`,
           "messageicon"
         );
+      } else {
+        console.log("⚠️ [SOCKET] Invalid toid for email notification:", data.toid);
       }
       
       socket.broadcast.emit("LiveChat", {
