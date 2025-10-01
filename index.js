@@ -183,6 +183,9 @@ app.use("/getcrush", require("./routes/api/creator/getcrush"));
 app.use("/deleteMsg", require("./routes/api/Admin/deleteMsg"));
 app.use("/deletecrush", require("./routes/api/creator/deletecrush"));
 
+// Block user functionality
+app.use("/block", require("./routes/api/block/blockUser"));
+
 //request
 app.use("/request", require("./routes/api/requestcreator/requestRoutes"));
 app.use("/upload-message-files", require("./routes/api/uploadMessageFiles"));
