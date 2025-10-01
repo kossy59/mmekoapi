@@ -5,6 +5,12 @@ let sendTomail = require("./sendTomail")
 
 let sendnote = async(userid, message)=>{
 
+    // Validate userid parameter
+    if (!userid || userid === 'undefined' || userid === 'null' || typeof userid !== 'string' || userid.length !== 24) {
+        console.log("❌ [SENDEMAILNOT] Invalid userid:", userid);
+        return;
+    }
+
     let userInfo = await userdb.findOne({_id:userid}).exec()
     let settingON = await settingdb.findOne({userid:userid}).exec()
 

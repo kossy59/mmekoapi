@@ -2,6 +2,7 @@
 const messagedb = require("../../Creators/message");
 const userdb = require("../../Creators/userdb");
 const completedb = require("../../Creators/usercomplete");
+const { filterBlockedMessages } = require("../../utiils/blockFilter");
 
 const MsgNotify = async (req, res) => {
   let userid = req.body.userid;
@@ -39,6 +40,8 @@ const MsgNotify = async (req, res) => {
     .sort({ date: -1 }) // Sort by date descending (newest first)
     .exec();
 
+    // Filter out messages from blocked users
+    allMessages = await filterBlockedMessages(allMessages, userid);
 
     // OPTIMIZED: Group messages by conversation (other user ID)
     let conversationMap = new Map();

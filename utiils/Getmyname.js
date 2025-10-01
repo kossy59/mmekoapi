@@ -8,6 +8,12 @@ const completedb = require("../Creators/usercomplete");
 const MYID = async (ID) => {
   //let data = await connectdatabase();
 
+  // Validate ID parameter
+  if (!ID || ID === 'undefined' || ID === 'null' || typeof ID !== 'string' || ID.length !== 24) {
+    console.log("❌ [MYID] Invalid ID:", ID);
+    return null;
+  }
+
   try {
     //  let name = Listofusername.documents.find(value =>{
     //     return ID === value.$id
