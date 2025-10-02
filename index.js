@@ -26,6 +26,7 @@ const pay_creator = require("./utiils/payclient_PCALL");
 const updatebalance = require("./utiils/deductPVC");
 const pushnotify = require("./utiils/sendPushnot");
 const imageRoutes = require("./routes/imageRoutes");
+const { scheduleMessageCleanup } = require("./utiils/deleteOldMessages");
 
 const PORT = process.env.PORT || 3100;
 const app = express();
@@ -80,8 +81,6 @@ const io = new Server(server, {
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        console.log("❌ [Socket.IO] CORS blocked origin:", origin);
-        console.log("✅ [Socket.IO] Allowed origins:", allowedOrigins);
         callback(new Error("Not allowed by CORS"));
       }
     },
@@ -98,14 +97,9 @@ const io = new Server(server, {
 // Make io available to routes
 app.set('io', io);
 
-// Socket.IO connection logging
 io.on("connection", (socket) => {
-  console.log("✅ [Socket.IO] Client connected:", socket.id);
-  console.log("✅ [Socket.IO] Client origin:", socket.handshake.headers.origin);
-  console.log("✅ [Socket.IO] Client transport:", socket.conn.transport.name);
-  
   socket.on("disconnect", (reason) => {
-    console.log("⚠️ [Socket.IO] Client disconnected:", socket.id, "Reason:", reason);
+    // Handle disconnect
   });
 });
 
@@ -230,7 +224,6 @@ io.on("connection", (socket) => {
       
       // Broadcast user online status to all connected clients
       socket.broadcast.emit('user_online', userid);
-      console.log(`🔍 [Socket] User ${userid} is now online`);
     }
   });
 
@@ -476,11 +469,21 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("offline", async (userid) => {
+    if (userid) {
+      // Broadcast user offline status
+      socket.broadcast.emit('user_offline', userid);
+      
+      // Clean up user data
+      await userdisconnect(userid);
+      await deletecallOffline(userid);
+    }
+  });
+
   socket.on("disconnect", async () => {
     // Broadcast user offline status before disconnecting
     if (socket.id && IDS.userid) {
       socket.broadcast.emit('user_offline', IDS.userid);
-      console.log(`🔍 [Socket] User ${IDS.userid} is now offline`);
     }
     
     await userdisconnect(socket.id);
@@ -498,14 +501,12 @@ io.on("connection", (socket) => {
   socket.on('join_user_room', (data) => {
     if (data.userId) {
       socket.join(`user_${data.userId}`);
-      console.log(`🔍 [Socket] User ${data.userId} joined their room`);
     }
   });
 
   socket.on('leave_user_room', (data) => {
     if (data.userId) {
       socket.leave(`user_${data.userId}`);
-      console.log(`🔍 [Socket] User ${data.userId} left their room`);
     }
   });
 
@@ -516,7 +517,6 @@ io.on("connection", (socket) => {
         fromUserId: data.fromUserId,
         toUserId: data.toUserId
       });
-      console.log(`🔍 [Socket] User ${data.fromUserId} started typing to ${data.toUserId}`);
     }
   });
 
@@ -527,13 +527,16 @@ io.on("connection", (socket) => {
         fromUserId: data.fromUserId,
         toUserId: data.toUserId
       });
-      console.log(`🔍 [Socket] User ${data.fromUserId} stopped typing to ${data.toUserId}`);
     }
   });
 });
 
 mongoose.connection.once("open", () => {
   console.log("✅ Database connected successfully");
+  
+  // Start message cleanup scheduler
+  scheduleMessageCleanup();
+  
   server.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
   });
