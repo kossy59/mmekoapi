@@ -212,18 +212,98 @@ app.use("/block", require("./routes/api/block/blockUser"));
 app.use("/request", require("./routes/api/requestcreator/requestRoutes"));
 app.use("/upload-message-files", require("./routes/api/uploadMessageFiles"));
 app.use("/quickchat", require("./routes/api/quickchat"));
+// Track online users
+const onlineUsers = new Set();
+
+// Track connected sockets to prevent duplicate connections
+const connectedSockets = new Map();
+
+// Track disconnection times for grace period (development mode)
+const disconnectionTimes = new Map();
+const DISCONNECTION_GRACE_PERIOD = 10000; // 10 seconds grace period
+
+// Track user activity to handle rapid reconnections
+const userActivity = new Map();
+const HEARTBEAT_INTERVAL = 30000; // 30 seconds
+
+// Cleanup inactive users periodically (TEMPORARILY DISABLED for debugging)
+
+// TODO: Re-enable cleanup in production
+// if (process.env.NODE_ENV !== 'development') {
+//   setInterval(() => {
+//     const now = Date.now();
+//     const inactiveUsers = [];
+//     
+//     for (const [userid, lastActivity] of userActivity.entries()) {
+//       // Only remove if user is truly inactive (no activity for 2+ minutes) AND not in grace period
+//       const isInGracePeriod = disconnectionTimes.has(userid);
+//       const isInactive = now - lastActivity > HEARTBEAT_INTERVAL * 4; // 2 minutes
+//       
+//       if (isInactive && !isInGracePeriod) {
+//         inactiveUsers.push(userid);
+//       }
+//     }
+//     
+//     // Remove inactive users
+//     inactiveUsers.forEach(userid => {
+//       console.log(`🔍 [Socket] Removing inactive user ${userid}`);
+//       onlineUsers.delete(userid);
+//       userActivity.delete(userid);
+//       disconnectionTimes.delete(userid);
+//       connectedSockets.delete(userid);
+//       io.emit('user_offline', userid);
+//     });
+//   }, HEARTBEAT_INTERVAL);
+// }
+
+
 // Socket.IO connection handling
 io.on("connection", (socket) => {
   socket.on("online", async (userid) => {
     if (userid) {
+      // Check if this user already has a connected socket
+      const existingSocket = connectedSockets.get(userid);
+      if (existingSocket && existingSocket.connected) {
+        return;
+      }
+      
       await checkuser(userid);
       await deletecallOffline(userid);
       socket.id = userid;
       IDS.userid = userid;
       socket.join("LiveChat");
       
-      // Broadcast user online status to all connected clients
-      socket.broadcast.emit('user_online', userid);
+      // Track this socket for this user
+      connectedSockets.set(userid, socket);
+      
+      // If user was in grace period, cancel the removal
+      if (disconnectionTimes.has(userid)) {
+        disconnectionTimes.delete(userid);
+      }
+      
+      // Update user activity
+      userActivity.set(userid, Date.now());
+      
+      // Check if user was already online
+      const wasAlreadyOnline = onlineUsers.has(userid);
+      
+      // Add user to online users set
+      onlineUsers.add(userid);
+      
+      // ----------------------------------------------------
+      // **Part A: Send the FULL list ONLY to the NEW user**
+      // ----------------------------------------------------
+      // Get the list of users *excluding* the one who just connected
+      const currentOnlineUsers = Array.from(onlineUsers).filter(id => id !== userid);
+      socket.emit('ONLINE_USERS_LIST', currentOnlineUsers);
+      
+      // ----------------------------------------------------
+      // **Part B: Notify ALL *other* users about the NEW user**
+      // ----------------------------------------------------
+      // Send the single new user to everyone *except* the new user (only if user wasn't already online)
+      if (!wasAlreadyOnline) {
+        socket.broadcast.emit('USER_CONNECTED', userid);
+      }
     }
   });
 
@@ -471,6 +551,12 @@ io.on("connection", (socket) => {
 
   socket.on("offline", async (userid) => {
     if (userid) {
+      // Remove user from online users set
+      onlineUsers.delete(userid);
+      
+      // Remove from connected sockets
+      connectedSockets.delete(userid);
+      
       // Broadcast user offline status
       socket.broadcast.emit('user_offline', userid);
       
@@ -483,7 +569,27 @@ io.on("connection", (socket) => {
   socket.on("disconnect", async () => {
     // Broadcast user offline status before disconnecting
     if (socket.id && IDS.userid) {
-      socket.broadcast.emit('user_offline', IDS.userid);
+      // Always use grace period for better user experience
+      disconnectionTimes.set(IDS.userid, Date.now());
+      
+      // Set timeout to actually remove user after grace period
+      setTimeout(() => {
+        if (disconnectionTimes.has(IDS.userid)) {
+          const disconnectTime = disconnectionTimes.get(IDS.userid);
+          const timeSinceDisconnect = Date.now() - disconnectTime;
+          
+          // Only remove if user hasn't reconnected within grace period
+          if (timeSinceDisconnect >= DISCONNECTION_GRACE_PERIOD) {
+            onlineUsers.delete(IDS.userid);
+            disconnectionTimes.delete(IDS.userid);
+            userActivity.delete(IDS.userid);
+            socket.broadcast.emit('user_offline', IDS.userid);
+          }
+        }
+      }, DISCONNECTION_GRACE_PERIOD);
+      
+      // Remove from connected sockets
+      connectedSockets.delete(IDS.userid);
     }
     
     await userdisconnect(socket.id);
@@ -491,6 +597,13 @@ io.on("connection", (socket) => {
     socket.disconnect();
   });
   
+  // Handle heartbeat to keep users online
+  socket.on('heartbeat', (userid) => {
+    if (userid) {
+      userActivity.set(userid, Date.now());
+    }
+  });
+
   // Handle follow/unfollow events from clients
   socket.on('follow_update', (data) => {
     // Broadcast to all clients
