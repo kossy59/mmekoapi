@@ -9,6 +9,7 @@ const commentdbs = require("../../Creators/comment");
 const likedbs = require("../../Creators/like");
 const alldelete = require("../../utiils/Deletes/deleteAcceptsBook");
 const followdb = require("../../Creators/followers");
+const { filterBlockedPosts } = require("../../utiils/blockingUtils");
 
 const readPost = async (req, res) => {
   // let data = await connectdatabase()
@@ -116,9 +117,13 @@ const readPost = async (req, res) => {
     // let following = await followdb.find({}).exec();
 
     alldelete();
+    
+    // Filter out posts from blocked users
+    const filteredPosts = await filterBlockedPosts(posts, userid);
+    
     return res
       .status(200)
-      .json({ ok: true, message: `Enter new password`, post: posts.reverse() });
+      .json({ ok: true, message: `Enter new password`, post: filteredPosts.reverse() });
   } catch (err) {
     console.log(err);
     return res.status(500).json({ ok: false, message: `${err.message}!` });
