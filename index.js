@@ -227,6 +227,10 @@ io.on("connection", (socket) => {
       socket.id = userid;
       IDS.userid = userid;
       socket.join("LiveChat");
+      
+      // Broadcast user online status to all connected clients
+      socket.broadcast.emit('user_online', userid);
+      console.log(`🔍 [Socket] User ${userid} is now online`);
     }
   });
 
@@ -473,6 +477,12 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", async () => {
+    // Broadcast user offline status before disconnecting
+    if (socket.id && IDS.userid) {
+      socket.broadcast.emit('user_offline', IDS.userid);
+      console.log(`🔍 [Socket] User ${IDS.userid} is now offline`);
+    }
+    
     await userdisconnect(socket.id);
     await deletecallOffline(socket.id);
     socket.disconnect();
@@ -482,6 +492,43 @@ io.on("connection", (socket) => {
   socket.on('follow_update', (data) => {
     // Broadcast to all clients
     io.emit('follow_update', data);
+  });
+
+  // Online status and typing indicators
+  socket.on('join_user_room', (data) => {
+    if (data.userId) {
+      socket.join(`user_${data.userId}`);
+      console.log(`🔍 [Socket] User ${data.userId} joined their room`);
+    }
+  });
+
+  socket.on('leave_user_room', (data) => {
+    if (data.userId) {
+      socket.leave(`user_${data.userId}`);
+      console.log(`🔍 [Socket] User ${data.userId} left their room`);
+    }
+  });
+
+  socket.on('typing_start', (data) => {
+    if (data.fromUserId && data.toUserId) {
+      // Send typing indicator to the target user
+      socket.to(`user_${data.toUserId}`).emit('typing_start', {
+        fromUserId: data.fromUserId,
+        toUserId: data.toUserId
+      });
+      console.log(`🔍 [Socket] User ${data.fromUserId} started typing to ${data.toUserId}`);
+    }
+  });
+
+  socket.on('typing_stop', (data) => {
+    if (data.fromUserId && data.toUserId) {
+      // Send typing stop indicator to the target user
+      socket.to(`user_${data.toUserId}`).emit('typing_stop', {
+        fromUserId: data.fromUserId,
+        toUserId: data.toUserId
+      });
+      console.log(`🔍 [Socket] User ${data.fromUserId} stopped typing to ${data.toUserId}`);
+    }
   });
 });
 

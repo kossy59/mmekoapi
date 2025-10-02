@@ -3,6 +3,7 @@ const userdb = require("../../Creators/userdb")
 const admindb = require("../../Creators/admindb")
 let sendEmail = require("../../utiils/sendEmailnot")
 let sendpushnote = require("../../utiils/sendPushnot")
+const { areUsersBlocked } = require("../../utiils/blockingUtils")
 
 const createCreator = async (req,res)=>{
 
@@ -12,6 +13,12 @@ const createCreator = async (req,res)=>{
    
     if(!followerid && !userid ){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
+    }
+
+    // Check if users have a blocking relationship
+    const isBlocked = await areUsersBlocked(userid, followerid);
+    if (isBlocked) {
+        return res.status(403).json({"ok":false,'message': 'Cannot follow this user due to blocking relationship'})
     }
 
     let followeds = await followerdb.find({userid:userid}).exec()

@@ -48,7 +48,6 @@ const MsgNotify = async (req, res) => {
       
       // Skip messages with invalid user IDs
       if (!otherUserId || otherUserId === 'undefined' || otherUserId === 'null' || typeof otherUserId !== 'string' || otherUserId.length !== 24) {
-        console.log("⚠️ [GETMSGNOTIFY_OPTIMIZED] Skipping message with invalid otherUserId:", otherUserId, "from message:", msg._id);
         return;
       }
       
@@ -86,7 +85,6 @@ const MsgNotify = async (req, res) => {
       id.length === 24
     );
     
-    console.log("🔍 [GETMSGNOTIFY_OPTIMIZED] Filtered user IDs:", allUserIds);
 
     // OPTIMIZED: Batch fetch all user info and photos
     let [allUsers, allPhotos] = await Promise.all([
@@ -162,7 +160,6 @@ const MsgNotify = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ [GETMSGNOTIFY] Error:", err);
     return res.status(500).json({ 
       ok: false, 
       message: "Failed to fetch messages",
