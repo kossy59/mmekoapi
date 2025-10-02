@@ -1,5 +1,5 @@
-const settingdb = require("../../Models/settingsdb")
-const pushdb = require("../../Models/pushnotifydb")
+const settingdb = require("../../Creators/settingsdb")
+const pushdb = require("../../Creators/pushnotifydb")
 
 let getBlockuser = async(req, res)=>{
     let userid = req.body.userid

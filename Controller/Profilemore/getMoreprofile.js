@@ -1,6 +1,6 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
-const completedb = require("../../Models/usercomplete")
+const completedb = require("../../Creators/usercomplete")
 
 const readProfile = async (req, res) => {
 

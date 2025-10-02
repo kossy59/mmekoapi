@@ -1,7 +1,7 @@
-const PendingUser = require("../../Models/pendingUser");
-const userdb = require("../../Models/userdb");
-const usercompletedb = require("../../Models/usercomplete");
-let pushdb = require("../../Models/settingsdb");
+const PendingUser = require("../../Creators/pendingUser");
+const userdb = require("../../Creators/userdb");
+const usercompletedb = require("../../Creators/usercomplete");
+let pushdb = require("../../Creators/settingsdb");
 const jwt = require("jsonwebtoken");
 
 const handleNewUser = async (req, res) => {

@@ -1,21 +1,21 @@
-const bookingdb = require("../../Models/book")
-const userdb = require("../../Models/userdb")
-const modeldb = require("../../Models/models")
-const historydb = require("../../Models/mainbalance")
+const bookingdb = require("../../Creators/book")
+const userdb = require("../../Creators/userdb")
+const creatordb = require("../../Creators/creators")
+const historydb = require("../../Creators/mainbalance")
 let sendEmail = require("../../utiils/sendEmailnot")
 let sendpushnote = require("../../utiils/sendPushnot")
 
 const createLike = async (req,res)=>{
      
     const userid = req.body.userid;
-    let modelid = req.body.modelid;
+    let creatorid = req.body.creatorid;
     const type = req.body.type;
     const time = req.body.time
     const place = req.body.place
     const date = req.body.date
     const price = req.body.price
    
-    if(!modelid  && !userid){
+    if(!creatorid  && !userid){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
     //console.log('untop init db')
@@ -27,23 +27,23 @@ const createLike = async (req,res)=>{
 
          let userbalance = parseFloat(user.balance)
 
-         let modelprice = parseFloat(price)
+         let creatorprice = parseFloat(price)
 
          if(!userbalance){
             userbalance = 0
          }
 
-         let modelemail = await modeldb.findOne({_id:modelid}).exec()
+         let creatoremail = await creatordb.findOne({_id:creatorid}).exec()
 
          
         if(type !== "Private show"){
 
-            let total = userbalance - modelprice
+            let total = userbalance - creatorprice
 
             let clienthistory = {
                userid,
-               details: "Model request pending",
-               spent: `${modelprice}`,
+               details: "Creator request pending",
+               spent: `${creatorprice}`,
                income: "0",
                date: `${Date.now().toString()}`
             }
@@ -65,12 +65,12 @@ const createLike = async (req,res)=>{
         
          //console.log("user balance "+userbalance)
 
-         await sendEmail(modelemail.userid, "Accept appointment")
-         await sendpushnote(modelemail.userid,"Accept appointment","modelicon")
+         await sendEmail(creatoremail.userid, "Accept appointment")
+         await sendpushnote(creatoremail.userid,"Accept appointment","creatoricon")
 
        let books  = {
             userid,
-            modelid,
+            creatorid,
             type,
             place,
             time,

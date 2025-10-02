@@ -1,7 +1,7 @@
-let exclusivePdb = require("../../Models/exclusivePurshase")
-const crushdb = require("../../Models/crushdb")
-const modeldb = require("../../Models/models")
-const userdb = require("../../Models/userdb")
+let exclusivePdb = require("../../Creators/exclusivePurshase")
+const crushdb = require("../../Creators/crushdb")
+const creatordb = require("../../Creators/creators")
+const userdb = require("../../Creators/userdb")
 
 const postexclusive = async (req, res) => {
 
@@ -18,27 +18,27 @@ const postexclusive = async (req, res) => {
     let allContent = []
 
     let mycrush = await crushdb.find({ userid: userid }).exec()
-    let modelDetail = await modeldb.find({}).exec()
-    let modelUser = await userdb.find({}).exec()
+    let creatorDetail = await creatordb.find({}).exec()
+    let creatorUser = await userdb.find({}).exec()
 
     let myContent = await exclusivePdb.find({ userid: userid }).exec()
 
 
     for (let i = 0; i < mycrush.length; i++) {
-        let modelInfo = modelDetail.find(value => mycrush[i].modelid === String(value._id))
+        let creatorInfo = creatorDetail.find(value => mycrush[i].creatorid === String(value._id))
        
-        if (modelInfo) {
-            let onlineuser = modelUser.find(value => modelInfo.userid === String(value._id))
-            let image = modelInfo.modelfiles[0].modelfilelink;
+        if (creatorInfo) {
+            let onlineuser = creatorUser.find(value => creatorInfo.userid === String(value._id))
+            let image = creatorInfo.creatorfiles[0].creatorfilelink;
 
             const data = {
                 photolink: image,
-                name: modelInfo.name,
+                name: creatorInfo.name,
                 id: mycrush[i]._id,
-                userid: modelInfo.userid,
-                hosttype: modelInfo.hosttype,
-                modelid: modelInfo._id,
-                location: modelInfo.location,
+                userid: creatorInfo.userid,
+                hosttype: creatorInfo.hosttype,
+                creatorid: creatorInfo._id,
+                location: creatorInfo.location,
                 online: onlineuser.active
             }
 

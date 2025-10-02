@@ -1,8 +1,8 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
 
-const completedb = require("../../Models/usercomplete")
-const userdb = require("../../Models/userdb")
+const completedb = require("../../Creators/usercomplete")
+const userdb = require("../../Creators/userdb")
 const { updateSingleFileToCloudinary } = require("../../utiils/appwrite")
 
 const updatePost = async (req, res) => {

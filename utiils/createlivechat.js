@@ -1,31 +1,29 @@
-const messagedb = require("../Models/message")
+const messagedb = require("../Creators/message")
 
 const Livechats = async(newdata)=>{
-
-   
-
-        //  let Chats = await data.databar.listDocuments(data.dataid,data.msgCol);
-
-          //console.log("Message length 1st "+Chats.documents.length)
-  // await data.databar.createDocument(data.dataid,data.msgCol,sdk.ID.unique(),newdata)
-  // console.log(newdata)
-  await messagedb.create(newdata)
-  
-          //console.log(id.$id)
-          //console.log("Message length 2nd "+Chats.documents.length)
-         //console.log( "inside new message "+newdata.toid)
-
-         let Chats = await messagedb.find().exec()
-
-         
+    console.log("💾 [LIVECHATS] Starting to save message:", newdata);
+    
+    try {
+        console.log("💾 [LIVECHATS] Creating message in database");
+        const savedMessage = await messagedb.create(newdata);
+        console.log("✅ [LIVECHATS] Message saved successfully with ID:", savedMessage._id);
         
-
-         let listchat = Chats.filter(value =>{
-          return value.toid === newdata.toid
-         })
-
-         //console.log(listchat)
-
+        console.log("📊 [LIVECHATS] Fetching all messages for statistics");
+        let Chats = await messagedb.find().exec();
+        console.log("📊 [LIVECHATS] Total messages in database:", Chats.length);
+        
+        console.log("🔍 [LIVECHATS] Filtering messages for recipient:", newdata.toid);
+        let listchat = Chats.filter(value => {
+            return value.toid === newdata.toid;
+        });
+        console.log("📨 [LIVECHATS] Messages for recipient:", listchat.length);
+        
+        console.log("✅ [LIVECHATS] Message processing completed successfully");
+        
+    } catch (error) {
+        console.error("❌ [LIVECHATS] Error saving message:", error);
+        throw error;
+    }
 }
 
 module.exports = Livechats;

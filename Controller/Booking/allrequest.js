@@ -1,12 +1,12 @@
-const bookingdb = require("../../Models/book");
-const modeldb = require("../../Models/models");
-const photoLink = require("../../Models/usercomplete");
-const userdb = require("../../Models/userdb");
-const admindb = require("../../Models/admindb");
+const bookingdb = require("../../Creators/book");
+const creatordb = require("../../Creators/creators");
+const photoLink = require("../../Creators/usercomplete");
+const userdb = require("../../Creators/userdb");
+const admindb = require("../../Creators/admindb");
 
 const createLike = async (req, res) => {
   const userid = req.body.userid;
-  const modelid = req.body.modelid;
+  const creatorid = req.body.creatorid;
 
   if (!userid) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
@@ -17,11 +17,11 @@ const createLike = async (req, res) => {
     let users = await bookingdb.find({ userid: userid }).exec();
     let adminmessage = await admindb.find({ userid: userid }).exec();
 
-    let model = [];
+    let creator = [];
 
-    if (modelid) {
-      let mod = await bookingdb.find({ modelid: modelid }).exec();
-      model = mod
+    if (creatorid) {
+      let mod = await bookingdb.find({ creatorid: creatorid }).exec();
+      creator = mod
         // .filter((value) => {
         //   return (
         //     String(value.status) === "pending" ||
@@ -46,8 +46,8 @@ const createLike = async (req, res) => {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // Filter model array for bookings created within the last 30 days
-    model = model.filter((m) => {
+    // Filter creator array for bookings created within the last 30 days
+    creator = creator.filter((m) => {
       const created = new Date(m.createdAt);
       return created >= thirtyDaysAgo && created <= now;
     });
@@ -63,33 +63,33 @@ const createLike = async (req, res) => {
       return created >= thirtyDaysAgo && created <= now;
     });
 
-    for (let i = 0; i < model.length; i++) {
-      console.log("inside my model" + i);
-      let username = await userdb.findOne({ _id: model[i].userid }).exec();
+    for (let i = 0; i < creator.length; i++) {
+      console.log("inside my creator" + i);
+      let username = await userdb.findOne({ _id: creator[i].userid }).exec();
       let image1 = await photoLink
-        .findOne({ useraccountId: model[i].userid })
+        .findOne({ useraccountId: creator[i].userid })
         .exec();
       if (username) {
         approve.push({
           photolink: image1?.photoLink || "",
           name: username.firstname,
-          status: model[i].status,
-          type: model[i].type,
-          date: model[i].date,
-          time: model[i].time,
-          modelid: model[i].modelid,
-          id: model[i]._id,
-          place: model[i].place,
-          clientid: model[i].userid,
-          createdAt: model[i].createdAt,
-          updatedAt: model[i].updatedAt,
-          modeluserid: username.id,
+          status: creator[i].status,
+          type: creator[i].type,
+          date: creator[i].date,
+          time: creator[i].time,
+          creatorid: creator[i].creatorid,
+          id: creator[i]._id,
+          place: creator[i].place,
+          clientid: creator[i].userid,
+          createdAt: creator[i].createdAt,
+          updatedAt: creator[i].updatedAt,
+          creatoruserid: username.id,
         });
       }
     }
 
     for (let i = 0; i < user.length; i++) {
-      let image = await modeldb.findOne({ _id: user[i].modelid }).exec();
+      let image = await creatordb.findOne({ _id: user[i].creatorid }).exec();
 
       if (image?.photolink) {
         let photo = image.photolink.split(",");
@@ -101,9 +101,9 @@ const createLike = async (req, res) => {
           type: user[i].type,
           date: user[i].date,
           time: user[i].time,
-          modelid: user[i].modelid,
+          creatorid: user[i].creatorid,
           id: user[i]._id,
-          modeluserid: image.userid,
+          creatoruserid: image.userid,
           amount: image.price,
           createdAt: user[i].createdAt,
           updatedAt: user[i].updatedAt,
@@ -129,9 +129,9 @@ const createLike = async (req, res) => {
     });
 
     for (let i = 0; i < user.length; i++) {
-      let image = await modeldb.findOne({ _id: user[i].modelid }).exec();
+      let image = await creatordb.findOne({ _id: user[i].creatorid }).exec();
       if (image) {
-        let photo = image.modelfiles[0]?.modelfilelink || "";
+        let photo = image.creatorfiles[0]?.creatorfilelink || "";
 
         approve.push({
           photolink: photo,
@@ -140,10 +140,10 @@ const createLike = async (req, res) => {
           type: user[i].type,
           date: user[i].date,
           time: user[i].time,
-          modelid: user[i].modelid,
+          creatorid: user[i].creatorid,
           accepted: "accepted",
           id: user[i]._id,
-          modeluserid: image.userid,
+          creatoruserid: image.userid,
           amount: image.price,
           createdAt: user[i].createdAt,
           updatedAt: user[i].updatedAt,

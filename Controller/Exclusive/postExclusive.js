@@ -1,4 +1,4 @@
-let exclusivedb = require("../../Models/exclusivedb")
+let exclusivedb = require("../../Creators/exclusivedb")
 const {
     uploadManyFilesToCloudinary
 } = require("../../utiils/appwrite")

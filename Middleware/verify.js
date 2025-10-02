@@ -9,7 +9,7 @@ const verifyJwt = (req, res, next) => {
 
   const token = authHeader.split(" ")[1];
 
-  const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET || "z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g0f9e8d7c6b5a4";
+  const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET || "NEXT_PUBLIC_SECERET";
   jwt.verify(token, accessTokenSecret, (err, decode) => {
     if (err) {
       return res.status(403).json({ message: err.message });

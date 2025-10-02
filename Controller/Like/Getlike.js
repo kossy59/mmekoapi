@@ -1,6 +1,6 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
-const likedata = require("../../Models/like");
+const likedata = require("../../Creators/like");
 
 const readComment = async (req, res) => {
   let data = await connectdatabase();

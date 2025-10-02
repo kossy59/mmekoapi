@@ -1,6 +1,6 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
-const commentdata = require("../../Models/comment")
+const commentdata = require("../../Creators/comment")
 const updateComment = async (req,res)=>{
 
     const commentid = req.body.commentid;

@@ -1,7 +1,7 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
 
-const postdb = require("../../Models/post");
+const postdb = require("../../Creators/post");
 
 const readPost = async (req, res) => {
   const userid = req.body.userid;

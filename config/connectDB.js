@@ -1,12 +1,12 @@
 const sdk = require("node-appwrite");
-const { initalizeDB } = require("../Model/userdb");
-const { initalizeer } = require("../Model/usercomplete");
-const { initalizePost } = require("../Model/post");
-const { initalizeComment } = require("../Model/comment");
-const { initalizeLike } = require("../Model/like");
-const { initalizeShare } = require("../Model/share");
-const { initalizeModel } = require("../Model/models");
-const { initalizeMessage } = require("../Model/message");
+const { initalizeDB } = require("../Creator/userdb");
+const { initalizeer } = require("../Creator/usercomplete");
+const { initalizePost } = require("../Creator/post");
+const { initalizeComment } = require("../Creator/comment");
+const { initalizeLike } = require("../Creator/like");
+const { initalizeShare } = require("../Creator/share");
+const { initalizeCreator } = require("../Creator/creators");
+const { initalizeMessage } = require("../Creator/message");
 
 require("dotenv").config();
 const client = new sdk.Client();
@@ -18,7 +18,7 @@ let colPost = "";
 let colComment = "";
 let colLike = "";
 let colShare = "";
-let colModel = "";
+let colCreator = "";
 let colMsg;
 
 client
@@ -52,8 +52,8 @@ async function connectdatabase() {
       let usershare = await initalizeShare(memkodbID.$id, database);
       colShare = String(usershare.$id);
 
-      let usersmodel = await initalizeModel(memkodbID.$id, database);
-      colModel = String(usersmodel.$id);
+      let userscreator = await initalizeCreator(memkodbID.$id, database);
+      colCreator = String(userscreator.$id);
 
       let usermsg = await initalizeMessage(memkodbID.$id, database);
       colMsg = String(usermsg.$id);
@@ -106,12 +106,12 @@ async function connectdatabase() {
 
       colShare = String(sharecollectin[0].$id);
 
-      let usermodel = await database.listCollections(db[0].$id);
-      let modelcollectin = usermodel.collections.filter((value) => {
-        return value.name === "Model";
+      let usercreator = await database.listCollections(db[0].$id);
+      let creatorcollectin = usercreator.collections.filter((value) => {
+        return value.name === "Creator";
       });
 
-      colModel = String(modelcollectin[0].$id);
+      colCreator = String(creatorcollectin[0].$id);
 
       let usermsg = await database.listCollections(db[0].$id);
       let msgcol = usermsg.collections.filter((value) => {
@@ -130,7 +130,7 @@ async function connectdatabase() {
       commentCol: colComment,
       likeCol: colLike,
       shareCol: colShare,
-      modelCol: colModel,
+      creatorCol: colCreator,
       msgCol: colMsg,
     };
   } catch (err) {}

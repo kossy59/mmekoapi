@@ -1,4 +1,4 @@
-const likedata = require("../../Models/like");
+const likedata = require("../../Creators/like");
 
 const getLikesByPost = async (req, res) => {
   const postid = req.query.postid;

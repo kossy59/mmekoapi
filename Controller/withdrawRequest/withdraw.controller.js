@@ -1,6 +1,6 @@
-const WithdrawRequest = require("../../Models/withdrawRequest");
-const PaymentAccount = require("../../Models/paymentAccount");
-const User = require("../../Models/userdb"); // Ensure this is the correct path
+const WithdrawRequest = require("../../Creators/withdrawRequest");
+const PaymentAccount = require("../../Creators/paymentAccount");
+const User = require("../../Creators/userdb"); // Ensure this is the correct path
 
 // Create Withdrawal Request
 exports.handleWithdrawRequest = async (req, res) => {

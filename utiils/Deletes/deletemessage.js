@@ -1,4 +1,4 @@
-let messageDB = require("../../Models/message")
+let messageDB = require("../../Creators/message")
 
 let deleteMessage = async()=>{
 

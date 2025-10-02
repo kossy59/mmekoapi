@@ -1,5 +1,5 @@
-const bookingdb = require("../../Models/book");
-const modeldb = require("../../Models/models");
+const bookingdb = require("../../Creators/book");
+const creatordb = require("../../Creators/creators");
 
 const createLike = async (req, res) => {
   const userid = req.body.userid;
@@ -16,7 +16,7 @@ const createLike = async (req, res) => {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // Filter model array for bookings created within the last 30 days
+    // Filter creator array for bookings created within the last 30 days
     users = users.filter((m) => {
       const created = new Date(m.createdAt);
       return created >= thirtyDaysAgo && created <= now;
@@ -34,21 +34,21 @@ const createLike = async (req, res) => {
     let listinfos = [];
 
     for (let i = 0; i < user.length; i++) {
-      const modelid = await modeldb.findOne({ _id: user[i].modelid }).exec();
-      let image = modelid?.modelfiles[0]?.modelfilelink || "";
-      if (modelid)
+      const creatorid = await creatordb.findOne({ _id: user[i].creatorid }).exec();
+      let image = creatorid?.creatorfiles[0]?.creatorfilelink || "";
+      if (creatorid)
         listinfos.push({
-          name: modelid?.name,
+          name: creatorid?.name,
           type: user[i].type,
           date: user[i].date,
           time: user[i].time,
           photolink: image,
-          modelid: modelid._id,
+          creatorid: creatorid._id,
           id: user[i]._id,
         });
     }
 
-    // console.log("modeil "+modelinfo)
+    // console.log("modeil "+creatorinfo)
 
     return res
       .status(200)

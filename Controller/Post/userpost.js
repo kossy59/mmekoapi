@@ -1,10 +1,10 @@
 // // const {connectdatabase} = require('../../config/connectDB');
 // // const sdk = require("node-appwrite");
-// const postdata = require("../../Models/post");
-// const commentdata = require("../../Models/comment");
-// const likedata = require("../../Models/like");
-// const userdata = require("../../Models/userdb");
-// const comdata = require("../../Models/usercomplete");
+// const postdata = require("../../Creators/post");
+// const commentdata = require("../../Creators/comment");
+// const likedata = require("../../Creators/like");
+// const userdata = require("../../Creators/userdb");
+// const comdata = require("../../Creators/usercomplete");
 // const {
 //   saveFile,
 //   uploadSingleFileToCloudinary,
@@ -146,11 +146,11 @@
 
 const {connectdatabase} = require('../../config/connectDB');
 const sdk = require("node-appwrite");
-const postdata = require("../../Models/post");
-const commentdata = require("../../Models/comment");
-const likedata = require("../../Models/like");
-const userdata = require("../../Models/userdb");
-const comdata = require("../../Models/usercomplete");
+const postdata = require("../../Creators/post");
+const commentdata = require("../../Creators/comment");
+const likedata = require("../../Creators/like");
+const userdata = require("../../Creators/userdb");
+const comdata = require("../../Creators/usercomplete");
 const {
   uploadSingleFileToCloudinary,
 } = require("../../utiils/appwrite");

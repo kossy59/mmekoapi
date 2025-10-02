@@ -22,7 +22,7 @@ let {
   check_connected,
   deletecallOffline,
 } = require("./utiils/check_caller");
-const pay_model = require("./utiils/payclient_PCALL");
+const pay_creator = require("./utiils/payclient_PCALL");
 const updatebalance = require("./utiils/deductPVC");
 const pushnotify = require("./utiils/sendPushnot");
 const imageRoutes = require("./routes/imageRoutes");
@@ -35,6 +35,9 @@ const server = http.createServer(app);
 const allowedOrigins = [
   process.env.NEXT_PUBLIC_URL,
   "https://mmekowebsite.onrender.com",
+
+  "https://mmekowebsite-eight.vercel.app", // Vercel deployment
+
   "http://localhost:3000", // Add localhost for development
 ].filter(Boolean); // Remove falsy values (e.g., undefined NEXT_PUBLIC_URL)
 
@@ -67,20 +70,47 @@ app.use(cookieParser());
 
 // Log requests for debugging
 app.use((req, res, next) => {
-  console.log(`${req.method} Request at ${req.url} with`, req.body);
   next();
 });
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g., mobile apps) or from allowed origins
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        console.log("❌ [Socket.IO] CORS blocked origin:", origin);
+        console.log("✅ [Socket.IO] Allowed origins:", allowedOrigins);
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST"],
     credentials: true,
+    allowedHeaders: ["Content-Type", "Authorization"],
   },
+  // Additional production settings
+  pingTimeout: 60000,
+  pingInterval: 25000,
+  transports: ["websocket", "polling"],
 });
 
 // Make io available to routes
 app.set('io', io);
+
+// Socket.IO connection logging
+io.on("connection", (socket) => {
+  console.log("✅ [Socket.IO] Client connected:", socket.id);
+  console.log("✅ [Socket.IO] Client origin:", socket.handshake.headers.origin);
+  console.log("✅ [Socket.IO] Client transport:", socket.conn.transport.name);
+  
+  socket.on("disconnect", (reason) => {
+    console.log("⚠️ [Socket.IO] Client disconnected:", socket.id, "Reason:", reason);
+  });
+});
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static('uploads'));
 
 connect();
 
@@ -102,7 +132,7 @@ app.use(
   "/messagenotification",
   require("./routes/api/chat/getNotificationmsg")
 );
-app.use("/notifymodel", require("./routes/api/booking/notifybooking"));
+app.use("/notifycreator", require("./routes/api/booking/notifybooking"));
 app.use("/subpushid", require("./routes/api/profile/postUserPushNote"));
 app.use("/verifyemail", require("./routes/Auth/verifyEmail"));
 app.use("/register", require("./routes/Auth/register"));
@@ -114,11 +144,11 @@ app.use("/comfirmpasscode", require("./routes/Auth/comfirmpasscode"));
 app.use("/changepassword", require("./routes/Auth/changepassword"));
 app.use("/getpostcomment", require("./routes/api/comment/Getallcomment"));
 app.use("/getprofilebyid", require("./routes/api/profile/Profile"));
-app.use("/getverifymodel", require("./routes/api/model/getlivemodel"));
-app.use("/getmodelbyid", require("./routes/api/model/getmodelbyid"));
+app.use("/getverifycreator", require("./routes/api/creator/getlivecreator"));
+app.use("/getcreatorbyid", require("./routes/api/creator/getcreatorbyid"));
 app.use("/searchuser", require("./routes/api/profile/getallUser"));
 app.use("/post", require("./routes/api/post/Post"));
-app.use("/model/all", require("./routes/api/model/mymodels"));
+app.use("/creator/all", require("./routes/api/creator/mycreators"));
 app.use("/addpayment", require("./routes/api/payment/payment.routes"));
 app.use(
   "/withdraw-request",
@@ -128,29 +158,27 @@ app.use(
   "/editmoreprofile",
   require("./routes/api/Profilemore/editprofilemore")
 );
-app.use("/model", require("./routes/api/model/models"));
-app.use("/editmodel", require("./routes/api/model/editemodel"));
-app.use("/postdocument", require("./routes/api/model/postdocument"));
-app.use("/getdocument", require("./routes/api/model/getdocument"));
-app.use("/rejectdocument", require("./routes/api/model/rejectdocument"));
+app.use("/creator", require("./routes/api/creator/creators"));
+app.use("/editcreator", require("./routes/api/creator/editecreator"));
+app.use("/postdocument", require("./routes/api/creator/postdocument"));
 app.use("/exclusive", require("./routes/api/Exclusive/exclusive"));
-app.use("/models", require("./routes/api/model/updateView"));
-app.use("/models", require("./routes/api/model/updateFollowers"));
+app.use("/creators", require("./routes/api/creator/updateView"));
+app.use("/creators", require("./routes/api/creator/updateFollowers"));
 app.use("/allrequest", require("./routes/api/booking/allrequestroute"));
 app.use("/exclusivecontent", require("./routes/api/Exclusive/allexclusive"));
 app.use("/deleteaccount", require("./routes/api/profile/deleteprofile"));
 app.use("/setting", require("./routes/api/profile/setting"));
 app.use("/follow", require("./routes/api/follow/follower"));
 app.use("/getfollowers", require("./routes/api/follow/get_followers"));
-app.use("/getadminhost", require("./routes/api/model/hostforadmin"));
-app.use("/deletemodel", require("./routes/api/model/deletemodel"));
+app.use("/getadminhost", require("./routes/api/creator/hostforadmin"));
+app.use("/deletecreator", require("./routes/api/creator/deletecreator"));
 app.use("/comment", require("./routes/api/comment/Comment"));
 app.use("/like", require("./routes/api/like/Like"));
 app.use("/sharepost", require("./routes/api/share/share"));
 app.use("/editprofile", require("./routes/api/profile/Editprofile"));
 app.use("/checkusername", require("./routes/api/profile/checkusername"));
-app.use("/rejectmodel", require("./routes/api/model/rejectmodel"));
-app.use("/verifymodel", require("./routes/api/model/verifymodel"));
+app.use("/rejectcreator", require("./routes/api/creator/rejectcreator"));
+app.use("/verifycreator", require("./routes/api/creator/verifycreator"));
 app.use("/getcurrentchat", require("./routes/api/chat/getchat"));
 app.use("/getmsgnotify", require("./routes/api/chat/getmsgnotify"));
 app.use("/updatenotify", require("./routes/api/chat/updatenotify"));
@@ -160,16 +188,16 @@ app.use("/cancelrequest", require("./routes/api/booking/cancelmyrequest"));
 app.use("/acceptbook", require("./routes/api/booking/acceptbooking"));
 app.use("/declinebook", require("./routes/api/booking/declinebooking"));
 app.use("/getrequeststats", require("./routes/api/booking/requeststat"));
-app.use("/paymodel", require("./routes/api/booking/paymodel"));
-app.use("/reviewmodel", require("./routes/api/model/reviewmodel"));
-app.use("/getreviews", require("./routes/api/model/getmodelreview"));
-app.use("/deletereview", require("./routes/api/model/deletereview"));
+app.use("/paycreator", require("./routes/api/booking/paycreator"));
+app.use("/reviewcreator", require("./routes/api/creator/reviewcreator"));
+app.use("/getreviews", require("./routes/api/creator/getcreatorreview"));
+app.use("/deletereview", require("./routes/api/creator/deletereview"));
 app.use("/statistics", require("./routes/api/profile/get_statistics"));
 app.use(
   "/statistics/monthly",
   require("./routes/api/profile/get_statisticsByMonth")
 );
-app.use("/giftmodel", require("./routes/api/chat/giftGold"));
+app.use("/giftcreator", require("./routes/api/chat/giftGold"));
 app.use("/topup", require("./routes/api/profile/topup"));
 app.use("/getallusers", require("./routes/api/Admin/getallusers"));
 app.use("/deleteuser", require("./routes/api/Admin/deleteuser"));
@@ -178,13 +206,18 @@ app.use("/sendmessages", require("./routes/api/Admin/sendmessage"));
 app.use("/recivemessage", require("./routes/api/Admin/recivemessage"));
 app.use("/adminnotify", require("./routes/api/Admin/adminnotify"));
 app.use("/useredit", require("./routes/api/Profilemore/getuseredit"));
-app.use("/addcrush", require("./routes/api/model/addcrush"));
-app.use("/getcrush", require("./routes/api/model/getcrush"));
+app.use("/addcrush", require("./routes/api/creator/addcrush"));
+app.use("/getcrush", require("./routes/api/creator/getcrush"));
 app.use("/deleteMsg", require("./routes/api/Admin/deleteMsg"));
-app.use("/deletecrush", require("./routes/api/model/deletecrush"));
+app.use("/deletecrush", require("./routes/api/creator/deletecrush"));
+
+// Block user functionality
+app.use("/block", require("./routes/api/block/blockUser"));
 
 //request
-app.use("/request", require("./routes/api/requestmodel/requestRoutes"));
+app.use("/request", require("./routes/api/requestcreator/requestRoutes"));
+app.use("/upload-message-files", require("./routes/api/uploadMessageFiles"));
+app.use("/quickchat", require("./routes/api/quickchat"));
 // Socket.IO connection handling
 io.on("connection", (socket) => {
   socket.on("online", async (userid) => {
@@ -193,38 +226,49 @@ io.on("connection", (socket) => {
       await deletecallOffline(userid);
       socket.id = userid;
       IDS.userid = userid;
-      console.log("a user connected " + socket.id);
       socket.join("LiveChat");
     }
   });
 
   socket.on("message", async (newdata) => {
-    let info = await MYID(newdata.fromid);
-    const data = { ...newdata, ...info };
+    
+    try {
+      // Validate incoming message data
+      if (!newdata || !newdata.fromid || !newdata.toid) {
+        console.log("❌ [SOCKET] Invalid message data:", newdata);
+        return;
+      }
 
-    console.log("1");
+      if (newdata.fromid === 'undefined' || newdata.toid === 'undefined' || 
+          newdata.fromid === 'null' || newdata.toid === 'null') {
+        console.log("❌ [SOCKET] Message contains undefined/null IDs:", newdata);
+        return;
+      }
 
-    await Livechats({ ...data });
-
-    console.log(data);
-
-    console.log("2");
-
-    if (info) {
-      console.log(info);
-      await sendEmail(data.toid, `New message from ${info?.name}`);
-      await pushnotify(
-        data.toid,
-        `New message from ${info?.name}`,
-        "messageicon"
-      );
+      let info = await MYID(newdata.fromid);
+      
+      const data = { ...newdata, ...info };
+      await Livechats({ ...data });
+      if (info && data.toid && data.toid !== 'undefined' && data.toid !== 'null' && typeof data.toid === 'string' && data.toid.length === 24) {
+        await sendEmail(data.toid, `New message from ${info?.name}`);
+        await pushnotify(
+          data.toid,
+          `New message from ${info?.name}`,
+          "messageicon"
+        );
+      } else {
+        console.log("⚠️ [SOCKET] Invalid toid for email notification:", data.toid);
+      }
+      
+      socket.broadcast.emit("LiveChat", {
+        name: info?.name,
+        photolink: info?.photolink || "",
+        data: data,
+      });
+      
+    } catch (error) {
+      console.error("❌ [BACKEND] Error processing message:", error);
     }
-    console.log("3");
-    socket.broadcast.emit("LiveChat", {
-      name: info?.name,
-      photolink: info?.photolink || "",
-      data: data,
-    });
   });
 
   socket.on("videocall", async (data, arkFunction) => {
@@ -245,7 +289,6 @@ io.on("connection", (socket) => {
         socket.broadcast.emit(answerid, { data: data });
       } else if (responds === "store_sdb") {
         if (data.offer_can) {
-          console.log("we got offer can");
           socket.broadcast.emit(`${answerid}_calloffer`, {
             offer: data.offer_can,
           });
@@ -253,7 +296,6 @@ io.on("connection", (socket) => {
       } else if (responds === "calling") {
         data.answer_message = "calling";
         data.message = `incomming call ${callname}`;
-        console.log("calling user " + data.sdp_c_offer);
         if (data.sdp_c_offer) {
           let info = calloffer.find((value) => {
             return (
@@ -262,7 +304,6 @@ io.on("connection", (socket) => {
             );
           });
           if (!info) {
-            console.log(" string offer sdp user");
             let datas = {
               callerid: data.caller_id,
               answerid: data.answer_id,
@@ -274,7 +315,6 @@ io.on("connection", (socket) => {
         }
 
         if (data.offer_can) {
-          console.log("sending offer can");
           socket.broadcast.emit(`${answerid}_calloffer`, {
             offer: data.offer_can,
           });
@@ -293,13 +333,10 @@ io.on("connection", (socket) => {
     if (answerid === video_user) {
       let responds = await check_connected(answerid);
       if (data.answer_message === "reject") {
-        console.log("inside anser reject test " + data.answer_message);
         await deletebyCallerid(answerid);
         data.answer_message = "reject";
         socket.broadcast.emit(myid, { data: data });
       } else if (responds === false) {
-        console.log("answer sdp " + data.sdp_a_offer);
-        console.log("answer sdp " + data.answer_can);
 
         if (data.sdp_a_offer && data.answer_can) {
           socket.broadcast.emit(`${myid}_answeroffer`, {
@@ -310,8 +347,6 @@ io.on("connection", (socket) => {
 
         socket.broadcast.emit(myid, { data: data });
       } else if (responds === true) {
-        console.log("answer sdp " + data.sdp_a_offer);
-        console.log("answer sdp " + data.answer_can);
 
         if (data.answer_can) {
           socket.broadcast.emit(`${myid}_answeroffer`, {
@@ -336,9 +371,8 @@ io.on("connection", (socket) => {
       let responds = await Check_caller(answerid, myid);
 
       if (data.amount) {
-        console.log("sending amount");
         if (parseFloat(data.amount) > 0) {
-          await pay_model(data.fromid, data.toid, data.amount);
+          await pay_creator(data.fromid, data.toid, data.amount);
           await updatebalance(
             data.fromid,
             data.toid,
@@ -356,12 +390,10 @@ io.on("connection", (socket) => {
         await deletebyClient(myid);
         data.message = "call ended";
         data.answer_message = "reject";
-        console.log("sending caller reject");
         socket.broadcast.emit(`${answerid}_reject`, { data: "reject" });
         socket.broadcast.emit(answerid, { data: data });
       } else if (responds === "store_sdb") {
         if (data.offer_can) {
-          console.log("we got offer can");
           socket.broadcast.emit(`${answerid}_calloffer`, {
             offer: data.offer_can,
           });
@@ -377,7 +409,6 @@ io.on("connection", (socket) => {
             );
           });
           if (!info) {
-            console.log(" string offer sdp user");
             let datas = {
               callerid: data.caller_id,
               answerid: data.answer_id,
@@ -389,7 +420,6 @@ io.on("connection", (socket) => {
         }
 
         if (data.offer_can) {
-          console.log("sending offer can");
           socket.broadcast.emit(`${answerid}_calloffer`, {
             offer: data.offer_can,
           });
@@ -406,18 +436,13 @@ io.on("connection", (socket) => {
     }
 
     if (answerid === video_user) {
-      console.log("answer values ");
       let responds = await check_connected(answerid);
       if (data.answer_message === "reject") {
-        console.log("inside anser reject test " + data.answer_message);
         await deletebyCallerid(answerid);
         data.answer_message = "reject";
-        console.log("sending aner reject");
         socket.broadcast.emit(`${myid}_reject`, { data: "reject" });
         socket.broadcast.emit(myid, { data: data });
       } else if (responds === false) {
-        console.log("answer sdp " + data.sdp_a_offer);
-        console.log("answer sdp " + data.answer_can);
 
         if (data.sdp_a_offer && data.answer_can) {
           socket.broadcast.emit(`${myid}_answeroffer`, {
@@ -428,8 +453,6 @@ io.on("connection", (socket) => {
 
         socket.broadcast.emit(myid, { data: data });
       } else if (responds === true) {
-        console.log("answer sdp " + data.sdp_a_offer);
-        console.log("answer sdp " + data.answer_can);
 
         if (data.sdp_a_offer) {
           socket.broadcast.emit(`${myid}_answeroffer`, {
@@ -439,7 +462,6 @@ io.on("connection", (socket) => {
         }
 
         if (data.answer_can) {
-          console.log("there is answer candididate");
           socket.broadcast.emit(`${myid}_answeroffer`, {
             offer: data.answer_can,
           });
@@ -454,20 +476,22 @@ io.on("connection", (socket) => {
     await userdisconnect(socket.id);
     await deletecallOffline(socket.id);
     socket.disconnect();
-    console.log("user disconnected " + socket.id);
   });
   
   // Handle follow/unfollow events from clients
   socket.on('follow_update', (data) => {
-    console.log('follow_update received:', data);
     // Broadcast to all clients
     io.emit('follow_update', data);
   });
 });
 
 mongoose.connection.once("open", () => {
-  console.log("Database connected");
+  console.log("✅ Database connected successfully");
   server.listen(PORT, () => {
-    console.log("listening on *:" + PORT);
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
   });
+});
+
+mongoose.connection.on("error", (err) => {
+  console.error("❌ Database connection error:", err);
 });

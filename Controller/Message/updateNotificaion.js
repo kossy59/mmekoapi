@@ -1,13 +1,12 @@
 // const {connectdatabase} = require('../../config/connectDB');
 // const sdk = require("node-appwrite");
 
-const messagedb = require("../../Models/message")
+const messagedb = require("../../Creators/message")
 
-const getnotify = async(req,res)=>{
+const MsgNotify = async(req,res)=>{
 
      const date = req.body.date
 
-      console.log("inside message notificaton "+date)
       //let data = await connectdatabase();
      
 
@@ -34,4 +33,4 @@ const getnotify = async(req,res)=>{
 
     }
 
-    module.exports = getnotify;
+    module.exports = MsgNotify;

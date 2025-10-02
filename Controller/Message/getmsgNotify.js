@@ -1,444 +1,181 @@
-// const {connectdatabase} = require('../../config/connectDB')
-// const sdk = require("node-appwrite");
-
-const messagedb = require("../../Models/message");
-const userdb = require("../../Models/userdb");
-const completedb = require("../../Models/usercomplete");
-const models = require("../../Models/models");
-const deleteOldChats = require("../../utiils/Deletes/deletemessage");
+// OPTIMIZED VERSION - Much faster message notification fetching
+const messagedb = require("../../Creators/message");
+const userdb = require("../../Creators/userdb");
+const completedb = require("../../Creators/usercomplete");
+const { filterBlockedMessages } = require("../../utiils/blockFilter");
 
 const MsgNotify = async (req, res) => {
   let userid = req.body.userid;
 
-  console.log("getting message in all");
-  let unfiterd_my_MSG = await messagedb.find({ fromid: userid }).exec();
-  let fiterd_my_MSG = unfiterd_my_MSG.filter((value) => {
-    return value.notify === false || value.notify === true;
-  });
+  // Debug logging
+  console.log("🔍 [GETMSGNOTIFY] Received userid:", userid, "Type:", typeof userid);
 
-  console.log("getting message in all 1");
-  let unfiterd_rv_MSG = await messagedb.find({ toid: userid }).exec();
-  let fiterd_rv_MSG = unfiterd_rv_MSG.filter((value) => {
-    return value.notify === false;
-  });
+  // Validate userid parameter
+  if (!userid || userid === 'undefined' || userid === 'null') {
+    console.log("❌ [GETMSGNOTIFY] Invalid userid:", userid);
+    return res.status(400).json({
+      ok: false,
+      message: "User ID is required",
+      error: "Missing or invalid userid parameter"
+    });
+  }
 
-  let my_messgae_per_user = [];
+  // Validate userid is a valid ObjectId format
+  if (typeof userid !== 'string' || userid.length !== 24) {
+    return res.status(400).json({
+      ok: false,
+      message: "Invalid User ID format",
+      error: "User ID must be a valid 24-character string"
+    });
+  }
 
-  let fiter_mymsg_A = fiterd_my_MSG.sort(
-    (a, b) => b._id.getTimestamp().getTime() - a._id.getTimestamp().getTime()
-  );
-  let fiter_mymsg_B = fiterd_my_MSG.sort(
-    (a, b) => b._id.getTimestamp().getTime() - a._id.getTimestamp().getTime()
-  );
+  try {
+    // OPTIMIZED: Single query to get all messages involving this user
+    let allMessages = await messagedb.find({
+      $or: [
+        { fromid: userid },
+        { toid: userid }
+      ]
+    })
+    .sort({ date: -1 }) // Sort by date descending (newest first)
+    .exec();
 
-  for (let i = 0; i < fiter_mymsg_A.length; i++) {
-    if (fiter_mymsg_A[i].toid === fiter_mymsg_B[i].toid) {
-      // console.log("TIME STAMP "+fiter_mymsg_B[i]._id.getTimestamp())
-      if (
-        fiter_mymsg_A[i]._id.getTimestamp().getTime() >
-        fiter_mymsg_B[i]._id.getTimestamp().getTime()
-      ) {
-        console.log("resemble by time1");
-        let canpush = my_messgae_per_user.find(
-          (index) => index._id === fiter_mymsg_A[i]._id
-        );
-        if (!canpush) {
-          my_messgae_per_user.push(fiter_mymsg_A[i]);
-        }
-      } else if (
-        fiter_mymsg_B[i]._id.getTimestamp().getTime() >
-        fiter_mymsg_A[i]._id.getTimestamp().getTime()
-      ) {
-        let canpush = my_messgae_per_user.find(
-          (index) => index.toid === fiter_mymsg_B[i].toid
-        );
-        if (!canpush) {
-          my_messgae_per_user.push(fiter_mymsg_B[i]);
-        }
-      } else if (
-        fiter_mymsg_B[i]._id.getTimestamp().getTime() ===
-        fiter_mymsg_A[i]._id.getTimestamp().getTime()
-      ) {
-        let canpush = my_messgae_per_user.find((index) => {
-          return index.toid === fiter_mymsg_A[i].toid;
+    // Filter out messages from blocked users
+    allMessages = await filterBlockedMessages(allMessages, userid);
+
+    // OPTIMIZED: Group messages by conversation (other user ID)
+    let conversationMap = new Map();
+    
+    allMessages.forEach(msg => {
+      const otherUserId = msg.fromid === userid ? msg.toid : msg.fromid;
+      
+      // Skip messages with invalid user IDs
+      if (!otherUserId || otherUserId === 'undefined' || otherUserId === 'null' || typeof otherUserId !== 'string' || otherUserId.length !== 24) {
+        console.log("⚠️ [GETMSGNOTIFY] Skipping message with invalid otherUserId:", otherUserId, "from message:", msg._id);
+        return;
+      }
+      
+      if (!conversationMap.has(otherUserId)) {
+        conversationMap.set(otherUserId, {
+          latestMessage: null,
+          unreadCount: 0,
+          lastActivity: null
         });
-
-        if (!canpush) {
-          my_messgae_per_user.push(fiter_mymsg_A[i]);
-        }
       }
-    } else {
-      let canpush = my_messgae_per_user.find(
-        (index) => index.toid === fiter_mymsg_A[i].toid
-      );
-
-      if (!canpush) {
-        my_messgae_per_user.push(fiter_mymsg_A[i]);
+      
+      const conversation = conversationMap.get(otherUserId);
+      
+      // Update latest message if this is newer
+      if (!conversation.latestMessage || new Date(msg.date) > new Date(conversation.latestMessage.date)) {
+        conversation.latestMessage = msg;
+        conversation.lastActivity = new Date(msg.date);
       }
-    }
-  }
-
-  console.log("my message length " + my_messgae_per_user.length);
-
-  let recv_messgae_per_user = [];
-
-  let fiter_tome_A = fiterd_rv_MSG.sort(
-    (a, b) => b._id.getTimestamp().getTime() - a._id.getTimestamp().getTime()
-  );
-  let fiter_tome_B = fiterd_rv_MSG.sort(
-    (a, b) => b._id.getTimestamp().getTime() - a._id.getTimestamp().getTime()
-  );
-
-  for (let i = 0; i < fiter_tome_A.length; i++) {
-    if (fiter_tome_A[i].fromid === fiter_tome_B[i].fromid) {
-      if (
-        fiter_tome_A[i]._id.getTimestamp().getTime() >
-        fiter_tome_B[i]._id.getTimestamp().getTime()
-      ) {
-        let canpush = recv_messgae_per_user.find(
-          (index) => index.fromid === fiter_tome_A[i].fromid
-        );
-        if (!canpush) {
-          recv_messgae_per_user.push(fiter_tome_A[i]);
-        }
-      } else if (
-        fiter_tome_B[i]._id.getTimestamp().getTime() >
-        fiter_tome_A[i]._id.getTimestamp().getTime()
-      ) {
-        let canpush = recv_messgae_per_user.find(
-          (index) => index.fromid === fiter_tome_B[i].fromid
-        );
-        if (!canpush) {
-          recv_messgae_per_user.push(fiter_tome_B[i]);
-        }
-      } else if (
-        fiter_tome_B[i]._id.getTimestamp().getTime() ===
-        fiter_tome_A[i]._id.getTimestamp().getTime()
-      ) {
-        let canpush = recv_messgae_per_user.find(
-          (index) => index.fromid === fiter_tome_A[i].fromid
-        );
-        if (!canpush) {
-          recv_messgae_per_user.push(fiter_tome_A[i]);
-        }
-      }
-    } else {
-      let canpush = recv_messgae_per_user.find(
-        (index) => index._id === fiter_tome_A[i]._id
-      );
-
-      if (!canpush) {
-        recv_messgae_per_user.push(fiter_tome_A[i]);
-      }
-    }
-  }
-
-  let tome_and_fromme_per_user = [];
-
-  if (my_messgae_per_user.length === 0 && recv_messgae_per_user.length > 0) {
-    console.log("transfaring recive message");
-    tome_and_fromme_per_user = recv_messgae_per_user;
-  }
-
-  if (recv_messgae_per_user.length === 0 && my_messgae_per_user.length > 0) {
-    console.log("transfaring recive message");
-    tome_and_fromme_per_user = my_messgae_per_user;
-  }
-
-  if (recv_messgae_per_user.length > 0 && my_messgae_per_user.length > 0) {
-    // console.log("getting message in all 4 lengths "+recv_messgae_per_user.length +""+ my_messgae_per_user.length)
-    // we sort the my_messages to contain both the rev message too just one per me and sender, if my own is earliest use it
-    // if not use sender own as recent messge
-    for (let i = 0; i < my_messgae_per_user.length; i++) {
-      if (
-        recv_messgae_per_user.findIndex((value) => {
-          if (value.fromid === my_messgae_per_user[i].toid) {
-            return true;
-          }
-        }) === -1
-      ) {
-        console.log("not find1");
-        tome_and_fromme_per_user.push(my_messgae_per_user[i]);
-      } else if (
-        recv_messgae_per_user.findIndex((value) => {
-          if (
-            value.fromid === my_messgae_per_user[i].toid &&
-            value._id.getTimestamp().getTime() <
-              my_messgae_per_user[i]._id.getTimestamp().getTime()
-          ) {
-            return true;
-          }
-        }) !== -1
-      ) {
-        console.log("not find2");
-        tome_and_fromme_per_user.push(my_messgae_per_user[i]);
-      }
-    }
-
-    for (let i = 0; i < recv_messgae_per_user.length; i++) {
-      if (
-        my_messgae_per_user.findIndex((value) => {
-          if (value.toid === recv_messgae_per_user[i].fromid) {
-            return true;
-          }
-        }) === -1
-      ) {
-        console.log("not find 3");
-        tome_and_fromme_per_user.push(recv_messgae_per_user[i]);
-      } else if (
-        my_messgae_per_user.findIndex((value) => {
-          if (
-            value.toid === recv_messgae_per_user[i].fromid &&
-            value._id.getTimestamp().getTime() <
-              recv_messgae_per_user[i]._id.getTimestamp().getTime()
-          ) {
-            return true;
-          }
-        }) !== -1
-      ) {
-        console.log("not find 4");
-        tome_and_fromme_per_user.push(recv_messgae_per_user[i]);
-      }
-    }
-
-    my_messgae_per_user.forEach((value) => {
-      let ischeck = tome_and_fromme_per_user.find((index) => {
-        return index.toid === value.fromid || index.toid === value.toid;
-      });
-      if (!ischeck) {
-        tome_and_fromme_per_user.push(value);
+      
+      // Count unread messages (messages sent to this user that are unread)
+      if (msg.toid === userid && msg.notify === true) {
+        conversation.unreadCount++;
       }
     });
 
-    recv_messgae_per_user.forEach((value) => {
-      let ischeck = tome_and_fromme_per_user.find((index) => {
-        return index.fromid === value.toid || index.fromid === value.fromid;
-      });
-      if (!ischeck) {
-        tome_and_fromme_per_user.push(value);
-      }
-    });
-
-    console.log(
-      "getting message in all 4 length last " + tome_and_fromme_per_user.length
+    // OPTIMIZED: Get all unique user IDs for batch fetching
+    let allUserIds = Array.from(conversationMap.keys());
+    
+    // Filter out invalid user IDs (undefined, null, empty strings)
+    allUserIds = allUserIds.filter(id => 
+      id && 
+      id !== 'undefined' && 
+      id !== 'null' && 
+      typeof id === 'string' && 
+      id.length === 24
     );
-  }
+    
+    console.log("🔍 [GETMSGNOTIFY] Filtered user IDs:", allUserIds);
 
-  let allCurrent_MSG = unfiterd_rv_MSG.filter((value) => {
-    return value.notify === true && value.toid === userid;
-  });
+    // OPTIMIZED: Batch fetch all user info and photos
+    let [allUsers, allPhotos] = await Promise.all([
+      userdb.find({ _id: { $in: allUserIds } }).exec(),
+      completedb.find({ useraccountId: { $in: allUserIds } }).exec()
+    ]);
+    
 
-  //console.log("notificatin is in "+allCurrent_MSG.length)
-
-  let allRecent_A = allCurrent_MSG.sort(
-    (a, b) => b._id.getTimestamp().getTime() - a._id.getTimestamp().getTime()
-  );
-  let allRecent_B = allCurrent_MSG.sort(
-    (a, b) => b._id.getTimestamp().getTime() - a._id.getTimestamp().getTime()
-  );
-
-  let fiterd_notify_msg = []; // list of newest unread messages per user
-
-  // console.log("notificatin is in "+allRecent_A.length)
-  let count = 0;
-  for (i = 0; i < allRecent_A.length; i++) {
-    if (allRecent_A[i].fromid === allRecent_B[i].fromid) {
-      count = count + 1;
-      console.log("count " + count);
-      if (
-        allRecent_A[i]._id.getTimestamp().getTime() >
-        allRecent_B[i]._id.getTimestamp().getTime()
-      ) {
-        let canpush = fiterd_notify_msg.findIndex(
-          (index) => index.fromid === allRecent_A[i].fromid
-        );
-        if (canpush !== -1) {
-          console.log("pushing data1");
-          fiterd_notify_msg.splice(canpush, 1);
-        }
-        let data = allRecent_A[i].toObject();
-        data.count = count;
-        fiterd_notify_msg.push(data);
-      } else if (
-        allRecent_B[i]._id.getTimestamp().getTime() >
-        allRecent_A[i]._id.getTimestamp().getTime()
-      ) {
-        let canpush = fiterd_notify_msg.findIndex(
-          (index) => index.fromid === allRecent_B[i].fromid
-        );
-        if (canpush !== -1) {
-          console.log("pushing data2");
-          fiterd_notify_msg.splice(canpush, 1);
-        }
-        let data = allRecent_B[i].toObject();
-        data.count = count;
-        fiterd_notify_msg.push(data);
-      } else {
-        let canpush = fiterd_notify_msg.findIndex(
-          (index) => index.fromid === allRecent_A[i].fromid
-        );
-        if (canpush !== -1) {
-          console.log("pushing data3");
-          fiterd_notify_msg.splice(canpush, 1);
-        }
-        let data = allRecent_A[i].toObject();
-        data.count = count;
-        fiterd_notify_msg.push(data);
-      }
-    } else {
-      let canpush = fiterd_notify_msg.find(
-        (index) => index.fromid === allRecent_A[i].fromid
-      );
-
-      if (!canpush) {
-        let data = allRecent_A[i].toObject();
-        count = 1;
-        data.count = count;
-        fiterd_notify_msg.push(data);
-        count = 0;
-      }
-    }
-  }
-
-  let recent_message_without_uread = []; // this users dont have any new uread meassge just plain recent read messages
-
-  tome_and_fromme_per_user.forEach((value) => {
-    let isIn = fiterd_notify_msg.find((index) => {
-      return (
-        (index.fromid === value.toid && value.fromid === userid) ||
-        (index.fromid === value.fromid && value.toid === userid)
-      );
+    // Create lookup maps for O(1) access
+    let userMap = {};
+    let photoMap = {};
+    
+    allUsers.forEach(user => {
+      userMap[user._id] = user;
+    });
+    
+    allPhotos.forEach(photo => {
+      photoMap[photo.useraccountId] = photo;
     });
 
-    if (!isIn) {
-      console.log("message IDS " + value._id);
-      recent_message_without_uread.push(value);
-    }
-  });
 
-  let sorted_unread = []; // we contain the unread messages with thier complete data
+    // OPTIMIZED: Build response data efficiently
+    let lastchat = [];
+    let recentmsg = [];
+    let Allmsg = [];
 
-  for (let i = 0; i < fiterd_notify_msg.length; i++) {
-    let userINfo = await userdb
-      .findOne({ _id: fiterd_notify_msg[i].fromid })
-      .exec();
-    if (userINfo) {
-      let photolink = "";
-      let photo = await completedb
-        .findOne({ useraccountId: userINfo._id })
-        .exec();
-      if (photo?.photoLink) {
-        photolink = photo?.photoLink || "";
-      }
-      let data = {
-        username: `${userINfo.firstname} ${userINfo.lastname} `,
-        photolink: photolink,
-        content: fiterd_notify_msg[i].content,
-        fromid: fiterd_notify_msg[i].fromid,
-        toid: fiterd_notify_msg[i].toid,
-        date: fiterd_notify_msg[i].date,
-        messagecount: fiterd_notify_msg[i].count,
-        id: fiterd_notify_msg[i]._id,
-        value: "unread",
-        online: userINfo.active,
-      };
-
-      sorted_unread.push(data);
-    }
-  }
-
-  sorted_unread.sort(
-    (a, b) => b.id.getTimestamp().getTime() - a.id.getTimestamp().getTime()
-  );
-
-  let sorted_recent = [];
-
-  for (let i = 0; i < recent_message_without_uread.length; i++) {
-    if (recent_message_without_uread[i].toid === userid) {
-      // we get fromid infomation
-
-      let userINfo = await userdb
-        .findOne({ _id: recent_message_without_uread[i].fromid })
-        .exec();
-      if (userINfo) {
-        let photolink = "";
-        let photo = await completedb
-          .findOne({ useraccountId: userINfo._id })
-          .exec();
-        if (photo?.photoLink) {
-          photolink = photo?.photoLink || "";
-        }
-        let data = {
-          fromid: recent_message_without_uread[i].fromid,
-          toid: recent_message_without_uread[i].toid,
-          content: recent_message_without_uread[i].content,
-          name: `${userINfo.firstname} ${userINfo.lastname}`,
-          photolink: photolink,
-          id: recent_message_without_uread[i]._id,
-          value: "recent",
-          online: userINfo.active,
-          date: recent_message_without_uread[i].date,
+    conversationMap.forEach((conversation, otherUserId) => {
+      const userInfo = userMap[otherUserId];
+      const userPhoto = photoMap[otherUserId];
+      
+      
+      if (userInfo && conversation.latestMessage) {
+        const messageData = {
+          id: conversation.latestMessage._id,
+          content: conversation.latestMessage.content,
+          date: conversation.latestMessage.date,
+          fromid: conversation.latestMessage.fromid,
+          toid: conversation.latestMessage.toid,
+          notify: conversation.latestMessage.notify,
+          coin: conversation.latestMessage.coin || false,
+          files: conversation.latestMessage.files || [],
+          fileCount: conversation.latestMessage.fileCount || 0,
+          name: userInfo.firstname,
+          firstname: userInfo.firstname,
+          lastname: userInfo.lastname,
+          photolink: userPhoto?.photoLink || "",
+          unreadCount: conversation.unreadCount,
+          lastActivity: conversation.lastActivity
         };
-        sorted_recent.push(data);
-      }
-    } else if (recent_message_without_uread[i].fromid === userid) {
-      // we get toid infomation
 
-      let userINfo = await userdb
-        .findOne({ _id: recent_message_without_uread[i].toid })
-        .exec();
-      if (userINfo) {
-        console.log("indide my info");
-        let photolink = "";
-        let photo = await completedb
-          .findOne({ useraccountId: userINfo._id })
-          .exec();
-        if (photo?.photoLink) {
-          photolink = photo?.photoLink || "";
+        // Add to appropriate arrays based on message direction
+        if (conversation.latestMessage.fromid === userid) {
+          // Message sent by this user
+          lastchat.push(messageData);
+        } else {
+          // Message received by this user
+          recentmsg.push(messageData);
         }
-        let data = {
-          fromid: recent_message_without_uread[i].fromid,
-          toid: recent_message_without_uread[i].toid,
-          content: recent_message_without_uread[i].content,
-          name: `${userINfo.firstname} ${userINfo.lastname}`,
-          photolink: photolink,
-          id: recent_message_without_uread[i]._id,
-          value: "recent",
-          online: userINfo.active,
-          date: recent_message_without_uread[i].date,
-        };
-        sorted_recent.push(data);
+        
+        // Add to all messages
+        Allmsg.push(messageData);
       }
-    }
+    });
+
+    // Sort by last activity (most recent first)
+    lastchat.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+    recentmsg.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+    Allmsg.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+
+
+    return res.status(200).json({
+      ok: true,
+      message: "Messages fetched successfully",
+      lastchat,
+      recentmsg,
+      Allmsg
+    });
+
+  } catch (err) {
+    console.error("❌ [GETMSGNOTIFY] Error:", err);
+    return res.status(500).json({ 
+      ok: false, 
+      message: "Failed to fetch messages",
+      error: err.message 
+    });
   }
-
-  sorted_recent.sort(
-    (a, b) => b.id.getTimestamp().getTime() - a.id.getTimestamp().getTime()
-  );
-
-  let allData = [];
-
-  console.log("getting message in all 10");
-  sorted_unread.forEach((value) => {
-    allData.push(value);
-  });
-
-  console.log("getting message in all 11");
-  sorted_recent.forEach((value) => {
-    allData.push(value);
-  });
-
-  console.log("array list success " + allData.length);
-
-  return res
-    .status(200)
-    .json({ ok: true, message: `successfully`, lastchat: allData });
-
-  // catch(err){
-
-  //     console.log(err.message+"  inside recent message")
-  //     return []
-  // }
 };
 
 module.exports = MsgNotify;

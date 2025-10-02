@@ -1,6 +1,6 @@
-const blockuserdb = require("../../Models/BlockedDB")
-const userdb = require("../../Models/userdb")
-const imagedb = require("../../Models/usercomplete")
+const blockuserdb = require("../../Creators/BlockedDB")
+const userdb = require("../../Creators/userdb")
+const imagedb = require("../../Creators/usercomplete")
 
 let getBlockuser = async(req, res)=>{
     let userid = req.body.userid

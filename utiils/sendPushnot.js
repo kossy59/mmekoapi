@@ -1,7 +1,7 @@
-let userdb = require("../Models/userdb");
+let userdb = require("../Creators/userdb");
 let webpush = require("web-push");
 let vapikey = require("./webpushKeys");
-let pushdb = require("../Models/pushnotifydb");
+let pushdb = require("../Creators/pushnotifydb");
 
 const pushmessage = async (userid, message, icon) => {
   let online = await userdb.findOne({ _id: userid }).exec();

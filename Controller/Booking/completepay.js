@@ -1,13 +1,13 @@
-const bookingdb = require("../../Models/book");
-const modeldb = require("../../Models/models");
-const userdb = require("../../Models/userdb");
-const historydb = require("../../Models/mainbalance");
+const bookingdb = require("../../Creators/book");
+const creatordb = require("../../Creators/creators");
+const userdb = require("../../Creators/userdb");
+const historydb = require("../../Creators/mainbalance");
 let sendEmail = require("../../utiils/sendEmailnot");
 let sendpushnote = require("../../utiils/sendPushnot");
 
 const createLike = async (req, res) => {
   const userid = req.body.userid;
-  const modelid = req.body.modelid;
+  const creatorid = req.body.creatorid;
   const time = req.body.time;
   const date = req.body.date;
 
@@ -25,7 +25,7 @@ const createLike = async (req, res) => {
     let user = users.find((value) => {
       return (
         String(value.status) === "accepted" &&
-        String(value.modelid) === String(modelid) &&
+        String(value.creatorid) === String(creatorid) &&
         String(value.time) === String(time) &&
         String(value.date) === String(date)
       );
@@ -39,17 +39,17 @@ const createLike = async (req, res) => {
         .json({ ok: false, message: "you have 0 approved request!!" });
     }
 
-    // getting model for knowing it booking price
-    let model = await modeldb.findOne({ _id: user.modelid }).exec();
-    let price = parseFloat(model.price);
-    console.log("model price " + price);
+    // getting creator for knowing it booking price
+    let creator = await creatordb.findOne({ _id: user.creatorid }).exec();
+    let price = parseFloat(creator.price);
+    console.log("creator price " + price);
 
     if (user.type !== "Private show") {
-      let modeluser = await userdb.findOne({ _id: model.userid }).exec();
-      let modelwitdraw = parseFloat(modeluser.withdrawbalance);
+      let creatoruser = await userdb.findOne({ _id: creator.userid }).exec();
+      let creatorwitdraw = parseFloat(creatoruser.withdrawbalance);
 
-      let modelpaymenthistory = {
-        userid: model.userid,
+      let creatorpaymenthistory = {
+        userid: creator.userid,
         details: "hosting service completed",
         spent: `${0}`,
         income: `${price}`,
@@ -63,35 +63,35 @@ const createLike = async (req, res) => {
         date: `${Date.now().toString()}`,
       };
 
-      await historydb.create(modelpaymenthistory);
+      await historydb.create(creatorpaymenthistory);
       await historydb.create(userpaymenthistory);
-      const earnings = Number(model.earnings) + Number(price);
-      console.log("Model Earnings: ", earnings);
+      const earnings = Number(creator.earnings) + Number(price);
+      console.log("Creator Earnings: ", earnings);
 
-      model.earnings = earnings;
-      await model.save();
+      creator.earnings = earnings;
+      await creator.save();
 
-      if (!modelwitdraw) {
-        modelwitdraw = 0;
+      if (!creatorwitdraw) {
+        creatorwitdraw = 0;
       }
 
-      modelwitdraw += price;
+      creatorwitdraw += price;
 
-      modeluser.withdrawbalance = `${modelwitdraw}`;
-      modeluser.save();
+      creatoruser.withdrawbalance = `${creatorwitdraw}`;
+      creatoruser.save();
 
       await sendEmail(
-        `${modeluser._id}`,
+        `${creatoruser._id}`,
         `You received ${price} from ${paidname.firstname}`
       );
       await sendpushnote(
-        `${modeluser._id}`,
+        `${creatoruser._id}`,
         `You received ${price} from ${paidname.firstname}`,
-        "modelicon"
+        "creatoricon"
       );
     }
 
-    // getting user of that model for adding the payment to it's account
+    // getting user of that creator for adding the payment to it's account
 
     user.status = "completed";
     await user.save();

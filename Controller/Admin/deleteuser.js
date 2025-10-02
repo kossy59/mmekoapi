@@ -1,5 +1,5 @@
-const admindb = require("../../Models/admindb")
-let userdb = require("../../Models/userdb")
+const admindb = require("../../Creators/admindb")
+let userdb = require("../../Creators/userdb")
 let deleteaccount = require("../../utiils/Deletes/deleteaccount")
 
 const updatePost = async (req,res)=>{

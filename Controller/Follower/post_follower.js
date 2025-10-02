@@ -1,10 +1,10 @@
-const followerdb = require("../../Models/followers")
-const userdb = require("../../Models/userdb")
-const admindb = require("../../Models/admindb")
+const followerdb = require("../../Creators/followers")
+const userdb = require("../../Creators/userdb")
+const admindb = require("../../Creators/admindb")
 let sendEmail = require("../../utiils/sendEmailnot")
 let sendpushnote = require("../../utiils/sendPushnot")
 
-const createModel = async (req,res)=>{
+const createCreator = async (req,res)=>{
 
     const followerid = req.body.followerid;
     const userid = req.body.userid
@@ -46,7 +46,7 @@ const createModel = async (req,res)=>{
 
         await followerdb.create(follow)
         await sendEmail(userid, "you have new follower")
-        await sendpushnote(userid,"you have new follower","modelicon")
+        await sendpushnote(userid,"you have new follower","creatoricon")
 
         // No need to sync userdb arrays - followers collection is the single source of truth
 
@@ -76,4 +76,4 @@ const createModel = async (req,res)=>{
        }
 }
 
-module.exports = createModel
+module.exports = createCreator

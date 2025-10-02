@@ -1,8 +1,8 @@
-let exclusivedb = require("../../Models/exclusivedb");
-let exclusive_purshaseDB = require("../../Models/exclusivePurshase");
-let userdb = require("../../Models/userdb");
-let modeldb = require("../../Models/models");
-let historydb = require("../../Models/mainbalance");
+let exclusivedb = require("../../Creators/exclusivedb");
+let exclusive_purshaseDB = require("../../Creators/exclusivePurshase");
+let userdb = require("../../Creators/userdb");
+let creatordb = require("../../Creators/creators");
+let historydb = require("../../Creators/mainbalance");
 let sendEmail = require("../../utiils/sendEmailnot");
 let sendpushnote = require("../../utiils/sendPushnot");
 
@@ -13,13 +13,13 @@ const postexclusive = async (req, res) => {
   let pricebalance = req.body.pricebalance;
   let exclusivename = req.body.exclusivename;
   let exclusivelink = req.body.exclusivelink;
-  let modelID = req.body.modelID;
+  let creatorID = req.body.creatorID;
 
   console.log("userid " + userid);
   console.log("exclusiveid " + exclusiveid);
   console.log("price " + price);
   console.log("pricebalance " + pricebalance);
-  console.log(modelID);
+  console.log(creatorID);
 
   if (!userid || !exclusiveid || !price) {
     console.log("failed to buy");
@@ -68,32 +68,32 @@ const postexclusive = async (req, res) => {
         income: "0",
         date: `${Date.now().toString()}`,
       };
-      let modelhistory = {
-        userid: modelID,
+      let creatorhistory = {
+        userid: creatorID,
         details: `received ${price} coins for exclusive sale successful`,
         spent: "0",
         income: `${price}`,
         date: `${Date.now().toString()}`,
       };
-      let model = await modeldb.find({
-        userid: modelID,
+      let creator = await creatordb.find({
+        userid: creatorID,
       });
 
-      const earnings = Number(model[0].earnings) + Number(price);
-      console.log("Model Earnings: ", earnings);
+      const earnings = Number(creator[0].earnings) + Number(price);
+      console.log("Creator Earnings: ", earnings);
 
-      model[0].earnings = earnings;
-      await model[0].save();
-      console.log("New earnings", model[0].earnings);
+      creator[0].earnings = earnings;
+      await creator[0].save();
+      console.log("New earnings", creator[0].earnings);
 
       await historydb.create(clienthistory);
-      await historydb.create(modelhistory);
+      await historydb.create(creatorhistory);
 
       await sendEmail(content_price.userid, "user purchased your content");
       await sendpushnote(
         content_price.userid,
         "user purchase content",
-        "modelicon"
+        "creatoricon"
       );
 
       return res

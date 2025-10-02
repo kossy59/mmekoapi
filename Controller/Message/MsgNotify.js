@@ -1,178 +1,149 @@
-// const {connectdatabase} = require('../../config/connectDB');
-// const sdk = require("node-appwrite");
+// OPTIMIZED VERSION - Much faster message notification fetching
+const messagedb = require("../../Creators/message");
+const userdb = require("../../Creators/userdb");
+const completedb = require("../../Creators/usercomplete");
+const { filterBlockedMessages } = require("../../utiils/blockFilter");
 
-const messagedb = require("../../Models/message");
-const userdb = require("../../Models/userdb");
-const completedb = require("../../Models/usercomplete");
-const models = require("../../Models/models");
-
-const getnotify = async (req, res) => {
+const MsgNotify = async (req, res) => {
   const userid = req.body.userid;
 
-  // console.log("inside message notificaton "+userid)
-  // let data = await connectdatabase();
+  // Validate userid parameter
+  if (!userid || userid === 'undefined' || userid === 'null') {
+    return res.status(400).json({
+      ok: false,
+      message: "User ID is required",
+      error: "Missing or invalid userid parameter"
+    });
+  }
+
+  // Validate userid is a valid ObjectId format
+  if (typeof userid !== 'string' || userid.length !== 24) {
+    return res.status(400).json({
+      ok: false,
+      message: "Invalid User ID format",
+      error: "User ID must be a valid 24-character string"
+    });
+  }
 
   try {
-    // let Chats = await data.databar.listDocuments(data.dataid,data.msgCol,[sdk.Query.and([sdk.Query.equal("toid",[userid]), sdk.Query.equal("notify",[true])])])
-    let chatting = await messagedb.find({ toid: userid }).exec();
-    let Chats = chatting.filter((value) => {
-      return value.notify === true;
-    });
+    // OPTIMIZED: Direct query for unread messages only
+    let unreadMessages = await messagedb.find({ 
+      toid: userid, 
+      notify: true 
+    })
+    .sort({ date: -1 }) // Sort by date descending (newest first)
+    .exec();
 
-    //  let Listofchat = Chats.documents.filter(value=>{
-    //     return value.toid === userid
-    //    })
+    // Filter out messages from blocked users
+    unreadMessages = await filterBlockedMessages(unreadMessages, userid);
 
-    //console.log(Listofchat+" List of notification")
-    //   console.log(userid)
-    //   console.log("66ce8992001432aca6b0")
-    //  console.log(Chats)
 
-    //    let NonreponseChat = Listofchat.filter(value =>{
-    //      return value.Notify === true
-    //    })
-
-    //console.log(Chats.documents[0])
-
-    if (!Chats[0]) {
-      return res
-        .status(200)
-        .json({ ok: true, message: `user host empty`, notify: [] });
+    if (unreadMessages.length === 0) {
+      return res.status(200).json({ 
+        ok: true, 
+        message: "No unread messages", 
+        notify: [] 
+      });
     }
 
-    // console.log(NonreponseChat[0].fromid)
+    // OPTIMIZED: Get unique sender IDs for batch fetching
+    let senderIds = [...new Set(unreadMessages.map(msg => msg.fromid))];
+    
+    // Filter out invalid sender IDs (undefined, null, empty strings)
+    senderIds = senderIds.filter(id => 
+      id && 
+      id !== 'undefined' && 
+      id !== 'null' && 
+      typeof id === 'string' && 
+      id.length === 24
+    );
+    
+    console.log("🔍 [MSGNOTIFY] Filtered sender IDs:", senderIds);
 
-    let notificationbyuser = [];
+    // OPTIMIZED: Batch fetch all sender info and photos
+    let [allSenders, allPhotos] = await Promise.all([
+      userdb.find({ _id: { $in: senderIds } }).exec(),
+      completedb.find({ useraccountId: { $in: senderIds } }).exec()
+    ]);
 
-    // file notification base on the sender
-
-    Chats.forEach((value, index) => {
-      if (notificationbyuser.length < 1) {
-        let chat = {
-          userid: value.fromid,
-          content: value.content,
-          notifycount: 1,
-          toid: value.toid,
-          date: value.date,
-        };
-
-        notificationbyuser.push(chat);
-      }
-
-      notificationbyuser.forEach((value1, index2) => {
-        if (value1.userid === value.fromid) {
-          notificationbyuser[index2].content = value.content;
-          notificationbyuser[index2].notifycount++;
-        } else {
-          let chat = {
-            userid: value.fromid,
-            content: value.content,
-            notifycount: 1,
-            toid: value.toid,
-            date: value.date,
-          };
-
-          notificationbyuser.push(chat);
-        }
-      });
+    // Create lookup maps for O(1) access
+    let senderMap = {};
+    let photoMap = {};
+    
+    allSenders.forEach(sender => {
+      senderMap[sender._id] = sender;
+    });
+    
+    allPhotos.forEach(photo => {
+      photoMap[photo.useraccountId] = photo;
     });
 
-    //console.log(notificationbyuser[0])
 
-    // all notification array
-    let Notify = [];
-
-    // get the sender notifcations name and photolink with it id
-
-    // starting from userdb database as client...
-    let lastmessagecount = 0;
-    let lastmessageDisplay = "";
-
-    for (let i = 0; i < notificationbyuser.length; i++) {
-      // let Users =  await data.databar.listDocuments(data.dataid,data.colid,[sdk.Query.equal("$id",[notificationbyuser[i].userid])])
-      let Users = await userdb
-        .findOne({ _id: notificationbyuser[i].userid })
-        .exec();
-      //let Photos = await data.databar.listDocuments(data.dataid,data.userincol,[sdk.Query.equal("useraccountId",[notificationbyuser[i].userid])])
-      let Photos = await completedb
-        .findOne({ useraccountId: notificationbyuser[i].userid })
-        .exec();
-      if (Users) {
-        //  console.log("fetching clent")
-        // console.log("message photolink "+Photos.photoLink)
-
-        console.log("data number " + parseFloat(notificationbyuser[i].date));
-        if (
-          parseFloat(lastmessagecount) < parseFloat(notificationbyuser[i].date)
-        ) {
-          lastmessageDisplay = `message from ${Users.firstname}`;
-        }
-
-        let notication = {
-          photolink: Photos?.photoLink || "",
-          username: Users.firstname,
-          content: notificationbyuser[i].content,
-          messagecount: notificationbyuser[i].notifycount,
-          fromid: notificationbyuser[i].userid,
-          toid: notificationbyuser[i].toid,
-          value: "notify",
-          date: notificationbyuser[i].date,
-          online: Users.active,
-        };
-
-        // Notify.push(notication)
-
-        Notify.push(notication);
-        //console.log(Notify[0])
+    // OPTIMIZED: Group notifications by sender
+    let notificationMap = new Map();
+    
+    unreadMessages.forEach(msg => {
+      const senderId = msg.fromid;
+      
+      if (!notificationMap.has(senderId)) {
+        notificationMap.set(senderId, {
+          sender: senderMap[senderId],
+          photo: photoMap[senderId],
+          messages: [],
+          unreadCount: 0
+        });
       }
-    }
+      
+      const notification = notificationMap.get(senderId);
+      notification.messages.push(msg);
+      notification.unreadCount++;
+    });
 
-    //  getting user names from model as model
+    // OPTIMIZED: Build response data
+    let notify = [];
+    
+    notificationMap.forEach((notification, senderId) => {
+      if (notification.sender) {
+        // Get the most recent message from this sender
+        const latestMessage = notification.messages.sort((a, b) => 
+          new Date(b.date) - new Date(a.date)
+        )[0];
+        
+        notify.push({
+          id: latestMessage._id,
+          content: latestMessage.content,
+          date: latestMessage.date,
+          fromid: latestMessage.fromid,
+          toid: latestMessage.toid,
+          notify: latestMessage.notify,
+          coin: latestMessage.coin || false,
+          files: latestMessage.files || [],
+          fileCount: latestMessage.fileCount || 0,
+          name: notification.sender.firstname,
+          photolink: notification.photo?.photoLink || "",
+          unreadCount: notification.unreadCount
+        });
+      }
+    });
 
-    // for(let i = 0; i < notificationbyuser.length; i++){
-    //     if(notificationbyuser[i].client === false){
-    //        //let Modeling = await data.databar.listDocuments(data.dataid,data.modelCol,[sdk.Query.equal("userid",[notificationbyuser[i].userid])])
-    //        let Modeling = await models.findOne({userid:notificationbyuser[i].userid}).exec()
-    //         let Users = await userdb.findOne({_id:notificationbyuser[i].userid}).exec()
-    //        if(Modeling){
+    // Sort by most recent message
+    notify.sort((a, b) => new Date(b.date) - new Date(a.date));
 
-    //           let photoLinks = Modeling.photolink.split(",")
-    //               let notication = {
-    //                         photolink: photoLinks[0],
-    //                         username: Modeling.name,
-    //                         content: notificationbyuser[i].content,
-    //                         messagecount: notificationbyuser[i].notifycount,
-    //                         fromid: notificationbyuser[i].userid,
-    //                         toid: notificationbyuser[i].toid,
-    //                         value:"notify",
-    //                         date:notificationbyuser[i].date,
-    //                         client:false,
-    //                         online:Users.active
-    //                     }
 
-    //                     Notify.push(notication)
+    return res.status(200).json({
+      ok: true,
+      message: "Notifications fetched successfully",
+      notify
+    });
 
-    //        }
-    //     }
-    // }
-
-    //  console.log("still nothig "+Notify[0])
-
-    // return Notify
-    Notify.reverse();
-
-    return res
-      .status(200)
-      .json({
-        ok: true,
-        message: `user host empty`,
-        notify: Notify,
-        lastmessage: lastmessageDisplay,
-      });
   } catch (err) {
-    // console.log('Erro on notification '+err.message)
-    return [];
+    console.error("❌ [GETNOTIFY] Error:", err);
+    return res.status(500).json({ 
+      ok: false, 
+      message: "Failed to fetch notifications",
+      error: err.message 
+    });
   }
 };
 
-module.exports = getnotify;
+module.exports = MsgNotify;

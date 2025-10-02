@@ -1,5 +1,5 @@
-const completedb = require("../../Models/usercomplete")
-const userdb = require("../../Models/userdb")
+const completedb = require("../../Creators/usercomplete")
+const userdb = require("../../Creators/userdb")
 
 const updatePost = async (req, res) => {
     const userid = req.body.userid;

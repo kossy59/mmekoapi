@@ -1,4 +1,4 @@
-const userdb = require("../../Models/userdb");
+const userdb = require("../../Creators/userdb");
 
 const checkUsername = async (req, res) => {
     const { username, currentUserId } = req.body;

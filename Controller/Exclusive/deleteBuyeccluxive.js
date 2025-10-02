@@ -1,4 +1,4 @@
-let exclusivedb = require("../../Models/exclusivePurshase")
+let exclusivedb = require("../../Creators/exclusivePurshase")
 
 const postexclusive = async(req,res)=>{
 

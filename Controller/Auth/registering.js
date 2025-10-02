@@ -1,20 +1,20 @@
-//const {userdb} = require('../../Model/userdb');
+//const {userdb} = require('../../Creator/userdb');
 //const {connectdatabase} = require('../../config/connectDB');
 //const { Query } = require('node-appwrite');
 //const sdk = require("node-appwrite");
 //const forgetHandler = require("../../helpers/sendemailAuth");
 // const mongoose = require("mongoose");
-// const userdb = require("../../Models/userdb");
-//const baneddb = require("../../Models/admindb");
-// const usercompletedb = require("../../Models/usercomplete");
-// let pushdb = require("../../Models/settingsdb");
+// const userdb = require("../../Creators/userdb");
+//const baneddb = require("../../Creators/admindb");
+// const usercompletedb = require("../../Creators/usercomplete");
+// let pushdb = require("../../Creators/settingsdb");
 
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
-const userdb = require("../../Models/userdb");
-const usercompletedb = require("../../Models/usercomplete");
-const pushdb = require("../../Models/settingsdb");
+const userdb = require("../../Creators/userdb");
+const usercompletedb = require("../../Creators/usercomplete");
+const pushdb = require("../../Creators/settingsdb");
 
 const handleNewUser = async (req, res) => {
   console.log("Incoming registration payload:", req.body);
@@ -67,8 +67,8 @@ const handleNewUser = async (req, res) => {
     const hashSecretPhrase = await bcrypt.hash(phraseString, 10);
 
     // Create tokens
-    const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET || "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6";
-    const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET || "z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g0f9e8d7c6b5a4";
+    const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET || "NEXT_PUBLIC_SECERET";
+    const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET || "NEXT_PUBLIC_SECERET";
     
     const refreshToken = jwt.sign(
       { UserInfo: { username: nickname } },

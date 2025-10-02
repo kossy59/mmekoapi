@@ -1,5 +1,5 @@
-const userdb = require("../../Models/userdb")
-const admin = require("../../Models/admindb")
+const userdb = require("../../Creators/userdb")
+const admin = require("../../Creators/admindb")
 let sendEmail = require("../../utiils/sendEmailnot")
 let sendpushnote = require("../../utiils/sendPushnot")
 
@@ -38,7 +38,7 @@ const updatePost = async (req,res)=>{
                 await admin.create(data)
 
                 await sendEmail(userid,"your account has been suspended")
-                await sendpushnote(userid,"your account has been suspended","modelicon")
+                await sendpushnote(userid,"your account has been suspended","creatoricon")
 
 
 
