@@ -161,6 +161,8 @@ app.use(
 app.use("/creator", require("./routes/api/creator/creators"));
 app.use("/editcreator", require("./routes/api/creator/editecreator"));
 app.use("/postdocument", require("./routes/api/creator/postdocument"));
+app.use("/getdocument", require("./routes/api/creator/getdocument"));
+app.use("/rejectdocument", require("./routes/api/creator/rejectdocument"));
 app.use("/exclusive", require("./routes/api/Exclusive/exclusive"));
 app.use("/creators", require("./routes/api/creator/updateView"));
 app.use("/creators", require("./routes/api/creator/updateFollowers"));

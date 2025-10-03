@@ -1,6 +1,6 @@
-let admindb = require("../../Models/admindb");
-const userdb = require("../../Models/userdb");
-let documentdb = require("../../Models/document");
+let admindb = require("../../Creators/admindb");
+const userdb = require("../../Creators/userdb");
+let documentdb = require("../../Creators/document");
 
 const rejectdocument = async (req, res) => {
   const userid = req.body.userid;

@@ -1,4 +1,4 @@
-let documentdb = require("../../Models/document");
+let documentdb = require("../../Creators/document");
 
 const getdocument = async (req, res) => {
   const { userid } = req.params;
