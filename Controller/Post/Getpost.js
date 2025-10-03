@@ -9,6 +9,7 @@ const commentdbs = require("../../Creators/comment");
 const likedbs = require("../../Creators/like");
 const alldelete = require("../../utiils/Deletes/deleteAcceptsBook");
 const followdb = require("../../Creators/followers");
+const { filterBlockedComments } = require("../../utiils/blockFilter");
 const { filterBlockedPosts } = require("../../utiils/blockingUtils");
 
 const readPost = async (req, res) => {
@@ -121,9 +122,20 @@ const readPost = async (req, res) => {
     // Filter out posts from blocked users
     const filteredPosts = await filterBlockedPosts(posts, userid);
     
+    // Filter comments from blocked users in each post
+    const postsWithFilteredComments = await Promise.all(
+      filteredPosts.map(async (post) => {
+        if (post.comments && post.comments.length > 0) {
+          const filteredComments = await filterBlockedComments(post.comments, userid);
+          return { ...post, comments: filteredComments };
+        }
+        return post;
+      })
+    );
+    
     return res
       .status(200)
-      .json({ ok: true, message: `Enter new password`, post: filteredPosts.reverse() });
+      .json({ ok: true, message: `Enter new password`, post: postsWithFilteredComments.reverse() });
   } catch (err) {
     console.log(err);
     return res.status(500).json({ ok: false, message: `${err.message}!` });

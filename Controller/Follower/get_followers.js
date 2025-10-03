@@ -2,7 +2,7 @@ const followerdb = require("../../Creators/followers");
 const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 const photodb = require("../../Creators/usercomplete");
-const { filterBlockedUsers } = require("../../utiils/blockingUtils");
+const { filterBlockedUsers } = require("../../utiils/blockFilter");
 
 const createCreator = async (req, res) => {
   const userid = req.body.userid;
