@@ -1,6 +1,7 @@
 const messagedb = require("../../Creators/message");
 const userdb = require("../../Creators/userdb");
 const completedb = require("../../Creators/usercomplete");
+const { filterBlockedUsers } = require("../../utiils/blockFilter");
 
 const getConversations = async (req, res) => {
   const userid = req.body.userid;
@@ -174,11 +175,14 @@ const getConversations = async (req, res) => {
             return formattedConv;
           });
 
-          console.log("✅ [QUICK_CHAT_CONVERSATIONS] Returning", formattedConversations.length, "formatted conversations");
+          // Filter out conversations with blocked users
+          const filteredConversations = await filterBlockedUsers(formattedConversations, userid);
+
+          console.log("✅ [QUICK_CHAT_CONVERSATIONS] Returning", filteredConversations.length, "filtered conversations");
           console.log("📤 [QUICK_CHAT_CONVERSATIONS] Final response data:", {
             ok: true,
-            conversationsCount: formattedConversations.length,
-            conversations: formattedConversations.map(conv => ({
+            conversationsCount: filteredConversations.length,
+            conversations: filteredConversations.map(conv => ({
               fromid: conv.fromid,
               name: conv.name,
               photolink: conv.photolink,
@@ -188,13 +192,13 @@ const getConversations = async (req, res) => {
               isUrl: conv.photolink?.startsWith('http'),
               isEmpty: !conv.photolink || conv.photolink.trim() === ""
             })),
-            count: formattedConversations.length
+            count: filteredConversations.length
           });
 
           return res.status(200).json({
             ok: true,
-            conversations: formattedConversations,
-            count: formattedConversations.length
+            conversations: filteredConversations,
+            count: filteredConversations.length
           });
   } catch (error) {
     console.error("❌ [QUICK_CHAT_CONVERSATIONS] Error:", error);

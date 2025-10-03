@@ -1,7 +1,10 @@
 const creators = require("../../Creators/creators");
 const userdb = require("../../Creators/userdb");
+const { filterBlockedUsers } = require("../../utiils/blockFilter");
 
 const createCreator = async (req, res) => {
+  const userid = req.body.userid;
+  
   try {
     let verified = await creators
       .find({
@@ -61,10 +64,53 @@ const createCreator = async (req, res) => {
       }
     }
 
+    // Filter out blocked users from the host list
+    console.log(`🔍 [DISCOVER] Before filtering: ${host.length} hosts for user ${userid}`);
+    
+    // Convert host objects to user-like objects for filtering
+    const hostAsUsers = host.map(h => ({
+      _id: h.userid,
+      id: h.userid,
+      userId: h.userid,
+      ...h
+    }));
+    
+    const filteredHostAsUsers = await filterBlockedUsers(hostAsUsers, userid);
+    console.log(`🔍 [DISCOVER] After filtering: ${filteredHostAsUsers.length} hosts remaining`);
+    
+    // Convert back to host format
+    const filteredHost = filteredHostAsUsers.map(user => ({
+      hostid: user.hostid,
+      photolink: user.photolink,
+      verify: user.verify,
+      name: user.name,
+      age: user.age,
+      location: user.location,
+      price: user.price,
+      duration: user.duration,
+      bodytype: user.bodytype,
+      smoke: user.smoke,
+      drink: user.drink,
+      interestedin: user.interestedin,
+      height: user.height,
+      weight: user.weight,
+      description: user.description,
+      gender: user.gender,
+      timeava: user.timeava,
+      daysava: user.daysava,
+      hosttype: user.hosttype,
+      online: user.online,
+      userid: user.userid,
+      amount: user.amount,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      views: user.views
+    }));
+
     return res.status(200).json({
       ok: true,
       message: `Creator Fetched successfully`,
-      host,
+      host: filteredHost,
     });
   } catch (err) {
     return res.status(500).json({
