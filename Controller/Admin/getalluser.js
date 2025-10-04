@@ -54,9 +54,7 @@ const updatePost = async (req,res)=>{
     })
 
     // Filter out blocked users from the alluser list
-    console.log(`🔍 [GETALLUSERS] Before filtering: ${alluser.length} users for user ${userid}`);
     const filteredUsers = await filterBlockedUsers(alluser, userid);
-    console.log(`🔍 [GETALLUSERS] After filtering: ${filteredUsers.length} users remaining`);
 
   return res.status(200).json({"ok":true,"message":`Fetched all users Successfully`, users: filteredUsers})
 

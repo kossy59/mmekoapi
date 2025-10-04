@@ -17,6 +17,7 @@ const readPost = async (req, res) => {
 
   const userid = req.body.userid;
 
+
   try {
     //let  postdb = await data.databar.listDocuments(data.dataid,data.postCol)
 
@@ -107,10 +108,15 @@ const readPost = async (req, res) => {
             exclusive_verify: 1,
             photolink: 1,
             photoID: 1,
+            isVip: 1,
+            vipStartDate: 1,
+            vipEndDate: 1,
           },
         },
       },
     ]);
+    
+    
     // let userdb = await userdbs.find().exec();
     // let comdb = await comdbs.find().exec();
     // let commentdb = await commentdbs.find().exec();
@@ -132,6 +138,7 @@ const readPost = async (req, res) => {
         return post;
       })
     );
+    
     
     return res
       .status(200)

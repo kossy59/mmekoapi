@@ -78,6 +78,10 @@ const readProfile = async (req, res) => {
       creatortype: "",
       dob: dob,
       likecount: 0,
+      // VIP status fields
+      isVip: du.isVip || false,
+      vipStartDate: du.vipStartDate || null,
+      vipEndDate: du.vipEndDate || null,
     };
 
     let exclusiveData = await exclusivedb

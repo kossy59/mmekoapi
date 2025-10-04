@@ -90,9 +90,6 @@ const filterBlockedPosts = async (posts, currentUserId) => {
       return posts;
     }
 
-    console.log(`🔍 [BLOCKING_UTILS] Filtering ${posts.length} posts for current user ${currentUserId}`);
-    console.log(`🔍 [BLOCKING_UTILS] Users blocked by current user: ${blockedUserIds.length}`);
-    console.log(`🔍 [BLOCKING_UTILS] Users who blocked current user: ${blockedByUserIds.length}`);
 
     // Filter out posts from blocked users (bidirectional)
     const filteredPosts = posts.filter(post => {
@@ -107,14 +104,10 @@ const filterBlockedPosts = async (posts, currentUserId) => {
       const postUserIdStr = String(postUserId);
       const isBlocked = allBlockedUserIds.some(blockedId => String(blockedId) === postUserIdStr);
       
-      if (isBlocked) {
-        console.log(`🔍 [BLOCKING_UTILS] Filtering out post from user ${postUserIdStr}`);
-      }
       
       return !isBlocked;
     });
     
-    console.log(`🔍 [BLOCKING_UTILS] After filtering: ${filteredPosts.length} posts remaining`);
     return filteredPosts;
   } catch (error) {
     console.error('[BlockingUtils] Error filtering blocked posts:', error);

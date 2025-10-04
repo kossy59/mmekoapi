@@ -142,6 +142,35 @@ const markertdata = new Scheme(
       required: false,
       default: [],
     },
+    isVip: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    vipStartDate: {
+      type: Date,
+      required: false,
+    },
+    vipEndDate: {
+      type: Date,
+      required: false,
+    },
+    vipAutoRenewal: {
+      type: Boolean,
+      required: false,
+      default: true,
+    },
+    coinBalance: {
+      type: Number,
+      required: false,
+      default: 0,
+    },
+    vipCelebrationViewed: {
+      type: Map,
+      of: String, // userId -> monthKey (e.g., "2024-0")
+      required: false,
+      default: new Map(),
+    },
   },
   { timestamps: true }
 );

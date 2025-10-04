@@ -21,7 +21,6 @@ const createCreator = async (req, res) => {
     let followersFromDB = await followerdb.find({ userid: userid }).exec();
     let followers = followersFromDB.map(f => f.followerid);
     
-    console.log("Getting followers from followers collection:", followers.length);
     if (followers?.length) {
       // console.log("got the follower")
       for (let i = 0; i < followers.length; i++) {
@@ -44,6 +43,11 @@ const createCreator = async (req, res) => {
             photolink = photo?.photoLink || "";
           }
 
+          const isVip = username.isVip || false;
+          const vipEndDate = username.vipEndDate;
+          const isVipActive = isVip && vipEndDate && new Date(vipEndDate) > new Date();
+          
+
           let user = {
             name: `${username.firstname} ${username.lastname}`,
             image: photolink,
@@ -51,6 +55,9 @@ const createCreator = async (req, res) => {
             creatorid: creatorid,
             id: username._id,
             following: false,
+            isVip: username.isVip || false,
+            vipStartDate: username.vipStartDate,
+            vipEndDate: username.vipEndDate,
           };
 
           follows.followers.push(user);
@@ -62,7 +69,6 @@ const createCreator = async (req, res) => {
     let followingFromDB = await followerdb.find({ followerid: userid }).exec();
     let followings = followingFromDB.map(f => f.userid);
     
-    console.log("Getting following from followers collection:", followings.length);
     if (followings?.length) {
       //console.log("got the followings")
 
@@ -90,6 +96,11 @@ const createCreator = async (req, res) => {
             photolink = photo?.photoLink || "";
           }
 
+          const isVip = username.isVip || false;
+          const vipEndDate = username.vipEndDate;
+          const isVipActive = isVip && vipEndDate && new Date(vipEndDate) > new Date();
+          
+
           let user = {
             name: `${username.firstname} ${username.lastname}`,
             image: photolink,
@@ -97,6 +108,9 @@ const createCreator = async (req, res) => {
             creatorid: creatorid,
             id: username._id,
             following: true,
+            isVip: username.isVip || false,
+            vipStartDate: username.vipStartDate,
+            vipEndDate: username.vipEndDate,
           };
 
           follows.following.push(user);
@@ -112,6 +126,7 @@ const createCreator = async (req, res) => {
       followers: filteredFollowers,
       following: filteredFollowing,
     };
+
 
     return res
       .status(200)

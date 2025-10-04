@@ -49,16 +49,45 @@ const readComment = async (req,res)=>{
             const com = comMap.get(String(filteredComments[i].userid));
             
             if(user && com){
+                const isVip = user.isVip || false;
+                const vipEndDate = user.vipEndDate;
+                const isVipActive = isVip && vipEndDate && new Date(vipEndDate) > new Date();
+                
+                // Try to get photo from user data first, then from com data
+                const userPhoto = user.photolink || user.photoLink || user.profileImage || user.avatar || user.image;
+                const comPhoto = com.photoLink || com.photolink || com.profileImage || com.avatar || com.image;
+                const finalPhoto = userPhoto || comPhoto;
+                
                 let commentObj = {
-                    commentuserphoto: com.photoLink,
+                    commentuserphoto: finalPhoto,
                     commentusername: `${user.firstname} ${user.lastname}`,
                     content: filteredComments[i].content,
                     commentid: filteredComments[i]._id,
                     commenttime: filteredComments[i].commenttime,
                     commentuserid: user._id,
-                    commentnickname: user.nickname
+                    commentnickname: user.nickname,
+                    isVip: isVip,
+                    vipStartDate: user.vipStartDate,
+                    vipEndDate: user.vipEndDate
                 };
                 comment.push(commentObj);
+            } else {
+                // Fallback: create comment with basic info even if we don't have complete user data
+                if (user) {
+                    const commentObj = {
+                        commentuserphoto: user.photolink || user.photoLink || user.profileImage || user.avatar || user.image,
+                        commentusername: `${user.firstname || 'Unknown'} ${user.lastname || 'User'}`,
+                        content: filteredComments[i].content,
+                        commentid: filteredComments[i]._id,
+                        commenttime: filteredComments[i].commenttime,
+                        commentuserid: user._id,
+                        commentnickname: user.nickname,
+                        isVip: user.isVip || false,
+                        vipStartDate: user.vipStartDate,
+                        vipEndDate: user.vipEndDate
+                    };
+                    comment.push(commentObj);
+                }
             }
         }
 
