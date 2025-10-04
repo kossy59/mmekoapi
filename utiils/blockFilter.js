@@ -66,9 +66,6 @@ const filterBlockedUsers = async (users, currentUserId) => {
     const usersWhoBlockedCurrentUser = await BlockUser.find({ blockedUserId: currentUserId }).select('blockerId').lean();
     const blockedMeIds = new Set(usersWhoBlockedCurrentUser.map(block => block.blockerId.toString()));
 
-    console.log(`🔍 [BLOCK_FILTER] Filtering ${users.length} users for current user ${currentUserId}`);
-    console.log(`🔍 [BLOCK_FILTER] Users blocked by current user: ${blockedByUserIds.size}`);
-    console.log(`🔍 [BLOCK_FILTER] Users who blocked current user: ${blockedMeIds.size}`);
     
     return users.filter(user => {
       // Handle different user object structures
@@ -93,9 +90,6 @@ const filterBlockedUsers = async (users, currentUserId) => {
       // 2. This user has not blocked the current user
       const shouldKeep = !(hasBlockedUser || userBlockedMe);
       
-      if (!shouldKeep) {
-        console.log(`🔍 [BLOCK_FILTER] Filtering out user ${userIdStr} - hasBlockedUser: ${hasBlockedUser}, userBlockedMe: ${userBlockedMe}`);
-      }
       
       return shouldKeep;
     });

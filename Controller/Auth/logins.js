@@ -112,6 +112,10 @@ const handleLogin = async (req, res) => {
         userId: user._id,
         accessToken,
         token: refreshToken,
+        // Include VIP status
+        isVip: user.isVip || false,
+        vipStartDate: user.vipStartDate || null,
+        vipEndDate: user.vipEndDate || null,
       });
     } else {
       return res.status(401).json({

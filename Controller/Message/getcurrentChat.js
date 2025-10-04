@@ -8,6 +8,7 @@ const creators = require("../../Creators/creators");
 const getcurrentChat = async (req, res) => {
   const userid = req.body.creatorid; // This is the target user ID (the person we're chatting with)
   const clientid = req.body.clientid; // This is the current user ID (the person logged in)
+
   const mychat = req.body.mychat;
 
 
@@ -123,6 +124,11 @@ const getcurrentChat = async (req, res) => {
       let senderPhoto = photoMap[message.fromid];
       
       if (senderInfo) {
+        const isVip = senderInfo.isVip || false;
+        const vipEndDate = senderInfo.vipEndDate;
+        const isVipActive = isVip && vipEndDate && new Date(vipEndDate) > new Date();
+        
+        
         return {
           id: message.fromid,
           content: message.content,
@@ -132,7 +138,10 @@ const getcurrentChat = async (req, res) => {
           client: message.client,
           coin: message.coin || false,
           files: message.files || [],
-          fileCount: message.fileCount || 0
+          fileCount: message.fileCount || 0,
+          isVip: senderInfo.isVip || false,
+          vipStartDate: senderInfo.vipStartDate,
+          vipEndDate: senderInfo.vipEndDate
         };
       }
       return null;

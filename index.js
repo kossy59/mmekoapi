@@ -208,6 +208,9 @@ app.use("/deletecrush", require("./routes/api/creator/deletecrush"));
 // Block user functionality
 app.use("/block", require("./routes/api/block/blockUser"));
 
+// VIP functionality
+app.use("/vip", require("./routes/api/VIP/upgrade"));
+
 //request
 app.use("/request", require("./routes/api/requestcreator/requestRoutes"));
 app.use("/upload-message-files", require("./routes/api/uploadMessageFiles"));

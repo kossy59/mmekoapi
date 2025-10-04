@@ -88,7 +88,10 @@ const getnotify = async (req, res) => {
           fileCount: latestMessage.fileCount || 0,
           name: notification.sender.firstname,
           photolink: notification.photo?.photoLink || "",
-          unreadCount: notification.unreadCount
+          unreadCount: notification.unreadCount,
+          isVip: notification.sender.isVip || false,
+          vipStartDate: notification.sender.vipStartDate,
+          vipEndDate: notification.sender.vipEndDate
         });
       }
     });

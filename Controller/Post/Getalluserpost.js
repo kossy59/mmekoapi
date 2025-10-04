@@ -12,8 +12,6 @@ const readPost = async (req, res) => {
       .json({ ok: false, message: "Missing required parameter: userid" });
   }
 
-  console.log(`[getalluserPost] Fetching posts for user: ${userid}`);
-
   try {
     let du = await postdb.find({ userid: userid }).exec();
 
@@ -21,8 +19,6 @@ const readPost = async (req, res) => {
     if (!du) {
       du = [];
     }
-
-    console.log(`[getalluserPost] Found ${du.length} posts for user: ${userid}`);
     
     return res.status(200).json({ 
       ok: true, 
@@ -30,7 +26,6 @@ const readPost = async (req, res) => {
       post: du 
     });
   } catch (err) {
-    console.error(`[getalluserPost] Error: ${err.message}`);
     return res.status(500).json({ ok: false, message: `${err.message}!` });
   }
 };

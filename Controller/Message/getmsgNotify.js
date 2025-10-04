@@ -131,7 +131,10 @@ const MsgNotify = async (req, res) => {
           lastname: userInfo.lastname,
           photolink: userPhoto?.photoLink || "",
           unreadCount: conversation.unreadCount,
-          lastActivity: conversation.lastActivity
+          lastActivity: conversation.lastActivity,
+          isVip: userInfo.isVip || false,
+          vipStartDate: userInfo.vipStartDate,
+          vipEndDate: userInfo.vipEndDate
         };
 
         // Add to appropriate arrays based on message direction

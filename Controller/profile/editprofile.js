@@ -11,6 +11,8 @@ const updatePost = async (req,res)=>{
     const state = req.body.state;
     const photolink = req.body.photolink;
     const photoID = req.body.photoID;
+    const deletePhotolink = req.body.deletePhotolink;
+    const deletePhotoID = req.body.deletePhotoID;
 
   
 
@@ -75,6 +77,13 @@ const updatePost = async (req,res)=>{
                 du.photoID = photoID;
             }
 
+            // Handle profile picture deletion
+            if(deletePhotolink || deletePhotoID){
+                // Clear the profile picture fields
+                du.photolink = "";
+                du.photoID = "";
+                console.log("Profile picture deleted for user:", userid);
+            }
 
             // await data.databar.updateDocument(
             //     data.dataid,
