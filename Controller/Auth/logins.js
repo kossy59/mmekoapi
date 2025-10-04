@@ -73,15 +73,15 @@ const handleLogin = async (req, res) => {
       const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET || "NEXT_PUBLIC_SECERET";
       
       const refreshToken = jwt.sign(
-        { UserInfo: { username: user.nickname } },
-        refreshTokenSecret,
+        { UserInfo: { username: user.nickname, userId: user._id.toString() } },
+        process.env.REFRESH_TOKEN_SECRET,
         { expiresIn: "7d" }
       );
 
       const accessToken = jwt.sign(
         { UserInfo: { username: user.nickname, userId: user._id.toString() } },
-        accessTokenSecret,
-        { expiresIn: "15m" }
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: "1d" }
       );
       console.log("ACCESS:", process.env.ACCESS_TOKEN_SECRET);
       console.log("REFRESH:", process.env.REFRESH_TOKEN_SECRET);
@@ -95,7 +95,7 @@ const handleLogin = async (req, res) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 15 * 60 * 1000, // 15 minutes
+        maxAge: 24 * 60 * 60 * 1000, // 1 day
       });
 
       res.cookie("refresh_token", refreshToken, {

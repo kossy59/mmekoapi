@@ -1,123 +1,147 @@
-const documentdb = require("../../Creators/document")
-const admindb = require("../../Creators/admindb")
-const {
-    uploadManyFilesToCloudinary
-} = require("../../utiils/appwrite")
+const documentdb = require("../../Creators/document");
+const admindb = require("../../Creators/admindb");
+const { uploadManyFilesToCloudinary } = require("../../utiils/appwrite");
 
 const createCreator = async (req, res) => {
-    console.log("Trying to verify a form: ", req.body)
-    const data = JSON.parse(req.body.data);
-    console.log("data", data);
+  console.log("Trying to verify a form: ", req.body);
+  const data = JSON.parse(req.body.data);
+  console.log("data", data);
 
-    // If user did not all the needed documents, return an error
-    if (!req.files || req.files.length !== 2) {
-        return res.status(400).json({
-            "ok": false,
-            'message': 'You must upload all documents'
-        })
-    }
+  // Validate files
+  if (!req.files || req.files.length !== 2) {
+    return res.status(400).json({
+      ok: false,
+      message: "You must upload both ID photo and holding ID photo",
+    });
+  }
 
-    // {} object field names
-    const userid = data.userid
-    let firstname = data.firstname
-    let lastname = data.lastname
-    let email = data.email
-    let dob = data.dob
-    let country = data.country
-    let city = data.city
-    let address = data.address
-    let documentType = data.documentType
-    // let holdingIdPhotofile = req.body.holdingIdPhotofile
-    // let idPhotofile = req.body.idPhotofile
-    let idexpire = data.idexpire
+  // Extract fields
+  const {
+    userid,
+    firstname,
+    lastname,
+    email,
+    dob,
+    country,
+    city,
+    address,
+    documentType,
+    idexpire,
+  } = data;
 
-    if (!userid && !firstname && !lastname && !email && !dob && !country && !city && !address && !documentType && !idexpire) {
-        return res.status(400).json({
-            "ok": false,
-            'message': 'user Id invalid!!'
-        })
-    }
+  // Validate required fields
+  if (!userid || !firstname || !lastname || !email || !dob || !country || !city || !address || !documentType || !idexpire) {
+    return res.status(400).json({
+      ok: false,
+      message: "All fields are required",
+    });
+  }
 
-    // console.log("Uploaded documents: ", req.files)
+  // Validate dates
+  const today = new Date();
+  const dobDate = new Date(dob);
+  const idexpireDate = new Date(idexpire);
 
-    /**
-     * This implementation allows for in memory file upload manipulation
-     * This prevents accessing the filesystem of the hosted server
-     */
-    let results = await uploadManyFilesToCloudinary(req.files, `post`);
-     
-    console.log("results from cloudinary: ", results)
+  if (isNaN(dobDate.getTime())) {
+    return res.status(400).json({ ok: false, message: "Invalid Date of Birth" });
+  }
+  if (isNaN(idexpireDate.getTime())) {
+    return res.status(400).json({ ok: false, message: "Invalid ID Expiration Date" });
+  }
+  const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+  if (dobDate > minAgeDate) {
+    return res.status(400).json({ ok: false, message: "You must be at least 18 years old" });
+  }
+  if (idexpireDate < today) {
+    return res.status(400).json({ ok: false, message: "ID expiration date must be in the future" });
+  }
 
-    let holdingIdPhotofile = {}
-    let idPhotofile = {}
+  // Upload files to Cloudinary
+  let results = await uploadManyFilesToCloudinary(req.files, `post`);
+  console.log("results from cloudinary: ", results);
 
-    // Get uploaded file details
-    if (results && results.length > 1) {
-        results.forEach(result => {
-            if (result.filename === "holdingIdPhotofile") {
-                holdingIdPhotofile = {
-                    holdingIdPhotofilelink: result.file_link,
-                    holdingIdPhotofilepublicid: result.public_id,
-                }
-            } else if (result.filename === "idPhotofile") {
-                idPhotofile = {
-                    idPhotofilelink: result.file_link,
-                    idPhotofilepublicid: result.public_id,
-                }
-            }
-        })
-    } else {
-        // The file upload wasn't successful
-        return res.status(400).json({
-            "ok": false,
-            'message': 'Network error. Retry!'
-        })
-    }
+  let holdingIdPhotofile = {};
+  let idPhotofile = {};
 
-    console.log("holdingIdPhotofile: ", holdingIdPhotofile, "idPhotofile: ", idPhotofile)
+  // FIXED: Get the correct file mapping from FormData field names
+  // The files in req.files should maintain their original field names
+  if (req.files && req.files.length >= 2) {
+    // Map files by their field names from FormData
+    req.files.forEach((file, index) => {
+      if (file.fieldname === 'holdingIdPhotofile') {
+        holdingIdPhotofile = {
+          holdingIdPhotofilelink: results[index].file_link,
+          holdingIdPhotofilepublicid: results[index].public_id,
+        };
+      } else if (file.fieldname === 'idPhotofile') {
+        idPhotofile = {
+          idPhotofilelink: results[index].file_link,
+          idPhotofilepublicid: results[index].public_id,
+        };
+      }
+    });
+  } else {
+    return res.status(400).json({
+      ok: false,
+      message: "Network error. Retry!",
+    });
+  }
 
-    try {
-        let document = {
-            userid,
-            firstname,
-            lastname,
-            email,
-            dob,
-            country,
-            city,
-            address,
-            documentType,
-            // holdingIdPhoto,
-            // idPhoto,
-            idexpire,
-            holdingIdPhotofile,
-            idPhotofile,
-        }
+  // Alternative approach if the above doesn't work:
+  // If req.files doesn't have fieldname, use the order from FormData
+  if (Object.keys(holdingIdPhotofile).length === 0 || Object.keys(idPhotofile).length === 0) {
+    console.log("Using alternative file mapping approach");
+    idPhotofile = {
+      idPhotofilelink: results[0].file_link,
+      idPhotofilepublicid: results[0].public_id,
+    };
+    holdingIdPhotofile = {
+      holdingIdPhotofilelink: results[1].file_link,
+      holdingIdPhotofilepublicid: results[1].public_id,
+    };
+  }
 
-        console.log("Document to be submitted: ", document)
+  console.log("holdingIdPhotofile: ", holdingIdPhotofile, "idPhotofile: ", idPhotofile);
 
-        await documentdb.create(document)
+  try {
+    let document = {
+      userid,
+      firstname,
+      lastname,
+      email,
+      dob,
+      country,
+      city,
+      address,
+      documentType,
+      idexpire,
+      holdingIdPhotofile,
+      idPhotofile,
+      createdAt: new Date(), // Added here
+    };
 
-        let respond = {
-            userid: userid,
-            message: `Your Become a creator is under review`,
-            seen: true
-        }
+    console.log("Document to be submitted: ", document);
 
-        await admindb.create(respond)
+    await documentdb.create(document);
 
-        // returns ok true if succefully posted
-        return res.status(200).json({
-            "ok": true,
-            "message": `successfully`
-        })
+    let respond = {
+      userid,
+      message: `Your Become a creator is under review`,
+      seen: true,
+    };
 
-    } catch (err) {
-        return res.status(500).json({
-            "ok": false,
-            'message': `${err.message}!`
-        });
-    }
-}
+    await admindb.create(respond);
 
-module.exports = createCreator
+    return res.status(200).json({
+      ok: true,
+      message: "successfully",
+    });
+  } catch (err) {
+    return res.status(500).json({
+      ok: false,
+      message: `${err.message}!`,
+    });
+  }
+};
+
+module.exports = createCreator;
