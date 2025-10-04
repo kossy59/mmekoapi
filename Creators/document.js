@@ -76,6 +76,11 @@ const markertdata = new Schema({
 
     holdingIdPhotofile: holdingIdPhotofile,
     idPhotofile: idPhotofile,
+
+    createdAt: {
+        type: Date,
+        default: Date.now, 
+    },
 })
 
 module.exports = mongoose.model('Creators_Application', markertdata);
