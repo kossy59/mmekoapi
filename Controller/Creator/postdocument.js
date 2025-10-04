@@ -5,73 +5,106 @@ const { uploadManyFilesToCloudinary } = require("../../utiils/appwrite");
 const createCreator = async (req, res) => {
   console.log("Trying to verify a form: ", req.body);
   const data = JSON.parse(req.body.data);
-  console.log("Parsed data:", data);
+  console.log("data", data);
 
-  // Validate required files
-  if (!req.files || Object.keys(req.files).length !== 2) {
+  // Validate files
+  if (!req.files || req.files.length !== 2) {
     return res.status(400).json({
       ok: false,
-      message: "You must upload both ID photo and selfie with ID",
+      message: "You must upload both ID photo and holding ID photo",
     });
   }
 
-  const { userid, firstname, lastname, email, dob, country, city, address, documentType, idexpire } = data;
+  // Extract fields
+  const {
+    userid,
+    firstname,
+    lastname,
+    email,
+    dob,
+    country,
+    city,
+    address,
+    documentType,
+    idexpire,
+  } = data;
 
+  // Validate required fields
   if (!userid || !firstname || !lastname || !email || !dob || !country || !city || !address || !documentType || !idexpire) {
     return res.status(400).json({
       ok: false,
-      message: "Missing required fields!",
+      message: "All fields are required",
     });
   }
 
-  // Upload files to Cloudinary
-  let results;
-  try {
-    results = await uploadManyFilesToCloudinary(req.files, "post");
-    console.log("Results from Cloudinary:", results);
-  } catch (uploadErr) {
-    console.error("Upload error:", uploadErr);
-    return res.status(500).json({
-      ok: false,
-      message: "Failed to upload files to Cloudinary",
-    });
+  // Validate dates
+  const today = new Date();
+  const dobDate = new Date(dob);
+  const idexpireDate = new Date(idexpire);
+
+  if (isNaN(dobDate.getTime())) {
+    return res.status(400).json({ ok: false, message: "Invalid Date of Birth" });
   }
+  if (isNaN(idexpireDate.getTime())) {
+    return res.status(400).json({ ok: false, message: "Invalid ID Expiration Date" });
+  }
+  const minAgeDate = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+  if (dobDate > minAgeDate) {
+    return res.status(400).json({ ok: false, message: "You must be at least 18 years old" });
+  }
+  if (idexpireDate < today) {
+    return res.status(400).json({ ok: false, message: "ID expiration date must be in the future" });
+  }
+
+  // Upload files to Cloudinary
+  let results = await uploadManyFilesToCloudinary(req.files, `post`);
+  console.log("results from cloudinary: ", results);
 
   let holdingIdPhotofile = {};
   let idPhotofile = {};
 
-  if (results && results.length === 2) {
-    results.forEach((result) => {
-      if (result.filename === "holdingIdPhotofile") {
+  // FIXED: Get the correct file mapping from FormData field names
+  // The files in req.files should maintain their original field names
+  if (req.files && req.files.length >= 2) {
+    // Map files by their field names from FormData
+    req.files.forEach((file, index) => {
+      if (file.fieldname === 'holdingIdPhotofile') {
         holdingIdPhotofile = {
-          holdingIdPhotofilelink: result.file_link,
-          holdingIdPhotofilepublicid: result.public_id,
+          holdingIdPhotofilelink: results[index].file_link,
+          holdingIdPhotofilepublicid: results[index].public_id,
         };
-      } else if (result.filename === "idPhotofile") {
+      } else if (file.fieldname === 'idPhotofile') {
         idPhotofile = {
-          idPhotofilelink: result.file_link,
-          idPhotofilepublicid: result.public_id,
+          idPhotofilelink: results[index].file_link,
+          idPhotofilepublicid: results[index].public_id,
         };
       }
     });
   } else {
     return res.status(400).json({
       ok: false,
-      message: "Invalid file upload response from Cloudinary",
+      message: "Network error. Retry!",
     });
   }
 
-  console.log("holdingIdPhotofile:", holdingIdPhotofile, "idPhotofile:", idPhotofile);
-
-  if (!holdingIdPhotofile.holdingIdPhotofilelink || !idPhotofile.idPhotofilelink) {
-    return res.status(400).json({
-      ok: false,
-      message: "One or more photo links are missing",
-    });
+  // Alternative approach if the above doesn't work:
+  // If req.files doesn't have fieldname, use the order from FormData
+  if (Object.keys(holdingIdPhotofile).length === 0 || Object.keys(idPhotofile).length === 0) {
+    console.log("Using alternative file mapping approach");
+    idPhotofile = {
+      idPhotofilelink: results[0].file_link,
+      idPhotofilepublicid: results[0].public_id,
+    };
+    holdingIdPhotofile = {
+      holdingIdPhotofilelink: results[1].file_link,
+      holdingIdPhotofilepublicid: results[1].public_id,
+    };
   }
+
+  console.log("holdingIdPhotofile: ", holdingIdPhotofile, "idPhotofile: ", idPhotofile);
 
   try {
-    const document = {
+    let document = {
       userid,
       firstname,
       lastname,
@@ -84,13 +117,14 @@ const createCreator = async (req, res) => {
       idexpire,
       holdingIdPhotofile,
       idPhotofile,
+      createdAt: new Date(), // Added here
     };
 
-    console.log("Document to be submitted:", document);
+    console.log("Document to be submitted: ", document);
 
     await documentdb.create(document);
 
-    const respond = {
+    let respond = {
       userid,
       message: `Your Become a creator is under review`,
       seen: true,
@@ -100,10 +134,9 @@ const createCreator = async (req, res) => {
 
     return res.status(200).json({
       ok: true,
-      message: "Successfully submitted",
+      message: "successfully",
     });
   } catch (err) {
-    console.error("Database error:", err);
     return res.status(500).json({
       ok: false,
       message: `${err.message}!`,

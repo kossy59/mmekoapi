@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const rejectDocument = require("../../../Controller/Creator/rejectdocument");
+const rejectdocument = require("../../../Controller/Creator/rejectdocument");
 
 // Reject a model document
-router.post("/reject", rejectDocument);
+router.post("/", rejectdocument);
 
 module.exports = router;
