@@ -66,19 +66,38 @@ const filterBlockedUsers = async (users, currentUserId) => {
     const usersWhoBlockedCurrentUser = await BlockUser.find({ blockedUserId: currentUserId }).select('blockerId').lean();
     const blockedMeIds = new Set(usersWhoBlockedCurrentUser.map(block => block.blockerId.toString()));
 
+    console.log(`🔍 [BLOCK_FILTER] Filtering ${users.length} users for current user ${currentUserId}`);
+    console.log(`🔍 [BLOCK_FILTER] Users blocked by current user: ${blockedByUserIds.size}`);
+    console.log(`🔍 [BLOCK_FILTER] Users who blocked current user: ${blockedMeIds.size}`);
+    
     return users.filter(user => {
-      const userId = user._id.toString();
+      // Handle different user object structures
+      const userId = user._id || user.id || user.userId;
+      
+      // Skip users without valid ID
+      if (!userId) {
+        console.warn('User without valid ID found:', user);
+        return true; // Keep users without IDs (don't filter them out)
+      }
+      
+      const userIdStr = userId.toString();
       
       // Check if current user has blocked this user
-      const hasBlockedUser = blockedByUserIds.has(userId);
+      const hasBlockedUser = blockedByUserIds.has(userIdStr);
       
       // Check if this user has blocked the current user
-      const userBlockedMe = blockedMeIds.has(userId);
+      const userBlockedMe = blockedMeIds.has(userIdStr);
 
       // A user is kept if:
       // 1. The current user has not blocked this user AND
       // 2. This user has not blocked the current user
-      return !(hasBlockedUser || userBlockedMe);
+      const shouldKeep = !(hasBlockedUser || userBlockedMe);
+      
+      if (!shouldKeep) {
+        console.log(`🔍 [BLOCK_FILTER] Filtering out user ${userIdStr} - hasBlockedUser: ${hasBlockedUser}, userBlockedMe: ${userBlockedMe}`);
+      }
+      
+      return shouldKeep;
     });
   } catch (error) {
     console.error('Error filtering blocked users:', error);
@@ -163,10 +182,61 @@ const getBlockedUserIds = async (userId) => {
   }
 };
 
+/**
+ * Filter comments to exclude those from blocked users
+ *
+ * @param {Array<Object>} comments - An array of comment objects
+ * @param {string} currentUserId - The ID of the currently logged-in user
+ * @returns {Promise<Array<Object>>} A new array of comments with blocked users filtered out
+ */
+const filterBlockedComments = async (comments, currentUserId) => {
+  if (!comments || comments.length === 0 || !currentUserId) {
+    return comments;
+  }
+
+  try {
+    // Find all users blocked by the current user
+    const blockedByCurrentUser = await BlockUser.find({ blockerId: currentUserId }).select('blockedUserId').lean();
+    const blockedByUserIds = new Set(blockedByCurrentUser.map(block => block.blockedUserId.toString()));
+
+    // Find all users who have blocked the current user
+    const usersWhoBlockedCurrentUser = await BlockUser.find({ blockedUserId: currentUserId }).select('blockerId').lean();
+    const blockedMeIds = new Set(usersWhoBlockedCurrentUser.map(block => block.blockerId.toString()));
+
+    return comments.filter(comment => {
+      // Handle different comment object structures
+      const commentUserId = comment.userid || comment.userId || comment.user_id;
+      
+      // Skip comments without valid user ID
+      if (!commentUserId) {
+        console.warn('Comment without valid user ID found:', comment);
+        return true; // Keep comments without user IDs (don't filter them out)
+      }
+      
+      const commentUserIdStr = commentUserId.toString();
+      
+      // Check if current user has blocked this commenter
+      const hasBlockedCommenter = blockedByUserIds.has(commentUserIdStr);
+      
+      // Check if this commenter has blocked the current user
+      const commenterBlockedMe = blockedMeIds.has(commentUserIdStr);
+
+      // A comment is kept if:
+      // 1. The current user has not blocked this commenter AND
+      // 2. This commenter has not blocked the current user
+      return !(hasBlockedCommenter || commenterBlockedMe);
+    });
+  } catch (error) {
+    console.error('Error filtering blocked comments:', error);
+    return comments; // Return original comments if filtering fails
+  }
+};
+
 module.exports = {
   filterBlockedMessages,
   filterBlockedUsers,
   addBlockFilterToQuery,
   isUserBlocked,
   getBlockedUserIds,
+  filterBlockedComments,
 };

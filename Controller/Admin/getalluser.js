@@ -1,8 +1,10 @@
 const userdb = require("../../Creators/userdb")
 let admindb = require("../../Creators/admindb")
 let userphoto = require("../../Creators/usercomplete")
+const { filterBlockedUsers } = require("../../utiils/blockFilter")
 
 const updatePost = async (req,res)=>{
+  const userid = req.body.userid;
 
   try{
     let du = await userdb.find({}).exec()
@@ -51,7 +53,12 @@ const updatePost = async (req,res)=>{
     })
     })
 
-  return res.status(200).json({"ok":true,"message":`Fetched all users Successfully`, users: alluser})
+    // Filter out blocked users from the alluser list
+    console.log(`🔍 [GETALLUSERS] Before filtering: ${alluser.length} users for user ${userid}`);
+    const filteredUsers = await filterBlockedUsers(alluser, userid);
+    console.log(`🔍 [GETALLUSERS] After filtering: ${filteredUsers.length} users remaining`);
+
+  return res.status(200).json({"ok":true,"message":`Fetched all users Successfully`, users: filteredUsers})
 
 
 }catch(err){

@@ -3,6 +3,7 @@
 const creators = require("../../Creators/creators")
 let photodb = require("../../Creators/usercomplete")
 let userdb = require("../../Creators/userdb")
+const { filterBlockedUsers } = require("../../utiils/blockFilter")
 
 const createCreator = async (req,res)=>{
 
@@ -69,7 +70,41 @@ const createCreator = async (req,res)=>{
             return res.status(401).json({"ok":false,"message":`No unvrified Host`,hosts:[]})
            }
 
-        return res.status(200).json({ "ok": true, "message": `Creator Fetched successfully`, hosts: host.filter(h => !h?.exclusive_verify)})
+        // Filter out blocked users from the host list
+        // Convert host objects to user-like objects for filtering
+        const hostAsUsers = host.map(h => ({
+          _id: h.userid,
+          id: h.userid,
+          userId: h.userid,
+          ...h
+        }));
+        
+        const filteredHostAsUsers = await filterBlockedUsers(hostAsUsers, userid);
+        
+        // Convert back to host format and apply exclusive_verify filter
+        const filteredHost = filteredHostAsUsers
+          .filter(h => !h?.exclusive_verify)
+          .map(user => ({
+            image: user.image,
+            userid: user.userid,
+            firstname: user.firstname,
+            lastname: user.lastname,
+            email: user.email,
+            dob: user.dob,
+            country: user.country,
+            city: user.city,
+            resident_address: user.resident_address,
+            documentType: user.documentType,
+            holdingIdPhoto: user.holdingIdPhoto,
+            idPhoto: user.idPhoto,
+            idexpire: user.idexpire,
+            id: user.id,
+            username: user.username,
+            address: user.address,
+            ...user
+          }));
+        
+        return res.status(200).json({ "ok": true, "message": `Creator Fetched successfully`, hosts: filteredHost})
       
           
           }catch(err){

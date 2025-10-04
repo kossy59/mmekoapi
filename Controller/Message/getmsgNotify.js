@@ -7,12 +7,8 @@ const { filterBlockedMessages } = require("../../utiils/blockFilter");
 const MsgNotify = async (req, res) => {
   let userid = req.body.userid;
 
-  // Debug logging
-  console.log("🔍 [GETMSGNOTIFY] Received userid:", userid, "Type:", typeof userid);
-
   // Validate userid parameter
   if (!userid || userid === 'undefined' || userid === 'null') {
-    console.log("❌ [GETMSGNOTIFY] Invalid userid:", userid);
     return res.status(400).json({
       ok: false,
       message: "User ID is required",
@@ -51,7 +47,6 @@ const MsgNotify = async (req, res) => {
       
       // Skip messages with invalid user IDs
       if (!otherUserId || otherUserId === 'undefined' || otherUserId === 'null' || typeof otherUserId !== 'string' || otherUserId.length !== 24) {
-        console.log("⚠️ [GETMSGNOTIFY] Skipping message with invalid otherUserId:", otherUserId, "from message:", msg._id);
         return;
       }
       
@@ -89,7 +84,6 @@ const MsgNotify = async (req, res) => {
       id.length === 24
     );
     
-    console.log("🔍 [GETMSGNOTIFY] Filtered user IDs:", allUserIds);
 
     // OPTIMIZED: Batch fetch all user info and photos
     let [allUsers, allPhotos] = await Promise.all([
@@ -169,7 +163,6 @@ const MsgNotify = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("❌ [GETMSGNOTIFY] Error:", err);
     return res.status(500).json({ 
       ok: false, 
       message: "Failed to fetch messages",

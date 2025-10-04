@@ -2,6 +2,7 @@ const followerdb = require("../../Creators/followers");
 const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 const photodb = require("../../Creators/usercomplete");
+const { filterBlockedUsers } = require("../../utiils/blockFilter");
 
 const createCreator = async (req, res) => {
   const userid = req.body.userid;
@@ -103,9 +104,18 @@ const createCreator = async (req, res) => {
       }
     }
 
+    // Filter out blocked users from both followers and following lists
+    const filteredFollowers = await filterBlockedUsers(follows.followers, userid);
+    const filteredFollowing = await filterBlockedUsers(follows.following, userid);
+    
+    const filteredFollows = {
+      followers: filteredFollowers,
+      following: filteredFollowing,
+    };
+
     return res
       .status(200)
-      .json({ ok: true, message: `Fetched followers successfully`, data: follows });
+      .json({ ok: true, message: `Fetched followers successfully`, data: filteredFollows });
   } catch (err) {
     console.log(err);
     return res.status(500).json({ ok: false, message: `${err.message}!` });
