@@ -80,21 +80,41 @@ const filterBlockedPosts = async (posts, currentUserId) => {
     // Get users that current user has blocked
     const blockedUserIds = await getBlockedUserIds(currentUserId);
     
-    if (blockedUserIds.length === 0) {
+    // Get users who have blocked the current user
+    const blockedByUserIds = await getBlockedByUserIds(currentUserId);
+    
+    // Combine both lists for comprehensive filtering
+    const allBlockedUserIds = [...blockedUserIds, ...blockedByUserIds];
+    
+    if (allBlockedUserIds.length === 0) {
       return posts;
     }
 
-    // Filter out posts from blocked users
+    console.log(`🔍 [BLOCKING_UTILS] Filtering ${posts.length} posts for current user ${currentUserId}`);
+    console.log(`🔍 [BLOCKING_UTILS] Users blocked by current user: ${blockedUserIds.length}`);
+    console.log(`🔍 [BLOCKING_UTILS] Users who blocked current user: ${blockedByUserIds.length}`);
+
+    // Filter out posts from blocked users (bidirectional)
     const filteredPosts = posts.filter(post => {
       const postUserId = post.userid || post.user?._id;
       
+      if (!postUserId) {
+        console.warn('Post without valid user ID found:', post);
+        return true; // Keep posts without user IDs
+      }
+      
       // Convert both to strings for comparison
       const postUserIdStr = String(postUserId);
-      const isBlocked = blockedUserIds.some(blockedId => String(blockedId) === postUserIdStr);
+      const isBlocked = allBlockedUserIds.some(blockedId => String(blockedId) === postUserIdStr);
+      
+      if (isBlocked) {
+        console.log(`🔍 [BLOCKING_UTILS] Filtering out post from user ${postUserIdStr}`);
+      }
       
       return !isBlocked;
     });
     
+    console.log(`🔍 [BLOCKING_UTILS] After filtering: ${filteredPosts.length} posts remaining`);
     return filteredPosts;
   } catch (error) {
     console.error('[BlockingUtils] Error filtering blocked posts:', error);
