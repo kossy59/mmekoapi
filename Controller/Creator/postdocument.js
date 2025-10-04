@@ -1,123 +1,114 @@
-const documentdb = require("../../Creators/document")
-const admindb = require("../../Creators/admindb")
-const {
-    uploadManyFilesToCloudinary
-} = require("../../utiils/appwrite")
+const documentdb = require("../../Creators/document");
+const admindb = require("../../Creators/admindb");
+const { uploadManyFilesToCloudinary } = require("../../utiils/appwrite");
 
 const createCreator = async (req, res) => {
-    console.log("Trying to verify a form: ", req.body)
-    const data = JSON.parse(req.body.data);
-    console.log("data", data);
+  console.log("Trying to verify a form: ", req.body);
+  const data = JSON.parse(req.body.data);
+  console.log("Parsed data:", data);
 
-    // If user did not all the needed documents, return an error
-    if (!req.files || req.files.length !== 2) {
-        return res.status(400).json({
-            "ok": false,
-            'message': 'You must upload all documents'
-        })
-    }
+  // Validate required files
+  if (!req.files || Object.keys(req.files).length !== 2) {
+    return res.status(400).json({
+      ok: false,
+      message: "You must upload both ID photo and selfie with ID",
+    });
+  }
 
-    // {} object field names
-    const userid = data.userid
-    let firstname = data.firstname
-    let lastname = data.lastname
-    let email = data.email
-    let dob = data.dob
-    let country = data.country
-    let city = data.city
-    let address = data.address
-    let documentType = data.documentType
-    // let holdingIdPhotofile = req.body.holdingIdPhotofile
-    // let idPhotofile = req.body.idPhotofile
-    let idexpire = data.idexpire
+  const { userid, firstname, lastname, email, dob, country, city, address, documentType, idexpire } = data;
 
-    if (!userid && !firstname && !lastname && !email && !dob && !country && !city && !address && !documentType && !idexpire) {
-        return res.status(400).json({
-            "ok": false,
-            'message': 'user Id invalid!!'
-        })
-    }
+  if (!userid || !firstname || !lastname || !email || !dob || !country || !city || !address || !documentType || !idexpire) {
+    return res.status(400).json({
+      ok: false,
+      message: "Missing required fields!",
+    });
+  }
 
-    // console.log("Uploaded documents: ", req.files)
+  // Upload files to Cloudinary
+  let results;
+  try {
+    results = await uploadManyFilesToCloudinary(req.files, "post");
+    console.log("Results from Cloudinary:", results);
+  } catch (uploadErr) {
+    console.error("Upload error:", uploadErr);
+    return res.status(500).json({
+      ok: false,
+      message: "Failed to upload files to Cloudinary",
+    });
+  }
 
-    /**
-     * This implementation allows for in memory file upload manipulation
-     * This prevents accessing the filesystem of the hosted server
-     */
-    let results = await uploadManyFilesToCloudinary(req.files, `post`);
-     
-    console.log("results from cloudinary: ", results)
+  let holdingIdPhotofile = {};
+  let idPhotofile = {};
 
-    let holdingIdPhotofile = {}
-    let idPhotofile = {}
+  if (results && results.length === 2) {
+    results.forEach((result) => {
+      if (result.filename === "holdingIdPhotofile") {
+        holdingIdPhotofile = {
+          holdingIdPhotofilelink: result.file_link,
+          holdingIdPhotofilepublicid: result.public_id,
+        };
+      } else if (result.filename === "idPhotofile") {
+        idPhotofile = {
+          idPhotofilelink: result.file_link,
+          idPhotofilepublicid: result.public_id,
+        };
+      }
+    });
+  } else {
+    return res.status(400).json({
+      ok: false,
+      message: "Invalid file upload response from Cloudinary",
+    });
+  }
 
-    // Get uploaded file details
-    if (results && results.length > 1) {
-        results.forEach(result => {
-            if (result.filename === "holdingIdPhotofile") {
-                holdingIdPhotofile = {
-                    holdingIdPhotofilelink: result.file_link,
-                    holdingIdPhotofilepublicid: result.public_id,
-                }
-            } else if (result.filename === "idPhotofile") {
-                idPhotofile = {
-                    idPhotofilelink: result.file_link,
-                    idPhotofilepublicid: result.public_id,
-                }
-            }
-        })
-    } else {
-        // The file upload wasn't successful
-        return res.status(400).json({
-            "ok": false,
-            'message': 'Network error. Retry!'
-        })
-    }
+  console.log("holdingIdPhotofile:", holdingIdPhotofile, "idPhotofile:", idPhotofile);
 
-    console.log("holdingIdPhotofile: ", holdingIdPhotofile, "idPhotofile: ", idPhotofile)
+  if (!holdingIdPhotofile.holdingIdPhotofilelink || !idPhotofile.idPhotofilelink) {
+    return res.status(400).json({
+      ok: false,
+      message: "One or more photo links are missing",
+    });
+  }
 
-    try {
-        let document = {
-            userid,
-            firstname,
-            lastname,
-            email,
-            dob,
-            country,
-            city,
-            address,
-            documentType,
-            //holdingIdPhotofile,
-            //idPhoto,
-            idexpire,
-            holdingIdPhotofile,
-            idPhotofile,
-        }
+  try {
+    const document = {
+      userid,
+      firstname,
+      lastname,
+      email,
+      dob,
+      country,
+      city,
+      address,
+      documentType,
+      idexpire,
+      holdingIdPhotofile,
+      idPhotofile,
+    };
 
-        console.log("Document to be submitted: ", document)
+    console.log("Document to be submitted:", document);
 
-        await documentdb.create(document)
+    await documentdb.create(document);
 
-        let respond = {
-            userid: userid,
-            message: `Your Become a creator is under review`,
-            seen: true
-        }
+    const respond = {
+      userid,
+      message: `Your Become a creator is under review`,
+      seen: true,
+    };
 
-        await admindb.create(respond)
+    await admindb.create(respond);
 
-        // returns ok true if succefully posted
-        return res.status(200).json({
-            "ok": true,
-            "message": `successfully`
-        })
+    return res.status(200).json({
+      ok: true,
+      message: "Successfully submitted",
+    });
+  } catch (err) {
+    console.error("Database error:", err);
+    return res.status(500).json({
+      ok: false,
+      message: `${err.message}!`,
+    });
+  }
+};
 
-    } catch (err) {
-        return res.status(500).json({
-            "ok": false,
-            'message': `${err.message}!`
-        });
-    }
-}
-
-module.exports = createCreator
+module.exports = createCreator;
