@@ -16,11 +16,11 @@ const createLike = async (req, res) => {
 
   //let data = await connectdatabase()
 
-  let creator_listing = await creatordb.findOne({ userid: userid }).exec();
+  let creator_portfolio = await creatordb.findOne({ userid: userid }).exec();
   let users = [];
-  if (creator_listing) {
+  if (creator_portfolio) {
     console.log("this is creator");
-    users = await bookingdb.find({ creatorid: creator_listing._id }).exec();
+    users = await bookingdb.find({ creatorid: creator_portfolio._id }).exec();
     console.log("this is creator not " + users.length);
   }
 

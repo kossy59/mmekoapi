@@ -306,7 +306,7 @@
       "name": "Creator",
       "item": [
         {
-          "name": "Create Listing (Multipart with Refresh Token)",
+          "name": "Create Portfolio (Multipart with Refresh Token)",
           "request": {
             "method": "PUT",
             "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }] },

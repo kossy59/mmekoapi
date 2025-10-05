@@ -36,7 +36,7 @@ const createCreator = async (req, res) => {
       });
     }
     const user = (await userdb.findOne({ _id: currentuser.userid }).exec() || await userdb.findOne({ creatorId: hostid }).exec());
-    user.creator_listing = false
+    user.creator_portfolio = false
     user.creatorId = "";
     user.creatorID = "";
     await user.save()

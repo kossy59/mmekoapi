@@ -86,7 +86,7 @@ const pendingUser = new Scheme(
       type: String,
       required: false,
     },
-    creator_listing: {
+    creator_portfolio: {
       type: Boolean,
       required: false,
       default: false,

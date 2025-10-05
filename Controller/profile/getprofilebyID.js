@@ -73,7 +73,7 @@ const readProfile = async (req, res) => {
       joined_month: `${du._id.getTimestamp().getMonth()}`,
       joined_year: `${du._id.getTimestamp().getFullYear()}`,
       following: du?.following.includes(clientid),
-      creator_listing: false,
+      creator_portfolio: false,
       creatorid: "",
       creatortype: "",
       dob: dob,
@@ -141,16 +141,16 @@ const readProfile = async (req, res) => {
     //   }
     // }
 
-    let creator_listing = await creatordb
+    let creator_portfolio = await creatordb
       .findOne({
         userid: userid,
       })
       .exec();
 
-    if (creator_listing) {
-      user.creator_listing = true;
-      user.creatorid = creator_listing._id;
-      user.creatortype = creator_listing.hosttype;
+    if (creator_portfolio) {
+      user.creator_portfolio = true;
+      user.creatorid = creator_portfolio._id;
+      user.creatortype = creator_portfolio.hosttype;
     }
 
     if (postDB.length > 0) {

@@ -119,7 +119,7 @@ const createCreator = async (req, res) => {
 
     await currentuser
       .updateOne({
-        creator_listing: true,
+        creator_portfolio: true,
         creatorId: newCreator._id,
         creatorID: newCreator._id,
       })
