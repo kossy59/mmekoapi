@@ -13,26 +13,26 @@ const processAutoRenewal = async () => {
     console.log(`Found ${expiredVipUsers.length} expired VIP users to check for auto-renewal`);
 
     for (const user of expiredVipUsers) {
-      const requiredCoins = 10; // Same as upgrade requirement
-      const userCoins = user.coinBalance || 0;
+      const requiredGold = 250; // Same as upgrade requirement
+      const userGold = user.balance || 0;
 
-      if (userCoins >= requiredCoins) {
-        // User has enough coins, renew VIP
-        user.coinBalance = userCoins - requiredCoins;
+      if (userGold >= requiredGold) {
+        // User has enough gold, renew VIP
+        user.balance = userGold - requiredGold;
         
-        // Extend VIP for 2 minutes (for testing)
+        // Extend VIP for 30 days
         const newEndDate = new Date();
-        newEndDate.setMinutes(newEndDate.getMinutes() + 2);
+        newEndDate.setDate(newEndDate.getDate() + 30);
         user.vipEndDate = newEndDate;
 
         await user.save();
         console.log(`Auto-renewed VIP for user ${user._id}. New end date: ${newEndDate}`);
       } else {
-        // User doesn't have enough coins, disable VIP
+        // User doesn't have enough gold, disable VIP
         user.isVip = false;
         user.vipAutoRenewal = false;
         await user.save();
-        console.log(`Disabled VIP for user ${user._id} due to insufficient coins`);
+        console.log(`Disabled VIP for user ${user._id} due to insufficient gold`);
       }
     }
 

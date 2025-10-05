@@ -21,24 +21,24 @@ const upgradeToVip = async (req, res) => {
       });
     }
 
-    // Check if user has enough coins (hardcoded requirement: 10 coins)
-    const requiredCoins = 10;
-    const userCoins = user.coinBalance || 0;
+    // Check if user has enough gold (hardcoded requirement: 250 gold)
+    const requiredGold = 250;
+    const userGold = user.balance || 0;
     
-    if (userCoins < requiredCoins) {
+    if (userGold < requiredGold) {
       return res.status(400).json({
         ok: false,
-        message: `Insufficient coins. You need ${requiredCoins} coins to upgrade to VIP. You have ${userCoins} coins.`
+        message: `Insufficient gold. You need ${requiredGold} gold to upgrade to VIP. You have ${userGold} gold.`
       });
     }
 
-    // Deduct coins from user's balance
-    user.coinBalance = userCoins - requiredCoins;
+    // Deduct gold from user's balance
+    user.balance = userGold - requiredGold;
 
-    // Calculate VIP dates (using minutes for testing)
+    // Calculate VIP dates (30 days)
     const startDate = new Date();
     const endDate = new Date();
-    endDate.setMinutes(endDate.getMinutes() + duration);
+    endDate.setDate(endDate.getDate() + 30);
 
     // Update user with VIP status
     user.isVip = true;
@@ -57,7 +57,7 @@ const upgradeToVip = async (req, res) => {
         vipEndDate: user.vipEndDate,
         daysRemaining: Math.ceil((user.vipEndDate - new Date()) / (1000 * 60 * 60 * 24)),
         autoRenewal: user.vipAutoRenewal,
-        coinBalance: user.coinBalance
+        goldBalance: user.balance
       }
     });
 
@@ -108,7 +108,7 @@ const checkVipStatus = async (req, res) => {
       vipEndDate: user.vipEndDate,
       daysRemaining,
       autoRenewal: user.vipAutoRenewal || false,
-      coinBalance: user.coinBalance || 0
+      goldBalance: user.balance || 0
     };
 
     return res.status(200).json({
