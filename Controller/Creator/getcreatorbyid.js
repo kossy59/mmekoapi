@@ -24,7 +24,6 @@ const createCreator = async (req, res) => {
     //   return value.$id === hostid
     //  })
     const allCreators = await creators.find({}).exec();
-    console.log("all creators ", allCreators);
     let currentuser = await creators
       .findOne({
         "_id": hostid,
@@ -58,7 +57,6 @@ const createCreator = async (req, res) => {
       })
       .exec();
 
-    console.log("currentuser.creatorfiles: ", currentuser.creatorfiles);
     const photolink = currentuser.creatorfiles.map((photolink) => {
       return photolink?.creatorfilelink;
     });
