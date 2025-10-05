@@ -40,7 +40,7 @@ const createCreator = async (req, res) => {
   if (!currentuser) {
     return res.status(409).json({
       ok: false,
-      message: `User can not edit creator`,
+      message: `User can not edit portfolio`,
     });
   }
 

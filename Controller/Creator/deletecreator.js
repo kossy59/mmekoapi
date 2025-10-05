@@ -32,7 +32,7 @@ const createCreator = async (req, res) => {
     if (!currentuser) {
       return res.status(409).json({
         ok: false,
-        message: `user can not edit creator`,
+        message: `user can not edit portfolio`,
       });
     }
     const user = (await userdb.findOne({ _id: currentuser.userid }).exec() || await userdb.findOne({ creatorId: hostid }).exec());
