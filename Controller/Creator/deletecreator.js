@@ -54,7 +54,7 @@ const createCreator = async (req, res) => {
       currentuser.creatorfiles.forEach(async (creatorfile) => {
         const id = creatorfile.creatorfilepublicid;
         if (creatorfile.creatorfilepublicid) {
-          await deleteFile(id, "creator");
+          await deleteFile(id, "post");
         }
       });
     }

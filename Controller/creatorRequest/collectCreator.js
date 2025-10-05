@@ -54,7 +54,7 @@ const createUsercreator = async (req, res) => {
     );
     const selfieUpload = await appwriteHelper.uploadSingleFileToCloudinary(
       req.files.selfieWithId[0],
-      "creator"
+      "post"
     );
     console.log(idPhotoUpload, selfieUpload);
 

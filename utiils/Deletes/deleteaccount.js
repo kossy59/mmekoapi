@@ -101,7 +101,7 @@ let deletedbs = async(userid)=>{
 
         for(let i = 0; i < images.length; i++){
          try{
-            await deleteImage("creator",images[i])
+            await deleteImage("post",images[i])
          }catch{
            console.log("failed deleting creator")
          }

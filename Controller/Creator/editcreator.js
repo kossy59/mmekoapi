@@ -2,9 +2,15 @@ const creators = require("../../Creators/creators");
 const { updateManyFileToCloudinary } = require("../../utiils/appwrite");
 
 const createCreator = async (req, res) => {
-  console.log("req.body.data", req.body.data);
-  const data = JSON.parse(req.body.data);
-  console.log("data", data);
+  // Handle data from FormData (individual fields) or JSON string
+  let data;
+  if (req.body.data) {
+    // If data is sent as JSON string
+    data = JSON.parse(req.body.data);
+  } else {
+    // If data is sent as individual form fields
+    data = req.body;
+  }
 
   let hostid = data.hostid;
   let age = data.age;
@@ -22,6 +28,40 @@ const createCreator = async (req, res) => {
   let daysava = data.daysava;
   let drink = data.drink;
   let hosttype = data.hosttype;
+  let name = data.name; // Add name field
+  let userId = data.userId; // Add userId field
+  let creatorId = data.creatorId; // Add creatorId field
+
+  // Handle array fields properly (FormData sends arrays as multiple fields with same name)
+  if (Array.isArray(data.interestedin)) {
+    interestedin = data.interestedin;
+  } else if (typeof data.interestedin === 'string') {
+    try {
+      interestedin = JSON.parse(data.interestedin);
+    } catch (e) {
+      interestedin = [data.interestedin];
+    }
+  }
+
+  if (Array.isArray(data.timeava)) {
+    timeava = data.timeava;
+  } else if (typeof data.timeava === 'string') {
+    try {
+      timeava = JSON.parse(data.timeava);
+    } catch (e) {
+      timeava = [data.timeava];
+    }
+  }
+
+  if (Array.isArray(data.daysava)) {
+    daysava = data.daysava;
+  } else if (typeof data.daysava === 'string') {
+    try {
+      daysava = JSON.parse(data.daysava);
+    } catch (e) {
+      daysava = [data.daysava];
+    }
+  }
   // photolink = data.photolink
 
   if (!hostid) {
@@ -61,10 +101,8 @@ const createCreator = async (req, res) => {
   let results = [];
 
   if (req.files || req.files.length > 2) {
-    results = await updateManyFileToCloudinary(publicIDs, req.files, "creator");
+    results = await updateManyFileToCloudinary(publicIDs, req.files, "post");
   } 
-
-  console.log("results: ", results);
 
   let creatorfiles = [];
 
@@ -78,8 +116,6 @@ const createCreator = async (req, res) => {
     });
     creatorfiles = databaseReady;
   }
-
-  console.log("creatorfiles: ", creatorfiles);
 
   //let data = await connectdatabase()
 
@@ -151,6 +187,7 @@ const createCreator = async (req, res) => {
       currentuser.creatorfiles = initialCreatorFiles;
     }
 
+    currentuser.name = name || currentuser.name; // Update name if provided
     currentuser.age = age;
     currentuser.location = location;
     currentuser.price = price;
