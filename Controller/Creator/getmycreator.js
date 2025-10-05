@@ -1,19 +1,20 @@
 const creators = require("../../Creators/creators");
 
 const getMyCreator = async (req, res) => {
-  const userid = req.body.userid;
+  const userid = req.body?.userid;
 
   if (!userid) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
   }
 
   try {
-    let currentuser = await creators.find({ userid: userid }).exec();
+    // Get all creators for all users (public directory)
+    let currentuser = await creators.find({}).exec();
 
     if (!currentuser || currentuser.length === 0) {
       return res
         .status(200)
-        .json({ ok: false, message: `User host empty`, host: [] });
+        .json({ ok: false, message: `No creators found`, host: [] });
     }
 
     const host = currentuser.map((creator) => {
