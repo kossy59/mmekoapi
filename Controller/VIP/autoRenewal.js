@@ -13,7 +13,7 @@ const processAutoRenewal = async () => {
     console.log(`Found ${expiredVipUsers.length} expired VIP users to check for auto-renewal`);
 
     for (const user of expiredVipUsers) {
-      const requiredGold = 250; // Same as upgrade requirement
+      const requiredGold = 100; // Same as upgrade requirement
       const userGold = user.balance || 0;
 
       if (userGold >= requiredGold) {

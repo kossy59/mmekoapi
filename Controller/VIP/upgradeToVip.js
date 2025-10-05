@@ -21,8 +21,8 @@ const upgradeToVip = async (req, res) => {
       });
     }
 
-    // Check if user has enough gold (hardcoded requirement: 250 gold)
-    const requiredGold = 250;
+    // Check if user has enough gold (hardcoded requirement: 100 gold)
+    const requiredGold = 100;
     const userGold = user.balance || 0;
     
     if (userGold < requiredGold) {
