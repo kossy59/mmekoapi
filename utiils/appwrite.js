@@ -41,11 +41,41 @@ const storage = new sdk.Storage(client);
 // -----------------------------
 // Utils
 // -----------------------------
-const getFileViewUrl = (fileId, bucket = BUCKET_ID) =>
-  `${ENDPOINT}/storage/buckets/${bucket}/files/${fileId}/view?project=${PROJECT_ID}`;
+const getFileViewUrl = (fileId, bucket = BUCKET_ID) => {
+  // Use environment-agnostic URL construction
+  const endpoint = process.env.APPWRITE_ENDPOINT || "https://cloud.appwrite.io/v1";
+  const projectId = process.env.APPWRITE_PROJECT_ID;
+  
+  console.log(`[getFileViewUrl] Environment variables:`, {
+    endpoint,
+    projectId,
+    bucket,
+    fileId
+  });
+  
+  if (!projectId) {
+    console.error("[Appwrite] Missing APPWRITE_PROJECT_ID environment variable");
+    return "";
+  }
+  
+  const url = `${endpoint}/storage/buckets/${bucket}/files/${fileId}/view?project=${projectId}`;
+  console.log(`[getFileViewUrl] Generated URL:`, url);
+  
+  return url;
+};
 
-const getFileDownloadUrl = (fileId, bucket = BUCKET_ID) =>
-  `${ENDPOINT}/storage/buckets/${bucket}/files/${fileId}/download?project=${PROJECT_ID}`;
+const getFileDownloadUrl = (fileId, bucket = BUCKET_ID) => {
+  // Use environment-agnostic URL construction
+  const endpoint = process.env.APPWRITE_ENDPOINT || "https://cloud.appwrite.io/v1";
+  const projectId = process.env.APPWRITE_PROJECT_ID;
+  
+  if (!projectId) {
+    console.error("[Appwrite] Missing APPWRITE_PROJECT_ID environment variable");
+    return "";
+  }
+  
+  return `${endpoint}/storage/buckets/${bucket}/files/${fileId}/download?project=${projectId}`;
+};
 
 const restHeaders = (extra = {}) => ({
   ...extra,
@@ -137,9 +167,12 @@ async function saveFile(file /* not used */, filePath, folder = BUCKET_ID) {
       fs.unlinkSync(filePath);
     } catch (_) {}
 
+    const fileUrl = getFileViewUrl(resp.data.$id, bucket);
+    console.log(`[saveFile] Generated URL for ${originalname}:`, fileUrl);
+    
     return {
       public_id: resp.data.$id,
-      file_link: getFileViewUrl(resp.data.$id, bucket),
+      file_link: fileUrl,
     };
   } catch (error) {
     console.error(
@@ -181,9 +214,12 @@ async function uploadSingleFileToCloudinary(file, folder = BUCKET_ID) {
       headers: restHeaders(form.getHeaders()),
     });
 
+    const fileUrl = getFileViewUrl(resp.data.$id, bucket);
+    console.log(`[uploadSingleFileToAppwrite] Generated URL for ${file.originalname}:`, fileUrl);
+
     return {
       public_id: resp.data.$id,
-      file_link: getFileViewUrl(resp.data.$id, bucket),
+      file_link: fileUrl,
     };
   } catch (error) {
     console.error(
@@ -227,9 +263,12 @@ async function uploadManyFilesToCloudinary(files, folder = BUCKET_ID) {
           headers: restHeaders(form.getHeaders()),
         });
 
+        const fileUrl = getFileViewUrl(resp.data.$id, bucket);
+        console.log(`[uploadManyFilesToAppwrite] Generated URL for ${file.originalname}:`, fileUrl);
+        
         return {
           public_id: resp.data.$id,
-          file_link: getFileViewUrl(resp.data.$id, bucket),
+          file_link: fileUrl,
           filename: file.originalname,
         };
       } catch (error) {

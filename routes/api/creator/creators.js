@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router();
-const createcreator = require('../../../Controller/Creator/newcreator');
+const createCreator = require('../../../Controller/Creator/newcreator');
 const getmycreator = require('../../../Controller/Creator/getmycreator')
 const multer = require('multer')
 const handleRefresh = require('../../../Middleware/refresh')
@@ -14,7 +14,7 @@ const upload = multer({ storage });
  * Without this, authorization fails!
  */
 router.route('/')
-.put(upload.any(),/** handleRefresh ,*/ createcreator)
+.put(upload.any(),/** handleRefresh ,*/ createCreator)
 .post(getmycreator)
 
 

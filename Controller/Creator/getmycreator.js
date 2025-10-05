@@ -1,4 +1,5 @@
 const creators = require("../../Creators/creators");
+const userdb = require("../../Creators/userdb");
 
 const getMyCreator = async (req, res) => {
   const userid = req.body?.userid;
@@ -17,7 +18,14 @@ const getMyCreator = async (req, res) => {
         .json({ ok: false, message: `No creators found`, host: [] });
     }
 
-    const host = currentuser.map((creator) => {
+    const host = await Promise.all(currentuser.map(async (creator) => {
+      console.log(`🔍 [GETMYCREATOR] Processing creator:`, {
+        _id: creator._id,
+        name: creator.name,
+        userid: creator.userid,
+        allFields: Object.keys(creator.toObject ? creator.toObject() : creator)
+      });
+
       // Ensure creatorfiles always has the photolink entries
       let creatorfiles = creator.creatorfiles || [];
       if (creator.photolink && creator.photolink.length) {
@@ -33,8 +41,48 @@ const getMyCreator = async (req, res) => {
 
       const photolink = creatorfiles.map((f) => f.creatorfilelink);
 
+      // Get VIP status from user data
+      let vipStatus = { isVip: false, vipEndDate: null };
+      
+      // Try different possible userid field names
+      const possibleUserIds = [
+        creator.userid,
+        creator.userId,
+        creator.user_id,
+        creator.ownerId,
+        creator.owner_id,
+        creator.hostid,
+        creator.host_id
+      ].filter(Boolean);
+      
+      console.log(`🔍 [GETMYCREATOR] Possible user IDs for ${creator.name}:`, possibleUserIds);
+      
+      for (const userId of possibleUserIds) {
+        try {
+          console.log(`🔍 [GETMYCREATOR] Looking up VIP status for userid: ${userId}`);
+          const user = await userdb.findOne({ _id: userId }).exec();
+          if (user) {
+            vipStatus = {
+              isVip: user.isVip || false,
+              vipEndDate: user.vipEndDate || null
+            };
+            console.log(`🦁 [GETMYCREATOR] VIP Status for ${creator.name} (${userId}):`, vipStatus);
+            break; // Found user, stop looking
+          } else {
+            console.log(`❌ [GETMYCREATOR] User not found with userid: ${userId}`);
+          }
+        } catch (error) {
+          console.log(`❌ [GETMYCREATOR] Error fetching VIP status for user ${userId}:`, error);
+        }
+      }
+      
+      if (!vipStatus.isVip && possibleUserIds.length === 0) {
+        console.log(`❌ [GETMYCREATOR] No userid found for creator ${creator.name}`);
+      }
+
       return {
         hostid: creator._id,
+        userid: possibleUserIds[0] || creator.userid, // Include userid for frontend
         photolink,
         creatorfiles, // full files info
         verify: creator.verify,
@@ -55,9 +103,17 @@ const getMyCreator = async (req, res) => {
         daysava: creator.daysava,
         hosttype: creator.hosttype,
         document: creator.document,
+        createdAt: creator.createdAt,
+        updatedAt: creator.updatedAt,
+        // Include VIP status
+        isVip: vipStatus.isVip,
+        vipEndDate: vipStatus.vipEndDate,
       };
-    });
+    }));
 
+    console.log(`📊 [GETMYCREATOR] Returning ${host.length} creators with VIP status`);
+    console.log(`🦁 [GETMYCREATOR] VIP Status Summary:`, host.map(h => ({ name: h.name, userid: h.userid, isVip: h.isVip, vipEndDate: h.vipEndDate })));
+    
     return res
       .status(200)
       .json({ ok: true, message: `Creator fetched successfully`, host });

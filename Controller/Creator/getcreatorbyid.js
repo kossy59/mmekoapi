@@ -57,9 +57,13 @@ const createCreator = async (req, res) => {
       })
       .exec();
 
-    const photolink = currentuser.creatorfiles.map((photolink) => {
-      return photolink?.creatorfilelink;
-    });
+    console.log("🔍 Backend - creatorfiles:", currentuser.creatorfiles);
+    const photolink = currentuser.creatorfiles
+      .map((photolink) => {
+        return photolink?.creatorfilelink;
+      })
+      .filter((link) => link && link.trim() !== ""); // Filter out null/undefined/empty links
+    console.log("🔍 Backend - photolink after filtering:", photolink);
     const isFollowingUser = modState.followers.includes(userid);
 
     let host = {
@@ -88,6 +92,8 @@ const createCreator = async (req, res) => {
       active: modState.active,
       followingUser: isFollowingUser,
       views: currentuser.views.length,
+      createdAt: currentuser.createdAt,
+      updatedAt: currentuser.updatedAt,
     };
 
     //console.log("this is host "+host)
