@@ -3,6 +3,7 @@ const userdb = require("../../Creators/userdb");
 const { uploadManyFilesToCloudinary } = require("../../utiils/appwrite");
 
 const createCreator = async (req, res) => {
+  console.log("🔥 [createCreator] Function called - starting");
   console.log("req.body.data", req.body.data);
   const data = req.body;
   console.log("data", data);
@@ -50,6 +51,14 @@ const createCreator = async (req, res) => {
    */
   const filesCount = Array.isArray(req.files) ? req.files.length : 0;
   console.log("[createCreator] Incoming files count:", filesCount);
+  console.log("[createCreator] req.files:", req.files);
+  console.log("[createCreator] req.files details:", req.files?.map(f => ({
+    originalname: f.originalname,
+    mimetype: f.mimetype,
+    size: f.size,
+    fieldname: f.fieldname
+  })));
+  console.log("[createCreator] photolink from data:", photolink);
 
   if (!filesCount && !currentuser?.exclusive_verify && !photolink.length) {
     return res.status(400).json({
@@ -59,10 +68,12 @@ const createCreator = async (req, res) => {
   }
 
   // Upload new files if not exclusive
+  console.log("[createCreator] About to upload files:", req.files?.map(f => f.originalname));
   const results = currentuser?.exclusive_verify
     ? []
     : (await uploadManyFilesToCloudinary(req.files)) || [];
 
+  console.log("[createCreator] Upload results:", results);
   console.log("Uploader succeeded");
 
   // Merge uploaded files with any photolinks passed from frontend
@@ -73,13 +84,16 @@ const createCreator = async (req, res) => {
       creatorfilepublicid: result.public_id,
     }));
 
-  // Merge photolinks that might have been passed directly in the request
-  const photolinksFromReq = photolink.map((link) => ({
-    creatorfilelink: link,
-    creatorfilepublicid: null,
-  }));
-
-  const creatorfiles = [...uploadedFiles, ...photolinksFromReq];
+  // Only use photolinks from request if no files were uploaded
+  let creatorfiles = uploadedFiles;
+  
+  if (uploadedFiles.length === 0 && photolink.length > 0) {
+    const photolinksFromReq = photolink.map((link) => ({
+      creatorfilelink: link,
+      creatorfilepublicid: null,
+    }));
+    creatorfiles = photolinksFromReq;
+  }
 
   if (!creatorfiles.length && !currentuser?.exclusive_verify) {
     return res.status(400).json({

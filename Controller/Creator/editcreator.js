@@ -100,7 +100,7 @@ const createCreator = async (req, res) => {
    */
   let results = [];
 
-  if (req.files || req.files.length > 2) {
+  if (req.files && req.files.length > 0) {
     results = await updateManyFileToCloudinary(publicIDs, req.files, "post");
   } 
 

@@ -7,9 +7,6 @@ const postexclusive = async (req, res) => {
 
     let userid = req.body.userid;
 
-    console.log("my userID " + userid)
-    
-
     if (!userid) {
         return res.status(400).json({ "ok": false, 'message': 'Invalid exclusive ID!!' })
     }
