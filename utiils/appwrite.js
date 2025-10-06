@@ -19,7 +19,7 @@ const ENDPOINT =
   process.env.APPWRITE_ENDPOINT || "https://cloud.appwrite.io/v1";
 const PROJECT_ID = process.env.APPWRITE_PROJECT_ID; // required
 const APPWRITE_API_KEY = process.env.APPWRITE_API_KEY; // required
-const BUCKET_ID = process.env.APPWRITE_BUCKET_ID || "post";
+const BUCKET_ID = "post"; // Force use of "post" bucket
 
 if (!PROJECT_ID || !APPWRITE_API_KEY || !BUCKET_ID) {
   // Fail fast so you notice misconfigurations early.

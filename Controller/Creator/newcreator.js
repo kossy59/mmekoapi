@@ -3,10 +3,7 @@ const userdb = require("../../Creators/userdb");
 const { uploadManyFilesToCloudinary } = require("../../utiils/appwrite");
 
 const createCreator = async (req, res) => {
-  console.log("🔥 [createCreator] Function called - starting");
-  console.log("req.body.data", req.body.data);
   const data = req.body;
-  console.log("data", data);
 
   const userid = data.userid;
   const name = data.name;
@@ -50,31 +47,19 @@ const createCreator = async (req, res) => {
    * Validate incoming files and upload using in-memory buffers
    */
   const filesCount = Array.isArray(req.files) ? req.files.length : 0;
-  console.log("[createCreator] Incoming files count:", filesCount);
-  console.log("[createCreator] req.files:", req.files);
-  console.log("[createCreator] req.files details:", req.files?.map(f => ({
-    originalname: f.originalname,
-    mimetype: f.mimetype,
-    size: f.size,
-    fieldname: f.fieldname
-  })));
-  console.log("[createCreator] photolink from data:", photolink);
 
-  if (!filesCount && !currentuser?.exclusive_verify && !photolink.length) {
+  // Require files for all users, regardless of exclusive_verify status
+  if (!filesCount && !photolink.length) {
     return res.status(400).json({
       ok: false,
       message: "No files uploaded. Please attach at least one image file.",
     });
   }
 
-  // Upload new files if not exclusive
-  console.log("[createCreator] About to upload files:", req.files?.map(f => f.originalname));
-  const results = currentuser?.exclusive_verify
-    ? []
-    : (await uploadManyFilesToCloudinary(req.files)) || [];
-
-  console.log("[createCreator] Upload results:", results);
-  console.log("Uploader succeeded");
+  // Upload new files - always upload if files are provided
+  const results = (req.files && req.files.length > 0)
+    ? (await uploadManyFilesToCloudinary(req.files)) || []
+    : [];
 
   // Merge uploaded files with any photolinks passed from frontend
   const uploadedFiles = results
@@ -95,14 +80,13 @@ const createCreator = async (req, res) => {
     creatorfiles = photolinksFromReq;
   }
 
-  if (!creatorfiles.length && !currentuser?.exclusive_verify) {
+  // Require successful file upload for all users
+  if (!creatorfiles.length) {
     return res.status(400).json({
       ok: false,
       message: "File upload failed. Please try again with valid image files.",
     });
   }
-
-  console.log("creatorfiles: ", creatorfiles);
 
   try {
     const creator = {
@@ -126,8 +110,6 @@ const createCreator = async (req, res) => {
       daysava,
       hosttype,
     };
-
-    console.log("Creating creator with: ", creator);
 
     const newCreator = await creators.create(creator);
 
