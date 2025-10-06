@@ -1,7 +1,16 @@
 const creators = require("../../Creators/creators");
 const { updateManyFileToCloudinary } = require("../../utiils/appwrite");
 
-const createCreator = async (req, res) => {
+const editCreator = async (req, res) => {
+  console.log("🔥 [editCreator] Function called - starting");
+  console.log("🔥 [editCreator] Request details:", {
+    method: req.method,
+    url: req.url,
+    headers: req.headers,
+    bodyKeys: Object.keys(req.body || {}),
+    filesCount: req.files ? req.files.length : 0
+  });
+  
   // Handle data from FormData (individual fields) or JSON string
   let data;
   if (req.body.data) {
@@ -11,6 +20,16 @@ const createCreator = async (req, res) => {
     // If data is sent as individual form fields
     data = req.body;
   }
+  
+  console.log("🔥 [editCreator] Parsed data:", data);
+  console.log("🔥 [editCreator] Image data analysis:", {
+    existingImages: data.existingImages,
+    imagesToDelete: data.imagesToDelete,
+    newFilesCount: req.files ? req.files.length : 0,
+    existingImagesCount: data.existingImages ? data.existingImages.length : 0,
+    imagesToDeleteCount: data.imagesToDelete ? data.imagesToDelete.length : 0
+  });
+  
 
   let hostid = data.hostid;
   let age = data.age;
@@ -65,12 +84,14 @@ const createCreator = async (req, res) => {
   // photolink = data.photolink
 
   if (!hostid) {
+    console.log("❌ [editCreator] Missing hostid");
     return res.status(400).json({
       ok: false,
       message: "User Id invalid!!",
     });
   }
 
+  console.log("🔥 [editCreator] Looking up user:", hostid);
   let currentuser = await creators
     .findOne({
       userid: hostid,
@@ -78,11 +99,18 @@ const createCreator = async (req, res) => {
     .exec();
 
   if (!currentuser) {
+    console.log("❌ [editCreator] User not found:", hostid);
     return res.status(409).json({
       ok: false,
       message: `User can not edit portfolio`,
     });
   }
+
+  console.log("✅ [editCreator] User found:", {
+    userId: currentuser.userid,
+    name: currentuser.name,
+    currentFilesCount: currentuser.creatorfiles.length
+  });
 
   let publicIDs = [];
 
@@ -94,6 +122,12 @@ const createCreator = async (req, res) => {
     publicIDs = creatorfilepublicids;
   }
 
+  console.log("🔥 [editCreator] Current user files analysis:", {
+    currentFilesCount: currentuser.creatorfiles.length,
+    publicIDsCount: publicIDs.length,
+    newFilesToUpload: req.files ? req.files.length : 0
+  });
+
   /**
    * This implementation allows for in memory file upload manipulation
    * This prevents accessing the filesystem of the hosted server
@@ -101,8 +135,25 @@ const createCreator = async (req, res) => {
   let results = [];
 
   if (req.files && req.files.length > 0) {
+    console.log("🔥 [editCreator] Uploading new files to Appwrite:", {
+      filesCount: req.files.length,
+      fileNames: req.files.map(f => f.originalname),
+      publicIDsToReplace: publicIDs
+    });
+    
     results = await updateManyFileToCloudinary(publicIDs, req.files, "post");
-  } 
+    
+    console.log("🔥 [editCreator] Upload results:", {
+      resultsCount: results.length,
+      results: results.map(r => ({
+        public_id: r.public_id,
+        file_link: r.file_link,
+        success: !!(r.public_id && r.file_link)
+      }))
+    });
+  } else {
+    console.log("🔥 [editCreator] No new files to upload");
+  }
 
   let creatorfiles = [];
 
@@ -115,6 +166,33 @@ const createCreator = async (req, res) => {
       };
     });
     creatorfiles = databaseReady;
+    console.log("🔥 [editCreator] New files prepared for database:", creatorfiles.length);
+  }
+
+  // Handle existing images that should be preserved
+  if (data.existingImages && Array.isArray(data.existingImages)) {
+    console.log("🔥 [editCreator] Processing existing images:", {
+      existingImagesCount: data.existingImages.length,
+      existingImages: data.existingImages
+    });
+    
+    const existingFiles = data.existingImages.map((imgUrl) => ({
+      creatorfilelink: imgUrl,
+      creatorfilepublicid: null, // Existing images might not have public_id
+    }));
+    
+    console.log("🔥 [editCreator] Existing files prepared:", existingFiles.length);
+    
+    // Merge existing files with new files
+    creatorfiles = [...existingFiles, ...creatorfiles];
+    
+    console.log("🔥 [editCreator] Final creatorfiles after merge:", {
+      totalFiles: creatorfiles.length,
+      existingFiles: existingFiles.length,
+      newFiles: results.length
+    });
+  } else {
+    console.log("🔥 [editCreator] No existing images to preserve");
   }
 
   //let data = await connectdatabase()
@@ -204,11 +282,32 @@ const createCreator = async (req, res) => {
     currentuser.daysava = daysava;
     currentuser.hosttype = hosttype;
 
-    if (creatorfiles) {
+    if (creatorfiles && creatorfiles.length > 0) {
+      console.log("🔥 [editCreator] Updating creator files:", {
+        oldFilesCount: currentuser.creatorfiles.length,
+        newFilesCount: creatorfiles.length,
+        files: creatorfiles.map(f => ({
+          link: f.creatorfilelink,
+          publicId: f.creatorfilepublicid
+        }))
+      });
       currentuser.creatorfiles = creatorfiles;
+    } else {
+      console.log("🔥 [editCreator] No files to update, keeping existing files");
     }
 
-    currentuser.save();
+    console.log("🔥 [editCreator] Saving user with updated data:", {
+      name: currentuser.name,
+      age: currentuser.age,
+      location: currentuser.location,
+      price: currentuser.price,
+      hosttype: currentuser.hosttype,
+      filesCount: currentuser.creatorfiles.length
+    });
+
+    await currentuser.save();
+
+    console.log("✅ [editCreator] Creator updated successfully");
 
     // await data.databar.updateDocument(data.dataid,data.creatorCol,currentuser._id,currentuser)
 
@@ -225,4 +324,4 @@ const createCreator = async (req, res) => {
   }
 };
 
-module.exports = createCreator;
+module.exports = editCreator;

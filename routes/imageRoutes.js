@@ -15,7 +15,7 @@ const upload = multer({ storage: multer.memoryStorage() }); // Use memory storag
 // Appwrite API endpoint and project from env (fallbacks for local dev)
 const ENDPOINT = "https://cloud.appwrite.io/v1";
 const PROJECT_ID = process.env.APPWRITE_PROJECT_ID || "668f9f8c0011a761d118";
-const BUCKET_ID = process.env.APPWRITE_BUCKET_ID || "post";
+const BUCKET_ID = "post"; // Force use of "post" bucket
 const APPWRITE_API_KEY = process.env.APPWRITE_API_KEY || "";
 
 // POST route to upload an image and save it to Cloudinary
