@@ -94,9 +94,18 @@ const createCreator = async (req, res) => {
       views: currentuser.views.length,
       createdAt: currentuser.createdAt,
       updatedAt: currentuser.updatedAt,
+      // Include VIP status from user data
+      isVip: modState.isVip || false,
+      vipEndDate: modState.vipEndDate || null,
     };
 
-    //console.log("this is host "+host)
+    // Debug logging for VIP status
+    console.log("🔍 [GETCREATORBYID] VIP Status for creator:", {
+      name: currentuser.name,
+      userid: currentuser.userid,
+      isVip: modState.isVip,
+      vipEndDate: modState.vipEndDate
+    });
 
     res.status(200).json({
       ok: true,
