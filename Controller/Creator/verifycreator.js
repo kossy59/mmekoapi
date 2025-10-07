@@ -4,37 +4,46 @@ let admindb = require("../../Creators/admindb");
 const creators = require("../../Creators/creators");
 
 const createCreator = async (req, res) => {
-  const userid = req.body.userid;
-  const docID = req.body.docid;
+  const { userid, docid } = req.body;
 
-  if (!userid && !docID) {
-    return res.status(400).json({ ok: false, message: "user Id invalid!!" });
+  if (!userid || !docid) {
+    return res.status(400).json({ ok: false, message: "User Id or document Id invalid!" });
   }
 
   try {
-    let user = await userdb.findOne({ _id: userid }).exec();
+    // ✅ 1. Update user verification
+    const user = await userdb.findById(userid).exec();
+    if (!user) return res.status(404).json({ ok: false, message: "User not found!" });
 
     user.exclusive_verify = true;
     await user.save();
-    const theCreator= await creators.findOne({userid:userid}).exec();
-    if(theCreator){
-      theCreator.verify="live"
-      await theCreator.save()
+
+    // ✅ 2. Update creator verification status
+    const creator = await creators.findOne({ userid }).exec();
+    if (creator) {
+      creator.verify = "live";
+      await creator.save();
     }
 
-    await documentdb.deleteOne({ _id: docID }).exec();
+    // ✅ 3. Update document verification (instead of deleting it)
+    const document = await documentdb.findById(docid).exec();
+    if (document) {
+      document.verify = true; // update verify field to true
+      await document.save();
+    }
 
-    let respond = {
-      userid: userid,
-      message: `Congratulation! Your creator application has been approve`,
+    // ✅ 4. Send admin notification
+    await admindb.create({
+      userid,
+      message: `Congratulations! Your creator application has been approved.`,
       seen: true,
-    };
+    });
 
-    await admindb.create(respond);
-
-    return res
-      .status(200)
-      .json({ ok: true, message: `host Updated successfully`, hostid: docID });
+    return res.status(200).json({
+      ok: true,
+      message: "Creator verified successfully",
+      hostid: docid,
+    });
   } catch (err) {
     return res.status(500).json({ ok: false, message: `${err.message}!` });
   }
