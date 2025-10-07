@@ -3,6 +3,9 @@ const userdb = require("../../Creators/userdb");
 const historydb = require("../../Creators/mainbalance");
 const creatordb = require("../../Creators/creators");
 
+// Socket.io integration
+const { emitFanMeetStatusUpdate } = require('../../utils/socket');
+
 const createLike = async (req, res) => {
   const { id, userid, creatorid } = req.body;
 
@@ -13,23 +16,51 @@ const createLike = async (req, res) => {
   //let data = await connectdatabase()
 
   try {
-    let creators = await creatordb.findOne({ _id: creatorid }).exec();
-    let creatorprice = parseFloat(creators.price);
+    // Get the booking first to get the actual price
+    const booking = await bookingdb.findById(id).exec();
+    if (!booking) {
+      return res.status(404).json({ ok: false, message: "Booking not found." });
+    }
+
     let clientuser = await userdb.findOne({ _id: userid }).exec();
-    let balance = parseFloat(clientuser?.balance || 0) + creatorprice;
-    clientuser.balance = `${balance}`;
+    if (!clientuser) {
+      return res.status(404).json({ ok: false, message: "User not found." });
+    }
+
+    let clientbalance = parseFloat(clientuser.balance) || 0;
+    let clientpending = parseFloat(clientuser.pending) || 0;
+    let refundAmount = parseFloat(booking.price);
+
+    // Move money from pending back to balance
+    clientuser.balance = String(clientbalance + refundAmount);
+    clientuser.pending = String(clientpending - refundAmount);
     await clientuser.save();
+
     let creatorpaymenthistory = {
       userid: userid,
-      details: "Refund issued; you cancelled the request",
-      spent: `${0}`,
-      income: `${creatorprice}`,
+      details: "Fan meet request cancelled - refund processed",
+      spent: "0",
+      income: `${refundAmount}`,
       date: `${Date.now().toString()}`,
     };
 
     await historydb.create(creatorpaymenthistory);
+    
+    // Get booking details before deletion for socket emission
+    const bookingToDelete = await bookingdb.findById(id).exec();
+    
     const deletedBooking = await bookingdb.findByIdAndDelete(id).exec();
-    console.log(creatorprice, "refunded to ", clientuser.firstname);
+
+    // Emit socket event for real-time updates
+    if (deletedBooking && bookingToDelete) {
+      emitFanMeetStatusUpdate({
+        bookingId: id,
+        status: 'cancelled',
+        userid: userid,
+        creatorid: creatorid,
+        message: '🚫 Fan meet request was cancelled'
+      });
+    }
 
     if (deletedBooking) {
       return res

@@ -94,6 +94,10 @@ const io = new Server(server, {
   transports: ["websocket", "polling"],
 });
 
+// Set the socket.io instance for utils
+const { setSocketIO } = require('./utils/socket');
+setSocketIO(io);
+
 // Make io available to routes
 app.set('io', io);
 
@@ -185,6 +189,8 @@ app.use("/acceptbook", require("./routes/api/booking/acceptbooking"));
 app.use("/declinebook", require("./routes/api/booking/declinebooking"));
 app.use("/getrequeststats", require("./routes/api/booking/requeststat"));
 app.use("/paycreator", require("./routes/api/booking/paycreator"));
+app.use("/completebook", require("./routes/api/booking/completebook"));
+app.use("/getallfanmeetrequests", require("./routes/api/booking/getAllFanMeetRequests"));
 app.use("/reviewcreator", require("./routes/api/creator/reviewcreator"));
 app.use("/getreviews", require("./routes/api/creator/getcreatorreview"));
 app.use("/deletereview", require("./routes/api/creator/deletereview"));
@@ -217,6 +223,8 @@ app.use("/vip", require("./routes/api/VIP/upgrade"));
 app.use("/request", require("./routes/api/requestcreator/requestRoutes"));
 app.use("/upload-message-files", require("./routes/api/uploadMessageFiles"));
 app.use("/quickchat", require("./routes/api/quickchat"));
+app.use("/fanmeet", require("./routes/api/fanMeetRoutes"));
+app.use("/process-expired", require("./routes/api/processExpired"));
 // Track online users
 const onlineUsers = new Set();
 

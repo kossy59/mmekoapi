@@ -171,6 +171,16 @@ const markertdata = new Scheme(
       required: false,
       default: new Map(),
     },
+    pending: {
+      type: Number,
+      required: false,
+      default: 0,
+    },
+    earnings: {
+      type: Number,
+      required: false,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

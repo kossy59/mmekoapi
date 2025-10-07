@@ -1,6 +1,11 @@
 const bookingdb = require("../../Creators/book");
+const userdb = require("../../Creators/userdb");
+const historydb = require("../../Creators/mainbalance");
 let sendEmail = require("../../utiils/sendEmailnot");
 let sendpushnote = require("../../utiils/sendPushnot");
+
+// Socket.io integration
+const { emitFanMeetStatusUpdate } = require('../../utils/socket');
 
 const createLike = async (req, res) => {
   const creatorid = req.body.creatorid;
@@ -21,7 +26,7 @@ const createLike = async (req, res) => {
 
     let user = users.find((value) => {
       return (
-        String(value.status) === "pending" &&
+        String(value.status) === "request" &&
         String(value.userid) === String(userid) &&
         String(value.time) === String(time) &&
         String(value.date) === String(date)
@@ -37,9 +42,54 @@ const createLike = async (req, res) => {
     }
 
     let status = await bookingdb.findOne({ _id: user._id }).exec();
-    // console.log('under user accepted')
+    
+    // Check if request has expired
+    if (new Date() > new Date(status.expiresAt)) {
+      // Move money back from pending to balance
+      const fan = await userdb.findOne({ _id: userid }).exec();
+      if (fan) {
+        let fanBalance = parseFloat(fan.balance) || 0;
+        let fanPending = parseFloat(fan.pending) || 0;
+        let refundAmount = parseFloat(status.price);
+
+        fan.balance = String(fanBalance + refundAmount);
+        fan.pending = String(fanPending - refundAmount);
+        await fan.save();
+
+        // Update booking status to expired
+        status.status = "expired";
+        await status.save();
+
+        // Create refund history
+        const refundHistory = {
+          userid,
+          details: "Fan meet request expired - refund processed",
+          spent: "0",
+          income: `${refundAmount}`,
+          date: `${Date.now().toString()}`
+        };
+        await historydb.create(refundHistory);
+      }
+
+      return res.status(400).json({
+        ok: false,
+        message: "Request has expired"
+      });
+    }
+
+    // Update booking status to accepted
     status.status = "accepted";
-    status.save();
+    await status.save();
+    
+    // Emit socket event for real-time updates
+    emitFanMeetStatusUpdate({
+      bookingId: status._id,
+      status: 'accepted',
+      userid: status.userid,
+      creatorid: status.creatorid,
+      message: '🎉 Fan meet request has been accepted!'
+    });
+    
     await sendEmail(status.userid, "creator has accepted your booking request");
     await sendpushnote(
       status.userid,

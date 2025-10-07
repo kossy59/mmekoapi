@@ -4,6 +4,9 @@ const userdb = require("../../Creators/userdb");
 let sendEmail = require("../../utiils/sendEmailnot");
 let sendpushnote = require("../../utiils/sendPushnot");
 const historydb = require("../../Creators/mainbalance");
+
+// Socket.io integration
+const { emitFanMeetStatusUpdate } = require('../../utils/socket');
 const createLike = async (req, res) => {
   const creatorid = req.body.creatorid;
   const userid = req.body.userid;
@@ -20,11 +23,10 @@ const createLike = async (req, res) => {
 
     let user = users.find((value) => {
       return (
-        String(value.status) === "pending" ||
-        (String(value.status) === "accepted" &&
-          String(value.userid) === String(userid) &&
-          String(value.time) === String(time) &&
-          String(value.date) === String(date))
+        String(value.status) === "request" &&
+        String(value.userid) === String(userid) &&
+        String(value.time) === String(time) &&
+        String(value.date) === String(date)
       );
     });
 
@@ -36,27 +38,34 @@ const createLike = async (req, res) => {
 
     let status = await bookingdb.findOne({ _id: user._id }).exec();
 
-    status.status = "decline";
-    status.save();
+    status.status = "declined";
+    await status.save();
 
-    if (status.type !== "Private show") {
-      let creators = await creatordb.findOne({ _id: creatorid }).exec();
-      let creatorprice = parseFloat(creators.price);
-      let clientuser = await userdb.findOne({ _id: userid }).exec();
+    // Emit socket event for real-time updates
+    emitFanMeetStatusUpdate({
+      bookingId: status._id,
+      status: 'declined',
+      userid: status.userid,
+      creatorid: status.creatorid,
+      message: '❌ Fan meet request was declined'
+    });
 
-      let clientbalance = parseFloat(clientuser.balance);
-      if (!clientbalance || clientbalance <= 0) {
-        clientbalance = 0;
-      }
-      clientbalance = clientbalance + creatorprice;
-      clientuser.balance = `${clientbalance}`;
+    // Refund the user - move money from pending back to balance
+    const clientuser = await userdb.findOne({ _id: userid }).exec();
+    if (clientuser) {
+      let clientbalance = parseFloat(clientuser.balance) || 0;
+      let clientpending = parseFloat(clientuser.pending) || 0;
+      let refundAmount = parseFloat(status.price);
+
+      clientuser.balance = String(clientbalance + refundAmount);
+      clientuser.pending = String(clientpending - refundAmount);
       await clientuser.save();
 
       let creatorpaymenthistory = {
         userid: userid,
-        details: "Refound issued; creator cancellation confirmation",
-        spent: `${0}`,
-        income: `${creatorprice}`,
+        details: "Fan meet request declined - refund processed",
+        spent: "0",
+        income: `${refundAmount}`,
         date: `${Date.now().toString()}`,
       };
 

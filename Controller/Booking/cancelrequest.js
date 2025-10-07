@@ -10,9 +10,8 @@ const createLike = async (req, res) => {
   const userid = req.body.userid;
 
   if (!creatorid) {
-    return res.status(400).json({ ok: false, message: "user Id invalid!!" });
+    return res.status(400).json({ ok: false, message: "Creator ID is missing or invalid" });
   }
-  console.log("untop init db");
 
   //let data = await connectdatabase()
 
@@ -30,7 +29,7 @@ const createLike = async (req, res) => {
         (String(value.date) === String(date) &&
           String(value.time) === String(time) &&
           String(value.creatorid) === String(creatorid) &&
-          String(value.status) === "pending") ||
+          String(value.status) === "request") ||
         String(value.status) === "decline"
       );
     });
@@ -41,25 +40,42 @@ const createLike = async (req, res) => {
         .json({ ok: false, message: "you have 0 pending request!!" });
     }
 
+    // Try to find creator by _id first, then by userid
     let creatoruser = await creatordb.findOne({ _id: creatorid }).exec();
+    if (!creatoruser) {
+      creatoruser = await creatordb.findOne({ userid: creatorid }).exec();
+    }
+    
+            if (!creatoruser) {
+              return res.status(400).json({ ok: false, message: "Creator not found" });
+            }
+    
     let creatorprice = parseFloat(creatoruser.price);
 
     if (book.type !== "Private show") {
       let clientuser = await userdb.findOne({ _id: userid }).exec();
 
       let clientbalance = parseFloat(clientuser.balance);
+      let clientpending = parseFloat(clientuser.pending);
 
       if (!clientbalance) {
         clientbalance = 0;
       }
+      if (!clientpending) {
+        clientpending = 0;
+      }
 
-      clientbalance = creatorprice + clientbalance;
+      // Move money from pending back to balance
+      clientbalance = clientbalance + creatorprice;
+      clientpending = clientpending - creatorprice;
+      
       clientuser.balance = `${clientbalance}`;
+      clientuser.pending = `${clientpending}`;
       clientuser.save();
 
       let creatorpaymenthistory = {
         userid: userid,
-        details: "Refound issued; creator cancellation confirmation",
+        details: "Fan meet request cancelled - refund processed",
         spent: `${0}`,
         income: `${creatorprice}`,
         date: `${Date.now().toString()}`,
@@ -70,7 +86,6 @@ const createLike = async (req, res) => {
 
     await bookingdb.deleteOne({ _id: book._id }).exec();
 
-    // console.log("modeil "+creatorinfo)
 
     return res.status(200).json({ ok: true, message: ` Success` });
   } catch (err) {
