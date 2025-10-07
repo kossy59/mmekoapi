@@ -148,7 +148,19 @@ async function initalizeDB(memko_socialDB,database){
         255,true
     )
 
-    
+    await database.createIntegerAttribute(
+        memko_socialDB,
+        UsersDB.$id,
+        'pending',
+        false
+    )
+
+    await database.createIntegerAttribute(
+        memko_socialDB,
+        UsersDB.$id,
+        'earnings',
+        false
+    )
     
    return UsersDB ;
 }

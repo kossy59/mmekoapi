@@ -38,6 +38,14 @@ const markertdata = new Scheme(
       type: String,
       required: false,
     },
+    price: {
+      type: Number,
+      required: false,
+    },
+    expiresAt: {
+      type: Date,
+      required: false,
+    },
   },
   { timestamps: true }
 );

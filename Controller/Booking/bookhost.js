@@ -52,7 +52,9 @@ const createLike = async (req,res)=>{
                 return res.status(400).json({"ok":false,'message': 'insuffciate balance!!'})
             }
               
-             user.balance = String(total)
+            // Deduct from balance and add to pending
+            user.balance = String(total)
+            user.pending = String((parseFloat(user.pending) || 0) + creatorprice)
    
             user.save()
    
@@ -74,9 +76,10 @@ const createLike = async (req,res)=>{
             type,
             place,
             time,
-            status:"pending",
-            date
-
+            status:"request",
+            date,
+            price: creatorprice,
+            expiresAt: new Date(Date.now() + 23 * 60 * 60 * 1000 + 14 * 60 * 1000) // 23h 14m from now
         }
 
         await bookingdb.create(books)
