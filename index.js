@@ -212,6 +212,7 @@ app.use("/addcrush", require("./routes/api/creator/addcrush"));
 app.use("/getcrush", require("./routes/api/creator/getcrush"));
 app.use("/deleteMsg", require("./routes/api/Admin/deleteMsg"));
 app.use("/deletecrush", require("./routes/api/creator/deletecrush"));
+app.use("/notifications", require("./routes/api/Notifications/notificationRoutes"));
 
 // Block user functionality
 app.use("/block", require("./routes/api/block/blockUser"));
