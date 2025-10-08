@@ -7,9 +7,9 @@ exports.savePaymentAccount = async (req, res) => {
     const { method, fullName, email, phone, country, currency, cryptoType, walletAddress } = req.body;
 
     // Validate required fields per the pattern
-    if (!method || !fullName || !email || !country || !currency || !cryptoType || !walletAddress) {
+    if (!method || !fullName || !email || !country || !cryptoType || !walletAddress) {
       return res.status(400).json({
-        message: "Missing required fields: method, fullName, email, country, currency, cryptoType, or walletAddress",
+        message: "Missing required fields: method, fullName, email, country, cryptoType, or walletAddress",
       });
     }
 
@@ -37,7 +37,7 @@ exports.savePaymentAccount = async (req, res) => {
       email,
       phone,
       country,
-      currency,
+      currency: currency || "USD", // Default to USD if not provided
       cryptoType,
       walletAddress,
     };

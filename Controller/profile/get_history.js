@@ -4,42 +4,42 @@ const getUSD = require("../../helpers/get_user_usd");
 const getEarning = require("../../helpers/earning_in_days");
 const getRequest = require("../../helpers/get_request_history");
 const getGift = require("../../helpers/gift_in_days");
+const getMonthlyFollowers = require("../../helpers/get_monthly_followers");
 const userdb = require("../../Creators/userdb");
 let creatordb = require("../../Creators/creators");
 const readHistory = async (req, res) => {
   const userid = req.body.userid;
-  const creatorid = req.body.creatorid;
 
   if (!userid) {
     return res.status(409).json({ ok: false, message: "No user ID!!" });
   }
-  const creator = await userdb.find({
-    creatorId: creatorid,
-  });
+  
+  // Get creator information from database
   let currentCreator = await creatordb.find({
     userid: userid,
   });
+  
+  // Get creatorid from the creator record
+  let creatorid = null;
+  if (currentCreator && currentCreator.length > 0) {
+    creatorid = currentCreator[0]._id;
+  }
+  
 
-  console.log("inside history");
 
   try {
     let gift_count = "---";
     let request_count = "---";
     let earning = "---";
-    console.log("inside getlike");
     let like_count = await getlike(userid);
-    console.log("inside coin");
     let coin = await getCoin(userid);
     let usd = 0;
 
-    console.log("ontop usd assgn");
     if (!coin || coin > 0) {
       usd = getUSD(coin);
     } else {
       coin = 0;
     }
-
-    console.log("after usd assgn");
 
     let like_count2 = "";
 
@@ -49,13 +49,15 @@ const readHistory = async (req, res) => {
       like_count2 = "---";
     }
 
-    console.log("inside history log");
-    console.log("inside gift");
     gift_count = String(await getGift(userid));
-    console.log("inside request");
-    request_count = String(await getRequest(creatorid));
-    console.log("inside earning");
+    if (creatorid) {
+      request_count = String(await getRequest(creatorid, userid));
+    } else {
+      // If user is not a creator, only count fan requests
+      request_count = String(await getRequest(null, userid));
+    }
     earning = String(await getEarning(userid));
+    let monthly_followers = await getMonthlyFollowers(userid);
 
     if (parseFloat(gift_count) <= 0) {
       gift_count = "---";
@@ -67,6 +69,10 @@ const readHistory = async (req, res) => {
 
     if (parseFloat(request_count) <= 0) {
       request_count = "---";
+    }
+
+    if (monthly_followers <= 0) {
+      monthly_followers = "---";
     }
 
     // Safely read creator earnings to avoid crashes when creator document is missing
@@ -82,13 +88,10 @@ const readHistory = async (req, res) => {
       like: like_count2,
       coin: String(earningsVal),
       usd: String(earningsVal * 0.05),
+      followers: String(monthly_followers),
     };
 
-    for (let data in history) {
-      console.log(history[data]);
-    }
 
-    console.log("returning profile" + history);
     return res.status(200).json({ ok: true, message: `All Post`, history });
   } catch (err) {
     return res.status(500).json({ ok: false, message: `${err.message}!` });

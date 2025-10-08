@@ -1,6 +1,7 @@
 const WithdrawRequest = require("../../Creators/withdrawRequest");
 const PaymentAccount = require("../../Creators/paymentAccount");
 const User = require("../../Creators/userdb"); // Ensure this is the correct path
+const Balancehistory = require("../../Creators/mainbalance");
 
 // Create Withdrawal Request
 exports.handleWithdrawRequest = async (req, res) => {
@@ -44,6 +45,20 @@ exports.handleWithdrawRequest = async (req, res) => {
         .json({ message: "You already have a pending withdrawal request." });
     }
 
+    // Calculate earnings to deduct (1 USD = 25 earnings)
+    const earningsToDeduct = amount * 25;
+    
+    // Check if user has enough earnings
+    if (userExists.earnings < earningsToDeduct) {
+      return res.status(400).json({ 
+        message: `Insufficient earnings. You have ${userExists.earnings} earnings but need ${earningsToDeduct} for $${amount} withdrawal.` 
+      });
+    }
+
+    // Deduct earnings from user
+    userExists.earnings -= earningsToDeduct;
+    await userExists.save();
+
     const request = new WithdrawRequest({
       userId,
       amount,
@@ -52,9 +67,22 @@ exports.handleWithdrawRequest = async (req, res) => {
 
     const saved = await request.save();
 
+    // Create transaction history for withdrawal
+    const creatorHistory = new Balancehistory({
+      userid: userId,
+      details: `Withdrawal request: $${amount} USD`,
+      spent: `${earningsToDeduct}`,
+      income: "0",
+      date: `${Date.now()}`
+    });
+
+    await creatorHistory.save();
+
     res.status(201).json({
-      message: "Withdrawal request submitted",
+      message: "Withdrawal request submitted and earnings deducted",
       request: saved,
+      earningsDeducted: earningsToDeduct,
+      remainingEarnings: userExists.earnings,
     });
   } catch (err) {
     console.error("Withdraw error:", err);
@@ -76,12 +104,33 @@ exports.getAllWithdrawRequests = async (req, res) => {
   try {
     // You already have req.userId from the token
     const user = await User.findById(req.userId);
+    
+    console.log("🔍 [getAllWithdrawRequests] Full request debug:");
+    console.log("📋 [getAllWithdrawRequests] Request headers:", req.headers);
+    console.log("📋 [getAllWithdrawRequests] Request user ID from token:", req.userId);
+    console.log("📋 [getAllWithdrawRequests] User found:", !!user);
+    console.log("📋 [getAllWithdrawRequests] User admin field:", user?.admin);
+    console.log("📋 [getAllWithdrawRequests] User admin type:", typeof user?.admin);
+    console.log("📋 [getAllWithdrawRequests] User firstname:", user?.firstname);
+    console.log("📋 [getAllWithdrawRequests] User lastname:", user?.lastname);
 
-    if (!user || !user.admin) {
-      return res.status(403).json({ message: "Forbidden. Admins only." });
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Check admin status - handle both boolean and string values
+    const isAdmin = user.admin === true || user.admin === "true" || user.admin === 1;
+    
+    if (!isAdmin) {
+      return res.status(403).json({ 
+        message: "Forbidden. Admins only.",
+        userAdmin: user.admin,
+        userAdminType: typeof user.admin
+      });
     }
 
     const requests = await WithdrawRequest.find().sort({ createdAt: -1 });
+    console.log("Found withdrawal requests:", requests.length);
     res.status(200).json({ requests });
   } catch (err) {
     console.error("Error fetching withdrawals:", err);
@@ -101,6 +150,27 @@ exports.getWithdrawRequestById = async (req, res) => {
     res.status(200).json({ request });
   } catch (err) {
     console.error("Error fetching request:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Temporary route to check user admin status
+exports.checkAdminStatus = async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json({ 
+      userId: req.userId,
+      admin: user.admin,
+      adminType: typeof user.admin,
+      isAdmin: user.admin === true || user.admin === "true" || user.admin === 1
+    });
+  } catch (err) {
+    console.error("Error checking admin status:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -190,16 +260,12 @@ exports.markAsPaid = async (req, res) => {
     //   return res.status(400).json({ message: "Insufficient user balance" });
     // }
 
-    // 4. Deduct amount from user
-    user.balance -= request.amount;
-    await user.save();
-
-    // 5. Mark withdrawal as paid
+    // 4. Mark withdrawal as paid (earnings already deducted when request was created)
     request.status = "paid";
     await request.save();
 
     res.status(200).json({
-      message: "Withdrawal marked as paid and balance deducted",
+      message: "Withdrawal marked as paid",
       updated: request,
     });
   } catch (err) {
@@ -229,6 +295,24 @@ exports.getWithdrawStatusByUserId = async (req, res) => {
     });
   } catch (err) {
     console.error("Error getting withdraw status:", err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getAllWithdrawRequestsByUserId = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const requests = await WithdrawRequest.find({ userId }).sort({
+      createdAt: -1,
+    });
+
+    return res.status(200).json({
+      requests: requests,
+      message: "All withdrawal requests fetched successfully",
+    });
+  } catch (err) {
+    console.error("Error getting all withdraw requests:", err);
     return res.status(500).json({ message: "Server error" });
   }
 };

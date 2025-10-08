@@ -39,9 +39,11 @@ const handleRefresh = async (req, res, next) => {
           {
             UserInfo: {
               username: du.email,
+              userId: du._id.toString(),
+              isAdmin: du.admin,
             },
           },
-          process.env.accessToken,
+          process.env.ACCESS_TOKEN_SECRET || "access_token",
           { expiresIn: "30d" }
         );
 

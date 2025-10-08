@@ -73,6 +73,7 @@ const readProfile = async (req, res) => {
     dues.creator = Creator_portfolio;
     dues.emailnot = emailnot;
     dues.pushnot = pushnot;
+    
     if (creatorava) {
       // let images = creatorava.creatorfiles.split(",")
       if (creatorava.creatorfiles.length > 0) {
@@ -87,7 +88,7 @@ const readProfile = async (req, res) => {
 
 
 
-    // console.log('returning profile' + du)
+    
     return res.status(200).json({
       "ok": true,
       "message": `All Post`,
