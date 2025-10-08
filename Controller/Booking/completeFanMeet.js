@@ -11,6 +11,8 @@ const completeFanMeet = async (req, res) => {
     userid,
     creatorid
   } = req.body;
+  
+  console.log("🔍 [COMPLETE_FAN_MEET] Function called with:", { bookingId, userid, creatorid });
 
   if (!bookingId || !userid || !creatorid) {
     return res.status(400).json({
@@ -57,6 +59,9 @@ const completeFanMeet = async (req, res) => {
       await creator.save();
 
       // Create transaction histories
+      console.log("🔍 [COMPLETE_FAN_MEET] Creating transaction histories...");
+      console.log("🔍 [COMPLETE_FAN_MEET] User ID:", userid, "Creator ID:", creatorid, "Amount:", transferAmount);
+      
       const userHistory = {
         userid,
         details: "Fan meet completed - payment transferred to creator",
@@ -64,7 +69,9 @@ const completeFanMeet = async (req, res) => {
         income: "0",
         date: `${Date.now().toString()}`
       };
+      console.log("🔍 [COMPLETE_FAN_MEET] Creating user history:", userHistory);
       await historydb.create(userHistory);
+      console.log("✅ [COMPLETE_FAN_MEET] User history created successfully");
 
       const creatorHistory = {
         userid: creatorid,
@@ -73,7 +80,9 @@ const completeFanMeet = async (req, res) => {
         income: `${transferAmount}`,
         date: `${Date.now().toString()}`
       };
+      console.log("🔍 [COMPLETE_FAN_MEET] Creating creator history:", creatorHistory);
       await historydb.create(creatorHistory);
+      console.log("✅ [COMPLETE_FAN_MEET] Creator history created successfully");
     }
 
     // Send notifications

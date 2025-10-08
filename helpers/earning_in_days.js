@@ -22,7 +22,6 @@ let userdb = require("../Creators/creators")
 
     earning.forEach(value =>{
 
-        console.log("incomes date "+new Date(value._id.getTimestamp()).getTime())
         
         if( new Date(value._id.getTimestamp()).getTime() <= first.getTime() && new Date(value._id.getTimestamp()).getTime() > last.getTime()  ){
             earning_count = earning_count + parseFloat(value.income)

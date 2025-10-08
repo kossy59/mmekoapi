@@ -71,13 +71,13 @@ const handleNewUser = async (req, res) => {
     const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET || "NEXT_PUBLIC_SECERET";
     
     const refreshToken = jwt.sign(
-      { UserInfo: { username: nickname } },
+      { UserInfo: { username: nickname, userId: "", isAdmin: false } },
       refreshTokenSecret,
       { expiresIn: "7d" }
     );
 
     let accessToken = jwt.sign(
-      { UserInfo: { username: nickname, userId: "" } },
+      { UserInfo: { username: nickname, userId: "", isAdmin: false } },
       accessTokenSecret,
       { expiresIn: "15m" }
     );
@@ -103,7 +103,7 @@ const handleNewUser = async (req, res) => {
 
     // Update access token with user ID
     accessToken = jwt.sign(
-      { UserInfo: { username: nickname, userId: user._id.toString() } },
+      { UserInfo: { username: nickname, userId: user._id.toString(), isAdmin: user.admin } },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "15m" }
     );

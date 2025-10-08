@@ -13,6 +13,7 @@ const completeBooking = async (req, res) => {
     userid,
     creatorid
   } = req.body;
+  
 
   if (!bookingId || !userid || !creatorid) {
     return res.status(400).json({
@@ -66,7 +67,6 @@ const completeBooking = async (req, res) => {
 
     if (user && creator) {
       let userPending = parseFloat(user.pending) || 0;
-      let creatorBalance = parseFloat(creator.balance) || 0;
       let creatorEarnings = parseFloat(creator.earnings) || 0;
       let transferAmount = parseFloat(booking.price);
 
@@ -74,8 +74,7 @@ const completeBooking = async (req, res) => {
       user.pending = String(userPending - transferAmount);
       await user.save();
 
-      // Add to creator's balance and earnings
-      creator.balance = String(creatorBalance + transferAmount);
+      // Add to creator's earnings only (not balance)
       creator.earnings = String(creatorEarnings + transferAmount);
       await creator.save();
 
@@ -90,7 +89,7 @@ const completeBooking = async (req, res) => {
       await historydb.create(userHistory);
 
       const creatorHistory = {
-        userid: creatorid,
+        userid: creator._id, // Use the actual creator's user ID, not the host ID
         details: "Fan meet completed - payment received",
         spent: "0",
         income: `${transferAmount}`,

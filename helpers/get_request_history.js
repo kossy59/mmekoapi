@@ -1,12 +1,15 @@
 let bookdb = require("../Creators/book")
 
- let request_history = async (creatorid)=>{
+ let request_history = async (creatorid, userid)=>{
 
-  
-
-    let request = await bookdb.find({creatorid:creatorid}).exec() 
-
-  
+    // Get requests where user is creator (receiving requests) - only if creatorid exists
+    let creatorRequests = [];
+    if (creatorid) {
+      creatorRequests = await bookdb.find({creatorid:creatorid}).exec();
+    }
+    
+    // Get requests where user is fan (making requests)
+    let fanRequests = await bookdb.find({userid:userid}).exec()
 
     //from today
    
@@ -29,13 +32,26 @@ let bookdb = require("../Creators/book")
 
    // console.log("request list "+request)
 
-    request.forEach(value =>{
+    // Count creator requests
+    creatorRequests.forEach(value =>{
 
        
         if( new Date(value._id.getTimestamp()).getTime() <= first.getTime() && new Date(value._id.getTimestamp()).getTime() > last.getTime()  ){
             request_count = request_count + 1
         }
     })
+    
+    // Count fan requests
+    let fanRequestCount = 0;
+    fanRequests.forEach(value =>{
+
+       
+        if( new Date(value._id.getTimestamp()).getTime() <= first.getTime() && new Date(value._id.getTimestamp()).getTime() > last.getTime()  ){
+            fanRequestCount = fanRequestCount + 1
+        }
+    })
+    
+    request_count = request_count + fanRequestCount;
 
     return request_count
 

@@ -168,6 +168,7 @@ app.use("/allrequest", require("./routes/api/booking/allrequestroute"));
 app.use("/exclusivecontent", require("./routes/api/Exclusive/allexclusive"));
 app.use("/deleteaccount", require("./routes/api/profile/deleteprofile"));
 app.use("/setting", require("./routes/api/profile/setting"));
+app.use("/transaction_history", require("./routes/api/profile/transaction_history"));
 app.use("/follow", require("./routes/api/follow/follower"));
 app.use("/getfollowers", require("./routes/api/follow/get_followers"));
 app.use("/getadminhost", require("./routes/api/creator/hostforadmin"));
