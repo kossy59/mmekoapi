@@ -31,6 +31,10 @@ const markertdata = new Scheme(
       type: String,
       required: false,
     },
+    message: { 
+      type: String,
+      required: true
+   },
   },
   { timestamps: true }
 );
