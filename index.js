@@ -686,6 +686,29 @@ io.on("connection", (socket) => {
       console.log('🔍 [Video Call] Starting call:', { callerId, answererId });
       console.log('🔍 [Video Call] Online users:', Array.from(onlineUsers));
       
+      // Fetch caller's details from database
+      let callerPhoto = null;
+      let actualCallerName = callerName; // Fallback to passed name
+      try {
+        const userdb = require('./Creators/userdb');
+        const caller = await userdb.findOne({ _id: callerId }).exec();
+        if (caller) {
+          // Get caller's photo
+          if (caller.photolink) {
+            callerPhoto = caller.photolink;
+          }
+          
+          // Get caller's actual name from database
+          if (caller.firstname && caller.lastname) {
+            actualCallerName = `${caller.firstname} ${caller.lastname}`;
+          } else if (caller.firstname) {
+            actualCallerName = caller.firstname;
+          }
+        }
+      } catch (error) {
+        console.error('❌ [Video Call] Error fetching caller details:', error);
+      }
+      
       // Check if answererId is a creator ID (host ID) and find the actual user ID
       let actualAnswererId = answererId;
       
@@ -746,7 +769,7 @@ io.on("connection", (socket) => {
         clientid: callerId,
         connected: false,
         waiting: "wait",
-        callerName: callerName,
+        callerName: actualCallerName,
         answererName: answererName,
         createdAt: new Date()
       };
@@ -754,12 +777,15 @@ io.on("connection", (socket) => {
       const call = await videocalldb.create(callData);
 
       // Emit call notification to answerer using their actual user ID
-      socket.to(`user_${actualAnswererId}`).emit('video_call_incoming', {
+      const callNotificationData = {
         callId: call._id,
         callerId: callerId,
-        callerName: callerName,
+        callerName: actualCallerName,
+        callerPhoto: callerPhoto,
         isIncoming: true
-      });
+      };
+      
+      socket.to(`user_${actualAnswererId}`).emit('video_call_incoming', callNotificationData);
       
       console.log('📞 [Video Call] Call notification sent to user:', actualAnswererId);
 

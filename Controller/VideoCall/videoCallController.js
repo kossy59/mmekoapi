@@ -33,6 +33,14 @@ const startVideoCall = async (req, res) => {
       });
     }
 
+    // Get caller's actual name from database
+    let actualCallerName = callerName; // Fallback to passed name
+    if (caller.firstname && caller.lastname) {
+      actualCallerName = `${caller.firstname} ${caller.lastname}`;
+    } else if (caller.firstname) {
+      actualCallerName = caller.firstname;
+    }
+
     // Check if answerer is already in a call
     const existingCall = await videocalldb.findOne({ 
       $or: [
@@ -55,7 +63,7 @@ const startVideoCall = async (req, res) => {
       connected: false,
       waiting: "wait",
       bookingId: bookingId || null,
-      callerName: callerName,
+      callerName: actualCallerName,
       answererName: answererName,
       createdAt: new Date()
     };
@@ -66,13 +74,15 @@ const startVideoCall = async (req, res) => {
     const io = req.app.get('io');
     
     // Emit call notification to answerer
-    io.to(`user_${answererId}`).emit('video_call_incoming', {
+    const callNotificationData = {
       callId: call._id,
       callerId: callerId,
-      callerName: callerName,
+      callerName: actualCallerName,
       callerPhoto: caller.photolink,
       isIncoming: true
-    });
+    };
+    
+    io.to(`user_${answererId}`).emit('video_call_incoming', callNotificationData);
 
     return res.status(200).json({
       ok: true,
