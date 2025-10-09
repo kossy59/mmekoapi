@@ -29,9 +29,9 @@ const getAllFanMeetRequests = async (req, res) => {
     }
 
 
-    // Mark the source of each request
-    const fanRequestsWithRole = fanRequests.map(req => ({ ...req.toObject(), _userRole: 'fan' }));
-    const creatorRequestsWithRole = creatorRequests.map(req => ({ ...req.toObject(), _userRole: 'creator' }));
+    // Mark the source of each request (keep as Mongoose documents for now)
+    const fanRequestsWithRole = fanRequests.map(req => ({ ...req.toObject(), _userRole: 'fan', _mongooseDoc: req }));
+    const creatorRequestsWithRole = creatorRequests.map(req => ({ ...req.toObject(), _userRole: 'creator', _mongooseDoc: req }));
 
     // Combine and deduplicate requests
     const allRequests = [...fanRequestsWithRole, ...creatorRequestsWithRole];
@@ -79,8 +79,10 @@ const getAllFanMeetRequests = async (req, res) => {
             timeRemaining = `${hours}h, ${minutes}m, ${seconds}s`;
           } else {
             // Request has expired, update status
-            request.status = 'expired';
-            await request.save();
+            if (request._mongooseDoc && request._mongooseDoc.status !== 'expired') {
+              request._mongooseDoc.status = 'expired';
+              await request._mongooseDoc.save();
+            }
             timeRemaining = 'Expired';
           }
         }
@@ -97,6 +99,7 @@ const getAllFanMeetRequests = async (req, res) => {
           timeRemaining,
           userid: request.userid,
           creatorid: request.creatorid,
+          hosttype: request.type, // Host type: "Fan meet", "Fan call", "Fan date"
           otherUser: otherUser ? {
             name: otherUser.name || `${otherUser.firstname || ''} ${otherUser.lastname || ''}`.trim() || 'Unknown User',
             photolink: otherUser.photolink || '/picture-1.jfif',
