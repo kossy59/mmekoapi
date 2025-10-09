@@ -821,6 +821,17 @@ io.on("connection", (socket) => {
     try {
       const { callId, userId } = data;
       
+      // Skip database operations for temporary call IDs
+      if (callId && callId.startsWith('temp_')) {
+        console.log('📹 [WebRTC] Ending temporary call:', callId);
+        // Just emit the event without database operations
+        socket.to(`user_${userId}`).emit('video_call_ended', {
+          callId: callId,
+          endedBy: userId
+        });
+        return;
+      }
+      
       const videocalldb = require('./Creators/videoalldb');
       const call = await videocalldb.findOne({ _id: callId }).exec();
       
