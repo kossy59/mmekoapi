@@ -227,6 +227,7 @@ app.use("/upload-message-files", require("./routes/api/uploadMessageFiles"));
 app.use("/quickchat", require("./routes/api/quickchat"));
 app.use("/fanmeet", require("./routes/api/fanMeetRoutes"));
 app.use("/process-expired", require("./routes/api/processExpired"));
+app.use("/video-call", require("./routes/api/videoCall/videoCallRoutes"));
 // Track online users
 const onlineUsers = new Set();
 
@@ -276,15 +277,19 @@ const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 io.on("connection", (socket) => {
   socket.on("online", async (userid) => {
     if (userid) {
+      console.log('🔍 [Socket] User going online:', userid, 'Type:', typeof userid);
+      
       // Check if this user already has a connected socket
       const existingSocket = connectedSockets.get(userid);
       if (existingSocket && existingSocket.connected) {
+        console.log('🔍 [Socket] User already has connected socket, skipping');
         return;
       }
       
       await checkuser(userid);
       await deletecallOffline(userid);
       socket.id = userid;
+      socket.userId = userid; // Store user ID in socket for WebRTC signaling
       IDS.userid = userid;
       socket.join("LiveChat");
       
@@ -304,6 +309,8 @@ io.on("connection", (socket) => {
       
       // Add user to online users set
       onlineUsers.add(userid);
+      console.log('🔍 [Socket] Added user to onlineUsers:', userid);
+      console.log('🔍 [Socket] Current online users:', Array.from(onlineUsers));
       
       // ----------------------------------------------------
       // **Part A: Send the FULL list ONLY to the NEW user**
@@ -615,7 +622,20 @@ io.on("connection", (socket) => {
   // Handle heartbeat to keep users online
   socket.on('heartbeat', (userid) => {
     if (userid) {
+      console.log('💓 [Socket] Heartbeat received from:', userid);
       userActivity.set(userid, Date.now());
+      
+      // Ensure user stays in onlineUsers set
+      if (!onlineUsers.has(userid)) {
+        console.log('💓 [Socket] Re-adding user to onlineUsers:', userid);
+        onlineUsers.add(userid);
+      }
+      
+      // Cancel any pending disconnection
+      if (disconnectionTimes.has(userid)) {
+        console.log('💓 [Socket] Cancelling disconnection for:', userid);
+        disconnectionTimes.delete(userid);
+      }
     }
   });
 
@@ -655,6 +675,285 @@ io.on("connection", (socket) => {
         fromUserId: data.fromUserId,
         toUserId: data.toUserId
       });
+    }
+  });
+
+  // Video call events
+  socket.on('video_call_start', async (data) => {
+    try {
+      const { callerId, callerName, answererId, answererName } = data;
+      
+      console.log('🔍 [Video Call] Starting call:', { callerId, answererId });
+      console.log('🔍 [Video Call] Online users:', Array.from(onlineUsers));
+      
+      // Check if answererId is a creator ID (host ID) and find the actual user ID
+      let actualAnswererId = answererId;
+      
+      // Try to find the creator's user ID from their creator ID (which is the creator's _id)
+      try {
+        const creatordb = require('./Creators/creators');
+        console.log('🔍 [Video Call] Looking up creator with _id:', answererId);
+        const creator = await creatordb.findOne({ _id: answererId }).exec();
+        console.log('🔍 [Video Call] Creator lookup result:', creator);
+        
+        if (creator && creator.userid) {
+          actualAnswererId = creator.userid;
+          console.log('✅ [Video Call] Found creator user ID:', actualAnswererId, 'for creator ID:', answererId);
+        } else {
+          console.log('❌ [Video Call] Creator not found or no userid, using original ID:', answererId);
+        }
+      } catch (error) {
+        console.log('❌ [Video Call] Error looking up creator:', error.message);
+        console.log('🔍 [Video Call] Using original ID:', answererId);
+      }
+      
+      console.log('🔍 [Video Call] Checking online status for user ID:', actualAnswererId);
+      console.log('🔍 [Video Call] Is answerer online?', onlineUsers.has(actualAnswererId));
+      
+      // Check if answerer is online - try multiple ID formats
+      const isOnline = onlineUsers.has(actualAnswererId) || 
+                      onlineUsers.has(actualAnswererId.toString()) ||
+                      Array.from(onlineUsers).some(id => id.toString() === actualAnswererId.toString());
+      
+      // Additional check: see if user has a connected socket
+      const hasConnectedSocket = connectedSockets.has(actualAnswererId) || 
+                                connectedSockets.has(actualAnswererId.toString()) ||
+                                Array.from(connectedSockets.keys()).some(id => id.toString() === actualAnswererId.toString());
+      
+      if (!isOnline && !hasConnectedSocket) {
+        console.log('❌ [Video Call] User not online:', actualAnswererId);
+        console.log('❌ [Video Call] Online users:', Array.from(onlineUsers));
+        console.log('❌ [Video Call] Connected sockets:', Array.from(connectedSockets.keys()));
+        
+        // TEMPORARY: Allow video calls even if user appears offline (for debugging)
+        console.log('⚠️ [Video Call] TEMPORARY: Allowing call despite offline status');
+        // socket.emit('video_call_error', {
+        //   message: 'User is not online'
+        // });
+        // return;
+      }
+      
+      // If user has connected socket but not in onlineUsers, add them
+      if (!isOnline && hasConnectedSocket) {
+        console.log('🔧 [Video Call] User has socket but not in onlineUsers, adding:', actualAnswererId);
+        onlineUsers.add(actualAnswererId);
+      }
+
+      // Create call record
+      const videocalldb = require('./Creators/videoalldb');
+      const callData = {
+        callerid: actualAnswererId, // Use the actual user ID
+        clientid: callerId,
+        connected: false,
+        waiting: "wait",
+        callerName: callerName,
+        answererName: answererName,
+        createdAt: new Date()
+      };
+
+      const call = await videocalldb.create(callData);
+
+      // Emit call notification to answerer using their actual user ID
+      socket.to(`user_${actualAnswererId}`).emit('video_call_incoming', {
+        callId: call._id,
+        callerId: callerId,
+        callerName: callerName,
+        isIncoming: true
+      });
+      
+      console.log('📞 [Video Call] Call notification sent to user:', actualAnswererId);
+
+    } catch (error) {
+      console.error('Error in video_call_start:', error);
+      socket.emit('video_call_error', {
+        message: 'Failed to start call'
+      });
+    }
+  });
+
+  socket.on('video_call_accept', async (data) => {
+    try {
+      const { callId, callerId, answererId } = data;
+      
+      const videocalldb = require('./Creators/videoalldb');
+      const call = await videocalldb.findOne({ _id: callId }).exec();
+      
+      if (call) {
+        call.connected = true;
+        call.waiting = "connected";
+        await call.save();
+
+        // Emit call accepted to caller
+        socket.to(`user_${callerId}`).emit('video_call_accepted', {
+          callId: callId,
+          callerId: callerId,
+          answererId: answererId
+        });
+        
+        console.log('✅ [Video Call] Call accepted, notification sent to caller:', callerId);
+      }
+    } catch (error) {
+      console.error('Error in video_call_accept:', error);
+    }
+  });
+
+  socket.on('video_call_decline', async (data) => {
+    try {
+      const { callId, callerId, answererId } = data;
+      
+      const videocalldb = require('./Creators/videoalldb');
+      await videocalldb.deleteOne({ _id: callId }).exec();
+
+      // Emit call declined to caller
+      socket.to(`user_${callerId}`).emit('video_call_declined', {
+        callId: callId,
+        callerId: callerId,
+        answererId: answererId
+      });
+      
+      console.log('❌ [Video Call] Call declined, notification sent to caller:', callerId);
+    } catch (error) {
+      console.error('Error in video_call_decline:', error);
+    }
+  });
+
+  socket.on('video_call_end', async (data) => {
+    try {
+      const { callId, userId } = data;
+      
+      const videocalldb = require('./Creators/videoalldb');
+      const call = await videocalldb.findOne({ _id: callId }).exec();
+      
+      if (call) {
+        const otherUserId = call.callerid === userId ? call.clientid : call.callerid;
+        
+        // Delete call record
+        await videocalldb.deleteOne({ _id: callId }).exec();
+
+        // Emit call ended to both participants
+        socket.to(`user_${userId}`).emit('video_call_ended', {
+          callId: callId,
+          endedBy: userId
+        });
+        
+        socket.to(`user_${otherUserId}`).emit('video_call_ended', {
+          callId: callId,
+          endedBy: userId
+        });
+        
+        console.log('📞 [Video Call] Call ended, notifications sent to users:', userId, 'and', otherUserId);
+      }
+    } catch (error) {
+      console.error('Error in video_call_end:', error);
+    }
+  });
+
+  // WebRTC signaling events
+  socket.on('video_call_offer', async (data) => {
+    const { callId, offer } = data;
+    console.log('📹 [WebRTC] Received offer for call:', callId);
+    
+    try {
+      // If it's a temporary call ID, broadcast to all users (fallback)
+      if (callId.startsWith('temp_')) {
+        console.log('📹 [WebRTC] Temporary call ID, broadcasting offer');
+        socket.broadcast.emit('video_call_offer', {
+          callId: callId,
+          offer: offer
+        });
+        return;
+      }
+      
+      // Find the call to get the other participant
+      const videocalldb = require('./Creators/videoalldb');
+      const call = await videocalldb.findOne({ _id: callId }).exec();
+      
+      if (call) {
+        // Get the current user ID from the socket
+        const currentUserId = socket.userId || socket.id;
+        const otherUserId = call.callerid === currentUserId ? call.clientid : call.callerid;
+        console.log('📹 [WebRTC] Forwarding offer to user:', otherUserId);
+        
+        // Forward offer to the other participant
+        socket.to(`user_${otherUserId}`).emit('video_call_offer', {
+          callId: callId,
+          offer: offer
+        });
+      }
+    } catch (error) {
+      console.error('❌ [WebRTC] Error forwarding offer:', error);
+    }
+  });
+
+  socket.on('video_call_answer', async (data) => {
+    const { callId, answer } = data;
+    console.log('📹 [WebRTC] Received answer for call:', callId);
+    
+    try {
+      // If it's a temporary call ID, broadcast to all users (fallback)
+      if (callId.startsWith('temp_')) {
+        console.log('📹 [WebRTC] Temporary call ID, broadcasting answer');
+        socket.broadcast.emit('video_call_answer', {
+          callId: callId,
+          answer: answer
+        });
+        return;
+      }
+      
+      // Find the call to get the other participant
+      const videocalldb = require('./Creators/videoalldb');
+      const call = await videocalldb.findOne({ _id: callId }).exec();
+      
+      if (call) {
+        // Get the current user ID from the socket
+        const currentUserId = socket.userId || socket.id;
+        const otherUserId = call.callerid === currentUserId ? call.clientid : call.callerid;
+        console.log('📹 [WebRTC] Forwarding answer to user:', otherUserId);
+        
+        // Forward answer to the other participant
+        socket.to(`user_${otherUserId}`).emit('video_call_answer', {
+          callId: callId,
+          answer: answer
+        });
+      }
+    } catch (error) {
+      console.error('❌ [WebRTC] Error forwarding answer:', error);
+    }
+  });
+
+  socket.on('video_call_ice_candidate', async (data) => {
+    const { callId, candidate } = data;
+    console.log('📹 [WebRTC] Received ICE candidate for call:', callId);
+    
+    try {
+      // If it's a temporary call ID, broadcast to all users (fallback)
+      if (callId.startsWith('temp_')) {
+        console.log('📹 [WebRTC] Temporary call ID, broadcasting ICE candidate');
+        socket.broadcast.emit('video_call_ice_candidate', {
+          callId: callId,
+          candidate: candidate
+        });
+        return;
+      }
+      
+      // Find the call to get the other participant
+      const videocalldb = require('./Creators/videoalldb');
+      const call = await videocalldb.findOne({ _id: callId }).exec();
+      
+      if (call) {
+        // Get the current user ID from the socket
+        const currentUserId = socket.userId || socket.id;
+        const otherUserId = call.callerid === currentUserId ? call.clientid : call.callerid;
+        console.log('📹 [WebRTC] Forwarding ICE candidate to user:', otherUserId);
+        
+        // Forward ICE candidate to the other participant
+        socket.to(`user_${otherUserId}`).emit('video_call_ice_candidate', {
+          callId: callId,
+          candidate: candidate
+        });
+      }
+    } catch (error) {
+      console.error('❌ [WebRTC] Error forwarding ICE candidate:', error);
     }
   });
 });

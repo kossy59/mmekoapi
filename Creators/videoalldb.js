@@ -23,7 +23,26 @@ const markertdata = new Scheme({
         required : false
     },
 
-  
+     bookingId:{
+        type:String,
+        required : false
+    },
+
+     callerName:{
+        type:String,
+        required : false
+    },
+
+     answererName:{
+        type:String,
+        required : false
+    },
+
+     createdAt:{
+        type:Date,
+        required : false,
+        default : Date.now
+    }
     
 })
 
