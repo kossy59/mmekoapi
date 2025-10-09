@@ -37,7 +37,7 @@ const createCreator = async (req, res) => {
       userid,
       message: `Congratulations! Your creator application has been approved.`,
       seen: true,
-    });
+    }); 
 
     return res.status(200).json({
       ok: true,
