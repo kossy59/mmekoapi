@@ -126,7 +126,7 @@ const createCreator = async (req, res) => {
 
     let respond = {
       userid,
-      message: `Your Become a creator is under review`,
+      message: `Your application has been submitted and is now in review. You will hear from us within few hours.`,
       seen: true,
     };
 
