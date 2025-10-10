@@ -1003,8 +1003,11 @@ mongoose.connection.once("open", () => {
         
         // Deduct from fan's balance
         const fan = await userdb.findOne({ _id: fanId }).exec();
-        if (fan && fan.gold >= amount) {
-          fan.gold -= amount;
+        const fanBalance = parseFloat(fan?.balance || '0');
+        
+        if (fan && fanBalance >= amount) {
+          // Deduct from fan's balance
+          fan.balance = (fanBalance - amount).toString();
           await fan.save();
           
           // Add to creator's earnings
@@ -1013,18 +1016,20 @@ mongoose.connection.once("open", () => {
             creator.earnings = (creator.earnings || 0) + amount;
             await creator.save();
             
-            // Update main balance record
-            const balanceRecord = await mainbalance.findOne({ userid: creatorId }).exec();
-            if (balanceRecord) {
-              balanceRecord.earnings = (balanceRecord.earnings || 0) + amount;
-              await balanceRecord.save();
-            }
+            // Create transaction record in mainbalance
+            const balanceRecord = new mainbalance({
+              userid: creatorId,
+              details: "Video Call Earnings",
+              income: amount.toString(),
+              date: new Date().toISOString()
+            });
+            await balanceRecord.save();
             
             console.log(`💰 [Video Call] Billing successful: Fan ${fanId} paid ${amount} gold, Creator ${creatorId} earned ${amount}`);
             
             // Emit balance updates to both users
             io.to(`user_${fanId}`).emit('balance_updated', {
-              gold: fan.gold,
+              balance: fan.balance,
               type: 'deduct',
               amount: amount
             });
@@ -1037,9 +1042,9 @@ mongoose.connection.once("open", () => {
           }
         } else {
           console.log('💰 [Video Call] Insufficient funds for billing');
-          // Emit insufficient funds event to end the call
+          // Emit insufficient funds event to end the call (only to fan)
           io.to(`user_${fanId}`).emit('insufficient_funds', {
-            message: 'Insufficient funds to continue call'
+            message: 'You have run out of gold to continue the call'
           });
         }
       } catch (error) {
