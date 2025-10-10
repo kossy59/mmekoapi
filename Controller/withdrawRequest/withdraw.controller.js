@@ -67,19 +67,8 @@ exports.handleWithdrawRequest = async (req, res) => {
 
     const saved = await request.save();
 
-    // Create transaction history for withdrawal
-    const creatorHistory = new Balancehistory({
-      userid: userId,
-      details: `Withdrawal request: $${amount} USD`,
-      spent: `${earningsToDeduct}`,
-      income: "0",
-      date: `${Date.now()}`
-    });
-
-    await creatorHistory.save();
-
     res.status(201).json({
-      message: "Withdrawal request submitted and earnings deducted",
+      message: "Withdrawal request submitted and earnings deducted. Transaction history will be created when admin marks as paid.",
       request: saved,
       earningsDeducted: earningsToDeduct,
       remainingEarnings: userExists.earnings,
@@ -264,8 +253,20 @@ exports.markAsPaid = async (req, res) => {
     request.status = "paid";
     await request.save();
 
+    // 5. Create transaction history only when marked as paid
+    const earningsToDeduct = request.amount * 25; // Same calculation as in creation
+    const creatorHistory = new Balancehistory({
+      userid: request.userId,
+      details: `Withdrawal completed: $${request.amount} USD`,
+      spent: `${earningsToDeduct}`,
+      income: "0",
+      date: `${Date.now()}`
+    });
+
+    await creatorHistory.save();
+
     res.status(200).json({
-      message: "Withdrawal marked as paid",
+      message: "Withdrawal marked as paid and transaction history created",
       updated: request,
     });
   } catch (err) {
