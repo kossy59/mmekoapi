@@ -979,6 +979,74 @@ mongoose.connection.once("open", () => {
   server.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
   });
+
+  // Video call billing event
+  io.on('connection', (socket) => {
+    socket.on('video_call_billing', async (data) => {
+      try {
+        const { callId, callerId, currentUserId, amount, minute } = data;
+        console.log('💰 [Video Call] Billing event:', { callId, callerId, currentUserId, amount, minute });
+        
+        const userdb = require('./Creators/userdb');
+        const mainbalance = require('./Creators/mainbalance');
+        const videocalldb = require('./Creators/videoalldb');
+        
+        // Find the fan (caller) and creator (answerer)
+        const call = await videocalldb.findOne({ _id: callId }).exec();
+        if (!call) {
+          console.log('💰 [Video Call] Call not found for billing');
+          return;
+        }
+        
+        const fanId = call.callerid;
+        const creatorId = call.clientid;
+        
+        // Deduct from fan's balance
+        const fan = await userdb.findOne({ _id: fanId }).exec();
+        if (fan && fan.gold >= amount) {
+          fan.gold -= amount;
+          await fan.save();
+          
+          // Add to creator's earnings
+          const creator = await userdb.findOne({ _id: creatorId }).exec();
+          if (creator) {
+            creator.earnings = (creator.earnings || 0) + amount;
+            await creator.save();
+            
+            // Update main balance record
+            const balanceRecord = await mainbalance.findOne({ userid: creatorId }).exec();
+            if (balanceRecord) {
+              balanceRecord.earnings = (balanceRecord.earnings || 0) + amount;
+              await balanceRecord.save();
+            }
+            
+            console.log(`💰 [Video Call] Billing successful: Fan ${fanId} paid ${amount} gold, Creator ${creatorId} earned ${amount}`);
+            
+            // Emit balance updates to both users
+            io.to(`user_${fanId}`).emit('balance_updated', {
+              gold: fan.gold,
+              type: 'deduct',
+              amount: amount
+            });
+            
+            io.to(`user_${creatorId}`).emit('balance_updated', {
+              earnings: creator.earnings,
+              type: 'earn',
+              amount: amount
+            });
+          }
+        } else {
+          console.log('💰 [Video Call] Insufficient funds for billing');
+          // Emit insufficient funds event to end the call
+          io.to(`user_${fanId}`).emit('insufficient_funds', {
+            message: 'Insufficient funds to continue call'
+          });
+        }
+      } catch (error) {
+        console.error('Error in video_call_billing:', error);
+      }
+    });
+  });
 });
 
 mongoose.connection.on("error", (err) => {
