@@ -65,12 +65,40 @@ const getAllFanMeetRequests = async (req, res) => {
                   userType = 'fan';
                 }
 
-        // Calculate time remaining for pending requests
+        // Calculate time remaining for pending and accepted requests
         let timeRemaining = null;
+        const now = new Date();
+        
         if (request.status === 'request' && request.expiresAt) {
-          const now = new Date();
+          // Handle pending requests with expiresAt
           const expiresAt = new Date(request.expiresAt);
           const diffMs = expiresAt.getTime() - now.getTime();
+          
+          if (diffMs > 0) {
+            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+            const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+            timeRemaining = `${hours}h, ${minutes}m, ${seconds}s`;
+          } else {
+            // Request has expired, update status
+            if (request._mongooseDoc && request._mongooseDoc.status !== 'expired') {
+              request._mongooseDoc.status = 'expired';
+              await request._mongooseDoc.save();
+            }
+            timeRemaining = 'Expired';
+          }
+        } else if (request.status === 'accepted') {
+          // Handle accepted requests - different expiration times based on type
+          let expirationTime;
+          if (request.type === 'Fan Call') {
+            // Fan Call expires after 48 hours
+            expirationTime = new Date(request.createdAt.getTime() + (48 * 60 * 60 * 1000));
+          } else {
+            // Other types expire after 7 days
+            expirationTime = new Date(request.createdAt.getTime() + (7 * 24 * 60 * 60 * 1000));
+          }
+          
+          const diffMs = expirationTime.getTime() - now.getTime();
           
           if (diffMs > 0) {
             const hours = Math.floor(diffMs / (1000 * 60 * 60));
@@ -99,7 +127,7 @@ const getAllFanMeetRequests = async (req, res) => {
           timeRemaining,
           userid: request.userid,
           creatorid: request.creatorid,
-          hosttype: request.type, // Host type: "Fan meet", "Fan call", "Fan date"
+          hosttype: request.type, // Use booking's type field which contains the host type
           otherUser: otherUser ? {
             name: otherUser.name || `${otherUser.firstname || ''} ${otherUser.lastname || ''}`.trim() || 'Unknown User',
             photolink: otherUser.photolink || '/picture-1.jfif',

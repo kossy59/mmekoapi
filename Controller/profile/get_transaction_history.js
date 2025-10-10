@@ -55,10 +55,10 @@ const getTransactionHistory = async (req, res) => {
       const details = transaction.details || "";
       const detailsLower = details.toLowerCase();
       const isEarningsTransaction = 
-        // Fan meet earnings (creator receives)
-        details.includes("Fan meet completed - payment received") ||
-        // Fan meet payments (fan pays)
-        details.includes("Fan meet completed - payment transferred") ||
+        // Any host type earnings (creator receives) - Fan meet, Fan date, Fan call, etc.
+        details.includes("completed - payment received") ||
+        // Any host type payments (fan pays) - Fan meet, Fan date, Fan call, etc.
+        details.includes("completed - payment transferred") ||
         // Withdrawal from earnings
         detailsLower.includes("withdrawal") ||
         detailsLower.includes("withdraw") ||
@@ -79,7 +79,6 @@ const getTransactionHistory = async (req, res) => {
       
       return shouldInclude;
     });
-
 
     // Transform the data to match frontend expectations
     let formattedTransactions = earningsTransactions.map((transaction, index) => {

@@ -1,5 +1,6 @@
 const bookingdb = require("../../Creators/book");
 const userdb = require("../../Creators/userdb");
+const creatordb = require("../../Creators/creators");
 const historydb = require("../../Creators/mainbalance");
 let sendEmail = require("../../utiils/sendEmailnot");
 let sendpushnote = require("../../utiils/sendPushnot");
@@ -42,13 +43,21 @@ const completeBooking = async (req, res) => {
     booking.status = "completed";
     await booking.save();
 
+    // Get host type from booking first, then fallback to creator profile
+    let creatorProfile = await creatordb.findOne({ userid: creatorid }).exec();
+    if (!creatorProfile) {
+      // If not found by userid, try by _id (in case creatorid is the profile ID)
+      creatorProfile = await creatordb.findOne({ _id: creatorid }).exec();
+    }
+    const hostType = booking.type || creatorProfile?.hosttype || "Fan meet";
+
     // Emit socket event for real-time updates
     emitFanMeetStatusUpdate({
       bookingId: booking._id,
       status: 'completed',
       userid: userid,
       creatorid: creatorid,
-      message: '✅ Fan meet has been completed!'
+      message: `✅ ${hostType} has been completed!`
     });
 
     // Transfer money from user's pending to creator's balance
@@ -58,12 +67,13 @@ const completeBooking = async (req, res) => {
     let creator = await userdb.findOne({ _id: creatorid }).exec();
     if (!creator) {
       // If not found by _id, try to find by creatorid (hostid) in creatordb
-      const creatordb = require("../../Creators/creators");
       const creatorRecord = await creatordb.findOne({ _id: creatorid }).exec();
       if (creatorRecord) {
         creator = await userdb.findOne({ _id: creatorRecord.userid }).exec();
       }
     }
+
+    // Use the host type already fetched above
 
     if (user && creator) {
       let userPending = parseFloat(user.pending) || 0;
@@ -81,7 +91,7 @@ const completeBooking = async (req, res) => {
       // Create transaction histories
       const userHistory = {
         userid,
-        details: "Fan meet completed - payment transferred to creator",
+        details: `${hostType} completed - payment transferred to creator`,
         spent: `${transferAmount}`,
         income: "0",
         date: `${Date.now().toString()}`
@@ -90,7 +100,7 @@ const completeBooking = async (req, res) => {
 
       const creatorHistory = {
         userid: creator._id, // Use the actual creator's user ID, not the host ID
-        details: "Fan meet completed - payment received",
+        details: `${hostType} completed - payment received`,
         spent: "0",
         income: `${transferAmount}`,
         date: `${Date.now().toString()}`
@@ -99,15 +109,15 @@ const completeBooking = async (req, res) => {
     }
 
     // Send notifications
-    await sendEmail(userid, "Fan meet completed successfully!");
-    await sendpushnote(userid, "Fan meet completed successfully!", "fanicon");
+    await sendEmail(userid, `${hostType} completed successfully!`);
+    await sendpushnote(userid, `${hostType} completed successfully!`, "fanicon");
     
-    await sendEmail(creatorid, "Fan meet completed - payment received!");
-    await sendpushnote(creatorid, "Fan meet completed - payment received!", "creatoricon");
+    await sendEmail(creatorid, `${hostType} completed - payment received!`);
+    await sendpushnote(creatorid, `${hostType} completed - payment received!`, "creatoricon");
 
     return res.status(200).json({
       ok: true,
-      message: "Fan meet completed successfully"
+      message: `${hostType} completed successfully`
     });
 
   } catch (err) {
