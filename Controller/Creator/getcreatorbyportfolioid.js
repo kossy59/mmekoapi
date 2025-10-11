@@ -39,7 +39,7 @@ const createCreator = async (req, res) => {
 
     let istrue = await crushdb
       .findOne({
-        creator_portfoliio_Id: currentuser._id,
+        creator_portfolio_id: currentuser._id,
       })
       .exec();
 

@@ -72,7 +72,7 @@ router.route('/:pid')
                             followers: 1,
                             following: 1,
                             creator_portfolio: 1,
-                            creator_portfoliio_Id: 1,
+                            creator_portfolio_id: 1,
                             creator_verified: 1,
                             photolink: 1,
                             photoID: 1

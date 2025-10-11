@@ -74,7 +74,7 @@ const readProfile = async (req, res) => {
       joined_year: `${du._id.getTimestamp().getFullYear()}`,
       following: du?.following.includes(clientid),
       creator_portfolio: false,
-      creator_portfoliio_Id: "",
+      creator_portfolio_id: "",
       creatortype: "",
       dob: dob,
       likecount: 0,
@@ -149,7 +149,7 @@ const readProfile = async (req, res) => {
 
     if (creator_portfolio) {
       user.creator_portfolio = true;
-      user.creator_portfoliio_Id = creator_portfolio._id;
+      user.creator_portfolio_id = creator_portfolio._id;
       user.creatortype = creator_portfolio.hosttype;
     }
 

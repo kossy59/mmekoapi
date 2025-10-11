@@ -3,12 +3,12 @@ const reviewdb = require("../../Creators/review")
 const createLike = async (req,res)=>{
     
     const userid = req.body.userid
-    const creator_portfoliio_Id = req.body.creator_portfoliio_Id
+    const creator_portfolio_id = req.body.creator_portfolio_id
     const content = req.body.content
     
     
    
-    if(!userid && !creator_portfoliio_Id){
+    if(!userid && !creator_portfolio_id){
         return res.status(400).json({"ok":false,'message': 'please provide user and creator ID!!'})
     }
     console.log('untop init db')
@@ -22,7 +22,7 @@ const createLike = async (req,res)=>{
          let review = {
             userid,
             content,
-            creator_portfoliio_Id,
+            creator_portfolio_id,
             posttime : `${Date.now().toString()}`
          }
 

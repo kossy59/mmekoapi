@@ -22,7 +22,7 @@ const createCreator = async (req, res) => {
       seen: true
     }
     const user = userdb.findOne({ "_id": userid })
-    user.creator_portfoliio_Id = "";
+    user.creator_portfolio_id = "";
     user.creator_portfolio = false
     await user.save()
     await admindb.create(respond)

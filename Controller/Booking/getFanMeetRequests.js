@@ -18,7 +18,7 @@ const getFanMeetRequests = async (req, res) => {
     if (type === 'fan') {
       query = { userid: userid };
     } else if (type === 'creator') {
-      query = { creator_portfoliio_Id: userid };
+      query = { creator_portfolio_id: userid };
     } else {
       return res.status(400).json({
         ok: false,
@@ -36,7 +36,7 @@ const getFanMeetRequests = async (req, res) => {
       requests.map(async (request) => {
         let otherUser;
         if (type === 'fan') {
-          otherUser = await creatordb.findOne({ _id: request.creator_portfoliio_Id }).exec();
+          otherUser = await creatordb.findOne({ _id: request.creator_portfolio_id }).exec();
         } else {
           otherUser = await userdb.findOne({ _id: request.userid }).exec();
         }

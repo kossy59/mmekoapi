@@ -25,7 +25,7 @@ const createCreator = async (req, res) => {
       // console.log("got the follower")
       for (let i = 0; i < followers.length; i++) {
         let canmessage = false;
-        let creator_portfoliio_Id = "";
+        let creator_portfolio_id = "";
         let photolink = "";
         let username = await userdb.findOne({ _id: followers[i] }).exec();
         let creator = await creatordb.findOne({ userid: followers[i] }).exec();
@@ -36,7 +36,7 @@ const createCreator = async (req, res) => {
             .exec();
           if (creator) {
             canmessage = true;
-            creator_portfoliio_Id = creator._id;
+            creator_portfolio_id = creator._id;
           }
 
           if (photo) {
@@ -52,7 +52,7 @@ const createCreator = async (req, res) => {
             name: `${username.firstname} ${username.lastname}`,
             image: photolink,
             canmessage: canmessage,
-            creator_portfoliio_Id: creator_portfoliio_Id,
+            creator_portfolio_id: creator_portfolio_id,
             id: username._id,
             following: false,
             isVip: username.isVip || false,
@@ -74,7 +74,7 @@ const createCreator = async (req, res) => {
 
       for (let i = 0; i < followings.length; i++) {
         let canmessage = false;
-        let creator_portfoliio_Id = "";
+        let creator_portfolio_id = "";
         let photolink = "";
         let username = await userdb.findOne({ _id: followings[i] }).exec();
         let creator = await creatordb.findOne({ userid: followings[i] }).exec();
@@ -88,7 +88,7 @@ const createCreator = async (req, res) => {
           if (creator) {
             // console.log("inside she is creator")
             canmessage = true;
-            creator_portfoliio_Id = creator._id;
+            creator_portfolio_id = creator._id;
           }
 
           if (photo) {
@@ -105,7 +105,7 @@ const createCreator = async (req, res) => {
             name: `${username.firstname} ${username.lastname}`,
             image: photolink,
             canmessage: canmessage,
-            creator_portfoliio_Id: creator_portfoliio_Id,
+            creator_portfolio_id: creator_portfolio_id,
             id: username._id,
             following: true,
             isVip: username.isVip || false,

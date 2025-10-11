@@ -8,18 +8,18 @@ const historydb = require("../../Creators/mainbalance");
 // Socket.io integration
 const { emitFanMeetStatusUpdate } = require('../../utils/socket');
 const createLike = async (req, res) => {
-  const creator_portfoliio_Id = req.body.creator_portfoliio_Id;
+  const creator_portfolio_id = req.body.creator_portfolio_id;
   const userid = req.body.userid;
   const date = req.body.date;
   const time = req.body.time;
 
-  if (!creator_portfoliio_Id) {
+  if (!creator_portfolio_id) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
   }
   // console.log('untop init db')
 
   try {
-    const users = await bookingdb.find({ creator_portfoliio_Id: creator_portfoliio_Id }).exec();
+    const users = await bookingdb.find({ creator_portfolio_id: creator_portfolio_id }).exec();
 
     let user = users.find((value) => {
       return (
@@ -46,7 +46,7 @@ const createLike = async (req, res) => {
       bookingId: status._id,
       status: 'declined',
       userid: status.userid,
-      creator_portfoliio_Id: status.creator_portfoliio_Id,
+      creator_portfolio_id: status.creator_portfolio_id,
       message: '❌ Fan meet request was declined'
     });
 

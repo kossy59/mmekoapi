@@ -5,15 +5,15 @@ const giftdb = require("../../Creators/gift");
 // const { creator } = require("mongoose");
 
 const sendGold = async (req, res) => {
-  const creator_portfoliio_Id = req.body.creator_portfoliio_Id;
+  const creator_portfolio_id = req.body.creator_portfolio_id;
   const userid = req.body.userid;
   const amount = req.body.amount;
 
-  if (!userid && !creator_portfoliio_Id) {
+  if (!userid && !creator_portfolio_id) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
   }
 
-  let withdraw = await userdb.findOne({ _id: creator_portfoliio_Id }).exec();
+  let withdraw = await userdb.findOne({ _id: creator_portfolio_id }).exec();
 
   try {
     let user = await userdb.findOne({ _id: userid }).exec();
@@ -43,10 +43,10 @@ const sendGold = async (req, res) => {
 
     await historydb.create(user_history);
 
-    let creator_as_user = await get_creator_userID(creator_portfoliio_Id);
+    let creator_as_user = await get_creator_userID(creator_portfolio_id);
     // console.log("Under creator convert "+creator_as_user)
     let creator_history = {
-      userid: creator_portfoliio_Id,
+      userid: creator_portfolio_id,
       details: "Receives gold gift",
       spent: "0",
       income: `${gold_amount}`,
@@ -56,7 +56,7 @@ const sendGold = async (req, res) => {
     await historydb.create(creator_history);
 
     let gift = {
-      creator_portfoliio_Id: creator_portfoliio_Id,
+      creator_portfolio_id: creator_portfolio_id,
       userid: userid,
       date: `${Date.now()}`,
       amount: `${gold_amount}`,
@@ -89,8 +89,8 @@ const sendGold = async (req, res) => {
 
 module.exports = sendGold;
 
-const get_creator_userID = async (creator_portfoliio_Id) => {
-  let user = await creatordb.findOne({ userid: creator_portfoliio_Id }).exec();
+const get_creator_userID = async (creator_portfolio_id) => {
+  let user = await creatordb.findOne({ userid: creator_portfolio_id }).exec();
 
   //let userid = await userdb.findOne({_id : user.userid}).exec()
 

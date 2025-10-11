@@ -35,9 +35,9 @@ const createCreator = async (req, res) => {
         message: `user can not edit portfolio`,
       });
     }
-    const user = (await userdb.findOne({ _id: currentuser.userid }).exec() || await userdb.findOne({ creator_portfoliio_Id: hostid }).exec());
+    const user = (await userdb.findOne({ _id: currentuser.userid }).exec() || await userdb.findOne({ creator_portfolio_id: hostid }).exec());
     user.creator_portfolio = false
-    user.creator_portfoliio_Id = "";
+    user.creator_portfolio_id = "";
     user.creator_portfolio_id = "";
     await user.save()
 

@@ -43,7 +43,7 @@ const createLike = async (req, res) => {
     let approve = [];
 
     for (let i = 0; i < user.length; i++) {
-      let image = await creatordb.findOne({ _id: user[i].creator_portfoliio_Id }).exec();
+      let image = await creatordb.findOne({ _id: user[i].creator_portfolio_id }).exec();
       if (image) {
         let photo = image.creatorfiles[0]?.creatorfilelink || "";
 
@@ -54,7 +54,7 @@ const createLike = async (req, res) => {
           type: user[i].type,
           date: user[i].date,
           time: user[i].time,
-          creator_portfoliio_Id: user[i].creator_portfoliio_Id,
+          creator_portfolio_id: user[i].creator_portfolio_id,
           accepted: "accepted",
           id: user[i]._id,
           creatoruserid: image.userid,

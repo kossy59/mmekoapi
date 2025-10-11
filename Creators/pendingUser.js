@@ -91,7 +91,7 @@ const pendingUser = new Scheme(
       required: false,
       default: false,
     },
-    creator_portfoliio_Id: {
+    creator_portfolio_id: {
       type: String,
       required: false,
       default: "",

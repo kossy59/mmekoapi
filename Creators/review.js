@@ -8,7 +8,7 @@ const markertdata = new Scheme({
         required : true
     },
 
-     creator_portfoliio_Id:{
+     creator_portfolio_id:{
         type:String,
         required : true
     },

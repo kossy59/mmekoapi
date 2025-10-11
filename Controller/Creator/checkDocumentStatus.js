@@ -15,7 +15,7 @@ const checkDocumentStatus = async (req, res) => {
     }
 
     const user = await userdb.findById(userid).exec();
-    if (user && user.isCreator === false && !user.creator_portfoliio_Id) {
+    if (user && user.isCreator === false && !user.creator_portfolio_id) {
       return res.status(200).json({ status: "rejected" });
     }
 

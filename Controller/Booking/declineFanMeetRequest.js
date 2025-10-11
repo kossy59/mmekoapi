@@ -7,11 +7,11 @@ let sendpushnote = require("../../utiils/sendPushnot");
 const declineFanMeetRequest = async (req, res) => {
   const {
     bookingId,
-    creator_portfoliio_Id,
+    creator_portfolio_id,
     userid
   } = req.body;
 
-  if (!bookingId || !creator_portfoliio_Id || !userid) {
+  if (!bookingId || !creator_portfolio_id || !userid) {
     return res.status(400).json({
       ok: false,
       message: "Missing required parameters"
@@ -22,7 +22,7 @@ const declineFanMeetRequest = async (req, res) => {
     // Find the booking
     const booking = await bookingdb.findOne({ 
       _id: bookingId,
-      creator_portfoliio_Id: creator_portfoliio_Id,
+      creator_portfolio_id: creator_portfolio_id,
       userid: userid,
       status: "request"
     }).exec();
@@ -64,8 +64,8 @@ const declineFanMeetRequest = async (req, res) => {
     await sendEmail(userid, "Your fan meet request has been declined");
     await sendpushnote(userid, "Your fan meet request has been declined", "fanicon");
     
-    await sendEmail(creator_portfoliio_Id, "You declined a fan meet request");
-    await sendpushnote(creator_portfoliio_Id, "You declined a fan meet request", "creatoricon");
+    await sendEmail(creator_portfolio_id, "You declined a fan meet request");
+    await sendpushnote(creator_portfolio_id, "You declined a fan meet request", "creatoricon");
 
     return res.status(200).json({
       ok: true,

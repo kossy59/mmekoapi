@@ -127,7 +127,7 @@ const markertdata = new Scheme(
       default: "none",
     },
     // Creator_Application: { type: Boolean, required: false, default: false },
-    creator_portfoliio_Id: {
+    creator_portfolio_id: {
       type: String,
       required: false,
       default: "",

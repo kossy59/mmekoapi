@@ -8,14 +8,14 @@ let sendpushnote = require("../../utiils/sendPushnot")
 const createLike = async (req,res)=>{
      
     const userid = req.body.userid;
-    let creator_portfoliio_Id = req.body.creator_portfoliio_Id;
+    let creator_portfolio_id = req.body.creator_portfolio_id;
     const type = req.body.type;
     const time = req.body.time
     const place = req.body.place
     const date = req.body.date
     const price = req.body.price
    
-    if(!creator_portfoliio_Id  && !userid){
+    if(!creator_portfolio_id  && !userid){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
     //console.log('untop init db')
@@ -33,7 +33,7 @@ const createLike = async (req,res)=>{
             userbalance = 0
          }
 
-         let creatoremail = await creatordb.findOne({_id:creator_portfoliio_Id}).exec()
+         let creatoremail = await creatordb.findOne({_id:creator_portfolio_id}).exec()
 
          
         if(type !== "Private show"){
@@ -72,7 +72,7 @@ const createLike = async (req,res)=>{
 
        let books  = {
             userid,
-            creator_portfoliio_Id,
+            creator_portfolio_id,
             type,
             place,
             time,

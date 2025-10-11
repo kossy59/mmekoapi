@@ -22,7 +22,7 @@ const postexclusive = async (req, res) => {
 
 
     for (let i = 0; i < mycrush.length; i++) {
-        let creatorInfo = creatorDetail.find(value => mycrush[i].creator_portfoliio_Id === String(value._id))
+        let creatorInfo = creatorDetail.find(value => mycrush[i].creator_portfolio_id === String(value._id))
        
         if (creatorInfo) {
             let onlineuser = creatorUser.find(value => creatorInfo.userid === String(value._id))
@@ -34,7 +34,7 @@ const postexclusive = async (req, res) => {
                 id: mycrush[i]._id,
                 userid: creatorInfo.userid,
                 hosttype: creatorInfo.hosttype,
-                creator_portfoliio_Id: creatorInfo._id,
+                creator_portfolio_id: creatorInfo._id,
                 location: creatorInfo.location,
                 online: onlineuser.active
             }

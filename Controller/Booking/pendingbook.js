@@ -34,16 +34,16 @@ const createLike = async (req, res) => {
     let listinfos = [];
 
     for (let i = 0; i < user.length; i++) {
-      const creator_portfoliio_Id = await creatordb.findOne({ _id: user[i].creator_portfoliio_Id }).exec();
-      let image = creator_portfoliio_Id?.creatorfiles[0]?.creatorfilelink || "";
-      if (creator_portfoliio_Id)
+      const creator_portfolio_id = await creatordb.findOne({ _id: user[i].creator_portfolio_id }).exec();
+      let image = creator_portfolio_id?.creatorfiles[0]?.creatorfilelink || "";
+      if (creator_portfolio_id)
         listinfos.push({
-          name: creator_portfoliio_Id?.name,
+          name: creator_portfolio_id?.name,
           type: user[i].type,
           date: user[i].date,
           time: user[i].time,
           photolink: image,
-          creator_portfoliio_Id: creator_portfoliio_Id._id,
+          creator_portfolio_id: creator_portfolio_id._id,
           id: user[i]._id,
         });
     }
