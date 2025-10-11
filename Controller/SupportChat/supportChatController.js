@@ -242,8 +242,16 @@ const getAllSupportChats = async (req, res) => {
             firstname: user.firstname,
             lastname: user.lastname,
             photolink: user.photolink,
-            email: user.email
-          } : null
+            email: user.email,
+            isVip: user.isVip || false,
+            vipEndDate: user.vipEndDate
+          } : null,
+          // Add VIP info to messages as well
+          messages: chat.messages.map(msg => ({
+            ...msg.toObject(),
+            isVip: user ? (user.isVip || false) : false,
+            vipEndDate: user ? user.vipEndDate : null
+          }))
         };
       })
     );
@@ -290,8 +298,16 @@ const getSupportChat = async (req, res) => {
         firstname: user.firstname,
         lastname: user.lastname,
         photolink: user.photolink,
-        email: user.email
-      } : null
+        email: user.email,
+        isVip: user.isVip || false,
+        vipEndDate: user.vipEndDate
+      } : null,
+      // Add VIP info to messages as well
+      messages: supportChat.messages.map(msg => ({
+        ...msg.toObject(),
+        isVip: user ? (user.isVip || false) : false,
+        vipEndDate: user ? user.vipEndDate : null
+      }))
     };
 
     res.status(200).json({ 
@@ -333,7 +349,24 @@ const updateChatStatus = async (req, res) => {
     supportChat.status = status;
     supportChat.updatedAt = Date.now();
 
+    // If status is 'closed', clear all messages
+    if (status === 'closed') {
+      supportChat.messages = [];
+      supportChat.lastMessage = '';
+      supportChat.lastMessageDate = null;
+    }
+
     await supportChat.save();
+
+    // Emit socket event for real-time updates
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`support_chat_${supportChat.userid}`).emit('support_chat_status_update', {
+        chatId: supportChat._id,
+        userid: supportChat.userid,
+        status: status
+      });
+    }
 
     res.status(200).json({ 
       ok: true, 
