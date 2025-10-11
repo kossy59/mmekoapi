@@ -20,6 +20,7 @@ const getAllFanMeetRequests = async (req, res) => {
 
     // For creator requests, we need to find the creator's hostid first
     const creator = await creatordb.findOne({ userid: userid }).exec();
+    
     let creatorRequests = [];
     
     if (creator) {
@@ -35,6 +36,7 @@ const getAllFanMeetRequests = async (req, res) => {
 
     // Combine and deduplicate requests
     const allRequests = [...fanRequestsWithRole, ...creatorRequestsWithRole];
+    
     const uniqueRequests = allRequests.filter((request, index, self) => 
       index === self.findIndex(r => r._id.toString() === request._id.toString())
     );
