@@ -999,7 +999,7 @@ mongoose.connection.once("open", () => {
         }
         
         const fanId = call.callerid;
-        const creatorId = call.clientid;
+        const creator_portfolio_id = call.clientid;
         
         // Deduct from fan's balance
         const fan = await userdb.findOne({ _id: fanId }).exec();
@@ -1008,19 +1008,19 @@ mongoose.connection.once("open", () => {
           await fan.save();
           
           // Add to creator's earnings
-          const creator = await userdb.findOne({ _id: creatorId }).exec();
+          const creator = await userdb.findOne({ _id: creator_portfolio_id }).exec();
           if (creator) {
             creator.earnings = (creator.earnings || 0) + amount;
             await creator.save();
             
             // Update main balance record
-            const balanceRecord = await mainbalance.findOne({ userid: creatorId }).exec();
+            const balanceRecord = await mainbalance.findOne({ userid: creator_portfolio_id }).exec();
             if (balanceRecord) {
               balanceRecord.earnings = (balanceRecord.earnings || 0) + amount;
               await balanceRecord.save();
             }
             
-            console.log(`💰 [Video Call] Billing successful: Fan ${fanId} paid ${amount} gold, Creator ${creatorId} earned ${amount}`);
+            console.log(`💰 [Video Call] Billing successful: Fan ${fanId} paid ${amount} gold, Creator ${creator_portfolio_id} earned ${amount}`);
             
             // Emit balance updates to both users
             io.to(`user_${fanId}`).emit('balance_updated', {
@@ -1029,7 +1029,7 @@ mongoose.connection.once("open", () => {
               amount: amount
             });
             
-            io.to(`user_${creatorId}`).emit('balance_updated', {
+            io.to(`user_${creator_portfolio_id}`).emit('balance_updated', {
               earnings: creator.earnings,
               type: 'earn',
               amount: amount
