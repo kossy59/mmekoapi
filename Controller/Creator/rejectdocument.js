@@ -23,7 +23,7 @@ const rejectdocument = async (req, res) => {
     // 3. Reset user’s model info
     const user = await userdb.findById(userid).exec();
     if (user) {
-      user.creatorId = "";
+      user.creator_portfoliio_Id = "";
       user.isCreator = false;
       await user.save();
     }

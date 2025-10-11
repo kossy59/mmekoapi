@@ -32,7 +32,7 @@ const createCreator = async (req,res)=>{
            let addlist = []
 
            for(let i = 0; i < currentuser.length; i++){
-            let creator = await creatordb.findOne({_id:currentuser[i].creatorid})
+            let creator = await creatordb.findOne({_id:currentuser[i].creator_portfoliio_Id})
             
             if(creator){
               let mycreator = {

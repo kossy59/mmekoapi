@@ -4,12 +4,12 @@ const creatordb = require("../../Creators/creators");
 const historydb = require("../../Creators/mainbalance");
 
 const createLike = async (req, res) => {
-  const creatorid = req.body.creatorid;
+  const creator_portfoliio_Id = req.body.creator_portfoliio_Id;
   const date = req.body.date;
   const time = req.body.time;
   const userid = req.body.userid;
 
-  if (!creatorid) {
+  if (!creator_portfoliio_Id) {
     return res.status(400).json({ ok: false, message: "Creator ID is missing or invalid" });
   }
 
@@ -28,7 +28,7 @@ const createLike = async (req, res) => {
       return (
         (String(value.date) === String(date) &&
           String(value.time) === String(time) &&
-          String(value.creatorid) === String(creatorid) &&
+          String(value.creator_portfoliio_Id) === String(creator_portfoliio_Id) &&
           String(value.status) === "request") ||
         String(value.status) === "decline"
       );
@@ -41,9 +41,9 @@ const createLike = async (req, res) => {
     }
 
     // Try to find creator by _id first, then by userid
-    let creatoruser = await creatordb.findOne({ _id: creatorid }).exec();
+    let creatoruser = await creatordb.findOne({ _id: creator_portfoliio_Id }).exec();
     if (!creatoruser) {
-      creatoruser = await creatordb.findOne({ userid: creatorid }).exec();
+      creatoruser = await creatordb.findOne({ userid: creator_portfoliio_Id }).exec();
     }
     
             if (!creatoruser) {

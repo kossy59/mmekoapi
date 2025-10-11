@@ -7,7 +7,7 @@ let sendpushnote = require("../../utiils/sendPushnot");
 
 const createLike = async (req, res) => {
   const userid = req.body.userid;
-  const creatorid = req.body.creatorid;
+  const creator_portfoliio_Id = req.body.creator_portfoliio_Id;
   const time = req.body.time;
   const date = req.body.date;
 
@@ -25,7 +25,7 @@ const createLike = async (req, res) => {
     let user = users.find((value) => {
       return (
         String(value.status) === "accepted" &&
-        String(value.creatorid) === String(creatorid) &&
+        String(value.creator_portfoliio_Id) === String(creator_portfoliio_Id) &&
         String(value.time) === String(time) &&
         String(value.date) === String(date)
       );
@@ -40,7 +40,7 @@ const createLike = async (req, res) => {
     }
 
     // getting creator for knowing it booking price
-    let creator = await creatordb.findOne({ _id: user.creatorid }).exec();
+    let creator = await creatordb.findOne({ _id: user.creator_portfoliio_Id }).exec();
     let price = parseFloat(creator.price);
     console.log("creator price " + price);
 

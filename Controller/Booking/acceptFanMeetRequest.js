@@ -8,11 +8,11 @@ let sendpushnote = require("../../utiils/sendPushnot");
 const acceptFanMeetRequest = async (req, res) => {
   const {
     bookingId,
-    creatorid,
+    creator_portfoliio_Id,
     userid
   } = req.body;
 
-  if (!bookingId || !creatorid || !userid) {
+  if (!bookingId || !creator_portfoliio_Id || !userid) {
     return res.status(400).json({
       ok: false,
       message: "Missing required parameters"
@@ -23,7 +23,7 @@ const acceptFanMeetRequest = async (req, res) => {
     // Find the booking
     const booking = await bookingdb.findOne({ 
       _id: bookingId,
-      creatorid: creatorid,
+      creator_portfoliio_Id: creator_portfoliio_Id,
       userid: userid,
       status: "request"
     }).exec();
@@ -77,8 +77,8 @@ const acceptFanMeetRequest = async (req, res) => {
     await sendEmail(userid, "Your fan meet request has been accepted!");
     await sendpushnote(userid, "Your fan meet request has been accepted!", "fanicon");
     
-    await sendEmail(creatorid, "You accepted a fan meet request");
-    await sendpushnote(creatorid, "You accepted a fan meet request", "creatoricon");
+    await sendEmail(creator_portfoliio_Id, "You accepted a fan meet request");
+    await sendpushnote(creator_portfoliio_Id, "You accepted a fan meet request", "creatoricon");
 
     return res.status(200).json({
       ok: true,

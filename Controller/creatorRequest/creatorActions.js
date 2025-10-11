@@ -17,12 +17,12 @@ const acceptCreator = async (req, res) => {
 
     application.Creator_Application_status = "accepted";
     application.Creator_Application = true;
-    application.exclusive_verify = true;
+    application.creator_verified = true;
     await application.save();
     const user = await userdb.findById(application.userid);
     if (user) {
       user.Creator_Application_status = "accepted";
-      user.exclusive_verify = true;
+      user.creator_verified = true;
       await user.save();
     }
     console.log(user);
@@ -56,12 +56,12 @@ const rejectCreator = async (req, res) => {
 
     application.Creator_Application_status = "rejected";
     application.Creator_Application = false;
-    application.exclusive_verify = false;
+    application.creator_verified = false;
     await application.save();
     const user = await userdb.findById(application.userid);
     if (user) {
       user.Creator_Application_status = "rejected";
-      user.exclusive_verify = false;
+      user.creator_verified = false;
       await user.save();
     }
     // console.log(user);

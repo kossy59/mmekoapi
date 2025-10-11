@@ -14,7 +14,7 @@ const userSchema = new mongoose.Schema(
       default: "pending",
     },
     Creator_Application: { type: Boolean, required: false, default: false },
-    exclusive_verify: { type: Boolean, required: false, default: false },
+    creator_verified: { type: Boolean, required: false, default: false },
     userid: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "UserDB",

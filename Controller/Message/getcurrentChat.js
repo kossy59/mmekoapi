@@ -6,7 +6,7 @@ const completedb = require("../../Creators/usercomplete");
 const creators = require("../../Creators/creators");
 
 const getcurrentChat = async (req, res) => {
-  const userid = req.body.creatorid; // This is the target user ID (the person we're chatting with)
+  const userid = req.body.creator_portfoliio_Id; // This is the target user ID (the person we're chatting with)
   const clientid = req.body.clientid; // This is the current user ID (the person logged in)
 
   const mychat = req.body.mychat;

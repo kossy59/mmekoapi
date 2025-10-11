@@ -1,11 +1,11 @@
 let bookdb = require("../Creators/book")
 
- let request_history = async (creatorid, userid)=>{
+ let request_history = async (creator_portfoliio_Id, userid)=>{
 
-    // Get requests where user is creator (receiving requests) - only if creatorid exists
+    // Get requests where user is creator (receiving requests) - only if creator_portfoliio_Id exists
     let creatorRequests = [];
-    if (creatorid) {
-      creatorRequests = await bookdb.find({creatorid:creatorid}).exec();
+    if (creator_portfoliio_Id) {
+      creatorRequests = await bookdb.find({creator_portfoliio_Id:creator_portfoliio_Id}).exec();
     }
     
     // Get requests where user is fan (making requests)

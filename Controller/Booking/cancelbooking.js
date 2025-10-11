@@ -7,7 +7,7 @@ const creatordb = require("../../Creators/creators");
 const { emitFanMeetStatusUpdate } = require('../../utils/socket');
 
 const createLike = async (req, res) => {
-  const { id, userid, creatorid } = req.body;
+  const { id, userid, creator_portfoliio_Id } = req.body;
 
   if (!id) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
@@ -57,7 +57,7 @@ const createLike = async (req, res) => {
         bookingId: id,
         status: 'cancelled',
         userid: userid,
-        creatorid: creatorid,
+        creator_portfoliio_Id: creator_portfoliio_Id,
         message: '🚫 Fan meet request was cancelled'
       });
     }

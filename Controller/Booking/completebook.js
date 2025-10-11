@@ -12,11 +12,11 @@ const completeBooking = async (req, res) => {
   const {
     bookingId,
     userid,
-    creatorid
+    creator_portfoliio_Id
   } = req.body;
   
 
-  if (!bookingId || !userid || !creatorid) {
+  if (!bookingId || !userid || !creator_portfoliio_Id) {
     return res.status(400).json({
       ok: false,
       message: "Missing required parameters"
@@ -28,7 +28,7 @@ const completeBooking = async (req, res) => {
     const booking = await bookingdb.findOne({ 
       _id: bookingId,
       userid: userid,
-      creatorid: creatorid,
+      creator_portfoliio_Id: creator_portfoliio_Id,
       status: "accepted"
     }).exec();
 
@@ -44,10 +44,10 @@ const completeBooking = async (req, res) => {
     await booking.save();
 
     // Get host type from booking first, then fallback to creator profile
-    let creatorProfile = await creatordb.findOne({ userid: creatorid }).exec();
+    let creatorProfile = await creatordb.findOne({ userid: creator_portfoliio_Id }).exec();
     if (!creatorProfile) {
-      // If not found by userid, try by _id (in case creatorid is the profile ID)
-      creatorProfile = await creatordb.findOne({ _id: creatorid }).exec();
+      // If not found by userid, try by _id (in case creator_portfoliio_Id is the profile ID)
+      creatorProfile = await creatordb.findOne({ _id: creator_portfoliio_Id }).exec();
     }
     const hostType = booking.type || creatorProfile?.hosttype || "Fan meet";
 
@@ -56,7 +56,7 @@ const completeBooking = async (req, res) => {
       bookingId: booking._id,
       status: 'completed',
       userid: userid,
-      creatorid: creatorid,
+      creator_portfoliio_Id: creator_portfoliio_Id,
       message: `✅ ${hostType} has been completed!`
     });
 
@@ -64,10 +64,10 @@ const completeBooking = async (req, res) => {
     const user = await userdb.findOne({ _id: userid }).exec();
     
     // Find creator by hostid first, then by userid
-    let creator = await userdb.findOne({ _id: creatorid }).exec();
+    let creator = await userdb.findOne({ _id: creator_portfoliio_Id }).exec();
     if (!creator) {
-      // If not found by _id, try to find by creatorid (hostid) in creatordb
-      const creatorRecord = await creatordb.findOne({ _id: creatorid }).exec();
+      // If not found by _id, try to find by creator_portfoliio_Id (hostid) in creatordb
+      const creatorRecord = await creatordb.findOne({ _id: creator_portfoliio_Id }).exec();
       if (creatorRecord) {
         creator = await userdb.findOne({ _id: creatorRecord.userid }).exec();
       }
@@ -112,8 +112,8 @@ const completeBooking = async (req, res) => {
     await sendEmail(userid, `${hostType} completed successfully!`);
     await sendpushnote(userid, `${hostType} completed successfully!`, "fanicon");
     
-    await sendEmail(creatorid, `${hostType} completed - payment received!`);
-    await sendpushnote(creatorid, `${hostType} completed - payment received!`, "creatoricon");
+    await sendEmail(creator_portfoliio_Id, `${hostType} completed - payment received!`);
+    await sendpushnote(creator_portfoliio_Id, `${hostType} completed - payment received!`, "creatoricon");
 
     return res.status(200).json({
       ok: true,

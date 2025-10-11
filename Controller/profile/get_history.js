@@ -19,10 +19,10 @@ const readHistory = async (req, res) => {
     userid: userid,
   });
   
-  // Get creatorid from the creator record
-  let creatorid = null;
+  // Get creator_portfoliio_Id from the creator record
+  let creator_portfoliio_Id = null;
   if (currentCreator && currentCreator.length > 0) {
-    creatorid = currentCreator[0]._id;
+    creator_portfoliio_Id = currentCreator[0]._id;
   }
   
 
@@ -50,8 +50,8 @@ const readHistory = async (req, res) => {
     }
 
     gift_count = String(await getGift(userid));
-    if (creatorid) {
-      request_count = String(await getRequest(creatorid, userid));
+    if (creator_portfoliio_Id) {
+      request_count = String(await getRequest(creator_portfoliio_Id, userid));
     } else {
       // If user is not a creator, only count fan requests
       request_count = String(await getRequest(null, userid));

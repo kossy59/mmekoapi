@@ -6,7 +6,7 @@ const admindb = require("../../Creators/admindb");
 
 const createLike = async (req, res) => {
   const userid = req.body.userid;
-  const creatorid = req.body.creatorid;
+  const creator_portfoliio_Id = req.body.creator_portfoliio_Id;
 
   if (!userid) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
@@ -19,8 +19,8 @@ const createLike = async (req, res) => {
 
     let creator = [];
 
-    if (creatorid) {
-      let mod = await bookingdb.find({ creatorid: creatorid }).exec();
+    if (creator_portfoliio_Id) {
+      let mod = await bookingdb.find({ creator_portfoliio_Id: creator_portfoliio_Id }).exec();
       creator = mod
         // .filter((value) => {
         //   return (
@@ -77,7 +77,7 @@ const createLike = async (req, res) => {
           type: creator[i].type,
           date: creator[i].date,
           time: creator[i].time,
-          creatorid: creator[i].creatorid,
+          creator_portfoliio_Id: creator[i].creator_portfoliio_Id,
           id: creator[i]._id,
           place: creator[i].place,
           clientid: creator[i].userid,
@@ -89,7 +89,7 @@ const createLike = async (req, res) => {
     }
 
     for (let i = 0; i < user.length; i++) {
-      let image = await creatordb.findOne({ _id: user[i].creatorid }).exec();
+      let image = await creatordb.findOne({ _id: user[i].creator_portfoliio_Id }).exec();
 
       if (image?.photolink) {
         let photo = image.photolink.split(",");
@@ -101,7 +101,7 @@ const createLike = async (req, res) => {
           type: user[i].type,
           date: user[i].date,
           time: user[i].time,
-          creatorid: user[i].creatorid,
+          creator_portfoliio_Id: user[i].creator_portfoliio_Id,
           id: user[i]._id,
           creatoruserid: image.userid,
           amount: image.price,
@@ -129,7 +129,7 @@ const createLike = async (req, res) => {
     });
 
     for (let i = 0; i < user.length; i++) {
-      let image = await creatordb.findOne({ _id: user[i].creatorid }).exec();
+      let image = await creatordb.findOne({ _id: user[i].creator_portfoliio_Id }).exec();
       if (image) {
         let photo = image.creatorfiles[0]?.creatorfilelink || "";
 
@@ -140,7 +140,7 @@ const createLike = async (req, res) => {
           type: user[i].type,
           date: user[i].date,
           time: user[i].time,
-          creatorid: user[i].creatorid,
+          creator_portfoliio_Id: user[i].creator_portfoliio_Id,
           accepted: "accepted",
           id: user[i]._id,
           creatoruserid: image.userid,

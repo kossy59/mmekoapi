@@ -8,13 +8,13 @@ let sendpushnote = require("../../utiils/sendPushnot");
 const { emitFanMeetStatusUpdate } = require('../../utils/socket');
 
 const createLike = async (req, res) => {
-  const creatorid = req.body.creatorid;
+  const creator_portfoliio_Id = req.body.creator_portfoliio_Id;
   const userid = req.body.userid;
   const date = req.body.date;
   const time = req.body.time;
-  console.log("accept creator " + creatorid);
+  console.log("accept creator " + creator_portfoliio_Id);
 
-  if (!creatorid) {
+  if (!creator_portfoliio_Id) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
   }
   console.log("untop init db");
@@ -22,7 +22,7 @@ const createLike = async (req, res) => {
   //let data = await connectdatabase()
 
   try {
-    const users = await bookingdb.find({ creatorid: creatorid }).exec();
+    const users = await bookingdb.find({ creator_portfoliio_Id: creator_portfoliio_Id }).exec();
 
     let user = users.find((value) => {
       return (
@@ -86,7 +86,7 @@ const createLike = async (req, res) => {
       bookingId: status._id,
       status: 'accepted',
       userid: status.userid,
-      creatorid: status.creatorid,
+      creator_portfoliio_Id: status.creator_portfoliio_Id,
       message: '🎉 Fan meet request has been accepted!'
     });
     
@@ -109,14 +109,14 @@ module.exports = createLike;
 // let sendpushnote = require("../../utiils/sendPushnot");
 
 // const AcceptBooking = async (req, res) => {
-//   const { creatorId, userId, date, time } = req.body;
+//   const { creator_portfoliio_Id, userId, date, time } = req.body;
 
-//   if (!creatorId) {
+//   if (!creator_portfoliio_Id) {
 //     return res.status(404).json({ ok: false, message: "Invalid Modle Id!" });
 //   }
 
 //   try {
-//     const boookings = await bookingdb.find({ creatorId: creatorId }).exec();
+//     const boookings = await bookingdb.find({ creator_portfoliio_Id: creator_portfoliio_Id }).exec();
 
 //     let filteredBookings = boookings.find((value) => {
 //       return (

@@ -143,7 +143,7 @@ app.use("/changepassword", require("./routes/Auth/changepassword"));
 app.use("/getpostcomment", require("./routes/api/comment/Getallcomment"));
 app.use("/getprofilebyid", require("./routes/api/profile/Profile"));
 app.use("/getverifycreator", require("./routes/api/creator/getlivecreator"));
-app.use("/getcreatorbyid", require("./routes/api/creator/getcreatorbyid"));
+app.use("/getcreatorbyportfolioid", require("./routes/api/creator/getcreatorbyportfolioid"));
 app.use("/searchuser", require("./routes/api/profile/getallUser"));
 app.use("/post", require("./routes/api/post/Post"));
 app.use("/creator/all", require("./routes/api/creator/mycreators"));

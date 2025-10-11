@@ -35,10 +35,10 @@ const createCreator = async (req, res) => {
         message: `user can not edit portfolio`,
       });
     }
-    const user = (await userdb.findOne({ _id: currentuser.userid }).exec() || await userdb.findOne({ creatorId: hostid }).exec());
+    const user = (await userdb.findOne({ _id: currentuser.userid }).exec() || await userdb.findOne({ creator_portfoliio_Id: hostid }).exec());
     user.creator_portfolio = false
-    user.creatorId = "";
-    user.creatorID = "";
+    user.creator_portfoliio_Id = "";
+    user.creator_portfolio_id = "";
     await user.save()
 
     //await data.databar.deleteDocument(data.dataid,data.creatorCol,currentuser.$id)

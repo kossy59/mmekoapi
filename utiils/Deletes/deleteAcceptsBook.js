@@ -26,7 +26,7 @@ let allbookings = allbookingss.filter(value=>{
 
     if(diffDays >= 30){
         allUserID.push({
-            creatorid:value.creatorid,
+            creator_portfoliio_Id:value.creator_portfoliio_Id,
             userid:value.userid,
             id:value._id
         })
@@ -36,7 +36,7 @@ let allbookings = allbookingss.filter(value=>{
  for(let i = 0; i < allUserID.length; i++){
     let price = 0
     let userBalance = 0;
-    let creatorprice = await creatorDB.findOne({_id:allUserID[i].creatorid}).exec()
+    let creatorprice = await creatorDB.findOne({_id:allUserID[i].creator_portfoliio_Id}).exec()
     let user = await userDB.findOne({_id:allUserID[i].userid}).exec()
 
     if(creatorprice){

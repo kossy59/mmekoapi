@@ -62,8 +62,8 @@ const cancelFanMeetRequest = async (req, res) => {
     await sendEmail(userid, "Your fan meet request has been cancelled");
     await sendpushnote(userid, "Your fan meet request has been cancelled", "fanicon");
     
-    await sendEmail(booking.creatorid, "A fan cancelled their meet request");
-    await sendpushnote(booking.creatorid, "A fan cancelled their meet request", "creatoricon");
+    await sendEmail(booking.creator_portfoliio_Id, "A fan cancelled their meet request");
+    await sendpushnote(booking.creator_portfoliio_Id, "A fan cancelled their meet request", "creatoricon");
 
     return res.status(200).json({
       ok: true,

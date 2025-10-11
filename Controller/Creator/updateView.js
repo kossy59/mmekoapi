@@ -1,11 +1,11 @@
 const creators = require("../../Creators/creators");
 const userdb = require("../../Creators/userdb");
 const updateView = async (req, res) => {
-  const { creatorId, userId } = req.body;
+  const { creator_portfoliio_Id, userId } = req.body;
 
   const currentCreator = await creators
     .find({
-      _id: creatorId,
+      _id: creator_portfoliio_Id,
     })
     .exec();
 

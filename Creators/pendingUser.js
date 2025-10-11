@@ -77,7 +77,7 @@ const pendingUser = new Scheme(
       type: String,
       required: false,
     },
-    exclusive_verify: {
+    creator_verified: {
       type: Boolean,
       required: false,
       default: false,
@@ -91,7 +91,7 @@ const pendingUser = new Scheme(
       required: false,
       default: false,
     },
-    creatorId: {
+    creator_portfoliio_Id: {
       type: String,
       required: false,
       default: "",

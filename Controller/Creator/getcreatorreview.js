@@ -4,9 +4,9 @@ const userphotodb = require("../../Creators/usercomplete")
 
 const createLike = async (req,res)=>{
 
-    const creatorid = req.body.creatorid
+    const creator_portfoliio_Id = req.body.creator_portfoliio_Id
 
-    if( !creatorid){
+    if( !creator_portfoliio_Id){
         return res.status(400).json({"ok":false,'message': 'please provide user and creator ID!!'})
     }
     console.log('untop init db')
@@ -15,7 +15,7 @@ const createLike = async (req,res)=>{
 
     try{
 
-         let review = await reviewdb.find({creatorid:creatorid}).exec()
+         let review = await reviewdb.find({creator_portfoliio_Id:creator_portfoliio_Id}).exec()
 
          if(!review[0]){
               return res.status(200).json({"ok":true,"message":` Success`, reviews:[]})

@@ -12,7 +12,7 @@ const getTransactionHistory = async (req, res) => {
     // First, find the creator ID for this user
     const creatordb = require("../../Creators/creators");
     const creatorRecord = await creatordb.findOne({ userid: userid }).exec();
-    const creatorId = creatorRecord ? creatorRecord._id : null;
+    const creator_portfoliio_Id = creatorRecord ? creatorRecord._id : null;
     
     // Get all transaction history for this user (both as user and as creator)
     let allTransactions = await historydb.find({ userid: userid })
@@ -27,8 +27,8 @@ const getTransactionHistory = async (req, res) => {
     
     // If user is a creator, also get transactions for their creator ID
     let creatorTransactions = [];
-    if (creatorId) {
-      creatorTransactions = await historydb.find({ userid: creatorId })
+    if (creator_portfoliio_Id) {
+      creatorTransactions = await historydb.find({ userid: creator_portfoliio_Id })
         .sort({ date: -1 })
         .exec();
     }

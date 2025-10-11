@@ -20,7 +20,7 @@ const createLike = async (req, res) => {
   let users = [];
   if (creator_portfolio) {
     console.log("this is creator");
-    users = await bookingdb.find({ creatorid: creator_portfolio._id }).exec();
+    users = await bookingdb.find({ creator_portfoliio_Id: creator_portfolio._id }).exec();
     console.log("this is creator not " + users.length);
   }
 
@@ -71,7 +71,7 @@ const createLike = async (req, res) => {
       photolink: clientphoto?.photoLink || "",
       clientid: client._id,
       place: user[i].place,
-      creatorid: user[i].creatorid,
+      creator_portfoliio_Id: user[i].creator_portfoliio_Id,
       status: user[i].status,
       ismessage: false,
       notification: false,

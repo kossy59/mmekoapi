@@ -48,7 +48,7 @@ const createCreator = async (req, res) => {
    */
   const filesCount = Array.isArray(req.files) ? req.files.length : 0;
 
-  // Require files for all users, regardless of exclusive_verify status
+  // Require files for all users, regardless of creator_verified status
   if (!filesCount && !photolink.length) {
     return res.status(400).json({
       ok: false,
@@ -92,7 +92,7 @@ const createCreator = async (req, res) => {
     const creator = {
       userid,
       creatorfiles,
-      verify: currentuser?.exclusive_verify ? "live" : "unverified",
+      verify: currentuser?.creator_verified ? "live" : "unverified",
       name,
       age,
       location,
@@ -116,8 +116,8 @@ const createCreator = async (req, res) => {
     await currentuser
       .updateOne({
         creator_portfolio: true,
-        creatorId: newCreator._id,
-        creatorID: newCreator._id,
+        creator_portfoliio_Id: newCreator._id,
+        creator_portfolio_id: newCreator._id,
       })
       .exec();
 

@@ -13,13 +13,13 @@ const postexclusive = async (req, res) => {
   let pricebalance = req.body.pricebalance;
   let exclusivename = req.body.exclusivename;
   let exclusivelink = req.body.exclusivelink;
-  let creatorID = req.body.creatorID;
+  let creator_portfolio_id = req.body.creator_portfolio_id;
 
   console.log("userid " + userid);
   console.log("exclusiveid " + exclusiveid);
   console.log("price " + price);
   console.log("pricebalance " + pricebalance);
-  console.log(creatorID);
+  console.log(creator_portfolio_id);
 
   if (!userid || !exclusiveid || !price) {
     console.log("failed to buy");
@@ -69,14 +69,14 @@ const postexclusive = async (req, res) => {
         date: `${Date.now().toString()}`,
       };
       let creatorhistory = {
-        userid: creatorID,
+        userid: creator_portfolio_id,
         details: `received ${price} coins for exclusive sale successful`,
         spent: "0",
         income: `${price}`,
         date: `${Date.now().toString()}`,
       };
       let creator = await creatordb.find({
-        userid: creatorID,
+        userid: creator_portfolio_id,
       });
 
       const earnings = Number(creator[0].earnings) + Number(price);

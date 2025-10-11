@@ -54,7 +54,7 @@ const readProfile = async (req, res) => {
       Creator_portfolio = false;
     }
 
-    if (du.exclusive_verify) {
+    if (du.creator_verified) {
       exclusive = true
     } else {
       exclusive = false
@@ -80,7 +80,7 @@ const readProfile = async (req, res) => {
         // Use the first creator image
         dues.creatorphotolink = creatorava.creatorfiles[0].creatorfilelink;
       }
-      dues.creatorID = creatorava._id
+      dues.creator_portfolio_id = creatorava._id
       // dues.creatorphotolink = images[0]
       dues.creatorname = creatorava.name
 

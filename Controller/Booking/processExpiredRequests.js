@@ -70,8 +70,8 @@ const processExpiredRequests = async (req, res) => {
             await sendEmail(booking.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`);
             await sendpushnote(booking.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`, "fanicon");
             
-            await sendEmail(booking.creatorid, `A ${hostType.toLowerCase()} request has expired`);
-            await sendpushnote(booking.creatorid, `A ${hostType.toLowerCase()} request has expired`, "creatoricon");
+            await sendEmail(booking.creator_portfoliio_Id, `A ${hostType.toLowerCase()} request has expired`);
+            await sendpushnote(booking.creator_portfoliio_Id, `A ${hostType.toLowerCase()} request has expired`, "creatoricon");
           }
         }
       } catch (err) {

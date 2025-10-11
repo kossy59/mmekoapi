@@ -23,7 +23,7 @@ const getAllFanMeetRequests = async (req, res) => {
     let creatorRequests = [];
     
     if (creator) {
-      creatorRequests = await bookingdb.find({ creatorid: creator._id })
+      creatorRequests = await bookingdb.find({ creator_portfoliio_Id: creator._id })
         .sort({ createdAt: -1 })
         .exec();
     }
@@ -58,7 +58,7 @@ const getAllFanMeetRequests = async (req, res) => {
                   userType = 'creator';
                 } else if (isFan) {
                   // Current user is fan, get creator details
-                  otherUser = await creatordb.findOne({ _id: request.creatorid }).exec();
+                  otherUser = await creatordb.findOne({ _id: request.creator_portfoliio_Id }).exec();
                   userType = 'fan';
                 } else {
                   // Fallback - shouldn't happen
@@ -126,7 +126,7 @@ const getAllFanMeetRequests = async (req, res) => {
           price: request.price,
           timeRemaining,
           userid: request.userid,
-          creatorid: request.creatorid,
+          creator_portfoliio_Id: request.creator_portfoliio_Id,
           hosttype: request.type, // Use booking's type field which contains the host type
           otherUser: otherUser ? {
             name: otherUser.name || `${otherUser.firstname || ''} ${otherUser.lastname || ''}`.trim() || 'Unknown User',

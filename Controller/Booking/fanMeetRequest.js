@@ -8,7 +8,7 @@ let sendpushnote = require("../../utiils/sendPushnot");
 const createFanMeetRequest = async (req, res) => {
   const {
     userid,
-    creatorid,
+    creator_portfoliio_Id,
     type,
     time,
     place,
@@ -16,7 +16,7 @@ const createFanMeetRequest = async (req, res) => {
     price
   } = req.body;
 
-  if (!creatorid || !userid) {
+  if (!creator_portfoliio_Id || !userid) {
     return res.status(400).json({
       ok: false,
       message: "User ID or Creator ID invalid!!"
@@ -26,7 +26,7 @@ const createFanMeetRequest = async (req, res) => {
   try {
     // Get user and creator data
     const user = await userdb.findOne({ _id: userid }).exec();
-    const creator = await creatordb.findOne({ _id: creatorid }).exec();
+    const creator = await creatordb.findOne({ _id: creator_portfoliio_Id }).exec();
 
     if (!user) {
       return res.status(404).json({
@@ -76,7 +76,7 @@ const createFanMeetRequest = async (req, res) => {
     // Create booking record
     const bookingData = {
       userid,
-      creatorid,
+      creator_portfoliio_Id,
       type,
       place,
       time,
