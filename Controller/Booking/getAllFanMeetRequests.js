@@ -60,7 +60,16 @@ const getAllFanMeetRequests = async (req, res) => {
                   userType = 'creator';
                 } else if (isFan) {
                   // Current user is fan, get creator details
-                  otherUser = await creatordb.findOne({ _id: request.creator_portfolio_id }).exec();
+                  const creatorData = await creatordb.findOne({ _id: request.creator_portfolio_id }).exec();
+                  // Also get the creator's user data for VIP status
+                  const creatorUserData = await userdb.findOne({ _id: creatorData?.userid }).exec();
+                  
+                  // Combine creator data with user VIP data
+                  otherUser = {
+                    ...creatorData?.toObject(),
+                    isVip: creatorUserData?.isVip || false,
+                    vipEndDate: creatorUserData?.vipEndDate
+                  };
                   userType = 'fan';
                 } else {
                   // Fallback - shouldn't happen
@@ -133,11 +142,15 @@ const getAllFanMeetRequests = async (req, res) => {
           otherUser: otherUser ? {
             name: otherUser.name || `${otherUser.firstname || ''} ${otherUser.lastname || ''}`.trim() || 'Unknown User',
             photolink: otherUser.photolink || '/picture-1.jfif',
-            isCreator: userType === 'fan' // If current user is fan, other user is creator
+            isCreator: userType === 'fan', // If current user is fan, other user is creator
+            isVip: otherUser.isVip || false, // Include VIP status
+            vipEndDate: otherUser.vipEndDate // Include VIP end date
           } : {
             name: 'Unknown User',
             photolink: '/picture-1.jfif',
-            isCreator: userType === 'fan'
+            isCreator: userType === 'fan',
+            isVip: false,
+            vipEndDate: null
           },
           createdAt: request.createdAt,
           expiresAt: request.expiresAt
