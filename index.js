@@ -229,11 +229,15 @@ app.use("/quickchat", require("./routes/api/quickchat"));
 app.use("/fanmeet", require("./routes/api/fanMeetRoutes"));
 app.use("/process-expired", require("./routes/api/processExpired"));
 app.use("/video-call", require("./routes/api/videoCall/videoCallRoutes"));
+app.use("/support-chat", require("./routes/api/supportChat"));
 // Track online users
 const onlineUsers = new Set();
 
 // Track connected sockets to prevent duplicate connections
 const connectedSockets = new Map();
+
+// Track support chat connections
+const supportChatConnections = new Map();
 
 // Track disconnection times for grace period (development mode)
 const disconnectionTimes = new Map();
@@ -589,7 +593,39 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Support Chat Socket Events
+  socket.on("join_support_chat", (data) => {
+    if (data.userid) {
+      supportChatConnections.set(data.userid, socket.id);
+      socket.join(`support_chat_${data.userid}`);
+      console.log(`User ${data.userid} joined support chat`);
+    }
+  });
+
+  socket.on("support_chat_message", async (data) => {
+    try {
+      // Broadcast message to admin and user
+      io.to(`support_chat_${data.userid}`).emit("support_message_received", data);
+      io.to("admin_support").emit("new_support_message", data);
+    } catch (error) {
+      console.error("Error handling support chat message:", error);
+    }
+  });
+
+  socket.on("admin_join_support", () => {
+    socket.join("admin_support");
+    console.log("Admin joined support chat");
+  });
+
   socket.on("disconnect", async () => {
+    // Remove from support chat connections
+    for (const [userid, socketId] of supportChatConnections.entries()) {
+      if (socketId === socket.id) {
+        supportChatConnections.delete(userid);
+        break;
+      }
+    }
+    
     // Broadcast user offline status before disconnecting
     if (socket.id && IDS.userid) {
       // Always use grace period for better user experience
