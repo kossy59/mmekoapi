@@ -1,5 +1,6 @@
 const userdb = require("../../Creators/userdb")
 const admindb = require("../../Creators/admindb");
+const { pushActivityNotification } = require("../../utiils/sendPushnot");
 
 const updatePost = async (req,res)=>{
     const data = req.body.data;
@@ -38,6 +39,9 @@ const updatePost = async (req,res)=>{
                 }
 
                 await admindb.create(newdata)
+                
+                // Send push notification for activity
+                await pushActivityNotification(verifyIDS[i], message, "admin_activity")
                }
 
 

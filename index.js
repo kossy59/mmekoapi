@@ -24,7 +24,7 @@ let {
 } = require("./utiils/check_caller");
 const pay_creator = require("./utiils/payclient_PCALL");
 const updatebalance = require("./utiils/deductPVC");
-const pushnotify = require("./utiils/sendPushnot");
+const { pushmessage, pushMessageNotification, pushSupportNotification, pushActivityNotification, pushAdminNotification } = require("./utiils/sendPushnot");
 const imageRoutes = require("./routes/imageRoutes");
 const { scheduleMessageCleanup } = require("./utiils/deleteOldMessages");
 
@@ -282,12 +282,10 @@ const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 io.on("connection", (socket) => {
   socket.on("online", async (userid) => {
     if (userid) {
-      console.log('🔍 [Socket] User going online:', userid, 'Type:', typeof userid);
       
       // Check if this user already has a connected socket
       const existingSocket = connectedSockets.get(userid);
       if (existingSocket && existingSocket.connected) {
-        console.log('🔍 [Socket] User already has connected socket, skipping');
         return;
       }
       
@@ -314,8 +312,6 @@ io.on("connection", (socket) => {
       
       // Add user to online users set
       onlineUsers.add(userid);
-      console.log('🔍 [Socket] Added user to onlineUsers:', userid);
-      console.log('🔍 [Socket] Current online users:', Array.from(onlineUsers));
       
       // ----------------------------------------------------
       // **Part A: Send the FULL list ONLY to the NEW user**
@@ -355,10 +351,10 @@ io.on("connection", (socket) => {
       await Livechats({ ...data });
       if (info && data.toid && data.toid !== 'undefined' && data.toid !== 'null' && typeof data.toid === 'string' && data.toid.length === 24) {
         await sendEmail(data.toid, `New message from ${info?.name}`);
-        await pushnotify(
+        await pushMessageNotification(
           data.toid,
           `New message from ${info?.name}`,
-          "messageicon"
+          info?.name || "Someone"
         );
       } else {
         console.log("⚠️ [SOCKET] Invalid toid for email notification:", data.toid);
@@ -607,6 +603,18 @@ io.on("connection", (socket) => {
       // Broadcast message to admin and user
       io.to(`support_chat_${data.userid}`).emit("support_message_received", data);
       io.to("admin_support").emit("new_support_message", data);
+      
+      // Send push notifications
+      if (data.isAdmin) {
+        // Admin message to user
+        await pushSupportNotification(data.userid, data.message || "New support message from admin");
+      } else {
+        // User message to admin - notify all admins
+        const admins = await userdb.find({ isAdmin: true }).exec();
+        for (const admin of admins) {
+          await pushAdminNotification(admin._id, `New support message from user: ${data.message || "Support request"}`);
+        }
+      }
     } catch (error) {
       console.error("Error handling support chat message:", error);
     }
@@ -659,18 +667,15 @@ io.on("connection", (socket) => {
   // Handle heartbeat to keep users online
   socket.on('heartbeat', (userid) => {
     if (userid) {
-      console.log('💓 [Socket] Heartbeat received from:', userid);
       userActivity.set(userid, Date.now());
       
       // Ensure user stays in onlineUsers set
       if (!onlineUsers.has(userid)) {
-        console.log('💓 [Socket] Re-adding user to onlineUsers:', userid);
         onlineUsers.add(userid);
       }
       
       // Cancel any pending disconnection
       if (disconnectionTimes.has(userid)) {
-        console.log('💓 [Socket] Cancelling disconnection for:', userid);
         disconnectionTimes.delete(userid);
       }
     }

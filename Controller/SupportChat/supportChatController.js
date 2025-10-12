@@ -1,5 +1,6 @@
 const SupportChat = require('../../Creators/supportchat');
 const User = require('../../Creators/userdb');
+const { pushAdminNotification, pushSupportNotification } = require('../../utiils/sendPushnot');
 
 // Create or get support chat
 const createOrGetSupportChat = async (req, res) => {
@@ -133,6 +134,21 @@ const sendMessage = async (req, res) => {
       });
     }
 
+    // Send push notifications to all admin users
+    try {
+      const adminUsers = await User.find({ admin: true }).exec();
+      
+      for (const admin of adminUsers) {
+        try {
+          await pushSupportNotification(admin._id, `New support message: ${message}`);
+        } catch (adminPushError) {
+          // Error sending push to admin
+        }
+      }
+    } catch (pushError) {
+      // Error sending push notifications to admins
+    }
+
     res.status(200).json({ 
       ok: true, 
       message: 'Message sent successfully',
@@ -197,6 +213,13 @@ const adminSendMessage = async (req, res) => {
         userid: supportChat.userid,
         isAdmin: true
       });
+    }
+
+    // Send push notification to user
+    try {
+      await pushAdminNotification(supportChat.userid, message, 'support');
+    } catch (pushError) {
+      // Error sending push notification to user
     }
 
     res.status(200).json({ 

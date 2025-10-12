@@ -3,7 +3,6 @@ const admindb = require("../../Creators/admindb");
 const updatePost = async (req, res) => {
   const userid = req.body.userid;
 
-  console.log("inside admin notify");
 
   if (!userid) {
     return res.status(400).json({ ok: false, message: "invalid userID!!" });

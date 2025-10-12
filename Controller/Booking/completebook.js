@@ -3,7 +3,7 @@ const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 const historydb = require("../../Creators/mainbalance");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
 // Socket.io integration
 const { emitFanMeetStatusUpdate } = require('../../utils/socket');
@@ -110,10 +110,13 @@ const completeBooking = async (req, res) => {
 
     // Send notifications
     await sendEmail(userid, `${hostType} completed successfully!`);
-    await sendpushnote(userid, `${hostType} completed successfully!`, "fanicon");
+    await pushActivityNotification(userid, `${hostType} completed successfully!`, "booking_completed");
     
-    await sendEmail(creator_portfolio_id, `${hostType} completed - payment received!`);
-    await sendpushnote(creator_portfolio_id, `${hostType} completed - payment received!`, "creatoricon");
+    // Send notification to creator's actual user ID, not portfolio ID
+    if (creator && creator._id) {
+      await sendEmail(creator._id, `${hostType} completed - payment received!`);
+      await pushActivityNotification(creator._id, `${hostType} completed - payment received!`, "booking_completed");
+    }
 
     return res.status(200).json({
       ok: true,

@@ -3,7 +3,7 @@ const creatordb = require("../../Creators/creators");
 const userdb = require("../../Creators/userdb");
 const historydb = require("../../Creators/mainbalance");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
 const createLike = async (req, res) => {
   const userid = req.body.userid;
@@ -84,10 +84,10 @@ const createLike = async (req, res) => {
         `${creatoruser._id}`,
         `You received ${price} from ${paidname.firstname}`
       );
-      await sendpushnote(
+      await pushActivityNotification(
         `${creatoruser._id}`,
         `You received ${price} from ${paidname.firstname}`,
-        "creatoricon"
+        "booking_completed"
       );
     }
 

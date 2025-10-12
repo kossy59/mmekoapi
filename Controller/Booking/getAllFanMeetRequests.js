@@ -14,7 +14,11 @@ const getAllFanMeetRequests = async (req, res) => {
 
   try {
     // Get all requests where user is either the fan or creator
-    const fanRequests = await bookingdb.find({ userid: userid })
+    // Filter out requests with missing required fields
+    const fanRequests = await bookingdb.find({ 
+      userid: userid,
+      creator_portfolio_id: { $exists: true, $ne: null, $ne: "" }
+    })
       .sort({ createdAt: -1 })
       .exec();
 
@@ -24,7 +28,10 @@ const getAllFanMeetRequests = async (req, res) => {
     let creatorRequests = [];
     
     if (creator) {
-      creatorRequests = await bookingdb.find({ creator_portfolio_id: creator._id })
+      creatorRequests = await bookingdb.find({ 
+        creator_portfolio_id: creator._id,
+        userid: { $exists: true, $ne: null, $ne: "" }
+      })
         .sort({ createdAt: -1 })
         .exec();
     }
@@ -93,8 +100,11 @@ const getAllFanMeetRequests = async (req, res) => {
           } else {
             // Request has expired, update status
             if (request._mongooseDoc && request._mongooseDoc.status !== 'expired') {
-              request._mongooseDoc.status = 'expired';
-              await request._mongooseDoc.save();
+              // Only save if required fields are present
+              if (request._mongooseDoc.creator_portfolio_id && request._mongooseDoc.userid) {
+                request._mongooseDoc.status = 'expired';
+                await request._mongooseDoc.save();
+              }
             }
             timeRemaining = 'Expired';
           }
@@ -119,8 +129,11 @@ const getAllFanMeetRequests = async (req, res) => {
           } else {
             // Request has expired, update status
             if (request._mongooseDoc && request._mongooseDoc.status !== 'expired') {
-              request._mongooseDoc.status = 'expired';
-              await request._mongooseDoc.save();
+              // Only save if required fields are present
+              if (request._mongooseDoc.creator_portfolio_id && request._mongooseDoc.userid) {
+                request._mongooseDoc.status = 'expired';
+                await request._mongooseDoc.save();
+              }
             }
             timeRemaining = 'Expired';
           }

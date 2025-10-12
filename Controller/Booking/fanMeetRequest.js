@@ -3,7 +3,7 @@ const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 const historydb = require("../../Creators/mainbalance");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
 const createFanMeetRequest = async (req, res) => {
   const {
@@ -90,10 +90,10 @@ const createFanMeetRequest = async (req, res) => {
 
     // Send notifications
     await sendEmail(creator.userid, "New fan meet request received");
-    await sendpushnote(creator.userid, "New fan meet request received", "creatoricon");
+    await pushActivityNotification(creator.userid, "New fan meet request received", "booking_request");
     
     await sendEmail(userid, "Fan meet request sent successfully");
-    await sendpushnote(userid, "Fan meet request sent successfully", "fanicon");
+    await pushActivityNotification(userid, "Fan meet request sent successfully", "booking_request");
 
     return res.status(200).json({
       ok: true,
