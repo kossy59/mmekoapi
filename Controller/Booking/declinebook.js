@@ -2,7 +2,7 @@ const bookingdb = require("../../Creators/book");
 const creatordb = require("../../Creators/creators");
 const userdb = require("../../Creators/userdb");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+let { pushActivityNotification } = require("../../utiils/sendPushnot");
 const historydb = require("../../Creators/mainbalance");
 
 // Socket.io integration
@@ -73,7 +73,7 @@ const createLike = async (req, res) => {
     }
 
     await sendEmail(userid, "Creator declined your Booking");
-    await sendpushnote(userid, "Creator declined your Booking", "creatoricon");
+    await pushActivityNotification(userid, "Creator declined your Booking", "booking_declined");
 
     return res.status(200).json({ ok: true, message: ` Success` });
   } catch (err) {

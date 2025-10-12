@@ -5,5 +5,6 @@ const updatesetting = require('../../../Controller/profile/updatepushNote');
 
 router.route('/')
 .post(updatesetting)
+.delete(updatesetting)
 
 module.exports = router;

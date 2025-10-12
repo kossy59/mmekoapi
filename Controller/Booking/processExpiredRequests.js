@@ -1,8 +1,9 @@
 const bookingdb = require("../../Creators/book");
 const userdb = require("../../Creators/userdb");
+const creatordb = require("../../Creators/creators");
 const historydb = require("../../Creators/mainbalance");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
 const processExpiredRequests = async (req, res) => {
   try {
@@ -68,10 +69,14 @@ const processExpiredRequests = async (req, res) => {
 
             // Send notifications with dynamic host type
             await sendEmail(booking.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`);
-            await sendpushnote(booking.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`, "fanicon");
+            await pushActivityNotification(booking.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`, "booking_expired");
             
-            await sendEmail(booking.creator_portfolio_id, `A ${hostType.toLowerCase()} request has expired`);
-            await sendpushnote(booking.creator_portfolio_id, `A ${hostType.toLowerCase()} request has expired`, "creatoricon");
+            // Find creator's actual user ID and send notification
+            const creatorRecord = await creatordb.findOne({ _id: booking.creator_portfolio_id }).exec();
+            if (creatorRecord && creatorRecord.userid) {
+              await sendEmail(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`);
+              await pushActivityNotification(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`, "booking_expired");
+            }
           }
         }
       } catch (err) {

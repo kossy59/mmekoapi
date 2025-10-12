@@ -3,7 +3,7 @@ const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 const historydb = require("../../Creators/mainbalance");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
 const completeFanMeet = async (req, res) => {
   const {
@@ -12,7 +12,6 @@ const completeFanMeet = async (req, res) => {
     creator_portfolio_id
   } = req.body;
   
-  console.log("🔍 [COMPLETE_FAN_MEET] Function called with:", { bookingId, userid, creator_portfolio_id });
 
   if (!bookingId || !userid || !creator_portfolio_id) {
     return res.status(400).json({
@@ -96,10 +95,13 @@ const completeFanMeet = async (req, res) => {
 
     // Send notifications
     await sendEmail(userid, `${hostType} completed successfully!`);
-    await sendpushnote(userid, `${hostType} completed successfully!`, "fanicon");
+    await pushActivityNotification(userid, `${hostType} completed successfully!`, "booking_completed");
     
-    await sendEmail(creator_portfolio_id, `${hostType} completed - payment received!`);
-    await sendpushnote(creator_portfolio_id, `${hostType} completed - payment received!`, "creatoricon");
+    // Send notification to creator's actual user ID, not portfolio ID
+    if (creator && creator._id) {
+      await sendEmail(creator._id, `${hostType} completed - payment received!`);
+      await pushActivityNotification(creator._id, `${hostType} completed - payment received!`, "booking_completed");
+    }
 
     return res.status(200).json({
       ok: true,

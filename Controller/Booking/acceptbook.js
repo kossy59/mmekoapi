@@ -2,7 +2,7 @@ const bookingdb = require("../../Creators/book");
 const userdb = require("../../Creators/userdb");
 const historydb = require("../../Creators/mainbalance");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
 // Socket.io integration
 const { emitFanMeetStatusUpdate } = require('../../utils/socket');
@@ -12,12 +12,10 @@ const createLike = async (req, res) => {
   const userid = req.body.userid;
   const date = req.body.date;
   const time = req.body.time;
-  console.log("accept creator " + creator_portfolio_id);
 
   if (!creator_portfolio_id) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
   }
-  console.log("untop init db");
 
   //let data = await connectdatabase()
 
@@ -33,7 +31,6 @@ const createLike = async (req, res) => {
       );
     });
 
-    console.log("under user pending " + user.length);
 
     if (!user) {
       return res
@@ -91,10 +88,10 @@ const createLike = async (req, res) => {
     });
     
     await sendEmail(status.userid, "creator has accepted your booking request");
-    await sendpushnote(
+    await pushActivityNotification(
       status.userid,
       "creator has accepted your booking request",
-      "creatoricon"
+      "booking_accepted"
     );
     return res.status(200).json({ ok: true, message: ` Success` });
   } catch (err) {
@@ -106,7 +103,7 @@ module.exports = createLike;
 
 // const bookingdb = require("../../Creators/book");
 // let sendEmail = require("../../utiils/sendEmailnot");
-// let sendpushnote = require("../../utiils/sendPushnot");
+// let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
 // const AcceptBooking = async (req, res) => {
 //   const { creator_portfolio_id, userId, date, time } = req.body;
@@ -127,8 +124,7 @@ module.exports = createLike;
 //       );
 //     });
 
-//     console.log("under user pending " + user.length);
-
+// 
 //     if (!filteredBookings) {
 //       return res
 //         .status(200)

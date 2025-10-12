@@ -3,7 +3,7 @@ const userdb = require("../../Creators/userdb")
 const creatordb = require("../../Creators/creators")
 const historydb = require("../../Creators/mainbalance")
 let sendEmail = require("../../utiils/sendEmailnot")
-let sendpushnote = require("../../utiils/sendPushnot")
+let { pushActivityNotification } = require("../../utiils/sendPushnot")
 
 const createLike = async (req,res)=>{
      
@@ -77,7 +77,7 @@ const createLike = async (req,res)=>{
          //console.log("user balance "+userbalance)
 
          await sendEmail(creatoremail.userid, "Accept appointment")
-         await sendpushnote(creatoremail.userid,"Accept appointment","creatoricon")
+         await pushActivityNotification(creatoremail.userid, "New booking request received", "booking")
 
        let books  = {
             userid,
