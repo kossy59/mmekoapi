@@ -48,6 +48,19 @@ const getAllFanMeetRequests = async (req, res) => {
       index === self.findIndex(r => r._id.toString() === request._id.toString())
     );
 
+    // Pre-fetch all creator data to avoid multiple database calls
+    const creatorPortfolioIds = uniqueRequests
+      .filter(req => req._userRole === 'fan')
+      .map(req => req.creator_portfolio_id);
+    
+    const creatorDataMap = new Map();
+    if (creatorPortfolioIds.length > 0) {
+      const creatorDataList = await creatordb.find({ _id: { $in: creatorPortfolioIds } }).exec();
+      creatorDataList.forEach(creator => {
+        creatorDataMap.set(creator._id.toString(), creator);
+      });
+    }
+
     // Enrich requests with user/creator details
     const enrichedRequests = await Promise.all(
       uniqueRequests.map(async (request) => {
@@ -67,7 +80,7 @@ const getAllFanMeetRequests = async (req, res) => {
                   userType = 'creator';
                 } else if (isFan) {
                   // Current user is fan, get creator details
-                  const creatorData = await creatordb.findOne({ _id: request.creator_portfolio_id }).exec();
+                  const creatorData = creatorDataMap.get(request.creator_portfolio_id.toString());
                   // Also get the creator's user data for VIP status
                   const creatorUserData = await userdb.findOne({ _id: creatorData?.userid }).exec();
                   
@@ -139,6 +152,21 @@ const getAllFanMeetRequests = async (req, res) => {
           }
         }
 
+        // Determine the target user ID for profile navigation
+        let targetUserId;
+        if (isCreator) {
+          // Current user is creator, target user is the fan
+          // The fan's user ID is in request.userid
+          targetUserId = request.userid;
+        } else if (isFan) {
+          // Current user is fan, target user is the creator
+          // Get creator's user ID from the pre-fetched creator data
+          const creatorData = creatorDataMap.get(request.creator_portfolio_id.toString());
+          if (creatorData && creatorData.userid) {
+            targetUserId = creatorData.userid;
+          }
+        }
+
         return {
           id: request._id,
           bookingId: request._id,
@@ -151,6 +179,7 @@ const getAllFanMeetRequests = async (req, res) => {
           timeRemaining,
           userid: request.userid,
           creator_portfolio_id: request.creator_portfolio_id,
+          targetUserId: targetUserId, // Add target user ID for profile navigation
           hosttype: request.type, // Use booking's type field which contains the host type
           otherUser: otherUser ? {
             name: otherUser.name || `${otherUser.firstname || ''} ${otherUser.lastname || ''}`.trim() || 'Unknown User',

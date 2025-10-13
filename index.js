@@ -40,6 +40,7 @@ const allowedOrigins = [
   "https://mmekowebsite-eight.vercel.app", // Vercel deployment
 
   "http://localhost:3000", // Add localhost for development
+  "http://10.245.95.157:3000", // Add network URL for device access
 ].filter(Boolean); // Remove falsy values (e.g., undefined NEXT_PUBLIC_URL)
 
 // Configure CORS
@@ -725,8 +726,7 @@ io.on("connection", (socket) => {
     try {
       const { callerId, callerName, answererId, answererName } = data;
       
-      console.log('🔍 [Video Call] Starting call:', { callerId, answererId });
-      console.log('🔍 [Video Call] Online users:', Array.from(onlineUsers));
+      // Starting video call
       
       // Check if answererId is a creator ID (host ID) and find the actual user ID
       let actualAnswererId = answererId;
@@ -734,23 +734,19 @@ io.on("connection", (socket) => {
       // Try to find the creator's user ID from their creator ID (which is the creator's _id)
       try {
         const creatordb = require('./Creators/creators');
-        console.log('🔍 [Video Call] Looking up creator with _id:', answererId);
         const creator = await creatordb.findOne({ _id: answererId }).exec();
-        console.log('🔍 [Video Call] Creator lookup result:', creator);
         
         if (creator && creator.userid) {
           actualAnswererId = creator.userid;
-          console.log('✅ [Video Call] Found creator user ID:', actualAnswererId, 'for creator ID:', answererId);
+          // Found creator user ID
         } else {
-          console.log('❌ [Video Call] Creator not found or no userid, using original ID:', answererId);
+          // Creator not found, using original ID
         }
       } catch (error) {
-        console.log('❌ [Video Call] Error looking up creator:', error.message);
-        console.log('🔍 [Video Call] Using original ID:', answererId);
+        // Error looking up creator, using original ID
       }
       
-      console.log('🔍 [Video Call] Checking online status for user ID:', actualAnswererId);
-      console.log('🔍 [Video Call] Is answerer online?', onlineUsers.has(actualAnswererId));
+      // Checking online status
       
       // Check if answerer is online - try multiple ID formats
       const isOnline = onlineUsers.has(actualAnswererId) || 
@@ -763,12 +759,7 @@ io.on("connection", (socket) => {
                                 Array.from(connectedSockets.keys()).some(id => id.toString() === actualAnswererId.toString());
       
       if (!isOnline && !hasConnectedSocket) {
-        console.log('❌ [Video Call] User not online:', actualAnswererId);
-        console.log('❌ [Video Call] Online users:', Array.from(onlineUsers));
-        console.log('❌ [Video Call] Connected sockets:', Array.from(connectedSockets.keys()));
-        
-        // TEMPORARY: Allow video calls even if user appears offline (for debugging)
-        console.log('⚠️ [Video Call] TEMPORARY: Allowing call despite offline status');
+        // User not online, but allowing call
         // socket.emit('video_call_error', {
         //   message: 'User is not online'
         // });
@@ -777,7 +768,7 @@ io.on("connection", (socket) => {
       
       // If user has connected socket but not in onlineUsers, add them
       if (!isOnline && hasConnectedSocket) {
-        console.log('🔧 [Video Call] User has socket but not in onlineUsers, adding:', actualAnswererId);
+        // User has socket but not in onlineUsers, adding
         onlineUsers.add(actualAnswererId);
       }
 
@@ -803,7 +794,7 @@ io.on("connection", (socket) => {
         isIncoming: true
       });
       
-      console.log('📞 [Video Call] Call notification sent to user:', actualAnswererId);
+      // Call notification sent
 
     } catch (error) {
       console.error('Error in video_call_start:', error);
@@ -832,7 +823,7 @@ io.on("connection", (socket) => {
           answererId: answererId
         });
         
-        console.log('✅ [Video Call] Call accepted, notification sent to caller:', callerId);
+        // Call accepted, notification sent to caller
       }
     } catch (error) {
       console.error('Error in video_call_accept:', error);
@@ -853,7 +844,7 @@ io.on("connection", (socket) => {
         answererId: answererId
       });
       
-      console.log('❌ [Video Call] Call declined, notification sent to caller:', callerId);
+      // Call declined, notification sent to caller
     } catch (error) {
       console.error('Error in video_call_decline:', error);
     }
@@ -865,7 +856,7 @@ io.on("connection", (socket) => {
       
       // Skip database operations for temporary call IDs
       if (callId && callId.startsWith('temp_')) {
-        console.log('📹 [WebRTC] Ending temporary call:', callId);
+        // Ending temporary call
         // Just emit the event without database operations
         socket.to(`user_${userId}`).emit('video_call_ended', {
           callId: callId,
@@ -894,22 +885,61 @@ io.on("connection", (socket) => {
           endedBy: userId
         });
         
-        console.log('📞 [Video Call] Call ended, notifications sent to users:', userId, 'and', otherUserId);
+        // Call ended, notifications sent to users
       }
     } catch (error) {
       console.error('Error in video_call_end:', error);
     }
   });
 
+  socket.on('video_call_timeout', async (data) => {
+    try {
+      const { callId } = data;
+      
+      // Skip database operations for temporary call IDs
+      if (callId && callId.startsWith('temp_')) {
+        // Timeout for temporary call - just emit the event
+        socket.broadcast.emit('video_call_timeout', {
+          callId: callId
+        });
+        return;
+      }
+      
+      const videocalldb = require('./Creators/videoalldb');
+      const call = await videocalldb.findOne({ _id: callId }).exec();
+      
+      if (call) {
+        const callerId = call.callerid;
+        const clientId = call.clientid;
+        
+        // Delete call record
+        await videocalldb.deleteOne({ _id: callId }).exec();
+
+        // Emit timeout event to both participants
+        io.to(`user_${callerId}`).emit('video_call_timeout', {
+          callId: callId
+        });
+        
+        io.to(`user_${clientId}`).emit('video_call_timeout', {
+          callId: callId
+        });
+        
+        // Call timeout, notifications sent to both users
+      }
+    } catch (error) {
+      console.error('Error in video_call_timeout:', error);
+    }
+  });
+
   // WebRTC signaling events
   socket.on('video_call_offer', async (data) => {
     const { callId, offer } = data;
-    console.log('📹 [WebRTC] Received offer for call:', callId);
+    // Received offer for call
     
     try {
       // If it's a temporary call ID, broadcast to all users (fallback)
       if (callId.startsWith('temp_')) {
-        console.log('📹 [WebRTC] Temporary call ID, broadcasting offer');
+        // Temporary call ID, broadcasting offer
         socket.broadcast.emit('video_call_offer', {
           callId: callId,
           offer: offer
@@ -925,7 +955,7 @@ io.on("connection", (socket) => {
         // Get the current user ID from the socket
         const currentUserId = socket.userId || socket.id;
         const otherUserId = call.callerid === currentUserId ? call.clientid : call.callerid;
-        console.log('📹 [WebRTC] Forwarding offer to user:', otherUserId);
+        // Forwarding offer to user
         
         // Forward offer to the other participant
         socket.to(`user_${otherUserId}`).emit('video_call_offer', {
@@ -940,12 +970,12 @@ io.on("connection", (socket) => {
 
   socket.on('video_call_answer', async (data) => {
     const { callId, answer } = data;
-    console.log('📹 [WebRTC] Received answer for call:', callId);
+    // Received answer for call
     
     try {
       // If it's a temporary call ID, broadcast to all users (fallback)
       if (callId.startsWith('temp_')) {
-        console.log('📹 [WebRTC] Temporary call ID, broadcasting answer');
+        // Temporary call ID, broadcasting answer
         socket.broadcast.emit('video_call_answer', {
           callId: callId,
           answer: answer
@@ -961,7 +991,7 @@ io.on("connection", (socket) => {
         // Get the current user ID from the socket
         const currentUserId = socket.userId || socket.id;
         const otherUserId = call.callerid === currentUserId ? call.clientid : call.callerid;
-        console.log('📹 [WebRTC] Forwarding answer to user:', otherUserId);
+        // Forwarding answer to user
         
         // Forward answer to the other participant
         socket.to(`user_${otherUserId}`).emit('video_call_answer', {
@@ -976,12 +1006,12 @@ io.on("connection", (socket) => {
 
   socket.on('video_call_ice_candidate', async (data) => {
     const { callId, candidate } = data;
-    console.log('📹 [WebRTC] Received ICE candidate for call:', callId);
+    // Received ICE candidate for call
     
     try {
       // If it's a temporary call ID, broadcast to all users (fallback)
       if (callId.startsWith('temp_')) {
-        console.log('📹 [WebRTC] Temporary call ID, broadcasting ICE candidate');
+        // Temporary call ID, broadcasting ICE candidate
         socket.broadcast.emit('video_call_ice_candidate', {
           callId: callId,
           candidate: candidate
@@ -997,7 +1027,7 @@ io.on("connection", (socket) => {
         // Get the current user ID from the socket
         const currentUserId = socket.userId || socket.id;
         const otherUserId = call.callerid === currentUserId ? call.clientid : call.callerid;
-        console.log('📹 [WebRTC] Forwarding ICE candidate to user:', otherUserId);
+        // Forwarding ICE candidate to user
         
         // Forward ICE candidate to the other participant
         socket.to(`user_${otherUserId}`).emit('video_call_ice_candidate', {
@@ -1017,8 +1047,9 @@ mongoose.connection.once("open", () => {
   // Start message cleanup scheduler
   scheduleMessageCleanup();
   
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`🌐 Server accessible on network at http://10.245.95.157:${PORT}`);
   });
 
   // Video call billing event
@@ -1026,7 +1057,7 @@ mongoose.connection.once("open", () => {
     socket.on('video_call_billing', async (data) => {
       try {
         const { callId, callerId, currentUserId, amount, minute } = data;
-        console.log('💰 [Video Call] Billing event:', { callId, callerId, currentUserId, amount, minute });
+        console.log('💰 [Billing] Received billing event:', { callId, callerId, currentUserId, amount, minute });
         
         const userdb = require('./Creators/userdb');
         const mainbalance = require('./Creators/mainbalance');
@@ -1035,17 +1066,33 @@ mongoose.connection.once("open", () => {
         // Find the fan (caller) and creator (answerer)
         const call = await videocalldb.findOne({ _id: callId }).exec();
         if (!call) {
-          console.log('💰 [Video Call] Call not found for billing');
+          console.log('❌ [Billing] Call not found for billing:', callId);
           return;
         }
         
-        const fanId = call.callerid;
-        const creator_portfolio_id = call.clientid;
+        console.log('✅ [Billing] Call found:', { callId, callerId: call.callerid, clientId: call.clientid });
         
-        // Deduct from fan's balance
+        // The fan is the one sending the billing event (currentUserId), not necessarily the caller
+        const fanId = currentUserId; // Fan is the one paying
+        const creator_portfolio_id = currentUserId === call.callerid ? call.clientid : call.callerid;
+        
+        console.log('💰 [Billing] Corrected user roles:', { 
+          fanId, 
+          creator_portfolio_id, 
+          originalCallerId: call.callerid,
+          originalClientId: call.clientid,
+          currentUserId 
+        });
+        
+        // Deduct from fan's balance (balance is String in database)
         const fan = await userdb.findOne({ _id: fanId }).exec();
-        if (fan && fan.gold >= amount) {
-          fan.gold -= amount;
+        const fanBalance = parseInt(fan.balance) || 0;
+        
+        console.log('💰 [Billing] Fan balance check:', { fanId, fanBalance, amount, hasEnoughFunds: fanBalance >= amount });
+        
+        if (fan && fanBalance >= amount) {
+          // Update fan's balance
+          fan.balance = (fanBalance - amount).toString();
           await fan.save();
           
           // Add to creator's earnings
@@ -1061,11 +1108,38 @@ mongoose.connection.once("open", () => {
               await balanceRecord.save();
             }
             
-            console.log(`💰 [Video Call] Billing successful: Fan ${fanId} paid ${amount} gold, Creator ${creator_portfolio_id} earned ${amount}`);
+            // Create transaction histories (like in completebook.js)
+            const userHistory = {
+              userid: fanId,
+              details: `Video call - payment for minute ${minute}`,
+              spent: `${amount}`,
+              income: "0",
+              date: `${Date.now().toString()}`
+            };
+            await mainbalance.create(userHistory);
+            console.log('📝 [Billing] Created user transaction history:', userHistory);
+
+            const creatorHistory = {
+              userid: creator._id, // Use the actual creator's user ID, not the portfolio ID
+              details: `Video call - payment received for minute ${minute}`,
+              spent: "0",
+              income: `${amount}`,
+              date: `${Date.now().toString()}`
+            };
+            await mainbalance.create(creatorHistory);
+            console.log('📝 [Billing] Created creator transaction history:', creatorHistory);
+            console.log('📝 [Billing] Creator IDs:', { 
+              portfolioId: creator_portfolio_id, 
+              actualCreatorId: creator._id,
+              creatorNickname: creator.nickname 
+            });
+            
+            // Billing successful
+            console.log('✅ [Billing] Billing successful:', { fanId, creator_portfolio_id, amount });
             
             // Emit balance updates to both users
             io.to(`user_${fanId}`).emit('balance_updated', {
-              gold: fan.gold,
+              balance: fan.balance,
               type: 'deduct',
               amount: amount
             });
@@ -1073,11 +1147,13 @@ mongoose.connection.once("open", () => {
             io.to(`user_${creator_portfolio_id}`).emit('balance_updated', {
               earnings: creator.earnings,
               type: 'earn',
-              amount: amount
+              amount: amount,
+              callEarnings: amount // Show earnings from this specific call
             });
           }
         } else {
-          console.log('💰 [Video Call] Insufficient funds for billing');
+          // Insufficient funds for billing
+          console.log('❌ [Billing] Insufficient funds:', { fanId, fanBalance, amount });
           // Emit insufficient funds event to end the call
           io.to(`user_${fanId}`).emit('insufficient_funds', {
             message: 'Insufficient funds to continue call'
