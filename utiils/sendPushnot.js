@@ -3,19 +3,24 @@ let webpush = require("web-push");
 let vapikey = require("./webpushKeys");
 let pushdb = require("../Creators/pushnotifydb");
 
-const pushmessage = async (userid, message, icon) => {
+const pushmessage = async (userid, message, icon, options = {}) => {
   let online = await userdb.findOne({ _id: userid }).exec();
   let subinfo = await pushdb.findOne({ userid: userid }).exec();
 
+
   if (online) {
-    console.log("is online");
     let datasend = JSON.stringify({
       message: message,
       userid: userid,
-      icon: icon, // fixed duplicate key
+      icon: icon,
+      title: options.title || "MmeKo",
+      url: options.url || "/",
+      type: options.type || "notification",
+      ...options
     });
+    
 
-    let options = {
+    let pushOptions = {
       TTL: 172800,
       urgency: "high",
     };
@@ -26,16 +31,40 @@ const pushmessage = async (userid, message, icon) => {
       vapikey.PrivateKey
     );
 
-    if (subinfo) {
+    if (subinfo && subinfo.subinfo) {
       try {
-        let subscription = JSON.parse(subinfo.subinfo);
-        await webpush.sendNotification(subscription, datasend, options);
-        console.log("sent notification");
+        let subscription;
+        
+        // Handle both string and object formats
+        if (typeof subinfo.subinfo === 'string') {
+          subscription = JSON.parse(subinfo.subinfo);
+        } else if (typeof subinfo.subinfo === 'object') {
+          subscription = subinfo.subinfo;
+        } else {
+          console.error("Invalid subscription data type for user:", userid);
+          await pushdb.deleteOne({ userid: userid }).exec();
+          return;
+        }
+        
+        // Validate subscription data
+        if (!subscription || !subscription.endpoint) {
+          console.error("Invalid subscription data for user:", userid);
+          await pushdb.deleteOne({ userid: userid }).exec();
+          return;
+        }
+        
+        
+        await webpush.sendNotification(subscription, datasend, pushOptions);
       } catch (err) {
-        console.error("Error sending push:", err.statusCode, err.body);
+        console.error("Error sending push notification:", {
+          userid: userid,
+          statusCode: err.statusCode,
+          body: err.body,
+          message: err.message,
+          name: err.name
+        });
 
         if (err.statusCode === 410 || err.statusCode === 404) {
-          console.log("Removing expired/unsubscribed push subscription");
           await pushdb.deleteOne({ userid: userid }).exec();
         }
       }
@@ -43,4 +72,43 @@ const pushmessage = async (userid, message, icon) => {
   }
 };
 
-module.exports = pushmessage;
+// Enhanced push notification functions for different types
+const pushActivityNotification = async (userid, message, activityType = "activity") => {
+  await pushmessage(userid, message, "/icons/icons8-profile_Icon1.png", {
+    title: "New Activity",
+    type: "activity",
+    url: "/notifications"
+  });
+};
+
+const pushMessageNotification = async (userid, message, senderName = "Someone") => {
+  await pushmessage(userid, message, "/icons/icons8-profile_Icon1.png", {
+    title: `Message from ${senderName}`,
+    type: "message",
+    url: "/message"
+  });
+};
+
+const pushSupportNotification = async (userid, message) => {
+  await pushmessage(userid, message, "/support.png", {
+    title: "Support Chat",
+    type: "support",
+    url: "/message/supportchat"
+  });
+};
+
+const pushAdminNotification = async (userid, message, adminType = "admin") => {
+  await pushmessage(userid, message, "/support.png", {
+    title: "Admin Support Response",
+    type: "support",
+    url: "/message/supportchat"
+  });
+};
+
+module.exports = {
+  pushmessage,
+  pushActivityNotification,
+  pushMessageNotification,
+  pushSupportNotification,
+  pushAdminNotification
+};

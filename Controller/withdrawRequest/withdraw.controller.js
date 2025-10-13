@@ -39,7 +39,6 @@ exports.handleWithdrawRequest = async (req, res) => {
     });
 
     if (existingRequest) {
-      console.log("Already has pending request");
       return res
         .status(409)
         .json({ message: "You already have a pending withdrawal request." });
@@ -67,19 +66,8 @@ exports.handleWithdrawRequest = async (req, res) => {
 
     const saved = await request.save();
 
-    // Create transaction history for withdrawal
-    const creatorHistory = new Balancehistory({
-      userid: userId,
-      details: `Withdrawal request: $${amount} USD`,
-      spent: `${earningsToDeduct}`,
-      income: "0",
-      date: `${Date.now()}`
-    });
-
-    await creatorHistory.save();
-
     res.status(201).json({
-      message: "Withdrawal request submitted and earnings deducted",
+      message: "Withdrawal request submitted and earnings deducted. Transaction history will be created when admin marks as paid.",
       request: saved,
       earningsDeducted: earningsToDeduct,
       remainingEarnings: userExists.earnings,
@@ -105,14 +93,6 @@ exports.getAllWithdrawRequests = async (req, res) => {
     // You already have req.userId from the token
     const user = await User.findById(req.userId);
     
-    console.log("🔍 [getAllWithdrawRequests] Full request debug:");
-    console.log("📋 [getAllWithdrawRequests] Request headers:", req.headers);
-    console.log("📋 [getAllWithdrawRequests] Request user ID from token:", req.userId);
-    console.log("📋 [getAllWithdrawRequests] User found:", !!user);
-    console.log("📋 [getAllWithdrawRequests] User admin field:", user?.admin);
-    console.log("📋 [getAllWithdrawRequests] User admin type:", typeof user?.admin);
-    console.log("📋 [getAllWithdrawRequests] User firstname:", user?.firstname);
-    console.log("📋 [getAllWithdrawRequests] User lastname:", user?.lastname);
 
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -130,7 +110,6 @@ exports.getAllWithdrawRequests = async (req, res) => {
     }
 
     const requests = await WithdrawRequest.find().sort({ createdAt: -1 });
-    console.log("Found withdrawal requests:", requests.length);
     res.status(200).json({ requests });
   } catch (err) {
     console.error("Error fetching withdrawals:", err);
@@ -264,8 +243,20 @@ exports.markAsPaid = async (req, res) => {
     request.status = "paid";
     await request.save();
 
+    // 5. Create transaction history only when marked as paid
+    const earningsToDeduct = request.amount * 25; // Same calculation as in creation
+    const creatorHistory = new Balancehistory({
+      userid: request.userId,
+      details: `Withdrawal completed: $${request.amount} USD`,
+      spent: `${earningsToDeduct}`,
+      income: "0",
+      date: `${Date.now()}`
+    });
+
+    await creatorHistory.save();
+
     res.status(200).json({
-      message: "Withdrawal marked as paid",
+      message: "Withdrawal marked as paid and transaction history created",
       updated: request,
     });
   } catch (err) {

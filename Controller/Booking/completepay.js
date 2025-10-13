@@ -3,11 +3,11 @@ const creatordb = require("../../Creators/creators");
 const userdb = require("../../Creators/userdb");
 const historydb = require("../../Creators/mainbalance");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
 const createLike = async (req, res) => {
   const userid = req.body.userid;
-  const creatorid = req.body.creatorid;
+  const creator_portfolio_id = req.body.creator_portfolio_id;
   const time = req.body.time;
   const date = req.body.date;
 
@@ -25,7 +25,7 @@ const createLike = async (req, res) => {
     let user = users.find((value) => {
       return (
         String(value.status) === "accepted" &&
-        String(value.creatorid) === String(creatorid) &&
+        String(value.creator_portfolio_id) === String(creator_portfolio_id) &&
         String(value.time) === String(time) &&
         String(value.date) === String(date)
       );
@@ -40,7 +40,7 @@ const createLike = async (req, res) => {
     }
 
     // getting creator for knowing it booking price
-    let creator = await creatordb.findOne({ _id: user.creatorid }).exec();
+    let creator = await creatordb.findOne({ _id: user.creator_portfolio_id }).exec();
     let price = parseFloat(creator.price);
     console.log("creator price " + price);
 
@@ -84,10 +84,10 @@ const createLike = async (req, res) => {
         `${creatoruser._id}`,
         `You received ${price} from ${paidname.firstname}`
       );
-      await sendpushnote(
+      await pushActivityNotification(
         `${creatoruser._id}`,
         `You received ${price} from ${paidname.firstname}`,
-        "creatoricon"
+        "booking_completed"
       );
     }
 

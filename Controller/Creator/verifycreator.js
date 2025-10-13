@@ -15,13 +15,13 @@ const createCreator = async (req, res) => {
     const user = await userdb.findById(userid).exec();
     if (!user) return res.status(404).json({ ok: false, message: "User not found!" });
 
-    user.exclusive_verify = true;
+    user.creator_verified = true;
     await user.save();
 
     // ✅ 2. Update creator verification status
     const creator = await creators.findOne({ userid }).exec();
     if (creator) {
-      creator.verify = "live";
+      creator.verify = "verified";
       await creator.save();
     }
 

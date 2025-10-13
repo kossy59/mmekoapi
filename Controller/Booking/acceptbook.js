@@ -2,27 +2,25 @@ const bookingdb = require("../../Creators/book");
 const userdb = require("../../Creators/userdb");
 const historydb = require("../../Creators/mainbalance");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
 // Socket.io integration
 const { emitFanMeetStatusUpdate } = require('../../utils/socket');
 
 const createLike = async (req, res) => {
-  const creatorid = req.body.creatorid;
+  const creator_portfolio_id = req.body.creator_portfolio_id;
   const userid = req.body.userid;
   const date = req.body.date;
   const time = req.body.time;
-  console.log("accept creator " + creatorid);
 
-  if (!creatorid) {
+  if (!creator_portfolio_id) {
     return res.status(400).json({ ok: false, message: "user Id invalid!!" });
   }
-  console.log("untop init db");
 
   //let data = await connectdatabase()
 
   try {
-    const users = await bookingdb.find({ creatorid: creatorid }).exec();
+    const users = await bookingdb.find({ creator_portfolio_id: creator_portfolio_id }).exec();
 
     let user = users.find((value) => {
       return (
@@ -33,7 +31,6 @@ const createLike = async (req, res) => {
       );
     });
 
-    console.log("under user pending " + user.length);
 
     if (!user) {
       return res
@@ -86,15 +83,15 @@ const createLike = async (req, res) => {
       bookingId: status._id,
       status: 'accepted',
       userid: status.userid,
-      creatorid: status.creatorid,
+      creator_portfolio_id: status.creator_portfolio_id,
       message: '🎉 Fan meet request has been accepted!'
     });
     
     await sendEmail(status.userid, "creator has accepted your booking request");
-    await sendpushnote(
+    await pushActivityNotification(
       status.userid,
       "creator has accepted your booking request",
-      "creatoricon"
+      "booking_accepted"
     );
     return res.status(200).json({ ok: true, message: ` Success` });
   } catch (err) {
@@ -106,17 +103,17 @@ module.exports = createLike;
 
 // const bookingdb = require("../../Creators/book");
 // let sendEmail = require("../../utiils/sendEmailnot");
-// let sendpushnote = require("../../utiils/sendPushnot");
+// let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
 // const AcceptBooking = async (req, res) => {
-//   const { creatorId, userId, date, time } = req.body;
+//   const { creator_portfolio_id, userId, date, time } = req.body;
 
-//   if (!creatorId) {
+//   if (!creator_portfolio_id) {
 //     return res.status(404).json({ ok: false, message: "Invalid Modle Id!" });
 //   }
 
 //   try {
-//     const boookings = await bookingdb.find({ creatorId: creatorId }).exec();
+//     const boookings = await bookingdb.find({ creator_portfolio_id: creator_portfolio_id }).exec();
 
 //     let filteredBookings = boookings.find((value) => {
 //       return (
@@ -127,8 +124,7 @@ module.exports = createLike;
 //       );
 //     });
 
-//     console.log("under user pending " + user.length);
-
+// 
 //     if (!filteredBookings) {
 //       return res
 //         .status(200)

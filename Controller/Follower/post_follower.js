@@ -2,7 +2,7 @@ const followerdb = require("../../Creators/followers")
 const userdb = require("../../Creators/userdb")
 const admindb = require("../../Creators/admindb")
 let sendEmail = require("../../utiils/sendEmailnot")
-let sendpushnote = require("../../utiils/sendPushnot")
+const { pushActivityNotification } = require("../../utiils/sendPushnot")
 const { areUsersBlocked } = require("../../utiils/blockingUtils")
 
 const createCreator = async (req,res)=>{
@@ -53,7 +53,7 @@ const createCreator = async (req,res)=>{
 
         await followerdb.create(follow)
         await sendEmail(userid, "you have new follower")
-        await sendpushnote(userid,"you have new follower","creatoricon")
+        await pushActivityNotification(userid, `${client.firstname} ${client.lastname} followed you`, "follow")
 
         // No need to sync userdb arrays - followers collection is the single source of truth
 

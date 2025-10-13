@@ -3,19 +3,20 @@ const userdb = require("../../Creators/userdb")
 const creatordb = require("../../Creators/creators")
 const historydb = require("../../Creators/mainbalance")
 let sendEmail = require("../../utiils/sendEmailnot")
-let sendpushnote = require("../../utiils/sendPushnot")
+let { pushActivityNotification } = require("../../utiils/sendPushnot")
 
 const createLike = async (req,res)=>{
      
     const userid = req.body.userid;
-    let creatorid = req.body.creatorid;
+    let creator_portfolio_id = req.body.creator_portfolio_id;
     const type = req.body.type;
     const time = req.body.time
     const place = req.body.place
     const date = req.body.date
     const price = req.body.price
+    
    
-    if(!creatorid  && !userid){
+    if(!creator_portfolio_id  && !userid){
         return res.status(400).json({"ok":false,'message': 'user Id invalid!!'})
     }
     //console.log('untop init db')
@@ -24,6 +25,10 @@ const createLike = async (req,res)=>{
 
     try{
          const user = await userdb.findOne({_id:userid}).exec()
+         
+         if (!user) {
+             return res.status(404).json({"ok":false,'message': 'User not found'})
+         }
 
          let userbalance = parseFloat(user.balance)
 
@@ -32,8 +37,12 @@ const createLike = async (req,res)=>{
          if(!userbalance){
             userbalance = 0
          }
-
-         let creatoremail = await creatordb.findOne({_id:creatorid}).exec()
+         
+         let creatoremail = await creatordb.findOne({_id:creator_portfolio_id}).exec()
+         
+         if (!creatoremail) {
+             return res.status(404).json({"ok":false,'message': 'Creator not found'})
+         }
 
          
         if(type !== "Private show"){
@@ -68,11 +77,11 @@ const createLike = async (req,res)=>{
          //console.log("user balance "+userbalance)
 
          await sendEmail(creatoremail.userid, "Accept appointment")
-         await sendpushnote(creatoremail.userid,"Accept appointment","creatoricon")
+         await pushActivityNotification(creatoremail.userid, "New booking request received", "booking")
 
        let books  = {
             userid,
-            creatorid,
+            creator_portfolio_id,
             type,
             place,
             time,
@@ -82,7 +91,7 @@ const createLike = async (req,res)=>{
             expiresAt: new Date(Date.now() + 23 * 60 * 60 * 1000 + 14 * 60 * 1000) // 23h 14m from now
         }
 
-        await bookingdb.create(books)
+        const booking = await bookingdb.create(books)
        
             return res.status(200).json({"ok":true,"message":`booking Success`})
       

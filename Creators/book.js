@@ -3,7 +3,7 @@ const Scheme = mongoose.Schema;
 
 const markertdata = new Scheme(
   {
-    creatorid: {
+    creator_portfolio_id: {
       type: String,
       required: true,
     },

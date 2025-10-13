@@ -81,9 +81,9 @@ const createCreator = async (req,res)=>{
         
         const filteredHostAsUsers = await filterBlockedUsers(hostAsUsers, userid);
         
-        // Convert back to host format and apply exclusive_verify filter
+        // Convert back to host format and apply creator_verified filter
         const filteredHost = filteredHostAsUsers
-          .filter(h => !h?.exclusive_verify)
+          .filter(h => !h?.creator_verified)
           .map(user => ({
             image: user.image,
             userid: user.userid,

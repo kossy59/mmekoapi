@@ -58,7 +58,6 @@ const MsgNotify = async (req, res) => {
       id.length === 24
     );
     
-    console.log("🔍 [MSGNOTIFY] Filtered sender IDs:", senderIds);
 
     // OPTIMIZED: Batch fetch all sender info and photos
     let [allSenders, allPhotos] = await Promise.all([

@@ -76,7 +76,7 @@ const createUsercreator = async (req, res) => {
       selfieWithId: selfieWithIdUrl,
       Creator_Application: true,
       Creator_Application_status: "pending",
-      exclusive_verify: false,
+      creator_verified: false,
       userid: req.userId,
     });
     console.log(newUser);

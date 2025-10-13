@@ -24,7 +24,7 @@ let {
 } = require("./utiils/check_caller");
 const pay_creator = require("./utiils/payclient_PCALL");
 const updatebalance = require("./utiils/deductPVC");
-const pushnotify = require("./utiils/sendPushnot");
+const { pushmessage, pushMessageNotification, pushSupportNotification, pushActivityNotification, pushAdminNotification } = require("./utiils/sendPushnot");
 const imageRoutes = require("./routes/imageRoutes");
 const { scheduleMessageCleanup } = require("./utiils/deleteOldMessages");
 
@@ -40,6 +40,7 @@ const allowedOrigins = [
   "https://mmekowebsite-eight.vercel.app", // Vercel deployment
 
   "http://localhost:3000", // Add localhost for development
+  "http://10.245.95.157:3000", // Add network URL for device access
 ].filter(Boolean); // Remove falsy values (e.g., undefined NEXT_PUBLIC_URL)
 
 // Configure CORS
@@ -143,7 +144,7 @@ app.use("/changepassword", require("./routes/Auth/changepassword"));
 app.use("/getpostcomment", require("./routes/api/comment/Getallcomment"));
 app.use("/getprofilebyid", require("./routes/api/profile/Profile"));
 app.use("/getverifycreator", require("./routes/api/creator/getlivecreator"));
-app.use("/getcreatorbyid", require("./routes/api/creator/getcreatorbyid"));
+app.use("/getcreatorbyportfolioid", require("./routes/api/creator/getcreatorbyportfolioid"));
 app.use("/searchuser", require("./routes/api/profile/getallUser"));
 app.use("/post", require("./routes/api/post/Post"));
 app.use("/creator/all", require("./routes/api/creator/mycreators"));
@@ -229,11 +230,16 @@ app.use("/upload-message-files", require("./routes/api/uploadMessageFiles"));
 app.use("/quickchat", require("./routes/api/quickchat"));
 app.use("/fanmeet", require("./routes/api/fanMeetRoutes"));
 app.use("/process-expired", require("./routes/api/processExpired"));
+app.use("/video-call", require("./routes/api/videoCall/videoCallRoutes"));
+app.use("/support-chat", require("./routes/api/supportChat"));
 // Track online users
 const onlineUsers = new Set();
 
 // Track connected sockets to prevent duplicate connections
 const connectedSockets = new Map();
+
+// Track support chat connections
+const supportChatConnections = new Map();
 
 // Track disconnection times for grace period (development mode)
 const disconnectionTimes = new Map();
@@ -278,6 +284,7 @@ const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 io.on("connection", (socket) => {
   socket.on("online", async (userid) => {
     if (userid) {
+      
       // Check if this user already has a connected socket
       const existingSocket = connectedSockets.get(userid);
       if (existingSocket && existingSocket.connected) {
@@ -287,6 +294,7 @@ io.on("connection", (socket) => {
       await checkuser(userid);
       await deletecallOffline(userid);
       socket.id = userid;
+      socket.userId = userid; // Store user ID in socket for WebRTC signaling
       IDS.userid = userid;
       socket.join("LiveChat");
       
@@ -345,10 +353,10 @@ io.on("connection", (socket) => {
       await Livechats({ ...data });
       if (info && data.toid && data.toid !== 'undefined' && data.toid !== 'null' && typeof data.toid === 'string' && data.toid.length === 24) {
         await sendEmail(data.toid, `New message from ${info?.name}`);
-        await pushnotify(
+        await pushMessageNotification(
           data.toid,
           `New message from ${info?.name}`,
-          "messageicon"
+          info?.name || "Someone"
         );
       } else {
         console.log("⚠️ [SOCKET] Invalid toid for email notification:", data.toid);
@@ -583,7 +591,51 @@ io.on("connection", (socket) => {
     }
   });
 
+  // Support Chat Socket Events
+  socket.on("join_support_chat", (data) => {
+    if (data.userid) {
+      supportChatConnections.set(data.userid, socket.id);
+      socket.join(`support_chat_${data.userid}`);
+      console.log(`User ${data.userid} joined support chat`);
+    }
+  });
+
+  socket.on("support_chat_message", async (data) => {
+    try {
+      // Broadcast message to admin and user
+      io.to(`support_chat_${data.userid}`).emit("support_message_received", data);
+      io.to("admin_support").emit("new_support_message", data);
+      
+      // Send push notifications
+      if (data.isAdmin) {
+        // Admin message to user
+        await pushSupportNotification(data.userid, data.message || "New support message from admin");
+      } else {
+        // User message to admin - notify all admins
+        const admins = await userdb.find({ isAdmin: true }).exec();
+        for (const admin of admins) {
+          await pushAdminNotification(admin._id, `New support message from user: ${data.message || "Support request"}`);
+        }
+      }
+    } catch (error) {
+      console.error("Error handling support chat message:", error);
+    }
+  });
+
+  socket.on("admin_join_support", () => {
+    socket.join("admin_support");
+    console.log("Admin joined support chat");
+  });
+
   socket.on("disconnect", async () => {
+    // Remove from support chat connections
+    for (const [userid, socketId] of supportChatConnections.entries()) {
+      if (socketId === socket.id) {
+        supportChatConnections.delete(userid);
+        break;
+      }
+    }
+    
     // Broadcast user offline status before disconnecting
     if (socket.id && IDS.userid) {
       // Always use grace period for better user experience
@@ -618,6 +670,16 @@ io.on("connection", (socket) => {
   socket.on('heartbeat', (userid) => {
     if (userid) {
       userActivity.set(userid, Date.now());
+      
+      // Ensure user stays in onlineUsers set
+      if (!onlineUsers.has(userid)) {
+        onlineUsers.add(userid);
+      }
+      
+      // Cancel any pending disconnection
+      if (disconnectionTimes.has(userid)) {
+        disconnectionTimes.delete(userid);
+      }
     }
   });
 
@@ -659,6 +721,325 @@ io.on("connection", (socket) => {
       });
     }
   });
+
+  // Video call events
+  socket.on('video_call_start', async (data) => {
+    try {
+      const { callerId, callerName, answererId, answererName } = data;
+      
+      // Starting video call
+      
+      // Check if answererId is a creator ID (host ID) and find the actual user ID
+      let actualAnswererId = answererId;
+      
+      // Try to find the creator's user ID from their creator ID (which is the creator's _id)
+      try {
+        const creatordb = require('./Creators/creators');
+        const creator = await creatordb.findOne({ _id: answererId }).exec();
+        
+        if (creator && creator.userid) {
+          actualAnswererId = creator.userid;
+          // Found creator user ID
+        } else {
+          // Creator not found, using original ID
+        }
+      } catch (error) {
+        // Error looking up creator, using original ID
+      }
+      
+      // Checking online status
+      
+      // Check if answerer is online - try multiple ID formats
+      const isOnline = onlineUsers.has(actualAnswererId) || 
+                      onlineUsers.has(actualAnswererId.toString()) ||
+                      Array.from(onlineUsers).some(id => id.toString() === actualAnswererId.toString());
+      
+      // Additional check: see if user has a connected socket
+      const hasConnectedSocket = connectedSockets.has(actualAnswererId) || 
+                                connectedSockets.has(actualAnswererId.toString()) ||
+                                Array.from(connectedSockets.keys()).some(id => id.toString() === actualAnswererId.toString());
+      
+      if (!isOnline && !hasConnectedSocket) {
+        // User not online, but allowing call
+        // socket.emit('video_call_error', {
+        //   message: 'User is not online'
+        // });
+        // return;
+      }
+      
+      // If user has connected socket but not in onlineUsers, add them
+      if (!isOnline && hasConnectedSocket) {
+        // User has socket but not in onlineUsers, adding
+        onlineUsers.add(actualAnswererId);
+      }
+
+      // Create call record
+      const videocalldb = require('./Creators/videoalldb');
+      const callData = {
+        callerid: actualAnswererId, // Use the actual user ID
+        clientid: callerId,
+        connected: false,
+        waiting: "wait",
+        callerName: callerName,
+        answererName: answererName,
+        createdAt: new Date()
+      };
+
+      const call = await videocalldb.create(callData);
+
+      // Emit call notification to answerer using their actual user ID
+      socket.to(`user_${actualAnswererId}`).emit('video_call_incoming', {
+        callId: call._id,
+        callerId: callerId,
+        callerName: callerName,
+        isIncoming: true
+      });
+      
+      // Call notification sent
+
+    } catch (error) {
+      console.error('Error in video_call_start:', error);
+      socket.emit('video_call_error', {
+        message: 'Failed to start call'
+      });
+    }
+  });
+
+  socket.on('video_call_accept', async (data) => {
+    try {
+      const { callId, callerId, answererId } = data;
+      
+      const videocalldb = require('./Creators/videoalldb');
+      const call = await videocalldb.findOne({ _id: callId }).exec();
+      
+      if (call) {
+        call.connected = true;
+        call.waiting = "connected";
+        await call.save();
+
+        // Emit call accepted to caller
+        socket.to(`user_${callerId}`).emit('video_call_accepted', {
+          callId: callId,
+          callerId: callerId,
+          answererId: answererId
+        });
+        
+        // Call accepted, notification sent to caller
+      }
+    } catch (error) {
+      console.error('Error in video_call_accept:', error);
+    }
+  });
+
+  socket.on('video_call_decline', async (data) => {
+    try {
+      const { callId, callerId, answererId } = data;
+      
+      const videocalldb = require('./Creators/videoalldb');
+      await videocalldb.deleteOne({ _id: callId }).exec();
+
+      // Emit call declined to caller
+      socket.to(`user_${callerId}`).emit('video_call_declined', {
+        callId: callId,
+        callerId: callerId,
+        answererId: answererId
+      });
+      
+      // Call declined, notification sent to caller
+    } catch (error) {
+      console.error('Error in video_call_decline:', error);
+    }
+  });
+
+  socket.on('video_call_end', async (data) => {
+    try {
+      const { callId, userId } = data;
+      
+      // Skip database operations for temporary call IDs
+      if (callId && callId.startsWith('temp_')) {
+        // Ending temporary call
+        // Just emit the event without database operations
+        socket.to(`user_${userId}`).emit('video_call_ended', {
+          callId: callId,
+          endedBy: userId
+        });
+        return;
+      }
+      
+      const videocalldb = require('./Creators/videoalldb');
+      const call = await videocalldb.findOne({ _id: callId }).exec();
+      
+      if (call) {
+        const otherUserId = call.callerid === userId ? call.clientid : call.callerid;
+        
+        // Delete call record
+        await videocalldb.deleteOne({ _id: callId }).exec();
+
+        // Emit call ended to both participants
+        socket.to(`user_${userId}`).emit('video_call_ended', {
+          callId: callId,
+          endedBy: userId
+        });
+        
+        socket.to(`user_${otherUserId}`).emit('video_call_ended', {
+          callId: callId,
+          endedBy: userId
+        });
+        
+        // Call ended, notifications sent to users
+      }
+    } catch (error) {
+      console.error('Error in video_call_end:', error);
+    }
+  });
+
+  socket.on('video_call_timeout', async (data) => {
+    try {
+      const { callId } = data;
+      
+      // Skip database operations for temporary call IDs
+      if (callId && callId.startsWith('temp_')) {
+        // Timeout for temporary call - just emit the event
+        socket.broadcast.emit('video_call_timeout', {
+          callId: callId
+        });
+        return;
+      }
+      
+      const videocalldb = require('./Creators/videoalldb');
+      const call = await videocalldb.findOne({ _id: callId }).exec();
+      
+      if (call) {
+        const callerId = call.callerid;
+        const clientId = call.clientid;
+        
+        // Delete call record
+        await videocalldb.deleteOne({ _id: callId }).exec();
+
+        // Emit timeout event to both participants
+        io.to(`user_${callerId}`).emit('video_call_timeout', {
+          callId: callId
+        });
+        
+        io.to(`user_${clientId}`).emit('video_call_timeout', {
+          callId: callId
+        });
+        
+        // Call timeout, notifications sent to both users
+      }
+    } catch (error) {
+      console.error('Error in video_call_timeout:', error);
+    }
+  });
+
+  // WebRTC signaling events
+  socket.on('video_call_offer', async (data) => {
+    const { callId, offer } = data;
+    // Received offer for call
+    
+    try {
+      // If it's a temporary call ID, broadcast to all users (fallback)
+      if (callId.startsWith('temp_')) {
+        // Temporary call ID, broadcasting offer
+        socket.broadcast.emit('video_call_offer', {
+          callId: callId,
+          offer: offer
+        });
+        return;
+      }
+      
+      // Find the call to get the other participant
+      const videocalldb = require('./Creators/videoalldb');
+      const call = await videocalldb.findOne({ _id: callId }).exec();
+      
+      if (call) {
+        // Get the current user ID from the socket
+        const currentUserId = socket.userId || socket.id;
+        const otherUserId = call.callerid === currentUserId ? call.clientid : call.callerid;
+        // Forwarding offer to user
+        
+        // Forward offer to the other participant
+        socket.to(`user_${otherUserId}`).emit('video_call_offer', {
+          callId: callId,
+          offer: offer
+        });
+      }
+    } catch (error) {
+      console.error('❌ [WebRTC] Error forwarding offer:', error);
+    }
+  });
+
+  socket.on('video_call_answer', async (data) => {
+    const { callId, answer } = data;
+    // Received answer for call
+    
+    try {
+      // If it's a temporary call ID, broadcast to all users (fallback)
+      if (callId.startsWith('temp_')) {
+        // Temporary call ID, broadcasting answer
+        socket.broadcast.emit('video_call_answer', {
+          callId: callId,
+          answer: answer
+        });
+        return;
+      }
+      
+      // Find the call to get the other participant
+      const videocalldb = require('./Creators/videoalldb');
+      const call = await videocalldb.findOne({ _id: callId }).exec();
+      
+      if (call) {
+        // Get the current user ID from the socket
+        const currentUserId = socket.userId || socket.id;
+        const otherUserId = call.callerid === currentUserId ? call.clientid : call.callerid;
+        // Forwarding answer to user
+        
+        // Forward answer to the other participant
+        socket.to(`user_${otherUserId}`).emit('video_call_answer', {
+          callId: callId,
+          answer: answer
+        });
+      }
+    } catch (error) {
+      console.error('❌ [WebRTC] Error forwarding answer:', error);
+    }
+  });
+
+  socket.on('video_call_ice_candidate', async (data) => {
+    const { callId, candidate } = data;
+    // Received ICE candidate for call
+    
+    try {
+      // If it's a temporary call ID, broadcast to all users (fallback)
+      if (callId.startsWith('temp_')) {
+        // Temporary call ID, broadcasting ICE candidate
+        socket.broadcast.emit('video_call_ice_candidate', {
+          callId: callId,
+          candidate: candidate
+        });
+        return;
+      }
+      
+      // Find the call to get the other participant
+      const videocalldb = require('./Creators/videoalldb');
+      const call = await videocalldb.findOne({ _id: callId }).exec();
+      
+      if (call) {
+        // Get the current user ID from the socket
+        const currentUserId = socket.userId || socket.id;
+        const otherUserId = call.callerid === currentUserId ? call.clientid : call.callerid;
+        // Forwarding ICE candidate to user
+        
+        // Forward ICE candidate to the other participant
+        socket.to(`user_${otherUserId}`).emit('video_call_ice_candidate', {
+          callId: callId,
+          candidate: candidate
+        });
+      }
+    } catch (error) {
+      console.error('❌ [WebRTC] Error forwarding ICE candidate:', error);
+    }
+  });
 });
 
 mongoose.connection.once("open", () => {
@@ -667,8 +1048,122 @@ mongoose.connection.once("open", () => {
   // Start message cleanup scheduler
   scheduleMessageCleanup();
   
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`🌐 Server accessible on network at http://10.245.95.157:${PORT}`);
+  });
+
+  // Video call billing event
+  io.on('connection', (socket) => {
+    socket.on('video_call_billing', async (data) => {
+      try {
+        const { callId, callerId, currentUserId, amount, minute } = data;
+        console.log('💰 [Billing] Received billing event:', { callId, callerId, currentUserId, amount, minute });
+        
+        const userdb = require('./Creators/userdb');
+        const mainbalance = require('./Creators/mainbalance');
+        const videocalldb = require('./Creators/videoalldb');
+        
+        // Find the fan (caller) and creator (answerer)
+        const call = await videocalldb.findOne({ _id: callId }).exec();
+        if (!call) {
+          console.log('❌ [Billing] Call not found for billing:', callId);
+          return;
+        }
+        
+        console.log('✅ [Billing] Call found:', { callId, callerId: call.callerid, clientId: call.clientid });
+        
+        // The fan is the one sending the billing event (currentUserId), not necessarily the caller
+        const fanId = currentUserId; // Fan is the one paying
+        const creator_portfolio_id = currentUserId === call.callerid ? call.clientid : call.callerid;
+        
+        console.log('💰 [Billing] Corrected user roles:', { 
+          fanId, 
+          creator_portfolio_id, 
+          originalCallerId: call.callerid,
+          originalClientId: call.clientid,
+          currentUserId 
+        });
+        
+        // Deduct from fan's balance (balance is String in database)
+        const fan = await userdb.findOne({ _id: fanId }).exec();
+        const fanBalance = parseInt(fan.balance) || 0;
+        
+        console.log('💰 [Billing] Fan balance check:', { fanId, fanBalance, amount, hasEnoughFunds: fanBalance >= amount });
+        
+        if (fan && fanBalance >= amount) {
+          // Update fan's balance
+          fan.balance = (fanBalance - amount).toString();
+          await fan.save();
+          
+          // Add to creator's earnings
+          const creator = await userdb.findOne({ _id: creator_portfolio_id }).exec();
+          if (creator) {
+            creator.earnings = (creator.earnings || 0) + amount;
+            await creator.save();
+            
+            // Update main balance record
+            const balanceRecord = await mainbalance.findOne({ userid: creator_portfolio_id }).exec();
+            if (balanceRecord) {
+              balanceRecord.earnings = (balanceRecord.earnings || 0) + amount;
+              await balanceRecord.save();
+            }
+            
+            // Create transaction histories (like in completebook.js)
+            const userHistory = {
+              userid: fanId,
+              details: `Video call - payment for minute ${minute}`,
+              spent: `${amount}`,
+              income: "0",
+              date: `${Date.now().toString()}`
+            };
+            await mainbalance.create(userHistory);
+            console.log('📝 [Billing] Created user transaction history:', userHistory);
+
+            const creatorHistory = {
+              userid: creator._id, // Use the actual creator's user ID, not the portfolio ID
+              details: `Video call - payment received for minute ${minute}`,
+              spent: "0",
+              income: `${amount}`,
+              date: `${Date.now().toString()}`
+            };
+            await mainbalance.create(creatorHistory);
+            console.log('📝 [Billing] Created creator transaction history:', creatorHistory);
+            console.log('📝 [Billing] Creator IDs:', { 
+              portfolioId: creator_portfolio_id, 
+              actualCreatorId: creator._id,
+              creatorNickname: creator.nickname 
+            });
+            
+            // Billing successful
+            console.log('✅ [Billing] Billing successful:', { fanId, creator_portfolio_id, amount });
+            
+            // Emit balance updates to both users
+            io.to(`user_${fanId}`).emit('balance_updated', {
+              balance: fan.balance,
+              type: 'deduct',
+              amount: amount
+            });
+            
+            io.to(`user_${creator_portfolio_id}`).emit('balance_updated', {
+              earnings: creator.earnings,
+              type: 'earn',
+              amount: amount,
+              callEarnings: amount // Show earnings from this specific call
+            });
+          }
+        } else {
+          // Insufficient funds for billing
+          console.log('❌ [Billing] Insufficient funds:', { fanId, fanBalance, amount });
+          // Emit insufficient funds event to end the call
+          io.to(`user_${fanId}`).emit('insufficient_funds', {
+            message: 'Insufficient funds to continue call'
+          });
+        }
+      } catch (error) {
+        console.error('Error in video_call_billing:', error);
+      }
+    });
   });
 });
 

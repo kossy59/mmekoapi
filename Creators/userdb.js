@@ -107,7 +107,7 @@ const markertdata = new Scheme(
       type: String,
       required: false,
     },
-    exclusive_verify: {
+    creator_verified: {
       type: Boolean,
       required: false,
       default: false,
@@ -127,7 +127,7 @@ const markertdata = new Scheme(
       default: "none",
     },
     // Creator_Application: { type: Boolean, required: false, default: false },
-    creatorId: {
+    creator_portfolio_id: {
       type: String,
       required: false,
       default: "",

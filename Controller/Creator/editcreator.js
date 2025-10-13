@@ -49,7 +49,7 @@ const editCreator = async (req, res) => {
   let hosttype = data.hosttype;
   let name = data.name; // Add name field
   let userId = data.userId; // Add userId field
-  let creatorId = data.creatorId; // Add creatorId field
+  let creator_portfolio_id = data.creator_portfolio_id; // Add creator_portfolio_id field
 
   // Handle array fields properly (FormData sends arrays as multiple fields with same name)
   if (Array.isArray(data.interestedin)) {

@@ -39,7 +39,7 @@ const createCreator = async (req, res) => {
 
     let istrue = await crushdb
       .findOne({
-        creatorid: currentuser._id,
+        creator_portfolio_id: currentuser._id,
       })
       .exec();
 
@@ -70,7 +70,7 @@ const createCreator = async (req, res) => {
       hostid: currentuser._id,
       // photolink: currentuser.creatorfiles[0].creatorfilelink,
       photolink,
-      verify: modState.exclusive_verify,
+      verify: modState.creator_verified,
       name: currentuser.name,
       age: currentuser.age,
       location: currentuser.location,

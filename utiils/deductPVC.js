@@ -3,24 +3,24 @@ let bookdb = require("../Creators/book");
 let userdb = require("../Creators/userdb");
 historydb = require("../Creators/mainbalance");
 const pay = async (userid, toid, balance, amount) => {
-  let creatorid = await creatordb.findOne({ userid: toid }).exec();
+  let creator_portfolio_id = await creatordb.findOne({ userid: toid }).exec();
 
-  if (creatorid) {
+  if (creator_portfolio_id) {
     // getting creator for knowing it booking price
-    //let creator = await creatordb.findOne({_id:uscreatorid}).exec()
+    //let creator = await creatordb.findOne({_id:uscreator_portfolio_id}).exec()
 
     //console.log("creator price "+price)
     let user_paying = await userdb.findOne({ _id: userid }).exec();
 
     let clienthistory = {
       userid: userid,
-      details: `private call payment from ${creatorid.name}`,
+      details: `private call payment from ${creator_portfolio_id.name}`,
       spent: `${amount}`,
       income: "0",
       date: `${Date.now().toString()}`,
     };
-    creatorid.earnings = (creatorid?.earnings ?? 0) + Number(amount);
-    await creatorid.save();
+    creator_portfolio_id.earnings = (creator_portfolio_id?.earnings ?? 0) + Number(amount);
+    await creator_portfolio_id.save();
 
     user_paying.balance = `${balance}`;
 

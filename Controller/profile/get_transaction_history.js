@@ -12,7 +12,7 @@ const getTransactionHistory = async (req, res) => {
     // First, find the creator ID for this user
     const creatordb = require("../../Creators/creators");
     const creatorRecord = await creatordb.findOne({ userid: userid }).exec();
-    const creatorId = creatorRecord ? creatorRecord._id : null;
+    const creator_portfolio_id = creatorRecord ? creatorRecord._id : null;
     
     // Get all transaction history for this user (both as user and as creator)
     let allTransactions = await historydb.find({ userid: userid })
@@ -27,8 +27,8 @@ const getTransactionHistory = async (req, res) => {
     
     // If user is a creator, also get transactions for their creator ID
     let creatorTransactions = [];
-    if (creatorId) {
-      creatorTransactions = await historydb.find({ userid: creatorId })
+    if (creator_portfolio_id) {
+      creatorTransactions = await historydb.find({ userid: creator_portfolio_id })
         .sort({ date: -1 })
         .exec();
     }
@@ -55,10 +55,14 @@ const getTransactionHistory = async (req, res) => {
       const details = transaction.details || "";
       const detailsLower = details.toLowerCase();
       const isEarningsTransaction = 
-        // Fan meet earnings (creator receives)
-        details.includes("Fan meet completed - payment received") ||
-        // Fan meet payments (fan pays)
-        details.includes("Fan meet completed - payment transferred") ||
+        // Any host type earnings (creator receives) - Fan meet, Fan date, Fan call, etc.
+        details.includes("completed - payment received") ||
+        // Any host type payments (fan pays) - Fan meet, Fan date, Fan call, etc.
+        details.includes("completed - payment transferred") ||
+        // Video call earnings (creator receives)
+        details.includes("Video call - payment received") ||
+        // Video call payments (fan pays)
+        details.includes("Video call - payment for") ||
         // Withdrawal from earnings
         detailsLower.includes("withdrawal") ||
         detailsLower.includes("withdraw") ||
@@ -79,7 +83,6 @@ const getTransactionHistory = async (req, res) => {
       
       return shouldInclude;
     });
-
 
     // Transform the data to match frontend expectations
     let formattedTransactions = earningsTransactions.map((transaction, index) => {

@@ -1,10 +1,10 @@
 const crushdb = require("../../Creators/crushdb");
 
 const createCreator = async (req, res) => {
-  const creatorid = req.body.creatorid;
+  const creator_portfolio_id = req.body.creator_portfolio_id;
   const userid = req.body.userid;
 
-  if (!creatorid && !userid) {
+  if (!creator_portfolio_id && !userid) {
     return res
       .status(400)
       .json({ ok: false, message: "user Id Or Creator Id invalid!!" });
@@ -19,7 +19,7 @@ const createCreator = async (req, res) => {
     //   return value.$id === hostid
     //  })
 
-    let currentuser = await crushdb.findOne({ creatorid: creatorid }).exec();
+    let currentuser = await crushdb.findOne({ creator_portfolio_id: creator_portfolio_id }).exec();
 
     if (currentuser) {
       return res
@@ -28,7 +28,7 @@ const createCreator = async (req, res) => {
     }
 
     let crush = {
-      creatorid: creatorid,
+      creator_portfolio_id: creator_portfolio_id,
       userid: userid,
     };
 

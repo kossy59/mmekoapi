@@ -3,18 +3,17 @@ const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 const historydb = require("../../Creators/mainbalance");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
 const completeFanMeet = async (req, res) => {
   const {
     bookingId,
     userid,
-    creatorid
+    creator_portfolio_id
   } = req.body;
   
-  console.log("🔍 [COMPLETE_FAN_MEET] Function called with:", { bookingId, userid, creatorid });
 
-  if (!bookingId || !userid || !creatorid) {
+  if (!bookingId || !userid || !creator_portfolio_id) {
     return res.status(400).json({
       ok: false,
       message: "Missing required parameters"
@@ -26,7 +25,7 @@ const completeFanMeet = async (req, res) => {
     const booking = await bookingdb.findOne({ 
       _id: bookingId,
       userid: userid,
-      creatorid: creatorid,
+      creator_portfolio_id: creator_portfolio_id,
       status: "accepted"
     }).exec();
 
@@ -43,7 +42,23 @@ const completeFanMeet = async (req, res) => {
 
     // Transfer money from user's pending to creator's earnings
     const user = await userdb.findOne({ _id: userid }).exec();
-    const creator = await userdb.findOne({ _id: creatorid }).exec();
+    let creator = await userdb.findOne({ _id: creator_portfolio_id }).exec();
+    
+    if (!creator) {
+      // If not found by _id, try to find by creator_portfolio_id (hostid) in creatordb
+      const creatorRecord = await creatordb.findOne({ _id: creator_portfolio_id }).exec();
+      if (creatorRecord) {
+        creator = await userdb.findOne({ _id: creatorRecord.userid }).exec();
+      }
+    }
+
+    // Get host type from booking first, then fallback to creator profile
+    let creatorProfile = await creatordb.findOne({ userid: creator_portfolio_id }).exec();
+    if (!creatorProfile) {
+      // If not found by userid, try by _id (in case creator_portfolio_id is the profile ID)
+      creatorProfile = await creatordb.findOne({ _id: creator_portfolio_id }).exec();
+    }
+    const hostType = booking.type || creatorProfile?.hosttype || "Fan meet";
 
     if (user && creator) {
       let userPending = parseFloat(user.pending) || 0;
@@ -59,42 +74,38 @@ const completeFanMeet = async (req, res) => {
       await creator.save();
 
       // Create transaction histories
-      console.log("🔍 [COMPLETE_FAN_MEET] Creating transaction histories...");
-      console.log("🔍 [COMPLETE_FAN_MEET] User ID:", userid, "Creator ID:", creatorid, "Amount:", transferAmount);
-      
       const userHistory = {
         userid,
-        details: "Fan meet completed - payment transferred to creator",
+        details: `${hostType} completed - payment transferred to creator`,
         spent: `${transferAmount}`,
         income: "0",
         date: `${Date.now().toString()}`
       };
-      console.log("🔍 [COMPLETE_FAN_MEET] Creating user history:", userHistory);
       await historydb.create(userHistory);
-      console.log("✅ [COMPLETE_FAN_MEET] User history created successfully");
 
       const creatorHistory = {
-        userid: creatorid,
-        details: "Fan meet completed - payment received",
+        userid: creator_portfolio_id,
+        details: `${hostType} completed - payment received`,
         spent: "0",
         income: `${transferAmount}`,
         date: `${Date.now().toString()}`
       };
-      console.log("🔍 [COMPLETE_FAN_MEET] Creating creator history:", creatorHistory);
       await historydb.create(creatorHistory);
-      console.log("✅ [COMPLETE_FAN_MEET] Creator history created successfully");
     }
 
     // Send notifications
-    await sendEmail(userid, "Fan meet completed successfully!");
-    await sendpushnote(userid, "Fan meet completed successfully!", "fanicon");
+    await sendEmail(userid, `${hostType} completed successfully!`);
+    await pushActivityNotification(userid, `${hostType} completed successfully!`, "booking_completed");
     
-    await sendEmail(creatorid, "Fan meet completed - payment received!");
-    await sendpushnote(creatorid, "Fan meet completed - payment received!", "creatoricon");
+    // Send notification to creator's actual user ID, not portfolio ID
+    if (creator && creator._id) {
+      await sendEmail(creator._id, `${hostType} completed - payment received!`);
+      await pushActivityNotification(creator._id, `${hostType} completed - payment received!`, "booking_completed");
+    }
 
     return res.status(200).json({
       ok: true,
-      message: "Fan meet completed successfully"
+      message: `${hostType} completed successfully`
     });
 
   } catch (err) {

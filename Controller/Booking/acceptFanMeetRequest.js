@@ -3,16 +3,16 @@ const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 const historydb = require("../../Creators/mainbalance");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
 const acceptFanMeetRequest = async (req, res) => {
   const {
     bookingId,
-    creatorid,
+    creator_portfolio_id,
     userid
   } = req.body;
 
-  if (!bookingId || !creatorid || !userid) {
+  if (!bookingId || !creator_portfolio_id || !userid) {
     return res.status(400).json({
       ok: false,
       message: "Missing required parameters"
@@ -23,7 +23,7 @@ const acceptFanMeetRequest = async (req, res) => {
     // Find the booking
     const booking = await bookingdb.findOne({ 
       _id: bookingId,
-      creatorid: creatorid,
+      creator_portfolio_id: creator_portfolio_id,
       userid: userid,
       status: "request"
     }).exec();
@@ -73,12 +73,9 @@ const acceptFanMeetRequest = async (req, res) => {
     booking.status = "accepted";
     await booking.save();
 
-    // Send notifications
+    // Send notification only to the fan (userid is the fan who made the request)
     await sendEmail(userid, "Your fan meet request has been accepted!");
-    await sendpushnote(userid, "Your fan meet request has been accepted!", "fanicon");
-    
-    await sendEmail(creatorid, "You accepted a fan meet request");
-    await sendpushnote(creatorid, "You accepted a fan meet request", "creatoricon");
+    await pushActivityNotification(userid, "Your fan meet request has been accepted!", "booking_accepted");
 
     return res.status(200).json({
       ok: true,

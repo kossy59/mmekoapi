@@ -114,9 +114,9 @@ let monthly_earning = async (userid)=>{
  for(let index in list_month){
     console.log(`\n📊 [DEBUG] Processing month ${index}:`, list_month[index])
     
-    // Check if there are fan meet transactions
+    // Check if there are fan meet transactions (any host type)
     let hasFanMeetTransactions = list_month[index].earning.some(earning => 
-        earning.detail && earning.detail.includes("Fan meet completed")
+        earning.detail && earning.detail.includes("completed - payment received")
     );
     
     console.log("🎯 [DEBUG] Has fan meet transactions:", hasFanMeetTransactions)
