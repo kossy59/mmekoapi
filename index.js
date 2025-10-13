@@ -148,6 +148,7 @@ app.use("/searchuser", require("./routes/api/profile/getallUser"));
 app.use("/post", require("./routes/api/post/Post"));
 app.use("/creator/all", require("./routes/api/creator/mycreators"));
 app.use("/addpayment", require("./routes/api/payment/payment.routes"));
+app.use("/payment", require("./routes/api/payment/transaction.routes"));
 app.use(
   "/withdraw-request",
   require("./routes/api/withdrawRequest/withdraw.route")
