@@ -193,7 +193,6 @@ app.use("/getrequeststats", require("./routes/api/booking/requeststat"));
 app.use("/paycreator", require("./routes/api/booking/paycreator"));
 app.use("/completebook", require("./routes/api/booking/completebook"));
 app.use("/getallfanmeetrequests", require("./routes/api/booking/getAllFanMeetRequests"));
-app.use("/reviewcreator", require("./routes/api/creator/reviewcreator"));
 app.use("/getreviews", require("./routes/api/creator/getcreatorreview"));
 app.use("/deletereview", require("./routes/api/creator/deletereview"));
 app.use("/statistics", require("./routes/api/profile/get_statistics"));
@@ -231,6 +230,7 @@ app.use("/fanmeet", require("./routes/api/fanMeetRoutes"));
 app.use("/process-expired", require("./routes/api/processExpired"));
 app.use("/video-call", require("./routes/api/videoCall/videoCallRoutes"));
 app.use("/support-chat", require("./routes/api/supportChat"));
+app.use("/review", require("./routes/api/Review/reviewRoutes"));
 // Track online users
 const onlineUsers = new Set();
 
@@ -726,6 +726,13 @@ io.on("connection", (socket) => {
     try {
       const { callerId, callerName, answererId, answererName } = data;
       
+      console.log('📞 [Backend] Received video call start:', {
+        callerId,
+        callerName,
+        answererId,
+        answererName
+      });
+      
       // Starting video call
       
       // Check if answererId is a creator ID (host ID) and find the actual user ID
@@ -787,6 +794,13 @@ io.on("connection", (socket) => {
       const call = await videocalldb.create(callData);
 
       // Emit call notification to answerer using their actual user ID
+      console.log('📞 [Backend] Sending video_call_incoming:', {
+        callId: call._id,
+        callerId: callerId,
+        callerName: callerName,
+        actualAnswererId: actualAnswererId
+      });
+      
       socket.to(`user_${actualAnswererId}`).emit('video_call_incoming', {
         callId: call._id,
         callerId: callerId,
@@ -896,12 +910,67 @@ io.on("connection", (socket) => {
     try {
       const { callId } = data;
       
-      // Skip database operations for temporary call IDs
+      // Handle temporary call IDs - still create missed call notification
       if (callId && callId.startsWith('temp_')) {
-        // Timeout for temporary call - just emit the event
+        const { callerId, callerName, answererId, answererName } = data;
+        
+        // Create missed call notification for the answerer (creator)
+        if (answererId) {
+          // Find the actual creator user ID from their creator ID
+          let actualCreatorUserId = answererId;
+          try {
+            const creatordb = require('./Creators/creators');
+            const creator = await creatordb.findOne({ _id: answererId }).exec();
+            if (creator && creator.userid) {
+              actualCreatorUserId = creator.userid;
+            }
+          } catch (error) {
+            // Error looking up creator, using original ID
+          }
+          
+          const admindb = require('./Creators/admindb');
+          await admindb.create({
+            userid: actualCreatorUserId,
+            message: `You missed a video call from ${callerName || 'Unknown User'}`,
+            seen: false,
+            type: 'missed_call',
+            callerId: callerId,
+            callerName: callerName,
+            callerPhoto: null
+          });
+          
+          // Send push notification for missed call
+          const { pushmessage } = require('./utiils/sendPushnot');
+          const userdb = require('./Creators/userdb');
+          const answerer = await userdb.findOne({ _id: actualCreatorUserId }).exec();
+          
+          if (answerer && answerer.pushToken) {
+            await pushmessage({
+              title: 'Missed Video Call',
+              body: `You missed a video call from ${callerName || 'Unknown User'}`,
+              token: answerer.pushToken,
+              data: {
+                type: 'missed_call',
+                callerId: callerId,
+                callerName: callerName
+              }
+            });
+          }
+          
+          // Emit missed call notification to the answerer (creator)
+          io.to(`user_${actualCreatorUserId}`).emit('video_call_missed', {
+            callId: callId,
+            callerId: callerId,
+            callerName: callerName,
+            callerPhoto: null
+          });
+        }
+        
+        // Emit timeout event to both participants
         socket.broadcast.emit('video_call_timeout', {
           callId: callId
         });
+        
         return;
       }
       
@@ -911,6 +980,45 @@ io.on("connection", (socket) => {
       if (call) {
         const callerId = call.callerid;
         const clientId = call.clientid;
+        
+        // Get user information for missed call notification
+        const userdb = require('./Creators/userdb');
+        const caller = await userdb.findOne({ _id: callerId }).exec();
+        const answerer = await userdb.findOne({ _id: clientId }).exec();
+        
+        // Create missed call notification for the answerer (creator)
+        const admindb = require('./Creators/admindb');
+        if (answerer) {
+          // Construct full caller name
+          const fullCallerName = caller?.firstname && caller?.lastname 
+            ? `${caller.firstname} ${caller.lastname}` 
+            : caller?.firstname || caller?.username || 'Unknown User';
+          
+          await admindb.create({
+            userid: clientId,
+            message: `You missed a video call from ${fullCallerName}`,
+            seen: false,
+            type: 'missed_call',
+            callerId: callerId,
+            callerName: fullCallerName,
+            callerPhoto: caller?.photolink || caller?.photo || null
+          });
+          
+          // Send push notification for missed call
+          const { pushmessage } = require('./utiils/sendPushnot');
+          if (answerer.pushToken) {
+            await pushmessage({
+              title: 'Missed Video Call',
+              body: `You missed a video call from ${fullCallerName}`,
+              token: answerer.pushToken,
+              data: {
+                type: 'missed_call',
+                callerId: callerId,
+                callerName: fullCallerName
+              }
+            });
+          }
+        }
         
         // Delete call record
         await videocalldb.deleteOne({ _id: callId }).exec();
@@ -923,6 +1031,16 @@ io.on("connection", (socket) => {
         io.to(`user_${clientId}`).emit('video_call_timeout', {
           callId: callId
         });
+        
+        // Emit missed call notification to the answerer (creator)
+        if (answerer) {
+          io.to(`user_${clientId}`).emit('video_call_missed', {
+            callId: callId,
+            callerId: callerId,
+            callerName: fullCallerName,
+            callerPhoto: caller?.photolink || caller?.photo || null
+          });
+        }
         
         // Call timeout, notifications sent to both users
       }

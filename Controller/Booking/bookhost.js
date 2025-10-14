@@ -77,7 +77,7 @@ const createLike = async (req,res)=>{
          //console.log("user balance "+userbalance)
 
          await sendEmail(creatoremail.userid, "Accept appointment")
-         await pushActivityNotification(creatoremail.userid, "New booking request received", "booking")
+         await pushActivityNotification(creatoremail.userid, "New request received", "booking")
 
        let books  = {
             userid,
@@ -93,7 +93,7 @@ const createLike = async (req,res)=>{
 
         const booking = await bookingdb.create(books)
        
-            return res.status(200).json({"ok":true,"message":`booking Success`})
+            return res.status(200).json({"ok":true,"message":` Success`})
       
           
        }catch(err){

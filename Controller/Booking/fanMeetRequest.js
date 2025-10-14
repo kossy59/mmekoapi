@@ -2,6 +2,7 @@ const bookingdb = require("../../Creators/book");
 const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 const historydb = require("../../Creators/mainbalance");
+const admindb = require("../../Creators/admindb");
 let sendEmail = require("../../utiils/sendEmailnot");
 let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
@@ -92,8 +93,22 @@ const createFanMeetRequest = async (req, res) => {
     await sendEmail(creator.userid, "New fan meet request received");
     await pushActivityNotification(creator.userid, "New fan meet request received", "booking_request");
     
+    // Create database notification for creator
+    await admindb.create({
+      userid: creator.userid,
+      message: `New fan meet request from ${user.firstname} ${user.lastname}`,
+      seen: false
+    });
+    
     await sendEmail(userid, "Fan meet request sent successfully");
     await pushActivityNotification(userid, "Fan meet request sent successfully", "booking_request");
+    
+    // Create database notification for fan
+    await admindb.create({
+      userid: userid,
+      message: `Fan meet request sent to ${creator.firstname} ${creator.lastname}`,
+      seen: false
+    });
 
     return res.status(200).json({
       ok: true,

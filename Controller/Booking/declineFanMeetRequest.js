@@ -1,8 +1,9 @@
 const bookingdb = require("../../Creators/book");
 const userdb = require("../../Creators/userdb");
 const historydb = require("../../Creators/mainbalance");
+const admindb = require("../../Creators/admindb");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+const { pushmessage } = require("../../utiils/sendPushnot");
 
 const declineFanMeetRequest = async (req, res) => {
   const {
@@ -62,10 +63,24 @@ const declineFanMeetRequest = async (req, res) => {
 
     // Send notifications
     await sendEmail(userid, "Your fan meet request has been declined");
-    await sendpushnote(userid, "Your fan meet request has been declined", "fanicon");
+    await pushmessage(userid, "Your fan meet request has been declined", "fanicon");
+    
+    // Create database notification for fan
+    await admindb.create({
+      userid: userid,
+      message: "Your fan meet request has been declined",
+      seen: false
+    });
     
     await sendEmail(creator_portfolio_id, "You declined a fan meet request");
-    await sendpushnote(creator_portfolio_id, "You declined a fan meet request", "creatoricon");
+    await pushmessage(creator_portfolio_id, "You declined a fan meet request", "creatoricon");
+    
+    // Create database notification for creator
+    await admindb.create({
+      userid: creator_portfolio_id,
+      message: "You declined a fan meet request",
+      seen: false
+    });
 
     return res.status(200).json({
       ok: true,

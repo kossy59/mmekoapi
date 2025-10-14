@@ -4,7 +4,10 @@ const createCreator = async (req, res) => {
   const creator_portfolio_id = req.body.creator_portfolio_id;
   const userid = req.body.userid;
 
+  console.log('🔍 [addcrush] Backend received:', { creator_portfolio_id, userid });
+
   if (!creator_portfolio_id && !userid) {
+    console.log('❌ [addcrush] Missing required fields');
     return res
       .status(400)
       .json({ ok: false, message: "user Id Or Creator Id invalid!!" });
@@ -20,8 +23,10 @@ const createCreator = async (req, res) => {
     //  })
 
     let currentuser = await crushdb.findOne({ creator_portfolio_id: creator_portfolio_id }).exec();
+    console.log('🔍 [addcrush] Checking existing crush:', currentuser);
 
     if (currentuser) {
+      console.log('❌ [addcrush] Creator already exists as crush');
       return res
         .status(409)
         .json({ ok: false, message: `creator already exist as crush` });
@@ -32,7 +37,9 @@ const createCreator = async (req, res) => {
       userid: userid,
     };
 
+    console.log('🔍 [addcrush] Creating new crush:', crush);
     await crushdb.create(crush);
+    console.log('✅ [addcrush] Crush created successfully');
 
     // await data.databar.updateDocument(data.dataid,data.creatorCol,currentuser._id,currentuser)
 

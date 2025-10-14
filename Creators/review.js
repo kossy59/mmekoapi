@@ -1,29 +1,58 @@
-const mongoose = require('mongoose');
-const Scheme = mongoose.Schema;
+const mongoose = require("mongoose");
 
-const markertdata = new Scheme({
+const reviewSchema = new mongoose.Schema({
+  bookingId: {
+    type: String,
+    required: true,
+    unique: true
+  },
+  creatorId: {
+    type: String,
+    required: true
+  },
+  fanId: {
+    type: String,
+    required: true
+  },
+  fanName: {
+    type: String,
+    required: true
+  },
+  fanNickname: {
+    type: String,
+    default: ""
+  },
+  fanPhoto: {
+    type: String,
+    default: ""
+  },
+  rating: {
+    type: Number,
+    required: true,
+    min: 1,
+    max: 5
+  },
+  feedback: {
+    type: String,
+    required: true,
+    maxlength: 100
+  },
+  hostType: {
+    type: String,
+    default: "Fan Meet"
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  }
+});
 
-     userid:{
-        type:String,
-        required : true
-    },
+// Index for efficient queries
+reviewSchema.index({ creatorId: 1, createdAt: -1 });
+reviewSchema.index({ bookingId: 1 });
 
-     creator_portfolio_id:{
-        type:String,
-        required : true
-    },
-
-     posttime:{
-        type:String,
-        required : true
-    },
-
-    content:{
-        type:String,
-        required : true
-    },
-
-    
-})
-
-module.exports = mongoose.model('Review',markertdata);
+module.exports = mongoose.model("Review", reviewSchema);

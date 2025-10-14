@@ -57,13 +57,11 @@ const createCreator = async (req, res) => {
       })
       .exec();
 
-    console.log("🔍 Backend - creatorfiles:", currentuser.creatorfiles);
     const photolink = currentuser.creatorfiles
       .map((photolink) => {
         return photolink?.creatorfilelink;
       })
       .filter((link) => link && link.trim() !== ""); // Filter out null/undefined/empty links
-    console.log("🔍 Backend - photolink after filtering:", photolink);
     const isFollowingUser = modState.followers.includes(userid);
 
     let host = {
@@ -99,13 +97,6 @@ const createCreator = async (req, res) => {
       vipEndDate: modState.vipEndDate || null,
     };
 
-    // Debug logging for VIP status
-    console.log("🔍 [GETCREATORBYID] VIP Status for creator:", {
-      name: currentuser.name,
-      userid: currentuser.userid,
-      isVip: modState.isVip,
-      vipEndDate: modState.vipEndDate
-    });
 
     res.status(200).json({
       ok: true,

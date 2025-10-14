@@ -4,7 +4,7 @@ let userdb = require("../../Creators/userdb");
 let creatordb = require("../../Creators/creators");
 let historydb = require("../../Creators/mainbalance");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+const { pushmessage } = require("../../utiils/sendPushnot");
 
 const postexclusive = async (req, res) => {
   let userid = req.body.userid;
@@ -90,7 +90,7 @@ const postexclusive = async (req, res) => {
       await historydb.create(creatorhistory);
 
       await sendEmail(content_price.userid, "user purchased your content");
-      await sendpushnote(
+      await pushmessage(
         content_price.userid,
         "user purchase content",
         "creatoricon"

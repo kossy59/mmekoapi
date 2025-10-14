@@ -19,12 +19,6 @@ const getMyCreator = async (req, res) => {
     }
 
     const host = await Promise.all(currentuser.map(async (creator) => {
-      console.log(`🔍 [GETMYCREATOR] Processing creator:`, {
-        _id: creator._id,
-        name: creator.name,
-        userid: creator.userid,
-        allFields: Object.keys(creator.toObject ? creator.toObject() : creator)
-      });
 
       // Ensure creatorfiles always has the photolink entries
       let creatorfiles = creator.creatorfiles || [];
@@ -55,29 +49,19 @@ const getMyCreator = async (req, res) => {
         creator.host_id
       ].filter(Boolean);
       
-      console.log(`🔍 [GETMYCREATOR] Possible user IDs for ${creator.name}:`, possibleUserIds);
-      
       for (const userId of possibleUserIds) {
         try {
-          console.log(`🔍 [GETMYCREATOR] Looking up VIP status for userid: ${userId}`);
           const user = await userdb.findOne({ _id: userId }).exec();
           if (user) {
             vipStatus = {
               isVip: user.isVip || false,
               vipEndDate: user.vipEndDate || null
             };
-            console.log(`🦁 [GETMYCREATOR] VIP Status for ${creator.name} (${userId}):`, vipStatus);
             break; // Found user, stop looking
-          } else {
-            console.log(`❌ [GETMYCREATOR] User not found with userid: ${userId}`);
           }
         } catch (error) {
-          console.log(`❌ [GETMYCREATOR] Error fetching VIP status for user ${userId}:`, error);
+          // Continue to next user ID
         }
-      }
-      
-      if (!vipStatus.isVip && possibleUserIds.length === 0) {
-        console.log(`❌ [GETMYCREATOR] No userid found for creator ${creator.name}`);
       }
 
       return {
@@ -111,8 +95,6 @@ const getMyCreator = async (req, res) => {
       };
     }));
 
-    console.log(`📊 [GETMYCREATOR] Returning ${host.length} creators with VIP status`);
-    console.log(`🦁 [GETMYCREATOR] VIP Status Summary:`, host.map(h => ({ name: h.name, userid: h.userid, isVip: h.isVip, vipEndDate: h.vipEndDate })));
     
     return res
       .status(200)
