@@ -2,6 +2,7 @@ const bookingdb = require("../../Creators/book")
 const userdb = require("../../Creators/userdb")
 const creatordb = require("../../Creators/creators")
 const historydb = require("../../Creators/mainbalance")
+const admindb = require("../../Creators/admindb")
 let sendEmail = require("../../utiils/sendEmailnot")
 let { pushActivityNotification } = require("../../utiils/sendPushnot")
 
@@ -45,7 +46,8 @@ const createLike = async (req,res)=>{
          }
 
          
-        if(type !== "Private show"){
+        // Only deduct gold for Fan meet and Fan date, not for Fan call or Private show
+        if(type !== "Private show" && type !== "Fan call" && type !== "Fan Call"){
 
             let total = userbalance - creatorprice
 
@@ -92,6 +94,34 @@ const createLike = async (req,res)=>{
         }
 
         const booking = await bookingdb.create(books)
+        
+        // Get user details for notification (user already fetched above)
+        const creator = await creatordb.findOne({_id: creator_portfolio_id}).exec()
+        
+        // Create database notification for creator
+        if (user && creator) {
+            const hostType = type || "Fan meet"
+            const userName = user.firstname && user.lastname 
+                ? `${user.firstname} ${user.lastname}` 
+                : user.firstname || user.username || 'Unknown User'
+            
+            await admindb.create({
+                userid: creator.userid,
+                message: `New ${hostType.toLowerCase()} request from ${userName}`,
+                seen: false
+            })
+            
+            // Create database notification for fan
+            const creatorName = creator.firstname && creator.lastname 
+                ? `${creator.firstname} ${creator.lastname}` 
+                : creator.firstname || creator.name || 'Unknown Creator'
+            
+            await admindb.create({
+                userid: userid,
+                message: `${hostType} request sent to ${creatorName}`,
+                seen: false
+            })
+        }
        
             return res.status(200).json({"ok":true,"message":` Success`})
       
