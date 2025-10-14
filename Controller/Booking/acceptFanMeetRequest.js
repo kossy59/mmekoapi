@@ -74,20 +74,23 @@ const acceptFanMeetRequest = async (req, res) => {
     booking.status = "accepted";
     await booking.save();
 
+    // Get host type for dynamic messages
+    const hostType = booking.type || "Fan meet";
+
     // Send notification only to the fan (userid is the fan who made the request)
-    await sendEmail(userid, "Your fan meet request has been accepted!");
-    await pushActivityNotification(userid, "Your fan meet request has been accepted!", "booking_accepted");
+    await sendEmail(userid, `Your ${hostType.toLowerCase()} request has been accepted!`);
+    await pushActivityNotification(userid, `Your ${hostType.toLowerCase()} request has been accepted!`, "booking_accepted");
     
     // Create database notification for fan
     await admindb.create({
       userid: userid,
-      message: "Your fan meet request has been accepted!",
+      message: `Your ${hostType.toLowerCase()} request has been accepted!`,
       seen: false
     });
 
     return res.status(200).json({
       ok: true,
-      message: "Fan meet request accepted successfully"
+      message: `${hostType} request accepted successfully`
     });
 
   } catch (err) {

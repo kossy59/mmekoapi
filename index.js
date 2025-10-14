@@ -609,7 +609,7 @@ io.on("connection", (socket) => {
       // Send push notifications
       if (data.isAdmin) {
         // Admin message to user
-        await pushSupportNotification(data.userid, data.message || "New support message from admin");
+        await pushSupportNotification(data.userid, data.message || "Hat Support Message");
       } else {
         // User message to admin - notify all admins
         const admins = await userdb.find({ isAdmin: true }).exec();
@@ -727,12 +727,7 @@ io.on("connection", (socket) => {
     try {
       const { callerId, callerName, answererId, answererName } = data;
       
-      console.log('📞 [Backend] Received video call start:', {
-        callerId,
-        callerName,
-        answererId,
-        answererName
-      });
+      
       
       // Starting video call
       
@@ -794,13 +789,7 @@ io.on("connection", (socket) => {
 
       const call = await videocalldb.create(callData);
 
-      // Emit call notification to answerer using their actual user ID
-      console.log('📞 [Backend] Sending video_call_incoming:', {
-        callId: call._id,
-        callerId: callerId,
-        callerName: callerName,
-        actualAnswererId: actualAnswererId
-      });
+      
       
       socket.to(`user_${actualAnswererId}`).emit('video_call_incoming', {
         callId: call._id,
@@ -932,7 +921,7 @@ io.on("connection", (socket) => {
           const admindb = require('./Creators/admindb');
           await admindb.create({
             userid: actualCreatorUserId,
-            message: `You missed a video call from ${callerName || 'Unknown User'}`,
+            message: `You missed a fan call from ${callerName || 'Unknown User'}`,
             seen: false,
             type: 'missed_call',
             callerId: callerId,
@@ -947,8 +936,8 @@ io.on("connection", (socket) => {
           
           if (answerer && answerer.pushToken) {
             await pushmessage({
-              title: 'Missed Video Call',
-              body: `You missed a video call from ${callerName || 'Unknown User'}`,
+              title: 'Missed Fan Call',
+              body: `You missed a fan call from ${callerName || 'Unknown User'}`,
               token: answerer.pushToken,
               data: {
                 type: 'missed_call',
@@ -997,7 +986,7 @@ io.on("connection", (socket) => {
           
           await admindb.create({
             userid: clientId,
-            message: `You missed a video call from ${fullCallerName}`,
+            message: `You missed a fan call from ${fullCallerName}`,
             seen: false,
             type: 'missed_call',
             callerId: callerId,
@@ -1009,8 +998,8 @@ io.on("connection", (socket) => {
           const { pushmessage } = require('./utiils/sendPushnot');
           if (answerer.pushToken) {
             await pushmessage({
-              title: 'Missed Video Call',
-              body: `You missed a video call from ${fullCallerName}`,
+              title: 'Missed Fan Call',
+              body: `You missed a fan call from ${fullCallerName}`,
               token: answerer.pushToken,
               data: {
                 type: 'missed_call',
@@ -1230,7 +1219,7 @@ mongoose.connection.once("open", () => {
             // Create transaction histories (like in completebook.js)
             const userHistory = {
               userid: fanId,
-              details: `Video call - payment for minute ${minute}`,
+              details: `Fan call - payment for minute ${minute}`,
               spent: `${amount}`,
               income: "0",
               date: `${Date.now().toString()}`
@@ -1240,7 +1229,7 @@ mongoose.connection.once("open", () => {
 
             const creatorHistory = {
               userid: creator._id, // Use the actual creator's user ID, not the portfolio ID
-              details: `Video call - payment received for minute ${minute}`,
+              details: `Fan call - payment received for minute ${minute}`,
               spent: "0",
               income: `${amount}`,
               date: `${Date.now().toString()}`
