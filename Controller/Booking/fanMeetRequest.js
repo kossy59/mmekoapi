@@ -89,30 +89,33 @@ const createFanMeetRequest = async (req, res) => {
 
     const booking = await bookingdb.create(bookingData);
 
+    // Get host type for dynamic messages
+    const hostType = type || "Fan meet";
+
     // Send notifications
-    await sendEmail(creator.userid, "New fan meet request received");
-    await pushActivityNotification(creator.userid, "New fan meet request received", "booking_request");
+    await sendEmail(creator.userid, `New ${hostType.toLowerCase()} request received`);
+    await pushActivityNotification(creator.userid, `New ${hostType.toLowerCase()} request received`, "booking_request");
     
     // Create database notification for creator
     await admindb.create({
       userid: creator.userid,
-      message: `New fan meet request from ${user.firstname} ${user.lastname}`,
+      message: `New ${hostType.toLowerCase()} request from ${user.firstname} ${user.lastname}`,
       seen: false
     });
     
-    await sendEmail(userid, "Fan meet request sent successfully");
-    await pushActivityNotification(userid, "Fan meet request sent successfully", "booking_request");
+    await sendEmail(userid, `${hostType} request sent successfully`);
+    await pushActivityNotification(userid, `${hostType} request sent successfully`, "booking_request");
     
     // Create database notification for fan
     await admindb.create({
       userid: userid,
-      message: `Fan meet request sent to ${creator.firstname} ${creator.lastname}`,
+      message: `${hostType} request sent to ${creator.firstname} ${creator.lastname}`,
       seen: false
     });
 
     return res.status(200).json({
       ok: true,
-      message: "Fan meet request created successfully",
+      message: `${hostType} request created successfully`,
       bookingId: booking._id
     });
 

@@ -5,10 +5,10 @@ const { submitRating, getCreatorRatings, checkUserRating } = require("../../../C
 // Submit a rating for a completed booking
 router.post("/submit", submitRating);
 
-// Get ratings for a specific creator
-router.get("/creator/:creatorId", getCreatorRatings);
+// Get ratings for a specific creator or fan
+router.get("/user/:userId/:ratingType", getCreatorRatings);
 
 // Check if a user has already rated a specific booking
-router.get("/check/:bookingId/:fanId", checkUserRating);
+router.get("/check/:bookingId/:userId/:ratingType", checkUserRating);
 
 module.exports = router;

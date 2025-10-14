@@ -3,8 +3,7 @@ const mongoose = require("mongoose");
 const reviewSchema = new mongoose.Schema({
   bookingId: {
     type: String,
-    required: true,
-    unique: true
+    required: true
   },
   creatorId: {
     type: String,
@@ -13,6 +12,11 @@ const reviewSchema = new mongoose.Schema({
   fanId: {
     type: String,
     required: true
+  },
+  ratingType: {
+    type: String,
+    required: true,
+    enum: ['fan-to-creator', 'creator-to-fan']
   },
   fanName: {
     type: String,
@@ -23,6 +27,18 @@ const reviewSchema = new mongoose.Schema({
     default: ""
   },
   fanPhoto: {
+    type: String,
+    default: ""
+  },
+  creatorName: {
+    type: String,
+    required: true
+  },
+  creatorNickname: {
+    type: String,
+    default: ""
+  },
+  creatorPhoto: {
     type: String,
     default: ""
   },
@@ -53,6 +69,8 @@ const reviewSchema = new mongoose.Schema({
 
 // Index for efficient queries
 reviewSchema.index({ creatorId: 1, createdAt: -1 });
-reviewSchema.index({ bookingId: 1 });
+reviewSchema.index({ fanId: 1, createdAt: -1 });
+reviewSchema.index({ bookingId: 1, ratingType: 1 }, { unique: true }); // Compound unique index
+reviewSchema.index({ ratingType: 1 });
 
 module.exports = mongoose.model("Review", reviewSchema);

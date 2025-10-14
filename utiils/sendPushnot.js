@@ -91,7 +91,7 @@ const pushMessageNotification = async (userid, message, senderName = "Someone") 
 
 const pushSupportNotification = async (userid, message) => {
   await pushmessage(userid, message, "/support.png", {
-    title: "Support Chat",
+    title: "Chat Support",
     type: "support",
     url: "/message/supportchat"
   });
@@ -99,7 +99,7 @@ const pushSupportNotification = async (userid, message) => {
 
 const pushAdminNotification = async (userid, message, adminType = "admin") => {
   await pushmessage(userid, message, "/support.png", {
-    title: "Admin Support Response",
+    title: "MMEKO SUPPORT",
     type: "support",
     url: "/message/supportchat"
   });

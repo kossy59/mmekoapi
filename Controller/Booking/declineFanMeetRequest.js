@@ -39,6 +39,9 @@ const declineFanMeetRequest = async (req, res) => {
     booking.status = "declined";
     await booking.save();
 
+    // Get host type for dynamic messages
+    const hostType = booking.type || "Fan meet";
+
     // Refund the user - move money from pending back to balance
     const user = await userdb.findOne({ _id: userid }).exec();
     if (user) {
@@ -53,7 +56,7 @@ const declineFanMeetRequest = async (req, res) => {
       // Create refund history
       const refundHistory = {
         userid,
-        details: "Fan meet request declined - refund processed",
+        details: `${hostType} request declined - refund processed`,
         spent: "0",
         income: `${refundAmount}`,
         date: `${Date.now().toString()}`
@@ -62,29 +65,29 @@ const declineFanMeetRequest = async (req, res) => {
     }
 
     // Send notifications
-    await sendEmail(userid, "Your fan meet request has been declined");
-    await pushmessage(userid, "Your fan meet request has been declined", "fanicon");
+    await sendEmail(userid, `Your ${hostType.toLowerCase()} request has been declined`);
+    await pushmessage(userid, `Your ${hostType.toLowerCase()} request has been declined`, "fanicon");
     
     // Create database notification for fan
     await admindb.create({
       userid: userid,
-      message: "Your fan meet request has been declined",
+      message: `Your ${hostType.toLowerCase()} request has been declined`,
       seen: false
     });
     
-    await sendEmail(creator_portfolio_id, "You declined a fan meet request");
-    await pushmessage(creator_portfolio_id, "You declined a fan meet request", "creatoricon");
+    await sendEmail(creator_portfolio_id, `You declined a ${hostType.toLowerCase()} request`);
+    await pushmessage(creator_portfolio_id, `You declined a ${hostType.toLowerCase()} request`, "creatoricon");
     
     // Create database notification for creator
     await admindb.create({
       userid: creator_portfolio_id,
-      message: "You declined a fan meet request",
+      message: `You declined a ${hostType.toLowerCase()} request`,
       seen: false
     });
 
     return res.status(200).json({
       ok: true,
-      message: "Fan meet request declined successfully"
+      message: `${hostType} request declined successfully`
     });
 
   } catch (err) {

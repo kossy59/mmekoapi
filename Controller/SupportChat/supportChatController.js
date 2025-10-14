@@ -219,7 +219,7 @@ const adminSendMessage = async (req, res) => {
     try {
       await pushAdminNotification(supportChat.userid, message, 'support');
     } catch (pushError) {
-      // Error sending push notification to user
+      console.error('Error sending push notification:', pushError);
     }
 
     res.status(200).json({ 

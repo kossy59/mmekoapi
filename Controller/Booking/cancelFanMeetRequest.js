@@ -37,6 +37,9 @@ const cancelFanMeetRequest = async (req, res) => {
     booking.status = "cancelled";
     await booking.save();
 
+    // Get host type for dynamic messages
+    const hostType = booking.type || "Fan meet";
+
     // Refund the user - move money from pending back to balance
     const user = await userdb.findOne({ _id: userid }).exec();
     if (user) {
@@ -51,7 +54,7 @@ const cancelFanMeetRequest = async (req, res) => {
       // Create refund history
       const refundHistory = {
         userid,
-        details: "Fan meet request cancelled - refund processed",
+        details: `${hostType} request cancelled - refund processed`,
         spent: "0",
         income: `${refundAmount}`,
         date: `${Date.now().toString()}`
@@ -60,29 +63,29 @@ const cancelFanMeetRequest = async (req, res) => {
     }
 
     // Send notifications
-    await sendEmail(userid, "Your fan meet request has been cancelled");
-    await pushmessage(userid, "Your fan meet request has been cancelled", "fanicon");
+    await sendEmail(userid, `Your ${hostType.toLowerCase()} request has been cancelled`);
+    await pushmessage(userid, `Your ${hostType.toLowerCase()} request has been cancelled`, "fanicon");
     
     // Create database notification for fan
     await admindb.create({
       userid: userid,
-      message: "Your fan meet request has been cancelled",
+      message: `Your ${hostType.toLowerCase()} request has been cancelled`,
       seen: false
     });
     
-    await sendEmail(booking.creator_portfolio_id, "A fan cancelled their meet request");
-    await pushmessage(booking.creator_portfolio_id, "A fan cancelled their meet request", "creatoricon");
+    await sendEmail(booking.creator_portfolio_id, `A fan cancelled their ${hostType.toLowerCase()} request`);
+    await pushmessage(booking.creator_portfolio_id, `A fan cancelled their ${hostType.toLowerCase()} request`, "creatoricon");
     
     // Create database notification for creator
     await admindb.create({
       userid: booking.creator_portfolio_id,
-      message: "A fan cancelled their meet request",
+      message: `A fan cancelled their ${hostType.toLowerCase()} request`,
       seen: false
     });
 
     return res.status(200).json({
       ok: true,
-      message: "Fan meet request cancelled successfully"
+      message: `${hostType} request cancelled successfully`
     });
 
   } catch (err) {
