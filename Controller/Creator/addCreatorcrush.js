@@ -22,11 +22,15 @@ const createCreator = async (req, res) => {
     //   return value.$id === hostid
     //  })
 
-    let currentuser = await crushdb.findOne({ creator_portfolio_id: creator_portfolio_id }).exec();
-    console.log('🔍 [addcrush] Checking existing crush:', currentuser);
+    // Check if this specific user already has this creator in their crush list
+    let currentuser = await crushdb.findOne({ 
+      creator_portfolio_id: creator_portfolio_id,
+      userid: userid 
+    }).exec();
+    console.log('🔍 [addcrush] Checking existing crush for current user:', currentuser);
 
     if (currentuser) {
-      console.log('❌ [addcrush] Creator already exists as crush');
+      console.log('❌ [addcrush] Creator already exists in current user crush list');
       return res
         .status(409)
         .json({ ok: false, message: `creator already exist as crush` });

@@ -37,18 +37,16 @@ const createCreator = async (req, res) => {
       });
     }
 
+    // Check if the current user has this creator in their crush list
     let istrue = await crushdb
       .findOne({
         creator_portfolio_id: currentuser._id,
+        userid: userid
       })
       .exec();
 
-    if (userid) {
-      if (istrue) {
-        if (String(istrue.userid) === userid) {
-          added = true;
-        }
-      }
+    if (userid && istrue) {
+      added = true;
     }
 
     let modState = await userdb
