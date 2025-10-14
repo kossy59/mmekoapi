@@ -3,7 +3,7 @@ const bookingdb = require('../Creators/book');
 const userdb = require('../Creators/userdb');
 const historydb = require('../Creators/mainbalance');
 let sendEmail = require('../utiils/sendEmailnot');
-let sendpushnote = require('../utiils/sendPushnot');
+const { pushmessage } = require('../utiils/sendPushnot');
 
 // Connect to database
 const connectDB = async () => {
@@ -84,10 +84,10 @@ const processExpiredRequests = async () => {
 
             // Send notifications with dynamic host type
             await sendEmail(booking.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`);
-            await sendpushnote(booking.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`, "fanicon");
+            await pushmessage(booking.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`, "fanicon");
             
             await sendEmail(booking.creator_portfolio_id, `A ${hostType.toLowerCase()} request has expired`);
-            await sendpushnote(booking.creator_portfolio_id, `A ${hostType.toLowerCase()} request has expired`, "creatoricon");
+            await pushmessage(booking.creator_portfolio_id, `A ${hostType.toLowerCase()} request has expired`, "creatoricon");
             
             console.log(`Refunded ${refundAmount} to user ${booking.userid} for ${hostType} request`);
           }

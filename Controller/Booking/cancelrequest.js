@@ -2,6 +2,9 @@ const bookingdb = require("../../Creators/book");
 const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 const historydb = require("../../Creators/mainbalance");
+const admindb = require("../../Creators/admindb");
+let sendEmail = require("../../utiils/sendEmailnot");
+let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
 const createLike = async (req, res) => {
   const creator_portfolio_id = req.body.creator_portfolio_id;
@@ -86,6 +89,19 @@ const createLike = async (req, res) => {
 
     await bookingdb.deleteOne({ _id: book._id }).exec();
 
+    // Get host type for dynamic message
+    const hostType = book.type || "Fan meet";
+    
+    // Send notifications to creator about cancellation
+    await sendEmail(creatoruser.userid, `A fan cancelled their ${hostType.toLowerCase()} request`);
+    await pushActivityNotification(creatoruser.userid, `A fan cancelled their ${hostType.toLowerCase()} request`, "booking_cancelled");
+    
+    // Create database notification for creator
+    await admindb.create({
+      userid: creatoruser.userid,
+      message: `A fan cancelled their ${hostType.toLowerCase()} request`,
+      seen: false
+    });
 
     return res.status(200).json({ ok: true, message: ` Success` });
   } catch (err) {

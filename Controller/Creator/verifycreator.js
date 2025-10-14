@@ -36,7 +36,7 @@ const createCreator = async (req, res) => {
     await admindb.create({
       userid,
       message: `Congratulations! Your creator application has been approved.`,
-      seen: true,
+      seen: false,
     }); 
 
     return res.status(200).json({

@@ -35,7 +35,7 @@ const updatePost = async (req,res)=>{
                 let newdata = {
                     userid: verifyIDS[i],
                     message: message,
-                    seen:true
+                    seen:false
                 }
 
                 await admindb.create(newdata)

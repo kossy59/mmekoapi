@@ -1,6 +1,7 @@
 const bookingdb = require("../../Creators/book");
 const creatordb = require("../../Creators/creators");
 const userdb = require("../../Creators/userdb");
+const admindb = require("../../Creators/admindb");
 let sendEmail = require("../../utiils/sendEmailnot");
 let { pushActivityNotification } = require("../../utiils/sendPushnot");
 const historydb = require("../../Creators/mainbalance");
@@ -41,13 +42,16 @@ const createLike = async (req, res) => {
     status.status = "declined";
     await status.save();
 
+    // Get host type for dynamic message
+    const hostType = status.type || "Fan meet";
+    
     // Emit socket event for real-time updates
     emitFanMeetStatusUpdate({
       bookingId: status._id,
       status: 'declined',
       userid: status.userid,
       creator_portfolio_id: status.creator_portfolio_id,
-      message: '❌ Fan meet request was declined'
+      message: `❌ ${hostType} request was declined`
     });
 
     // Refund the user - move money from pending back to balance
@@ -63,7 +67,7 @@ const createLike = async (req, res) => {
 
       let creatorpaymenthistory = {
         userid: userid,
-        details: "Fan meet request declined - refund processed",
+        details: `${hostType} request declined - refund processed`,
         spent: "0",
         income: `${refundAmount}`,
         date: `${Date.now().toString()}`,
@@ -71,9 +75,16 @@ const createLike = async (req, res) => {
 
       await historydb.create(creatorpaymenthistory);
     }
-
-    await sendEmail(userid, "Creator declined your Booking");
-    await pushActivityNotification(userid, "Creator declined your Booking", "booking_declined");
+    
+    await sendEmail(userid, `Creator declined your ${hostType} request`);
+    await pushActivityNotification(userid, `Creator declined your ${hostType} request`, "booking_declined");
+    
+    // Create database notification for fan
+    await admindb.create({
+      userid: userid,
+      message: `Your ${hostType} request has been declined`,
+      seen: false
+    });
 
     return res.status(200).json({ ok: true, message: ` Success` });
   } catch (err) {

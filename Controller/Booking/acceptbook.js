@@ -1,6 +1,7 @@
 const bookingdb = require("../../Creators/book");
 const userdb = require("../../Creators/userdb");
 const historydb = require("../../Creators/mainbalance");
+const admindb = require("../../Creators/admindb");
 let sendEmail = require("../../utiils/sendEmailnot");
 let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
@@ -78,21 +79,32 @@ const createLike = async (req, res) => {
     status.status = "accepted";
     await status.save();
     
+    // Get host type for dynamic message
+    const hostType = status.type || "Fan meet";
+    
     // Emit socket event for real-time updates
     emitFanMeetStatusUpdate({
       bookingId: status._id,
       status: 'accepted',
       userid: status.userid,
       creator_portfolio_id: status.creator_portfolio_id,
-      message: '🎉 Fan meet request has been accepted!'
+      message: `🎉 ${hostType} request has been accepted!`
     });
     
-    await sendEmail(status.userid, "creator has accepted your booking request");
+    await sendEmail(status.userid, `Creator has accepted your ${hostType.toLowerCase()} request`);
     await pushActivityNotification(
       status.userid,
-      "creator has accepted your booking request",
+      `Creator has accepted your ${hostType.toLowerCase()} request`,
       "booking_accepted"
     );
+    
+    // Create database notification for fan
+    await admindb.create({
+      userid: status.userid,
+      message: `Your ${hostType} request has been accepted!`,
+      seen: false
+    });
+    
     return res.status(200).json({ ok: true, message: ` Success` });
   } catch (err) {
     return res.status(500).json({ ok: false, message: `${err.message}!` });

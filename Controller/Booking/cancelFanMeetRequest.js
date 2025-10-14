@@ -1,8 +1,9 @@
 const bookingdb = require("../../Creators/book");
 const userdb = require("../../Creators/userdb");
 const historydb = require("../../Creators/mainbalance");
+const admindb = require("../../Creators/admindb");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+const { pushmessage } = require("../../utiils/sendPushnot");
 
 const cancelFanMeetRequest = async (req, res) => {
   const {
@@ -60,10 +61,24 @@ const cancelFanMeetRequest = async (req, res) => {
 
     // Send notifications
     await sendEmail(userid, "Your fan meet request has been cancelled");
-    await sendpushnote(userid, "Your fan meet request has been cancelled", "fanicon");
+    await pushmessage(userid, "Your fan meet request has been cancelled", "fanicon");
+    
+    // Create database notification for fan
+    await admindb.create({
+      userid: userid,
+      message: "Your fan meet request has been cancelled",
+      seen: false
+    });
     
     await sendEmail(booking.creator_portfolio_id, "A fan cancelled their meet request");
-    await sendpushnote(booking.creator_portfolio_id, "A fan cancelled their meet request", "creatoricon");
+    await pushmessage(booking.creator_portfolio_id, "A fan cancelled their meet request", "creatoricon");
+    
+    // Create database notification for creator
+    await admindb.create({
+      userid: booking.creator_portfolio_id,
+      message: "A fan cancelled their meet request",
+      seen: false
+    });
 
     return res.status(200).json({
       ok: true,

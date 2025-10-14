@@ -1,7 +1,7 @@
 const userdb = require("../../Creators/userdb");
 const admindb = require("../../Creators/admindb");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+const { pushmessage } = require("../../utiils/sendPushnot");
 
 const updateView = async (req, res) => {
   const { id, userId, action } = req.body;
@@ -52,13 +52,13 @@ const updateView = async (req, res) => {
           let respond = {
             userid: id,
             message: `${userFollowing[0].firstname} ${userFollowing[0].lastname} followed you`,
-            seen: true,
+            seen: false,
           };
 
           await admindb.create(respond);
 
           await sendEmail(id, "you have new follower");
-          await sendpushnote(id, "you have new follower", "creatoricon");
+          await pushmessage(id, "you have new follower", "creatoricon");
 
           console.log("Added follower successfully");
         } catch (error) {
@@ -82,13 +82,13 @@ const updateView = async (req, res) => {
           let respond = {
             userid: id,
             message: `${userFollowing[0].firstname} ${userFollowing[0].lastname} unfollowed you`,
-            seen: true,
+            seen: false,
           };
 
           await admindb.create(respond);
 
           await sendEmail(id, "A user unfollowed you");
-          await sendpushnote(id, "A user unfollowed you", "creatoricon");
+          await pushmessage(id, "A user unfollowed you", "creatoricon");
 
           isFollowing = false;
         } catch (error) {

@@ -27,6 +27,28 @@ exports.markNotificationsSeen = async (req, res) => {
   }
 };
 
+// ✅ Mark only activity notifications as seen for a user
+exports.markActivityNotificationsSeen = async (req, res) => {
+  const { userid } = req.params;
+
+  try {
+    // Mark only activity-related notifications as seen
+    await admindb.updateMany(
+      { 
+        userid, 
+        seen: false,
+        message: {
+          $regex: /booking|request|fan meet|accepted|declined|cancelled|expired|completed/i
+        }
+      }, 
+      { seen: true }
+    );
+    return res.status(200).json({ ok: true, message: "Activity notifications marked as seen" });
+  } catch (err) {
+    return res.status(500).json({ ok: false, message: err.message });
+  }
+};
+
 // ✅ Delete a notification by ID
 exports.deleteNotification = async (req, res) => {
   const { id } = req.params;

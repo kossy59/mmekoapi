@@ -2,6 +2,7 @@ const bookingdb = require("../../Creators/book");
 const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 const historydb = require("../../Creators/mainbalance");
+const admindb = require("../../Creators/admindb");
 let sendEmail = require("../../utiils/sendEmailnot");
 let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
@@ -112,10 +113,24 @@ const completeBooking = async (req, res) => {
     await sendEmail(userid, `${hostType} completed successfully!`);
     await pushActivityNotification(userid, `${hostType} completed successfully!`, "booking_completed");
     
+    // Create database notification for fan
+    await admindb.create({
+      userid: userid,
+      message: `${hostType} completed successfully!`,
+      seen: false
+    });
+    
     // Send notification to creator's actual user ID, not portfolio ID
     if (creator && creator._id) {
       await sendEmail(creator._id, `${hostType} completed - payment received!`);
       await pushActivityNotification(creator._id, `${hostType} completed - payment received!`, "booking_completed");
+      
+      // Create database notification for creator
+      await admindb.create({
+        userid: creator._id,
+        message: `${hostType} completed - payment received!`,
+        seen: false
+      });
     }
 
     return res.status(200).json({
