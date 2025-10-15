@@ -36,7 +36,7 @@ const completeRequest = async (req, res) => {
     if (!booking) {
       return res.status(404).json({
         ok: false,
-        message: "Accepted booking not found"
+        message: "Accepted Request not found"
       });
     }
 
