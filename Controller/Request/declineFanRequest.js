@@ -1,4 +1,4 @@
-const bookingdb = require("../../Creators/book");
+const requestdb = require("../../Creators/requsts");
 const userdb = require("../../Creators/userdb");
 const historydb = require("../../Creators/mainbalance");
 const admindb = require("../../Creators/admindb");
@@ -7,12 +7,12 @@ const { pushmessage } = require("../../utiils/sendPushnot");
 
 const declineFanRequest = async (req, res) => {
   const {
-    bookingId,
+    requestId,
     creator_portfolio_id,
     userid
   } = req.body;
 
-  if (!bookingId || !creator_portfolio_id || !userid) {
+  if (!requestId || !creator_portfolio_id || !userid) {
     return res.status(400).json({
       ok: false,
       message: "Missing required parameters"
@@ -20,34 +20,34 @@ const declineFanRequest = async (req, res) => {
   }
 
   try {
-    // Find the booking
-    const booking = await bookingdb.findOne({ 
-      _id: bookingId,
+    // Find the request
+    const request = await requestdb.findOne({ 
+      _id: requestId,
       creator_portfolio_id: creator_portfolio_id,
       userid: userid,
       status: "request"
     }).exec();
 
-    if (!booking) {
+    if (!request) {
       return res.status(404).json({
         ok: false,
-        message: "Booking request not found or already processed"
+        message: "request request not found or already processed"
       });
     }
 
-    // Update booking status to declined
-    booking.status = "declined";
-    await booking.save();
+    // Update request status to declined
+    request.status = "declined";
+    await request.save();
 
     // Get host type for dynamic messages
-    const hostType = booking.type || "Fan meet";
+    const hostType = request.type || "Fan meet";
 
     // Refund the user - move money from pending back to balance
     const user = await userdb.findOne({ _id: userid }).exec();
     if (user) {
       let userBalance = parseFloat(user.balance) || 0;
       let userPending = parseFloat(user.pending) || 0;
-      let refundAmount = parseFloat(booking.price);
+      let refundAmount = parseFloat(request.price);
 
       user.balance = String(userBalance + refundAmount);
       user.pending = String(userPending - refundAmount);

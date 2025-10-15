@@ -5,7 +5,7 @@ const { Check_caller, deletebyClient, deletebyCallerid, check_connected } = requ
 
 // Start a video call
 const startVideoCall = async (req, res) => {
-  const { callerId, callerName, answererId, answererName, bookingId } = req.body;
+  const { callerId, callerName, answererId, answererName, requestId } = req.body;
 
   if (!callerId || !answererId) {
     return res.status(400).json({
@@ -54,7 +54,7 @@ const startVideoCall = async (req, res) => {
       clientid: callerId,
       connected: false,
       waiting: "wait",
-      bookingId: bookingId || null,
+      requestId: requestId || null,
       callerName: callerName,
       answererName: answererName,
       createdAt: new Date()

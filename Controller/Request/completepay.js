@@ -1,4 +1,4 @@
-const bookingdb = require("../../Creators/book");
+const requestdb = require("../../Creators/requsts");
 const creatordb = require("../../Creators/creators");
 const userdb = require("../../Creators/userdb");
 const historydb = require("../../Creators/mainbalance");
@@ -19,7 +19,7 @@ const createLike = async (req, res) => {
   //let data = await connectdatabase()
 
   try {
-    const users = await bookingdb.find({ userid: userid }).exec();
+    const users = await requestdb.find({ userid: userid }).exec();
     const paidname = await userdb.findOne({ _id: userid }).exec();
 
     let user = users.find((value) => {
@@ -39,7 +39,7 @@ const createLike = async (req, res) => {
         .json({ ok: false, message: "you have 0 approved request!!" });
     }
 
-    // getting creator for knowing it booking price
+    // getting creator for knowing it request price
     let creator = await creatordb.findOne({ _id: user.creator_portfolio_id }).exec();
     let price = parseFloat(creator.price);
     console.log("creator price " + price);
@@ -87,7 +87,7 @@ const createLike = async (req, res) => {
       await pushActivityNotification(
         `${creatoruser._id}`,
         `You received ${price} from ${paidname.firstname}`,
-        "booking_completed"
+        "request_completed"
       );
     }
 

@@ -23,7 +23,7 @@ const markertdata = new Scheme({
         required : false
     },
 
-     bookingId:{
+     requestId:{
         type:String,
         required : false
     },

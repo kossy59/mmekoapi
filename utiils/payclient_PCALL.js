@@ -1,5 +1,5 @@
 const creatordb = require("../Creators/creators")
-let bookdb = require("../Creators/book")
+let requestdb = require("../Creators/requsts")
 let userdb = require("../Creators/userdb")
 historydb = require("../Creators/mainbalance")
 const pay = async(userid,toid,amount)=>{
@@ -7,7 +7,7 @@ const pay = async(userid,toid,amount)=>{
     let creator_portfolio_id = await creatordb.findOne({userid:toid}).exec()
 
     if(creator_portfolio_id){
-        let users = await bookdb.find({userid:userid}).exec()
+        let users = await requestdb.find({userid:userid}).exec()
 
         let user = users.find(value=>{
             return String(value.creator_portfolio_id) === String(creator_portfolio_id._id ) && String(value.type) === "Private show"
@@ -17,7 +17,7 @@ const pay = async(userid,toid,amount)=>{
             return 
         }
 
-          // getting creator for knowing it booking price
+          // getting creator for knowing it request price
           //let creator = await creatordb.findOne({_id:uscreator_portfolio_id}).exec()
           
           //console.log("creator price "+price)

@@ -1,4 +1,4 @@
-const bookingdb = require("../../Creators/book");
+const requestdb = require("../../Creators/requsts");
 const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 const historydb = require("../../Creators/mainbalance");
@@ -8,12 +8,12 @@ let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
 const acceptFanRequest = async (req, res) => {
   const {
-    bookingId,
+    requestId,
     creator_portfolio_id,
     userid
   } = req.body;
 
-  if (!bookingId || !creator_portfolio_id || !userid) {
+  if (!requestId || !creator_portfolio_id || !userid) {
     return res.status(400).json({
       ok: false,
       message: "Missing required parameters"
@@ -21,37 +21,37 @@ const acceptFanRequest = async (req, res) => {
   }
 
   try {
-    // Find the booking
-    const booking = await bookingdb.findOne({ 
-      _id: bookingId,
+    // Find the request
+    const request = await requestdb.findOne({ 
+      _id: requestId,
       creator_portfolio_id: creator_portfolio_id,
       userid: userid,
       status: "request"
     }).exec();
 
-    if (!booking) {
+    if (!request) {
       return res.status(404).json({
         ok: false,
-        message: "Booking request not found or already processed"
+        message: "Request request not found or already processed"
       });
     }
 
     // Check if request has expired
-    if (new Date() > new Date(booking.expiresAt)) {
+    if (new Date() > new Date(request.expiresAt)) {
       // Move money back from pending to balance
       const user = await userdb.findOne({ _id: userid }).exec();
       if (user) {
         let userBalance = parseFloat(user.balance) || 0;
         let userPending = parseFloat(user.pending) || 0;
-        let refundAmount = parseFloat(booking.price);
+        let refundAmount = parseFloat(request.price);
 
         user.balance = String(userBalance + refundAmount);
         user.pending = String(userPending - refundAmount);
         await user.save();
 
-        // Update booking status to expired
-        booking.status = "expired";
-        await booking.save();
+        // Update request status to expired
+        request.status = "expired";
+        await request.save();
 
         // Create refund history
         const refundHistory = {
@@ -70,16 +70,16 @@ const acceptFanRequest = async (req, res) => {
       });
     }
 
-    // Update booking status to accepted
-    booking.status = "accepted";
-    await booking.save();
+    // Update request status to accepted
+    request.status = "accepted";
+    await request.save();
 
     // Get host type for dynamic messages
-    const hostType = booking.type || "Fan meet";
+    const hostType = request.type || "Fan meet";
 
     // Send notification only to the fan (userid is the fan who made the request)
     await sendEmail(userid, `Your ${hostType.toLowerCase()} request has been accepted!`);
-    await pushActivityNotification(userid, `Your ${hostType.toLowerCase()} request has been accepted!`, "booking_accepted");
+    await pushActivityNotification(userid, `Your ${hostType.toLowerCase()} request has been accepted!`, "request_accepted");
     
     // Create database notification for fan
     await admindb.create({

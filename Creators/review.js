@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const reviewSchema = new mongoose.Schema({
-  bookingId: {
+  requestId: {
     type: String,
     required: true
   },
@@ -70,7 +70,7 @@ const reviewSchema = new mongoose.Schema({
 // Index for efficient queries
 reviewSchema.index({ creatorId: 1, createdAt: -1 });
 reviewSchema.index({ fanId: 1, createdAt: -1 });
-reviewSchema.index({ bookingId: 1, ratingType: 1 }, { unique: true }); // Compound unique index
+reviewSchema.index({ requestId: 1, ratingType: 1 }, { unique: true }); // Compound unique index
 reviewSchema.index({ ratingType: 1 });
 
 module.exports = mongoose.model("Review", reviewSchema);

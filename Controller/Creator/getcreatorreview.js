@@ -9,31 +9,14 @@ const createLike = async (req,res)=>{
     if( !creator_portfolio_id){
         return res.status(400).json({"ok":false,'message': 'please provide user and creator ID!!'})
     }
-    console.log('🔍 [GETREVIEWS] Looking for reviews with creator_portfolio_id:', creator_portfolio_id)
-
+   
     try{
          // Debug: Check all ratings in database
          let allRatings = await reviewdb.find({}).exec()
-         console.log('🔍 [GETREVIEWS] All ratings in database:', allRatings.map(r => ({ 
-           creatorId: r.creatorId, 
-           fanName: r.fanName, 
-           rating: r.rating,
-           bookingId: r.bookingId,
-           hostType: r.hostType
-         })))
-         
+       
          // Fetch 5-star ratings from request cards for this creator
          let ratings = await reviewdb.find({creatorId: creator_portfolio_id}).sort({createdAt: -1}).exec()
-         console.log('🔍 [GETREVIEWS] Found ratings for creator:', ratings.length)
-         console.log('🔍 [GETREVIEWS] Creator portfolio ID being searched:', creator_portfolio_id)
-         console.log('🔍 [GETREVIEWS] Ratings found:', ratings.map(r => ({
-           creatorId: r.creatorId,
-           fanName: r.fanName,
-           rating: r.rating,
-           feedback: r.feedback,
-           bookingId: r.bookingId
-         })))
-
+         
          if(!ratings[0]){
               return res.status(200).json({"ok":true,"message":` Success`, reviews:[]})
 
@@ -55,7 +38,7 @@ const createLike = async (req,res)=>{
                 photolink : ratings[i].fanPhoto || (image ? image.photoLink : ""),
                 rating : ratings[i].rating,
                 hostType : ratings[i].hostType,
-                bookingId : ratings[i].bookingId
+                requestId : ratings[i].requestId
             })
         }
 

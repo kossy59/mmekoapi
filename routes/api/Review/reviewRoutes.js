@@ -2,13 +2,13 @@ const express = require("express");
 const router = express.Router();
 const { submitRating, getCreatorRatings, checkUserRating } = require("../../../Controller/Review/submitRating");
 
-// Submit a rating for a completed booking
+// Submit a rating for a completed request
 router.post("/submit", submitRating);
 
 // Get ratings for a specific creator or fan
 router.get("/user/:userId/:ratingType", getCreatorRatings);
 
-// Check if a user has already rated a specific booking
-router.get("/check/:bookingId/:userId/:ratingType", checkUserRating);
+// Check if a user has already rated a specific request
+router.get("/check/:requestId/:userId/:ratingType", checkUserRating);
 
 module.exports = router;

@@ -38,7 +38,7 @@ exports.markActivityNotificationsSeen = async (req, res) => {
         userid, 
         seen: false,
         message: {
-          $regex: /booking|request|fan meet|accepted|declined|cancelled|expired|completed/i
+          $regex: /request|fan meet|accepted|declined|cancelled|expired|completed/i
         }
       }, 
       { seen: true }

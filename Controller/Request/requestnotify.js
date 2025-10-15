@@ -1,4 +1,4 @@
-const bookingdb = require("../../Creators/book");
+const requestdb = require("../../Creators/requsts");
 const userdb = require("../../Creators/userdb");
 const completedb = require("../../Creators/usercomplete");
 const admindb = require("../../Creators/admindb");
@@ -20,7 +20,7 @@ const createLike = async (req, res) => {
   let users = [];
   if (creator_portfolio) {
     console.log("this is creator");
-    users = await bookingdb.find({ creator_portfolio_id: creator_portfolio._id }).exec();
+    users = await requestdb.find({ creator_portfolio_id: creator_portfolio._id }).exec();
     console.log("this is creator not " + users.length);
   }
 
@@ -30,7 +30,7 @@ const createLike = async (req, res) => {
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-  // Filter creator array for bookings created within the last 30 days
+  // Filter creator array for requests created within the last 30 days
   users = users.filter((m) => {
     const created = new Date(m.createdAt);
     return created >= thirtyDaysAgo && created <= now;

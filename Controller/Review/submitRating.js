@@ -4,27 +4,17 @@ const creatorsdb = require("../../Creators/creators");
 const admindb = require("../../Creators/admindb");
 const { pushmessage } = require("../../utiils/sendPushnot");
 
-// Submit a rating and feedback for a completed booking
+// Submit a rating and feedback for a completed request
 // Can be fan rating creator OR creator rating fan
 exports.submitRating = async (req, res) => {
-  const { bookingId, creatorId, fanId, rating, feedback, hostType, ratingType } = req.body;
+  const { requestId, creatorId, fanId, rating, feedback, hostType, ratingType } = req.body;
 
-  console.log('🔍 [submitRating] Backend received request:', {
-    bookingId,
-    creatorId,
-    fanId,
-    rating,
-    feedback: feedback ? feedback.substring(0, 50) + '...' : 'empty',
-    hostType,
-    ratingType,
-    timestamp: new Date().toISOString()
-  });
-
+  
   try {
     // Validate required fields
-    if (!bookingId || !creatorId || !fanId || !rating || !feedback || !ratingType) {
+    if (!requestId || !creatorId || !fanId || !rating || !feedback || !ratingType) {
       console.log('❌ [submitRating] Missing required fields:', {
-        bookingId: !!bookingId,
+        requestId: !!requestId,
         creatorId: !!creatorId,
         fanId: !!fanId,
         rating: !!rating,
@@ -33,7 +23,7 @@ exports.submitRating = async (req, res) => {
       });
       return res.status(400).json({
         ok: false,
-        message: "Missing required fields: bookingId, creatorId, fanId, rating, feedback, ratingType"
+        message: "Missing required fields: requestId, creatorId, fanId, rating, feedback, ratingType"
       });
     }
 
@@ -53,12 +43,12 @@ exports.submitRating = async (req, res) => {
       });
     }
 
-    // Check if rating already exists for this booking and rating type
-    const existingRating = await reviewdb.findOne({ bookingId, ratingType });
+    // Check if rating already exists for this request and rating type
+    const existingRating = await reviewdb.findOne({ requestId, ratingType });
     if (existingRating) {
       return res.status(400).json({
         ok: false,
-        message: `Rating already submitted for this booking (${ratingType})`
+        message: `Rating already submitted for this request (${ratingType})`
       });
     }
 
@@ -155,7 +145,7 @@ exports.submitRating = async (req, res) => {
 
     // Create the rating record with dynamic fields based on rating type
     const ratingData = {
-      bookingId,
+      requestId,
       creatorId,
       fanId,
       ratingType,
@@ -234,15 +224,15 @@ exports.submitRating = async (req, res) => {
   }
 };
 
-// Check if a user has already rated a specific booking
+// Check if a user has already rated a specific request
 exports.checkUserRating = async (req, res) => {
-  const { bookingId, userId, ratingType } = req.params;
+  const { requestId, userId, ratingType } = req.params;
 
   try {
-    if (!bookingId || !userId || !ratingType) {
+    if (!requestId || !userId || !ratingType) {
       return res.status(400).json({
         ok: false,
-        message: "Booking ID, User ID, and Rating Type are required"
+        message: "request ID, User ID, and Rating Type are required"
       });
     }
 
@@ -254,8 +244,8 @@ exports.checkUserRating = async (req, res) => {
       });
     }
 
-    // Check if rating exists for this booking by this user and rating type
-    const existingRating = await reviewdb.findOne({ bookingId, ratingType });
+    // Check if rating exists for this request by this user and rating type
+    const existingRating = await reviewdb.findOne({ requestId, ratingType });
     
     if (existingRating) {
       return res.status(200).json({

@@ -50,4 +50,4 @@ const markertdata = new Scheme(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Booking", markertdata);
+module.exports = mongoose.model("Requests", markertdata);

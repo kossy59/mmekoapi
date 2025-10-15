@@ -1,4 +1,4 @@
-const bookingdb = require("../../Creators/book")
+const requestdb = require("../../Creators/requsts")
 const userdb = require("../../Creators/userdb")
 const creatordb = require("../../Creators/creators")
 const historydb = require("../../Creators/mainbalance")
@@ -79,9 +79,9 @@ const createLike = async (req,res)=>{
          //console.log("user balance "+userbalance)
 
          await sendEmail(creatoremail.userid, "Accept appointment")
-         await pushActivityNotification(creatoremail.userid, "New request received", "booking")
+         await pushActivityNotification(creatoremail.userid, "New request received", "request")
 
-       let books  = {
+       let requests  = {
             userid,
             creator_portfolio_id,
             type,
@@ -93,7 +93,7 @@ const createLike = async (req,res)=>{
             expiresAt: new Date(Date.now() + 23 * 60 * 60 * 1000 + 14 * 60 * 1000) // 23h 14m from now
         }
 
-        const booking = await bookingdb.create(books)
+        const request = await requestdb.create(requests)
         
         // Get user details for notification (user already fetched above)
         const creator = await creatordb.findOne({_id: creator_portfolio_id}).exec()

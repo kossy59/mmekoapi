@@ -1,12 +1,12 @@
 const creatordb = require("../Creators/creators");
-let bookdb = require("../Creators/book");
+let requestdb = require("../Creators/requsts");
 let userdb = require("../Creators/userdb");
 historydb = require("../Creators/mainbalance");
 const pay = async (userid, toid, balance, amount) => {
   let creator_portfolio_id = await creatordb.findOne({ userid: toid }).exec();
 
   if (creator_portfolio_id) {
-    // getting creator for knowing it booking price
+    // getting creator for knowing it request price
     //let creator = await creatordb.findOne({_id:uscreator_portfolio_id}).exec()
 
     //console.log("creator price "+price)
