@@ -32,7 +32,7 @@ const completeFanRequest = async (req, res) => {
     if (!booking) {
       return res.status(404).json({
         ok: false,
-        message: "Accepted booking not found"
+        message: "Accepted request not found"
       });
     }
 
