@@ -1,6 +1,6 @@
 let admindb = require("../../Creators/admindb")
-let bookdb =  require("../../Creators/book")
-let commentdb = require("../../Creators/book")
+let requestdb =  require("../../Creators/requsts")
+let commentdb = require("../../Creators/comment")
 let crushdb = require("../../Creators/crushdb")
 let follwerdb = require("../../Creators/followers")
 let gift = require("../../Creators/gift")
@@ -25,7 +25,7 @@ let pushdb = require("../../Creators/pushnotifydb")
 let deletedbs = async(userid)=>{
 
  await admindb.deleteMany({userid:userid}).exec()
- await bookdb.deleteMany({userid:userid}).exec()
+ await requestdb.deleteMany({userid:userid}).exec()
  await commentdb.deleteMany({userid:userid}).exec()
  await crushdb.deleteMany({userid:userid}).exec()
  await follwerdb.deleteMany({userid:userid}).exec()

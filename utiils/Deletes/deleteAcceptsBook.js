@@ -1,12 +1,12 @@
-let bookingDB = require("../../Creators/book")
+let requestDB = require("../../Creators/requsts")
 let userDB = require("../../Creators/userdb")
 let creatorDB = require("../../Creators/creators")
 let historyDB = require("../../Creators/mainbalance")
 
 const deteletaccpts = async()=>{
-let allbookingss = await bookingDB.find({}).exec()
+let allrequestss = await requestDB.find({}).exec()
 
-let allbookings = allbookingss.filter(value=>{
+let allrequests = allrequestss.filter(value=>{
     return String(value.status) === "pending" || String(value.status) === "accepted" || String(value.status) === "decline"
 })
 
@@ -17,7 +17,7 @@ let allbookings = allbookingss.filter(value=>{
 
  let today = new Date
 
- allbookings.forEach(value=>{
+ allrequests.forEach(value=>{
     let expireDate = new Date(Number(value._id.getTimestamp()))
 
     let diffTime = today.getTime() - expireDate.getTime()
@@ -64,7 +64,7 @@ let allbookings = allbookingss.filter(value=>{
          
     }
 
-    await bookingDB.deleteOne({_id:allUserID[i].id})
+    await requestDB.deleteOne({_id:allUserID[i].id})
  }
 
 

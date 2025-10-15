@@ -1217,7 +1217,7 @@ mongoose.connection.once("open", () => {
               await balanceRecord.save();
             }
             
-            // Create transaction histories (like in completebook.js)
+          
             const userHistory = {
               userid: fanId,
               details: `Fan call - payment for minute ${minute}`,

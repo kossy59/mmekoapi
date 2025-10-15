@@ -1,4 +1,4 @@
-const bookingdb = require("../../Creators/book");
+const requestdb = require("../../Creators/requsts");
 const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 
@@ -15,7 +15,7 @@ const getAllFanRequests = async (req, res) => {
   try {
     // Get all requests where user is either the fan or creator
     // Filter out requests with missing required fields
-    const fanRequests = await bookingdb.find({ 
+    const fanRequests = await requestdb.find({ 
       userid: userid,
       creator_portfolio_id: { $exists: true, $ne: null, $ne: "" }
     })
@@ -28,7 +28,7 @@ const getAllFanRequests = async (req, res) => {
     let creatorRequests = [];
     
     if (creator) {
-      creatorRequests = await bookingdb.find({ 
+      creatorRequests = await requestdb.find({ 
         creator_portfolio_id: creator._id,
         userid: { $exists: true, $ne: null, $ne: "" }
       })
@@ -169,7 +169,7 @@ const getAllFanRequests = async (req, res) => {
 
         return {
           id: request._id,
-          bookingId: request._id,
+          requestId: request._id,
           type: userType, // 'creator' or 'fan'
           date: request.date,
           time: request.time,
@@ -180,7 +180,7 @@ const getAllFanRequests = async (req, res) => {
           userid: request.userid,
           creator_portfolio_id: request.creator_portfolio_id,
           targetUserId: targetUserId, // Add target user ID for profile navigation
-          hosttype: request.type, // Use booking's type field which contains the host type
+          hosttype: request.type, // Use request's type field which contains the host type
           otherUser: otherUser ? {
             name: otherUser.name || `${otherUser.firstname || ''} ${otherUser.lastname || ''}`.trim() || 'Unknown User',
             photolink: otherUser.photolink || '/picture-1.jfif',

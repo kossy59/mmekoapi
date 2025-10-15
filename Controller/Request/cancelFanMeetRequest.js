@@ -1,4 +1,4 @@
-const bookingdb = require("../../Creators/book");
+const requestdb = require("../../Creators/requsts");
 const userdb = require("../../Creators/userdb");
 const historydb = require("../../Creators/mainbalance");
 const admindb = require("../../Creators/admindb");
@@ -7,11 +7,11 @@ const { pushmessage } = require("../../utiils/sendPushnot");
 
 const cancelFanRequest = async (req, res) => {
   const {
-    bookingId,
+    requestId,
     userid
   } = req.body;
 
-  if (!bookingId || !userid) {
+  if (!requestId || !userid) {
     return res.status(400).json({
       ok: false,
       message: "Missing required parameters"
@@ -19,33 +19,33 @@ const cancelFanRequest = async (req, res) => {
   }
 
   try {
-    // Find the booking
-    const booking = await bookingdb.findOne({ 
-      _id: bookingId,
+    // Find the request
+    const request = await requestdb.findOne({ 
+      _id: requestId,
       userid: userid,
       status: "request"
     }).exec();
 
-    if (!booking) {
+    if (!request) {
       return res.status(404).json({
         ok: false,
-        message: "Booking request not found or already processed"
+        message: "request request not found or already processed"
       });
     }
 
-    // Update booking status to cancelled
-    booking.status = "cancelled";
-    await booking.save();
+    // Update request status to cancelled
+    request.status = "cancelled";
+    await request.save();
 
     // Get host type for dynamic messages
-    const hostType = booking.type || "Fan meet";
+    const hostType = request.type || "Fan meet";
 
     // Refund the user - move money from pending back to balance
     const user = await userdb.findOne({ _id: userid }).exec();
     if (user) {
       let userBalance = parseFloat(user.balance) || 0;
       let userPending = parseFloat(user.pending) || 0;
-      let refundAmount = parseFloat(booking.price);
+      let refundAmount = parseFloat(request.price);
 
       user.balance = String(userBalance + refundAmount);
       user.pending = String(userPending - refundAmount);
@@ -73,12 +73,12 @@ const cancelFanRequest = async (req, res) => {
       seen: false
     });
     
-    await sendEmail(booking.creator_portfolio_id, `A fan cancelled their ${hostType.toLowerCase()} request`);
-    await pushmessage(booking.creator_portfolio_id, `A fan cancelled their ${hostType.toLowerCase()} request`, "creatoricon");
+    await sendEmail(request.creator_portfolio_id, `A fan cancelled their ${hostType.toLowerCase()} request`);
+    await pushmessage(request.creator_portfolio_id, `A fan cancelled their ${hostType.toLowerCase()} request`, "creatoricon");
     
     // Create database notification for creator
     await admindb.create({
-      userid: booking.creator_portfolio_id,
+      userid: request.creator_portfolio_id,
       message: `A fan cancelled their ${hostType.toLowerCase()} request`,
       seen: false
     });

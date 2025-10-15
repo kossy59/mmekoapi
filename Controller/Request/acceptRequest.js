@@ -1,4 +1,4 @@
-const bookingdb = require("../../Creators/book");
+const requestdb = require("../../Creators/requsts");
 const userdb = require("../../Creators/userdb");
 const historydb = require("../../Creators/mainbalance");
 const admindb = require("../../Creators/admindb");
@@ -21,7 +21,7 @@ const createLike = async (req, res) => {
   //let data = await connectdatabase()
 
   try {
-    const users = await bookingdb.find({ creator_portfolio_id: creator_portfolio_id }).exec();
+    const users = await requestdb.find({ creator_portfolio_id: creator_portfolio_id }).exec();
 
     let user = users.find((value) => {
       return (
@@ -39,7 +39,7 @@ const createLike = async (req, res) => {
         .json({ ok: false, message: "you have 0 pending requests!!" });
     }
 
-    let status = await bookingdb.findOne({ _id: user._id }).exec();
+    let status = await requestdb.findOne({ _id: user._id }).exec();
     
     // Check if request has expired
     if (new Date() > new Date(status.expiresAt)) {
@@ -54,7 +54,7 @@ const createLike = async (req, res) => {
         fan.pending = String(fanPending - refundAmount);
         await fan.save();
 
-        // Update booking status to expired
+        // Update request status to expired
         status.status = "expired";
         await status.save();
 
@@ -75,7 +75,7 @@ const createLike = async (req, res) => {
       });
     }
 
-    // Update booking status to accepted
+    // Update request status to accepted
     status.status = "accepted";
     await status.save();
     
@@ -84,7 +84,7 @@ const createLike = async (req, res) => {
     
     // Emit socket event for real-time updates
     emitFanRequestStatusUpdate({
-      bookingId: status._id,
+      requestId: status._id,
       status: 'accepted',
       userid: status.userid,
       creator_portfolio_id: status.creator_portfolio_id,
@@ -95,7 +95,7 @@ const createLike = async (req, res) => {
     await pushActivityNotification(
       status.userid,
       `Creator has accepted your ${hostType.toLowerCase()} request`,
-      "booking_accepted"
+      "request_accepted"
     );
     
     // Create database notification for fan
@@ -113,11 +113,11 @@ const createLike = async (req, res) => {
 
 module.exports = createLike;
 
-// const bookingdb = require("../../Creators/book");
+// const requestdb = require("../../Creators/requsts");
 // let sendEmail = require("../../utiils/sendEmailnot");
 // let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
-// const AcceptBooking = async (req, res) => {
+// const Acceptrequest = async (req, res) => {
 //   const { creator_portfolio_id, userId, date, time } = req.body;
 
 //   if (!creator_portfolio_id) {
@@ -125,9 +125,9 @@ module.exports = createLike;
 //   }
 
 //   try {
-//     const boookings = await bookingdb.find({ creator_portfolio_id: creator_portfolio_id }).exec();
+//     const boookings = await requestdb.find({ creator_portfolio_id: creator_portfolio_id }).exec();
 
-//     let filteredBookings = boookings.find((value) => {
+//     let filteredrequests = boookings.find((value) => {
 //       return (
 //         String(value.status) === "pending" &&
 //         String(value.userid) === String(userId) &&
@@ -137,25 +137,25 @@ module.exports = createLike;
 //     });
 
 // 
-//     if (!filteredBookings) {
+//     if (!filteredrequests) {
 //       return res
 //         .status(200)
 //         .json({ ok: false, message: "you have 0 pending request!!" });
 //     }
 
-//     let updatedBooking = await bookingdb
-//       .findOne({ _id: filteredBookings._id })
+//     let updatedrequest = await requestdb
+//       .findOne({ _id: filteredrequests._id })
 //       .exec();
 //     // console.log('under user accepted')
-//     updatedBooking.status = "accepted";
-//     await updatedBooking.save();
+//     updatedrequest.status = "accepted";
+//     await updatedrequest.save();
 //     await sendEmail(
-//       updatedBooking.userid,
-//       "creator has accepted your booking request"
+//       updatedrequest.userid,
+//       "creator has accepted your request request"
 //     );
 //     await sendpushnote(
-//       updatedBooking.userid,
-//       "creator has accepted your booking request",
+//       updatedrequest.userid,
+//       "creator has accepted your request request",
 //       "creatoricon"
 //     );
 //     return res.status(200).json({ ok: true, message: ` Success` });
@@ -164,4 +164,4 @@ module.exports = createLike;
 //   }
 // };
 
-// module.exports = AcceptBooking;
+// module.exports = Acceptrequest;

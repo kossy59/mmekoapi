@@ -1,4 +1,4 @@
-const bookingdb = require("../../Creators/book");
+const requestdb = require("../../Creators/requsts");
 const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 const historydb = require("../../Creators/mainbalance");
@@ -19,15 +19,15 @@ const createLike = async (req, res) => {
   //let data = await connectdatabase()
 
   try {
-    let bookings = await bookingdb.find({ userid: userid }).exec();
+    let requests = await requestdb.find({ userid: userid }).exec();
 
-    if (!bookings[0]) {
+    if (!requests[0]) {
       return res
         .status(200)
         .json({ ok: false, message: "you have 0 pending request!!" });
     }
 
-    let book = bookings.find((value) => {
+    let request = requests.find((value) => {
       return (
         (String(value.date) === String(date) &&
           String(value.time) === String(time) &&
@@ -37,7 +37,7 @@ const createLike = async (req, res) => {
       );
     });
 
-    if (!book) {
+    if (!request) {
       return res
         .status(200)
         .json({ ok: false, message: "you have 0 pending request!!" });
@@ -55,7 +55,7 @@ const createLike = async (req, res) => {
     
     let creatorprice = parseFloat(creatoruser.price);
 
-    if (book.type !== "Private show") {
+    if (request.type !== "Private show") {
       let clientuser = await userdb.findOne({ _id: userid }).exec();
 
       let clientbalance = parseFloat(clientuser.balance);
@@ -87,14 +87,14 @@ const createLike = async (req, res) => {
       await historydb.create(creatorpaymenthistory);
     }
 
-    await bookingdb.deleteOne({ _id: book._id }).exec();
+    await requestdb.deleteOne({ _id: request._id }).exec();
 
     // Get host type for dynamic message
-    const hostType = book.type || "Fan meet";
+    const hostType = request.type || "Fan meet";
     
     // Send notifications to creator about cancellation
     await sendEmail(creatoruser.userid, `A fan cancelled their ${hostType.toLowerCase()} request`);
-    await pushActivityNotification(creatoruser.userid, `A fan cancelled their ${hostType.toLowerCase()} request`, "booking_cancelled");
+    await pushActivityNotification(creatoruser.userid, `A fan cancelled their ${hostType.toLowerCase()} request`, "request_cancelled");
     
     // Create database notification for creator
     await admindb.create({

@@ -1,4 +1,4 @@
-const bookingdb = require("../../Creators/book");
+const requestdb = require("../../Creators/requsts");
 const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 const historydb = require("../../Creators/mainbalance");
@@ -74,8 +74,8 @@ const createFanRequest = async (req, res) => {
     };
     await historydb.create(clientHistory);
 
-    // Create booking record
-    const bookingData = {
+    // Create request record
+    const requestData = {
       userid,
       creator_portfolio_id,
       type,
@@ -87,14 +87,14 @@ const createFanRequest = async (req, res) => {
       expiresAt: new Date(Date.now() + 23 * 60 * 60 * 1000 + 14 * 60 * 1000) // 23h 14m from now
     };
 
-    const booking = await bookingdb.create(bookingData);
+    const request = await requestdb.create(requestData);
 
     // Get host type for dynamic messages
     const hostType = type || "Fan meet";
 
     // Send notifications
     await sendEmail(creator.userid, `New ${hostType.toLowerCase()} request received`);
-    await pushActivityNotification(creator.userid, `New ${hostType.toLowerCase()} request received`, "booking_request");
+    await pushActivityNotification(creator.userid, `New ${hostType.toLowerCase()} request received`, "request_request");
     
     // Create database notification for creator
     await admindb.create({
@@ -104,7 +104,7 @@ const createFanRequest = async (req, res) => {
     });
     
     await sendEmail(userid, `${hostType} request sent successfully`);
-    await pushActivityNotification(userid, `${hostType} request sent successfully`, "booking_request");
+    await pushActivityNotification(userid, `${hostType} request sent successfully`, "request_request");
     
     // Create database notification for fan
     await admindb.create({
@@ -116,7 +116,7 @@ const createFanRequest = async (req, res) => {
     return res.status(200).json({
       ok: true,
       message: `${hostType} request created successfully`,
-      bookingId: booking._id
+      requestId: request._id
     });
 
   } catch (err) {

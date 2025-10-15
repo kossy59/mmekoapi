@@ -1,4 +1,4 @@
-const bookingdb = require("../../Creators/book");
+const requestdb = require("../../Creators/requsts");
 const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 
@@ -27,7 +27,7 @@ const getFanRequests = async (req, res) => {
     }
 
     // Get all requests for the user
-    const requests = await bookingdb.find(query)
+    const requests = await requestdb.find(query)
       .sort({ createdAt: -1 })
       .exec();
 
@@ -63,7 +63,7 @@ const getFanRequests = async (req, res) => {
 
         return {
           id: request._id,
-          bookingId: request._id,
+          requestId: request._id,
           type: request.type,
           date: request.date,
           time: request.time,

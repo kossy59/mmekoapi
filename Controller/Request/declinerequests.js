@@ -1,4 +1,4 @@
-const bookingdb = require("../../Creators/book");
+const requestdb = require("../../Creators/requsts");
 const creatordb = require("../../Creators/creators");
 const userdb = require("../../Creators/userdb");
 const admindb = require("../../Creators/admindb");
@@ -20,7 +20,7 @@ const createLike = async (req, res) => {
   // console.log('untop init db')
 
   try {
-    const users = await bookingdb.find({ creator_portfolio_id: creator_portfolio_id }).exec();
+    const users = await requestdb.find({ creator_portfolio_id: creator_portfolio_id }).exec();
 
     let user = users.find((value) => {
       return (
@@ -37,7 +37,7 @@ const createLike = async (req, res) => {
         .json({ ok: false, message: "you have 0 pending requests !!!" });
     }
 
-    let status = await bookingdb.findOne({ _id: user._id }).exec();
+    let status = await requestdb.findOne({ _id: user._id }).exec();
 
     status.status = "declined";
     await status.save();
@@ -47,7 +47,7 @@ const createLike = async (req, res) => {
     
     // Emit socket event for real-time updates
     emitFanRequestStatusUpdate({
-      bookingId: status._id,
+      requestId: status._id,
       status: 'declined',
       userid: status.userid,
       creator_portfolio_id: status.creator_portfolio_id,
@@ -77,7 +77,7 @@ const createLike = async (req, res) => {
     }
     
     await sendEmail(userid, `Creator declined your ${hostType} request`);
-    await pushActivityNotification(userid, `Creator declined your ${hostType} request`, "booking_declined");
+    await pushActivityNotification(userid, `Creator declined your ${hostType} request`, "request_declined");
     
     // Create database notification for fan
     await admindb.create({

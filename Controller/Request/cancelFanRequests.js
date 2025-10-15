@@ -1,4 +1,4 @@
-const bookingdb = require("../../Creators/book");
+const requestdb = require("../../Creators/requsts");
 const userdb = require("../../Creators/userdb");
 const historydb = require("../../Creators/mainbalance");
 const creatordb = require("../../Creators/creators");
@@ -16,10 +16,10 @@ const createLike = async (req, res) => {
   //let data = await connectdatabase()
 
   try {
-    // Get the booking first to get the actual price
-    const booking = await bookingdb.findById(id).exec();
-    if (!booking) {
-      return res.status(404).json({ ok: false, message: "Booking not found." });
+    // Get the request first to get the actual price
+    const request = await requestdb.findById(id).exec();
+    if (!request) {
+      return res.status(404).json({ ok: false, message: "request not found." });
     }
 
     let clientuser = await userdb.findOne({ _id: userid }).exec();
@@ -29,7 +29,7 @@ const createLike = async (req, res) => {
 
     let clientbalance = parseFloat(clientuser.balance) || 0;
     let clientpending = parseFloat(clientuser.pending) || 0;
-    let refundAmount = parseFloat(booking.price);
+    let refundAmount = parseFloat(request.price);
 
     // Move money from pending back to balance
     clientuser.balance = String(clientbalance + refundAmount);
@@ -46,15 +46,15 @@ const createLike = async (req, res) => {
 
     await historydb.create(creatorpaymenthistory);
     
-    // Get booking details before deletion for socket emission
-    const bookingToDelete = await bookingdb.findById(id).exec();
+    // Get request details before deletion for socket emission
+    const requestToDelete = await requestdb.findById(id).exec();
     
-    const deletedBooking = await bookingdb.findByIdAndDelete(id).exec();
+    const deletedrequest = await requestdb.findByIdAndDelete(id).exec();
 
     // Emit socket event for real-time updates
-    if (deletedBooking && bookingToDelete) {
+    if (deletedrequest && requestToDelete) {
       emitFanRequestStatusUpdate({
-        bookingId: id,
+        requestId: id,
         status: 'cancelled',
         userid: userid,
         creator_portfolio_id: creator_portfolio_id,
@@ -62,12 +62,12 @@ const createLike = async (req, res) => {
       });
     }
 
-    if (deletedBooking) {
+    if (deletedrequest) {
       return res
         .status(200)
         .json({ ok: true, message: `Deleted successfully` });
     }
-    res.status(404).json({ ok: false, message: "Booking not found." });
+    res.status(404).json({ ok: false, message: "request not found." });
   } catch (err) {
     return res.status(500).json({ ok: false, message: `${err.message}!` });
   }
