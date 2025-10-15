@@ -34,8 +34,8 @@ const paymentAccountSchema = new mongoose.Schema(
     },
     cryptoType: {
       type: String,
-      enum: ["BTC", "USDT_TRC20", "USDT_ERC20"],
-      required: true,
+      enum: ["BTC", "USDT_TRC20", "USDT_ERC20", "USDT_BEP20"],
+      required: false,
     },
     walletAddress: {
       type: String,

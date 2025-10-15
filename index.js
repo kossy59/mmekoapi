@@ -209,6 +209,7 @@ app.use("/suspenduser", require("./routes/api/Admin/suspenduser"));
 app.use("/sendmessages", require("./routes/api/Admin/sendmessage"));
 app.use("/recivemessage", require("./routes/api/Admin/recivemessage"));
 app.use("/adminnotify", require("./routes/api/Admin/adminnotify"));
+app.use("/vipanalysis", require("./routes/api/Admin/vipAnalysis"));
 app.use("/useredit", require("./routes/api/Profilemore/getuseredit"));
 app.use("/addcrush", require("./routes/api/creator/addcrush"));
 app.use("/getcrush", require("./routes/api/creator/getcrush"));
