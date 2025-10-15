@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const cancelRequest = require("../../../Controller/Booking/cancelbooking");
+const cancelRequest = require("../../../Controller/Request/cancelFanRequests");
 
 router.route("/").put(cancelRequest);
 

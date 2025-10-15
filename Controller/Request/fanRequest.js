@@ -6,7 +6,7 @@ const admindb = require("../../Creators/admindb");
 let sendEmail = require("../../utiils/sendEmailnot");
 let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
-const createFanMeetRequest = async (req, res) => {
+const createFanRequest = async (req, res) => {
   const {
     userid,
     creator_portfolio_id,
@@ -128,4 +128,4 @@ const createFanMeetRequest = async (req, res) => {
   }
 };
 
-module.exports = createFanMeetRequest;
+module.exports = createFanRequest;

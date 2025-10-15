@@ -5,7 +5,7 @@ const admindb = require("../../Creators/admindb");
 let sendEmail = require("../../utiils/sendEmailnot");
 const { pushmessage } = require("../../utiils/sendPushnot");
 
-const declineFanMeetRequest = async (req, res) => {
+const declineFanRequest = async (req, res) => {
   const {
     bookingId,
     creator_portfolio_id,
@@ -99,4 +99,4 @@ const declineFanMeetRequest = async (req, res) => {
   }
 };
 
-module.exports = declineFanMeetRequest;
+module.exports = declineFanRequest;

@@ -131,7 +131,7 @@ app.use(
   "/messagenotification",
   require("./routes/api/chat/getNotificationmsg")
 );
-app.use("/notifycreator", require("./routes/api/booking/notifybooking"));
+app.use("/notifycreator", require("./routes/api/request/notifyrequests"));
 app.use("/subpushid", require("./routes/api/profile/postUserPushNote"));
 app.use("/verifyemail", require("./routes/Auth/verifyEmail"));
 app.use("/register", require("./routes/Auth/register"));
@@ -166,7 +166,7 @@ app.use("/rejectdocument", require("./routes/api/creator/rejectdocument"));
 app.use("/exclusive", require("./routes/api/Exclusive/exclusive"));
 app.use("/creators", require("./routes/api/creator/updateView"));
 app.use("/creators", require("./routes/api/creator/updateFollowers"));
-app.use("/allrequest", require("./routes/api/booking/allrequestroute"));
+app.use("/allrequest", require("./routes/api/request/allrequestroute"));
 app.use("/exclusivecontent", require("./routes/api/Exclusive/allexclusive"));
 app.use("/deleteaccount", require("./routes/api/profile/deleteprofile"));
 app.use("/setting", require("./routes/api/profile/setting"));
@@ -185,15 +185,15 @@ app.use("/verifycreator", require("./routes/api/creator/verifycreator"));
 app.use("/getcurrentchat", require("./routes/api/chat/getchat"));
 app.use("/getmsgnotify", require("./routes/api/chat/getmsgnotify"));
 app.use("/updatenotify", require("./routes/api/chat/updatenotify"));
-app.use("/bookhost", require("./routes/api/booking/book"));
-app.use("/pendingrequest", require("./routes/api/booking/getpendingbook"));
-app.use("/cancelrequest", require("./routes/api/booking/cancelmyrequest"));
-app.use("/acceptbook", require("./routes/api/booking/acceptbooking"));
-app.use("/declinebook", require("./routes/api/booking/declinebooking"));
-app.use("/getrequeststats", require("./routes/api/booking/requeststat"));
-app.use("/paycreator", require("./routes/api/booking/paycreator"));
-app.use("/completebook", require("./routes/api/booking/completebook"));
-app.use("/getallfanmeetrequests", require("./routes/api/booking/getAllFanMeetRequests"));
+app.use("/requesthost", require("./routes/api/request/requests"));
+app.use("/pendingrequest", require("./routes/api/request/getpendingrequests"));
+app.use("/cancelrequest", require("./routes/api/request/cancelmyrequest"));
+app.use("/acceptrequest", require("./routes/api/request/acceptrequest"));
+app.use("/declinerequest", require("./routes/api/request/declinerequest"));
+app.use("/getrequeststats", require("./routes/api/request/requeststat"));
+app.use("/paycreator", require("./routes/api/request/paycreator"));
+app.use("/completerequests", require("./routes/api/request/completerequests"));
+app.use("/getallfanrequests", require("./routes/api/request/getAllFanRequests"));
 app.use("/getreviews", require("./routes/api/creator/getcreatorreview"));
 app.use("/deletereview", require("./routes/api/creator/deletereview"));
 app.use("/statistics", require("./routes/api/profile/get_statistics"));
@@ -227,7 +227,7 @@ app.use("/vip", require("./routes/api/VIP/upgrade"));
 app.use("/request", require("./routes/api/requestcreator/requestRoutes"));
 app.use("/upload-message-files", require("./routes/api/uploadMessageFiles"));
 app.use("/quickchat", require("./routes/api/quickchat"));
-app.use("/fanmeet", require("./routes/api/fanMeetRoutes"));
+app.use("/fanrequest", require("./routes/api/fanRoutes"));
 app.use("/process-expired", require("./routes/api/processExpired"));
 app.use("/video-call", require("./routes/api/videoCall/videoCallRoutes"));
 app.use("/support-chat", require("./routes/api/supportChat"));
@@ -723,7 +723,7 @@ io.on("connection", (socket) => {
   });
 
   // Video call events
-  socket.on('video_call_start', async (data) => {
+  socket.on('fan_call_start', async (data) => {
     try {
       const { callerId, callerName, answererId, answererName } = data;
       
@@ -763,7 +763,7 @@ io.on("connection", (socket) => {
       
       if (!isOnline && !hasConnectedSocket) {
         // User not online, but allowing call
-        // socket.emit('video_call_error', {
+        // socket.emit('fan_call_error', {
         //   message: 'User is not online'
         // });
         // return;
@@ -791,7 +791,7 @@ io.on("connection", (socket) => {
 
       
       
-      socket.to(`user_${actualAnswererId}`).emit('video_call_incoming', {
+      socket.to(`user_${actualAnswererId}`).emit('fan_call_incoming', {
         callId: call._id,
         callerId: callerId,
         callerName: callerName,
@@ -801,14 +801,14 @@ io.on("connection", (socket) => {
       // Call notification sent
 
     } catch (error) {
-      console.error('Error in video_call_start:', error);
-      socket.emit('video_call_error', {
+      console.error('Error in fan_call_start:', error);
+      socket.emit('fan_call_error', {
         message: 'Failed to start call'
       });
     }
   });
 
-  socket.on('video_call_accept', async (data) => {
+  socket.on('fan_call_accept', async (data) => {
     try {
       const { callId, callerId, answererId } = data;
       
@@ -821,7 +821,7 @@ io.on("connection", (socket) => {
         await call.save();
 
         // Emit call accepted to caller
-        socket.to(`user_${callerId}`).emit('video_call_accepted', {
+        socket.to(`user_${callerId}`).emit('fan_call_accepted', {
           callId: callId,
           callerId: callerId,
           answererId: answererId
@@ -830,11 +830,11 @@ io.on("connection", (socket) => {
         // Call accepted, notification sent to caller
       }
     } catch (error) {
-      console.error('Error in video_call_accept:', error);
+      console.error('Error in fan_call_accept:', error);
     }
   });
 
-  socket.on('video_call_decline', async (data) => {
+  socket.on('fan_call_decline', async (data) => {
     try {
       const { callId, callerId, answererId } = data;
       
@@ -842,7 +842,7 @@ io.on("connection", (socket) => {
       await videocalldb.deleteOne({ _id: callId }).exec();
 
       // Emit call declined to caller
-      socket.to(`user_${callerId}`).emit('video_call_declined', {
+      socket.to(`user_${callerId}`).emit('fan_call_declined', {
         callId: callId,
         callerId: callerId,
         answererId: answererId
@@ -850,11 +850,11 @@ io.on("connection", (socket) => {
       
       // Call declined, notification sent to caller
     } catch (error) {
-      console.error('Error in video_call_decline:', error);
+      console.error('Error in fan_call_decline:', error);
     }
   });
 
-  socket.on('video_call_end', async (data) => {
+  socket.on('fan_call_end', async (data) => {
     try {
       const { callId, userId } = data;
       
@@ -862,7 +862,7 @@ io.on("connection", (socket) => {
       if (callId && callId.startsWith('temp_')) {
         // Ending temporary call
         // Just emit the event without database operations
-        socket.to(`user_${userId}`).emit('video_call_ended', {
+        socket.to(`user_${userId}`).emit('fan_call_ended', {
           callId: callId,
           endedBy: userId
         });
@@ -879,12 +879,12 @@ io.on("connection", (socket) => {
         await videocalldb.deleteOne({ _id: callId }).exec();
 
         // Emit call ended to both participants
-        socket.to(`user_${userId}`).emit('video_call_ended', {
+        socket.to(`user_${userId}`).emit('fan_call_ended', {
           callId: callId,
           endedBy: userId
         });
         
-        socket.to(`user_${otherUserId}`).emit('video_call_ended', {
+          socket.to(`user_${otherUserId}`).emit('fan_call_ended', {
           callId: callId,
           endedBy: userId
         });
@@ -892,11 +892,11 @@ io.on("connection", (socket) => {
         // Call ended, notifications sent to users
       }
     } catch (error) {
-      console.error('Error in video_call_end:', error);
+      console.error('Error in fan_call_end:', error);
     }
   });
 
-  socket.on('video_call_timeout', async (data) => {
+  socket.on('fan_call_timeout', async (data) => {
     try {
       const { callId } = data;
       
@@ -948,7 +948,7 @@ io.on("connection", (socket) => {
           }
           
           // Emit missed call notification to the answerer (creator)
-          io.to(`user_${actualCreatorUserId}`).emit('video_call_missed', {
+          io.to(`user_${actualCreatorUserId}`).emit('fan_call_missed', {
             callId: callId,
             callerId: callerId,
             callerName: callerName,
@@ -957,7 +957,7 @@ io.on("connection", (socket) => {
         }
         
         // Emit timeout event to both participants
-        socket.broadcast.emit('video_call_timeout', {
+        socket.broadcast.emit('fan_call_timeout', {
           callId: callId
         });
         
@@ -1014,17 +1014,17 @@ io.on("connection", (socket) => {
         await videocalldb.deleteOne({ _id: callId }).exec();
 
         // Emit timeout event to both participants
-        io.to(`user_${callerId}`).emit('video_call_timeout', {
+        io.to(`user_${callerId}`).emit('fan_call_timeout', {
           callId: callId
         });
         
-        io.to(`user_${clientId}`).emit('video_call_timeout', {
+        io.to(`user_${clientId}`).emit('fan_call_timeout', {
           callId: callId
         });
         
         // Emit missed call notification to the answerer (creator)
         if (answerer) {
-          io.to(`user_${clientId}`).emit('video_call_missed', {
+          io.to(`user_${clientId}`).emit('fan_call_missed', {
             callId: callId,
             callerId: callerId,
             callerName: fullCallerName,
@@ -1035,12 +1035,12 @@ io.on("connection", (socket) => {
         // Call timeout, notifications sent to both users
       }
     } catch (error) {
-      console.error('Error in video_call_timeout:', error);
+      console.error('Error in fan_call_timeout:', error);
     }
   });
 
   // WebRTC signaling events
-  socket.on('video_call_offer', async (data) => {
+  socket.on('fan_call_offer', async (data) => {
     const { callId, offer } = data;
     // Received offer for call
     
@@ -1048,7 +1048,7 @@ io.on("connection", (socket) => {
       // If it's a temporary call ID, broadcast to all users (fallback)
       if (callId.startsWith('temp_')) {
         // Temporary call ID, broadcasting offer
-        socket.broadcast.emit('video_call_offer', {
+        socket.broadcast.emit('fan_call_offer', {
           callId: callId,
           offer: offer
         });
@@ -1066,17 +1066,17 @@ io.on("connection", (socket) => {
         // Forwarding offer to user
         
         // Forward offer to the other participant
-        socket.to(`user_${otherUserId}`).emit('video_call_offer', {
+        socket.to(`user_${otherUserId}`).emit('fan_call_offer', {
           callId: callId,
           offer: offer
         });
       }
     } catch (error) {
-      console.error('❌ [WebRTC] Error forwarding offer:', error);
+      console.error('❌ [WebRTC] Error forwarding fan call offer:', error);
     }
   });
 
-  socket.on('video_call_answer', async (data) => {
+  socket.on('fan_call_answer', async (data) => {
     const { callId, answer } = data;
     // Received answer for call
     
@@ -1084,7 +1084,7 @@ io.on("connection", (socket) => {
       // If it's a temporary call ID, broadcast to all users (fallback)
       if (callId.startsWith('temp_')) {
         // Temporary call ID, broadcasting answer
-        socket.broadcast.emit('video_call_answer', {
+        socket.broadcast.emit('fan_call_answer', {
           callId: callId,
           answer: answer
         });
@@ -1102,17 +1102,17 @@ io.on("connection", (socket) => {
         // Forwarding answer to user
         
         // Forward answer to the other participant
-        socket.to(`user_${otherUserId}`).emit('video_call_answer', {
+        socket.to(`user_${otherUserId}`).emit('fan_call_answer', {
           callId: callId,
           answer: answer
         });
       }
     } catch (error) {
-      console.error('❌ [WebRTC] Error forwarding answer:', error);
+        console.error('❌ [WebRTC] Error forwarding answer:', error);
     }
   });
 
-  socket.on('video_call_ice_candidate', async (data) => {
+  socket.on('fan_call_ice_candidate', async (data) => {
     const { callId, candidate } = data;
     // Received ICE candidate for call
     
@@ -1120,7 +1120,7 @@ io.on("connection", (socket) => {
       // If it's a temporary call ID, broadcast to all users (fallback)
       if (callId.startsWith('temp_')) {
         // Temporary call ID, broadcasting ICE candidate
-        socket.broadcast.emit('video_call_ice_candidate', {
+          socket.broadcast.emit('fan_call_ice_candidate', {
           callId: callId,
           candidate: candidate
         });
@@ -1138,13 +1138,13 @@ io.on("connection", (socket) => {
         // Forwarding ICE candidate to user
         
         // Forward ICE candidate to the other participant
-        socket.to(`user_${otherUserId}`).emit('video_call_ice_candidate', {
+        socket.to(`user_${otherUserId}`).emit('fan_call_ice_candidate', {
           callId: callId,
           candidate: candidate
         });
       }
     } catch (error) {
-      console.error('❌ [WebRTC] Error forwarding ICE candidate:', error);
+      console.error('❌ [WebRTC] Error forwarding fan call ICE candidate:', error);
     }
   });
 });
@@ -1162,10 +1162,10 @@ mongoose.connection.once("open", () => {
 
   // Video call billing event
   io.on('connection', (socket) => {
-    socket.on('video_call_billing', async (data) => {
+    socket.on('fan_call_billing', async (data) => {
       try {
         const { callId, callerId, currentUserId, amount, minute } = data;
-        console.log('💰 [Billing] Received billing event:', { callId, callerId, currentUserId, amount, minute });
+        console.log('💰 [Billing] Received fan call billing event:', { callId, callerId, currentUserId, amount, minute });
         
         const userdb = require('./Creators/userdb');
         const mainbalance = require('./Creators/mainbalance');
@@ -1268,7 +1268,7 @@ mongoose.connection.once("open", () => {
           });
         }
       } catch (error) {
-        console.error('Error in video_call_billing:', error);
+        console.error('Error in fan_call_billing:', error);
       }
     });
   });

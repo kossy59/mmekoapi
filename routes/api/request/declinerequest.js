@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router();
-const booked = require('../../../Controller/Booking/bookednotify');
+const booked = require('../../../Controller/Request/declinerequests');
 
 
 router.route('/')

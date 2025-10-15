@@ -109,7 +109,9 @@ exports.getAllWithdrawRequests = async (req, res) => {
       });
     }
 
-    const requests = await WithdrawRequest.find().sort({ createdAt: -1 });
+    const requests = await WithdrawRequest.find()
+      .populate('userId', 'firstname lastname nickname')
+      .sort({ createdAt: -1 });
     res.status(200).json({ requests });
   } catch (err) {
     console.error("Error fetching withdrawals:", err);
