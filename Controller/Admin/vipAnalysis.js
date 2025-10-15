@@ -22,7 +22,7 @@ const getVipAnalysis = async (req, res) => {
     // VIP earnings calculation: 100 gold per VIP user per month, 1 gold = $0.04
     // So each VIP subscription = 100 * 0.04 = $4.00 per month
     const vipGoldCost = 100;
-    const goldToUsdRate = 0.04;
+    const goldToUsdRate = 0.1099;
     const vipEarningsPerUser = vipGoldCost * goldToUsdRate; // $4.00 per VIP user per month
 
     // Generate monthly data for the specified months
