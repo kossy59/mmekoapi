@@ -7,7 +7,7 @@ let { pushActivityNotification } = require("../../utiils/sendPushnot");
 const historydb = require("../../Creators/mainbalance");
 
 // Socket.io integration
-const { emitFanMeetStatusUpdate } = require('../../utils/socket');
+const { emitFanRequestStatusUpdate } = require('../../utils/socket');
 const createLike = async (req, res) => {
   const creator_portfolio_id = req.body.creator_portfolio_id;
   const userid = req.body.userid;
@@ -34,7 +34,7 @@ const createLike = async (req, res) => {
     if (!user) {
       return res
         .status(200)
-        .json({ ok: false, message: "you have 0 pending request!!" });
+        .json({ ok: false, message: "you have 0 pending requests !!!" });
     }
 
     let status = await bookingdb.findOne({ _id: user._id }).exec();
@@ -43,10 +43,10 @@ const createLike = async (req, res) => {
     await status.save();
 
     // Get host type for dynamic message
-    const hostType = status.type || "Fan meet";
+    const hostType = status.type || "Fan request";
     
     // Emit socket event for real-time updates
-    emitFanMeetStatusUpdate({
+    emitFanRequestStatusUpdate({
       bookingId: status._id,
       status: 'declined',
       userid: status.userid,

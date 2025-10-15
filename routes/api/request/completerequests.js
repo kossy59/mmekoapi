@@ -1,8 +1,8 @@
 const express = require('express')
 const router = express.Router();
-const completeBooking = require('../../../Controller/Booking/completebook');
+const completeRequest = require('../../../Controller/Request/completeRequest');
 
 router.route('/')
-.post(completeBooking)
+.post(completeRequest)
 
 module.exports = router;

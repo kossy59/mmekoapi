@@ -26,7 +26,7 @@ const updatePost = async (req, res) => {
     let notifycount = 0;
 
     adminMSG.forEach((value) => {
-      if (value.seen) {
+      if (!value.seen) {
         notifyme = true;
         notifycount++;
       }

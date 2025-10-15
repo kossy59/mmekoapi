@@ -1,9 +1,9 @@
 const express = require('express')
 const router = express.Router();
-const booked = require('../../../Controller/Booking/getstats');
+const booked = require('../../../Controller/Request/acceptRequest');
 
 
 router.route('/')
-.put(booked)
+.post(booked)
 
 module.exports = router;

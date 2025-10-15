@@ -2,7 +2,7 @@ const bookingdb = require("../../Creators/book");
 const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 
-const getAllFanMeetRequests = async (req, res) => {
+const getAllFanRequests = async (req, res) => {
   const { userid } = req.body;
 
   if (!userid) {
@@ -206,7 +206,7 @@ const getAllFanMeetRequests = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("Error getting fan meet requests:", err);
+      console.error("Error getting fan requests:", err);
     return res.status(500).json({
       ok: false,
       message: `${err.message}!`
@@ -214,4 +214,4 @@ const getAllFanMeetRequests = async (req, res) => {
   }
 };
 
-module.exports = getAllFanMeetRequests;
+module.exports = getAllFanRequests;

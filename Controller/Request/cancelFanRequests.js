@@ -4,7 +4,7 @@ const historydb = require("../../Creators/mainbalance");
 const creatordb = require("../../Creators/creators");
 
 // Socket.io integration
-const { emitFanMeetStatusUpdate } = require('../../utils/socket');
+const { emitFanRequestStatusUpdate } = require('../../utils/socket');
 
 const createLike = async (req, res) => {
   const { id, userid, creator_portfolio_id } = req.body;
@@ -38,7 +38,7 @@ const createLike = async (req, res) => {
 
     let creatorpaymenthistory = {
       userid: userid,
-      details: "Fan meet request cancelled - refund processed",
+      details: "Fan request cancelled - refund processed",
       spent: "0",
       income: `${refundAmount}`,
       date: `${Date.now().toString()}`,
@@ -53,12 +53,12 @@ const createLike = async (req, res) => {
 
     // Emit socket event for real-time updates
     if (deletedBooking && bookingToDelete) {
-      emitFanMeetStatusUpdate({
+      emitFanRequestStatusUpdate({
         bookingId: id,
         status: 'cancelled',
         userid: userid,
         creator_portfolio_id: creator_portfolio_id,
-        message: '🚫 Fan meet request was cancelled'
+        message: '🚫 Fan request was cancelled'
       });
     }
 

@@ -2,14 +2,10 @@ const bookingdb = require("../../Creators/book");
 const userdb = require("../../Creators/userdb");
 const creatordb = require("../../Creators/creators");
 const historydb = require("../../Creators/mainbalance");
-const admindb = require("../../Creators/admindb");
 let sendEmail = require("../../utiils/sendEmailnot");
 let { pushActivityNotification } = require("../../utiils/sendPushnot");
 
-// Socket.io integration
-const { emitFanMeetStatusUpdate } = require('../../utils/socket');
-
-const completeBooking = async (req, res) => {
+const completeFanRequest = async (req, res) => {
   const {
     bookingId,
     userid,
@@ -44,28 +40,10 @@ const completeBooking = async (req, res) => {
     booking.status = "completed";
     await booking.save();
 
-    // Get host type from booking first, then fallback to creator profile
-    let creatorProfile = await creatordb.findOne({ userid: creator_portfolio_id }).exec();
-    if (!creatorProfile) {
-      // If not found by userid, try by _id (in case creator_portfolio_id is the profile ID)
-      creatorProfile = await creatordb.findOne({ _id: creator_portfolio_id }).exec();
-    }
-    const hostType = booking.type || creatorProfile?.hosttype || "Fan meet";
-
-    // Emit socket event for real-time updates
-    emitFanMeetStatusUpdate({
-      bookingId: booking._id,
-      status: 'completed',
-      userid: userid,
-      creator_portfolio_id: creator_portfolio_id,
-      message: `✅ ${hostType} has been completed!`
-    });
-
-    // Transfer money from user's pending to creator's balance
+    // Transfer money from user's pending to creator's earnings
     const user = await userdb.findOne({ _id: userid }).exec();
-    
-    // Find creator by hostid first, then by userid
     let creator = await userdb.findOne({ _id: creator_portfolio_id }).exec();
+    
     if (!creator) {
       // If not found by _id, try to find by creator_portfolio_id (hostid) in creatordb
       const creatorRecord = await creatordb.findOne({ _id: creator_portfolio_id }).exec();
@@ -74,7 +52,13 @@ const completeBooking = async (req, res) => {
       }
     }
 
-    // Use the host type already fetched above
+    // Get host type from booking first, then fallback to creator profile
+    let creatorProfile = await creatordb.findOne({ userid: creator_portfolio_id }).exec();
+    if (!creatorProfile) {
+      // If not found by userid, try by _id (in case creator_portfolio_id is the profile ID)
+      creatorProfile = await creatordb.findOne({ _id: creator_portfolio_id }).exec();
+    }
+    const hostType = booking.type || creatorProfile?.hosttype || "Fan meet";
 
     if (user && creator) {
       let userPending = parseFloat(user.pending) || 0;
@@ -85,7 +69,7 @@ const completeBooking = async (req, res) => {
       user.pending = String(userPending - transferAmount);
       await user.save();
 
-      // Add to creator's earnings only (not balance)
+      // Add to creator's earnings
       creator.earnings = String(creatorEarnings + transferAmount);
       await creator.save();
 
@@ -100,7 +84,7 @@ const completeBooking = async (req, res) => {
       await historydb.create(userHistory);
 
       const creatorHistory = {
-        userid: creator._id, // Use the actual creator's user ID, not the host ID
+        userid: creator_portfolio_id,
         details: `${hostType} completed - payment received`,
         spent: "0",
         income: `${transferAmount}`,
@@ -113,24 +97,10 @@ const completeBooking = async (req, res) => {
     await sendEmail(userid, `${hostType} completed successfully!`);
     await pushActivityNotification(userid, `${hostType} completed successfully!`, "booking_completed");
     
-    // Create database notification for fan
-    await admindb.create({
-      userid: userid,
-      message: `${hostType} completed successfully!`,
-      seen: false
-    });
-    
     // Send notification to creator's actual user ID, not portfolio ID
     if (creator && creator._id) {
       await sendEmail(creator._id, `${hostType} completed - payment received!`);
       await pushActivityNotification(creator._id, `${hostType} completed - payment received!`, "booking_completed");
-      
-      // Create database notification for creator
-      await admindb.create({
-        userid: creator._id,
-        message: `${hostType} completed - payment received!`,
-        seen: false
-      });
     }
 
     return res.status(200).json({
@@ -147,4 +117,4 @@ const completeBooking = async (req, res) => {
   }
 };
 
-module.exports = completeBooking;
+module.exports = completeFanRequest;

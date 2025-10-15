@@ -5,7 +5,7 @@ const admindb = require("../../Creators/admindb");
 let sendEmail = require("../../utiils/sendEmailnot");
 const { pushmessage } = require("../../utiils/sendPushnot");
 
-const cancelFanMeetRequest = async (req, res) => {
+const cancelFanRequest = async (req, res) => {
   const {
     bookingId,
     userid
@@ -97,4 +97,4 @@ const cancelFanMeetRequest = async (req, res) => {
   }
 };
 
-module.exports = cancelFanMeetRequest;
+module.exports = cancelFanRequest;

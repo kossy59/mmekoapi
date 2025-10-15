@@ -66,7 +66,7 @@ const startVideoCall = async (req, res) => {
     const io = req.app.get('io');
     
     // Emit call notification to answerer
-    io.to(`user_${answererId}`).emit('video_call_incoming', {
+    io.to(`user_${answererId}`).emit('fan_call_incoming', {
       callId: call._id,
       callerId: callerId,
       callerName: callerName,
@@ -120,7 +120,7 @@ const acceptVideoCall = async (req, res) => {
     const io = req.app.get('io');
     
     // Emit call accepted to caller
-    io.to(`user_${callerId}`).emit('video_call_accepted', {
+    io.to(`user_${callerId}`).emit('fan_call_accepted', {
       callId: callId,
       callerId: callerId,
       answererId: answererId
@@ -169,7 +169,7 @@ const declineVideoCall = async (req, res) => {
     const io = req.app.get('io');
     
     // Emit call declined to caller
-    io.to(`user_${callerId}`).emit('video_call_declined', {
+    io.to(`user_${callerId}`).emit('fan_call_declined', {
       callId: callId,
       callerId: callerId,
       answererId: answererId
@@ -220,12 +220,12 @@ const endVideoCall = async (req, res) => {
     const io = req.app.get('io');
     
     // Emit call ended to both participants
-    io.to(`user_${userId}`).emit('video_call_ended', {
+    io.to(`user_${userId}`).emit('fan_call_ended', {
       callId: callId,
       endedBy: userId
     });
     
-    io.to(`user_${otherUserId}`).emit('video_call_ended', {
+    io.to(`user_${otherUserId}`).emit('fan_call_ended', {
       callId: callId,
       endedBy: userId
     });
