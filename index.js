@@ -734,10 +734,16 @@ io.on("connection", (socket) => {
       
       // Check if answererId is a creator ID (host ID) and find the actual user ID
       let actualAnswererId = answererId;
+      let answererVipStatus = false;
+      let answererVipEndDate = null;
+      let callerVipStatus = false;
+      let callerVipEndDate = null;
       
       // Try to find the creator's user ID from their creator ID (which is the creator's _id)
       try {
         const creatordb = require('./Creators/creators');
+        const userdb = require('./Creators/userdb');
+        
         const creator = await creatordb.findOne({ _id: answererId }).exec();
         
         if (creator && creator.userid) {
@@ -746,7 +752,34 @@ io.on("connection", (socket) => {
         } else {
           // Creator not found, using original ID
         }
+        
+        // Fetch VIP status for both caller and answerer
+        const [caller, answerer] = await Promise.all([
+          userdb.findOne({ _id: callerId }).exec(),
+          userdb.findOne({ _id: actualAnswererId }).exec()
+        ]);
+        
+        if (caller) {
+          callerVipStatus = caller.isVip || false;
+          callerVipEndDate = caller.vipEndDate || null;
+        }
+        
+        if (answerer) {
+          answererVipStatus = answerer.isVip || false;
+          answererVipEndDate = answerer.vipEndDate || null;
+        }
+        
+        console.log('🔍 [VIP Debug] Backend VIP Status:', {
+          callerId,
+          callerVipStatus,
+          callerVipEndDate,
+          answererId: actualAnswererId,
+          answererVipStatus,
+          answererVipEndDate
+        });
+        
       } catch (error) {
+        console.error('Error fetching VIP status:', error);
         // Error looking up creator, using original ID
       }
       
@@ -796,6 +829,10 @@ io.on("connection", (socket) => {
         callId: call._id,
         callerId: callerId,
         callerName: callerName,
+        callerIsVip: callerVipStatus,
+        callerVipEndDate: callerVipEndDate,
+        answererIsVip: answererVipStatus,
+        answererVipEndDate: answererVipEndDate,
         isIncoming: true
       });
       
@@ -811,9 +848,10 @@ io.on("connection", (socket) => {
 
   socket.on('fan_call_accept', async (data) => {
     try {
-      const { callId, callerId, answererId } = data;
+      const { callId, callerId, answererId, answererName } = data;
       
       const videocalldb = require('./Creators/videoalldb');
+      const userdb = require('./Creators/userdb');
       const call = await videocalldb.findOne({ _id: callId }).exec();
       
       if (call) {
@@ -821,11 +859,27 @@ io.on("connection", (socket) => {
         call.waiting = "connected";
         await call.save();
 
+        // Fetch VIP status for both users
+        const [caller, answerer] = await Promise.all([
+          userdb.findOne({ _id: callerId }).exec(),
+          userdb.findOne({ _id: answererId }).exec()
+        ]);
+        
+        const callerVipStatus = caller?.isVip || false;
+        const callerVipEndDate = caller?.vipEndDate || null;
+        const answererVipStatus = answerer?.isVip || false;
+        const answererVipEndDate = answerer?.vipEndDate || null;
+
         // Emit call accepted to caller
         socket.to(`user_${callerId}`).emit('fan_call_accepted', {
           callId: callId,
           callerId: callerId,
-          answererId: answererId
+          answererId: answererId,
+          answererName: answererName,
+          callerIsVip: callerVipStatus,
+          callerVipEndDate: callerVipEndDate,
+          answererIsVip: answererVipStatus,
+          answererVipEndDate: answererVipEndDate
         });
         
         // Call accepted, notification sent to caller
