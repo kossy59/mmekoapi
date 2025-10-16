@@ -42,6 +42,12 @@ const markertdata = new Scheme({
         type:Date,
         required : false,
         default : Date.now
+    },
+
+     billedMinutes:{
+        type:[Number],
+        required : false,
+        default : []
     }
     
 })

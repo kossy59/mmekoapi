@@ -1235,6 +1235,24 @@ mongoose.connection.once("open", () => {
         
         console.log('✅ [Billing] Call found:', { callId, callerId: call.callerid, clientId: call.clientid });
         
+        // Check if this minute has already been billed to prevent duplicate billing
+        const existingBilling = await mainbalance.findOne({
+          userid: currentUserId,
+          details: `Fan call - payment for minute ${minute}`,
+          date: { $gte: (Date.now() - 60000).toString() } // Within the last minute
+        }).exec();
+        
+        if (existingBilling) {
+          console.log('⚠️ [Billing] Minute already billed, skipping duplicate:', { minute, callId, currentUserId });
+          return;
+        }
+        
+        // Also check if the call document has a billing state to prevent race conditions
+        if (call.billedMinutes && call.billedMinutes.includes(minute)) {
+          console.log('⚠️ [Billing] Minute already marked as billed in call document:', { minute, callId });
+          return;
+        }
+        
         // The fan is the one sending the billing event (currentUserId), not necessarily the caller
         const fanId = currentUserId; // Fan is the one paying
         const creator_portfolio_id = currentUserId === call.callerid ? call.clientid : call.callerid;
@@ -1257,6 +1275,13 @@ mongoose.connection.once("open", () => {
           // Update fan's balance
           fan.balance = (fanBalance - amount).toString();
           await fan.save();
+          
+          // Mark this minute as billed in the call document to prevent duplicate billing
+          if (!call.billedMinutes) {
+            call.billedMinutes = [];
+          }
+          call.billedMinutes.push(minute);
+          await call.save();
           
           // Add to creator's earnings
           const creator = await userdb.findOne({ _id: creator_portfolio_id }).exec();
@@ -1298,20 +1323,30 @@ mongoose.connection.once("open", () => {
             });
             
             // Billing successful
-            console.log('✅ [Billing] Billing successful:', { fanId, creator_portfolio_id, amount });
+            console.log('✅ [Billing] Billing successful:', { 
+              fanId, 
+              creator_portfolio_id, 
+              amount, 
+              minute,
+              newFanBalance: fan.balance,
+              newCreatorEarnings: creator.earnings,
+              billedMinutes: call.billedMinutes
+            });
             
             // Emit balance updates to both users
             io.to(`user_${fanId}`).emit('balance_updated', {
               balance: fan.balance,
               type: 'deduct',
-              amount: amount
+              amount: amount,
+              minute: minute
             });
             
             io.to(`user_${creator_portfolio_id}`).emit('balance_updated', {
               earnings: creator.earnings,
               type: 'earn',
               amount: amount,
-              callEarnings: amount // Show earnings from this specific call
+              callEarnings: amount, // Show earnings from this specific call
+              minute: minute
             });
           }
         } else {
