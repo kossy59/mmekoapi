@@ -35,8 +35,10 @@ const getMyCreator = async (req, res) => {
 
       const photolink = creatorfiles.map((f) => f.creatorfilelink);
 
-      // Get VIP status from user data
+      // Get VIP status, online status, and following status from user data
       let vipStatus = { isVip: false, vipEndDate: null };
+      let isOnline = false;
+      let isFollowing = false;
       
       // Try different possible userid field names
       const possibleUserIds = [
@@ -57,6 +59,12 @@ const getMyCreator = async (req, res) => {
               isVip: user.isVip || false,
               vipEndDate: user.vipEndDate || null
             };
+            isOnline = user.active || false;
+            
+            // Check if current user is following this creator
+            if (userid && user.followers && user.followers.includes(userid)) {
+              isFollowing = true;
+            }
             break; // Found user, stop looking
           }
         } catch (error) {
@@ -92,6 +100,12 @@ const getMyCreator = async (req, res) => {
         // Include VIP status
         isVip: vipStatus.isVip,
         vipEndDate: vipStatus.vipEndDate,
+        // Include views count
+        views: creator.views ? creator.views.length : 0,
+        // Include online status
+        isOnline: isOnline,
+        // Include following status
+        isFollowing: isFollowing,
       };
     }));
 
