@@ -162,22 +162,42 @@ exports.submitRating = async (req, res) => {
       ratingData.fanName = `${raterUser.firstname || raterUser.creatorname || raterUser.name || ''} ${raterUser.lastname || ''}`.trim();
       ratingData.fanNickname = raterUser.nickname || raterUser.username || "";
       ratingData.fanPhoto = raterUser.photolink || "";
+      ratingData.fanIsVip = raterUser.isVip || false;
+      ratingData.fanVipEndDate = raterUser.vipEndDate || null;
       ratingData.creatorName = `${ratedUser.firstname || ratedUser.creatorname || ratedUser.name || ''} ${ratedUser.lastname || ''}`.trim();
       ratingData.creatorNickname = ratedUser.nickname || ratedUser.username || "";
       ratingData.creatorPhoto = ratedUser.photolink || "";
+      ratingData.creatorIsVip = ratedUser.isVip || false;
+      ratingData.creatorVipEndDate = ratedUser.vipEndDate || null;
     } else {
       // Creator rating fan
       ratingData.creatorName = `${raterUser.firstname || raterUser.creatorname || raterUser.name || ''} ${raterUser.lastname || ''}`.trim();
       ratingData.creatorNickname = raterUser.nickname || raterUser.username || "";
       ratingData.creatorPhoto = raterUser.photolink || "";
+      ratingData.creatorIsVip = raterUser.isVip || false;
+      ratingData.creatorVipEndDate = raterUser.vipEndDate || null;
       ratingData.fanName = `${ratedUser.firstname || ratedUser.creatorname || ratedUser.name || ''} ${ratedUser.lastname || ''}`.trim();
       ratingData.fanNickname = ratedUser.nickname || ratedUser.username || "";
       ratingData.fanPhoto = ratedUser.photolink || "";
+      ratingData.fanIsVip = ratedUser.isVip || false;
+      ratingData.fanVipEndDate = ratedUser.vipEndDate || null;
     }
 
-    console.log('💾 [submitRating] Creating rating record:', ratingData);
+    console.log('💾 [submitRating] Creating rating record with VIP data:', {
+      ratingType,
+      fanIsVip: ratingData.fanIsVip,
+      fanVipEndDate: ratingData.fanVipEndDate,
+      creatorIsVip: ratingData.creatorIsVip,
+      creatorVipEndDate: ratingData.creatorVipEndDate,
+      fanName: ratingData.fanName,
+      creatorName: ratingData.creatorName
+    });
     const savedRating = await reviewdb.create(ratingData);
-    console.log('✅ [submitRating] Rating saved successfully:', savedRating._id);
+    console.log('✅ [submitRating] Rating saved successfully with VIP data:', {
+      id: savedRating._id,
+      fanIsVip: savedRating.fanIsVip,
+      creatorIsVip: savedRating.creatorIsVip
+    });
 
     // Send notifications based on rating type
     if (ratingType === 'fan-to-creator') {
@@ -271,7 +291,249 @@ exports.checkUserRating = async (req, res) => {
   }
 };
 
-// Get ratings for a specific creator or fan
+// Get ALL ratings for a specific creator portfolio (both fan-to-creator and creator-to-creator)
+exports.getAllCreatorRatings = async (req, res) => {
+  const { creatorId } = req.params;
+
+  try {
+    console.log('🔍 [getAllCreatorRatings] Backend called with creatorId:', creatorId);
+    
+    if (!creatorId) {
+      return res.status(400).json({
+        ok: false,
+        message: "Creator ID is required"
+      });
+    }
+
+    // Get ALL ratings where this creator is being rated (both fan-to-creator and creator-to-creator)
+    let query = {
+      $or: [
+        { creatorId: creatorId, ratingType: 'fan-to-creator' }, // Ratings from fans
+        { creatorId: creatorId, ratingType: 'creator-to-creator' } // Ratings from other creators
+      ]
+    };
+
+    console.log('🔍 [getAllCreatorRatings] Query:', JSON.stringify(query, null, 2));
+    let ratings = await reviewdb.find(query).sort({ createdAt: -1 });
+    console.log('🔍 [getAllCreatorRatings] Found ratings count:', ratings.length);
+
+    // Update ratings with VIP data if missing
+    const updatedRatings = [];
+    for (const rating of ratings) {
+      let needsUpdate = false;
+      const updateData = {};
+      
+      // Check if fan VIP data is missing
+      if (rating.fanIsVip === undefined || rating.fanIsVip === null) {
+        const fanUser = await userdb.findOne({ _id: rating.fanId });
+        if (fanUser) {
+          updateData.fanIsVip = fanUser.isVip || false;
+          updateData.fanVipEndDate = fanUser.vipEndDate || null;
+          needsUpdate = true;
+        }
+      }
+      
+      // Check if creator VIP data is missing
+      if (rating.creatorIsVip === undefined || rating.creatorIsVip === null) {
+        let creatorUser = await userdb.findOne({ _id: rating.creatorId });
+        if (!creatorUser) {
+          creatorUser = await creatorsdb.findOne({ _id: rating.creatorId });
+          if (creatorUser) {
+            const creatorFromUserdb = await userdb.findOne({ _id: rating.creatorId });
+            if (creatorFromUserdb) {
+              creatorUser = creatorFromUserdb;
+            }
+          }
+        }
+        if (creatorUser) {
+          updateData.creatorIsVip = creatorUser.isVip || false;
+          updateData.creatorVipEndDate = creatorUser.vipEndDate || null;
+          needsUpdate = true;
+        }
+      }
+      
+      // Update the rating if needed
+      if (needsUpdate) {
+        await reviewdb.updateOne({ _id: rating._id }, { $set: updateData });
+        console.log(`🔄 [getCreatorRatings] Updated rating ${rating._id} with VIP data:`, updateData);
+        
+        // Update the local rating object
+        const updatedRating = { ...rating.toObject(), ...updateData };
+        updatedRatings.push(updatedRating);
+      } else {
+        updatedRatings.push(rating);
+      }
+    }
+    
+    ratings = updatedRatings;
+
+    // Debug log to see VIP data in ratings
+    console.log('🔍 [getAllCreatorRatings] Found ratings with VIP data:', ratings.map(r => ({
+      id: r._id,
+      ratingType: r.ratingType,
+      fanIsVip: r.fanIsVip,
+      fanVipEndDate: r.fanVipEndDate,
+      creatorIsVip: r.creatorIsVip,
+      creatorVipEndDate: r.creatorVipEndDate,
+      fanName: r.fanName,
+      creatorName: r.creatorName
+    })));
+
+    // Calculate average rating
+    const totalRatings = ratings.length;
+    const averageRating = totalRatings > 0 
+      ? ratings.reduce((sum, rating) => sum + rating.rating, 0) / totalRatings 
+      : 0;
+
+    // Count ratings by star
+    const ratingCounts = {
+      5: ratings.filter(r => r.rating === 5).length,
+      4: ratings.filter(r => r.rating === 4).length,
+      3: ratings.filter(r => r.rating === 3).length,
+      2: ratings.filter(r => r.rating === 2).length,
+      1: ratings.filter(r => r.rating === 1).length
+    };
+
+    const response = {
+      ok: true,
+      ratings,
+      totalRatings,
+      averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal place
+      ratingCounts
+    };
+    
+    console.log('✅ [getAllCreatorRatings] Sending response:', {
+      ok: response.ok,
+      totalRatings: response.totalRatings,
+      averageRating: response.averageRating,
+      ratingsCount: response.ratings.length
+    });
+    
+    return res.status(200).json(response);
+
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      message: "Failed to fetch ratings",
+      error: error.message
+    });
+  }
+}
+
+// Get ALL ratings for a specific user (for user profile page)
+exports.getAllUserRatings = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    if (!userId) {
+      return res.status(400).json({
+        ok: false,
+        message: "User ID is required"
+      });
+    }
+
+    // Get ALL ratings where this user is involved (as creator or fan)
+    let query = {
+      $or: [
+        { creatorId: userId }, // User is the creator being rated
+        { fanId: userId }      // User is the fan being rated
+      ]
+    };
+
+    let ratings = await reviewdb.find(query).sort({ createdAt: -1 });
+
+    // Update ratings with VIP data if missing
+    const updatedRatings = [];
+    for (const rating of ratings) {
+      let needsUpdate = false;
+      const updateData = {};
+      
+      if (rating.fanIsVip === undefined || rating.fanIsVip === null) {
+        const fanUser = await userdb.findOne({ _id: rating.fanId });
+        if (fanUser) {
+          updateData.fanIsVip = fanUser.isVip || false;
+          updateData.fanVipEndDate = fanUser.vipEndDate || null;
+          needsUpdate = true;
+        }
+      }
+      
+      if (rating.creatorIsVip === undefined || rating.creatorIsVip === null) {
+        let creatorUser = await userdb.findOne({ _id: rating.creatorId });
+        if (!creatorUser) {
+          creatorUser = await creatorsdb.findOne({ _id: rating.creatorId });
+          if (creatorUser) {
+            const creatorFromUserdb = await userdb.findOne({ _id: rating.creatorId });
+            if (creatorFromUserdb) {
+              creatorUser = creatorFromUserdb;
+            }
+          }
+        }
+        if (creatorUser) {
+          updateData.creatorIsVip = creatorUser.isVip || false;
+          updateData.creatorVipEndDate = creatorUser.vipEndDate || null;
+          needsUpdate = true;
+        }
+      }
+      
+      if (needsUpdate) {
+        await reviewdb.updateOne({ _id: rating._id }, { $set: updateData });
+        console.log(`🔄 [getAllUserRatings] Updated rating ${rating._id} with VIP data:`, updateData);
+        const updatedRating = { ...rating.toObject(), ...updateData };
+        updatedRatings.push(updatedRating);
+      } else {
+        updatedRatings.push(rating);
+      }
+    }
+    
+    ratings = updatedRatings;
+
+    // Debug log to see VIP data in ratings
+    console.log('🔍 [getAllUserRatings] Found ratings with VIP data:', ratings.map(r => ({
+      id: r._id,
+      ratingType: r.ratingType,
+      fanIsVip: r.fanIsVip,
+      fanVipEndDate: r.fanVipEndDate,
+      creatorIsVip: r.creatorIsVip,
+      creatorVipEndDate: r.creatorVipEndDate,
+      fanName: r.fanName,
+      creatorName: r.creatorName
+    })));
+
+    // Calculate average rating
+    const totalRatings = ratings.length;
+    const averageRating = totalRatings > 0 
+      ? ratings.reduce((sum, rating) => sum + rating.rating, 0) / totalRatings 
+      : 0;
+
+    // Count ratings by star
+    const ratingCounts = {
+      5: ratings.filter(r => r.rating === 5).length,
+      4: ratings.filter(r => r.rating === 4).length,
+      3: ratings.filter(r => r.rating === 3).length,
+      2: ratings.filter(r => r.rating === 2).length,
+      1: ratings.filter(r => r.rating === 1).length
+    };
+
+    const response = {
+      ok: true,
+      ratings,
+      totalRatings,
+      averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal place
+      ratingCounts
+    };
+    
+    return res.status(200).json(response);
+
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      message: "Failed to fetch ratings",
+      error: error.message
+    });
+  }
+}
+
+// Get ratings for a specific creator or fan (original function)
 exports.getCreatorRatings = async (req, res) => {
   const { userId, ratingType } = req.params;
 
@@ -301,7 +563,64 @@ exports.getCreatorRatings = async (req, res) => {
       query.fanId = userId;
     }
 
-    const ratings = await reviewdb.find(query).sort({ createdAt: -1 });
+    let ratings = await reviewdb.find(query).sort({ createdAt: -1 });
+
+    // Update ratings with VIP data if missing
+    const updatedRatings = [];
+    for (const rating of ratings) {
+      let needsUpdate = false;
+      const updateData = {};
+      
+      if (rating.fanIsVip === undefined || rating.fanIsVip === null) {
+        const fanUser = await userdb.findOne({ _id: rating.fanId });
+        if (fanUser) {
+          updateData.fanIsVip = fanUser.isVip || false;
+          updateData.fanVipEndDate = fanUser.vipEndDate || null;
+          needsUpdate = true;
+        }
+      }
+      
+      if (rating.creatorIsVip === undefined || rating.creatorIsVip === null) {
+        let creatorUser = await userdb.findOne({ _id: rating.creatorId });
+        if (!creatorUser) {
+          creatorUser = await creatorsdb.findOne({ _id: rating.creatorId });
+          if (creatorUser) {
+            const creatorFromUserdb = await userdb.findOne({ _id: rating.creatorId });
+            if (creatorFromUserdb) {
+              creatorUser = creatorFromUserdb;
+            }
+          }
+        }
+        if (creatorUser) {
+          updateData.creatorIsVip = creatorUser.isVip || false;
+          updateData.creatorVipEndDate = creatorUser.vipEndDate || null;
+          needsUpdate = true;
+        }
+      }
+      
+      if (needsUpdate) {
+        await reviewdb.updateOne({ _id: rating._id }, { $set: updateData });
+        console.log(`🔄 [getCreatorRatings] Updated rating ${rating._id} with VIP data:`, updateData);
+        const updatedRating = { ...rating.toObject(), ...updateData };
+        updatedRatings.push(updatedRating);
+      } else {
+        updatedRatings.push(rating);
+      }
+    }
+    
+    ratings = updatedRatings;
+
+    // Debug log to see VIP data in ratings
+    console.log('🔍 [getCreatorRatings] Found ratings with VIP data:', ratings.map(r => ({
+      id: r._id,
+      ratingType: r.ratingType,
+      fanIsVip: r.fanIsVip,
+      fanVipEndDate: r.fanVipEndDate,
+      creatorIsVip: r.creatorIsVip,
+      creatorVipEndDate: r.creatorVipEndDate,
+      fanName: r.fanName,
+      creatorName: r.creatorName
+    })));
 
     // Calculate average rating
     const totalRatings = ratings.length;

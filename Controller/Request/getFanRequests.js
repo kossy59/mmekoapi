@@ -73,6 +73,7 @@ const getFanRequests = async (req, res) => {
           timeRemaining,
           otherUser: otherUser ? {
             name: otherUser.name || `${otherUser.firstname} ${otherUser.lastname}`,
+            nickname: otherUser.nickname, // Include nickname field
             photolink: otherUser.photolink,
             isCreator: type === 'fan'
           } : null,

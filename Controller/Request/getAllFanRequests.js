@@ -88,7 +88,8 @@ const getAllFanRequests = async (req, res) => {
                   otherUser = {
                     ...creatorData?.toObject(),
                     isVip: creatorUserData?.isVip || false,
-                    vipEndDate: creatorUserData?.vipEndDate
+                    vipEndDate: creatorUserData?.vipEndDate,
+                    nickname: creatorUserData?.nickname // Include nickname from user data
                   };
                   userType = 'fan';
                 } else {
@@ -167,6 +168,22 @@ const getAllFanRequests = async (req, res) => {
           }
         }
 
+        const finalOtherUser = otherUser ? {
+          name: otherUser.name || `${otherUser.firstname || ''} ${otherUser.lastname || ''}`.trim() || 'Unknown User',
+          nickname: otherUser.nickname || otherUser.firstname || otherUser.name, // Include nickname field with fallbacks
+          photolink: otherUser.photolink || '/picture-1.jfif',
+          isCreator: userType === 'fan', // If current user is fan, other user is creator
+          isVip: otherUser.isVip || false, // Include VIP status
+          vipEndDate: otherUser.vipEndDate // Include VIP end date
+        } : {
+          name: 'Unknown User',
+          nickname: null, // Include nickname field
+          photolink: '/picture-1.jfif',
+          isCreator: userType === 'fan',
+          isVip: false,
+          vipEndDate: null
+        };
+
         return {
           id: request._id,
           requestId: request._id,
@@ -181,19 +198,7 @@ const getAllFanRequests = async (req, res) => {
           creator_portfolio_id: request.creator_portfolio_id,
           targetUserId: targetUserId, // Add target user ID for profile navigation
           hosttype: request.type, // Use request's type field which contains the host type
-          otherUser: otherUser ? {
-            name: otherUser.name || `${otherUser.firstname || ''} ${otherUser.lastname || ''}`.trim() || 'Unknown User',
-            photolink: otherUser.photolink || '/picture-1.jfif',
-            isCreator: userType === 'fan', // If current user is fan, other user is creator
-            isVip: otherUser.isVip || false, // Include VIP status
-            vipEndDate: otherUser.vipEndDate // Include VIP end date
-          } : {
-            name: 'Unknown User',
-            photolink: '/picture-1.jfif',
-            isCreator: userType === 'fan',
-            isVip: false,
-            vipEndDate: null
-          },
+          otherUser: finalOtherUser,
           createdAt: request.createdAt,
           expiresAt: request.expiresAt
         };

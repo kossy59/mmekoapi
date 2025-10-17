@@ -233,6 +233,7 @@ app.use("/process-expired", require("./routes/api/processExpired"));
 app.use("/video-call", require("./routes/api/videoCall/videoCallRoutes"));
 app.use("/support-chat", require("./routes/api/supportChat"));
 app.use("/review", require("./routes/api/Review/reviewRoutes"));
+app.use("/api", require("./routes/api/updateRatingsVip"));
 // Track online users
 const onlineUsers = new Set();
 
