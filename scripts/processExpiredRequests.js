@@ -84,10 +84,10 @@ const processExpiredRequests = async () => {
 
             // Send notifications with dynamic host type
             await sendEmail(request.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`);
-            await pushmessage(request.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`, "fanicon");
+            await pushmessage(request.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`, "/bell.jpg");
             
             await sendEmail(request.creator_portfolio_id, `A ${hostType.toLowerCase()} request has expired`);
-            await pushmessage(request.creator_portfolio_id, `A ${hostType.toLowerCase()} request has expired`, "creatoricon");
+            await pushmessage(request.creator_portfolio_id, `A ${hostType.toLowerCase()} request has expired`, "/bell.jpg");
             
             console.log(`Refunded ${refundAmount} to user ${request.userid} for ${hostType} request`);
           }

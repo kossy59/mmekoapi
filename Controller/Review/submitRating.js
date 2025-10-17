@@ -204,7 +204,7 @@ exports.submitRating = async (req, res) => {
       // Fan rated creator - notify creator
       console.log('📱 [submitRating] Sending notification to creator:', creatorId);
       const raterName = raterUser.firstname || raterUser.creatorname || raterUser.name || 'User';
-      await pushmessage(creatorId, `You received a ${rating}-star rating from ${raterName}!`, "creatoricon");
+      await pushmessage(creatorId, `You received a ${rating}-star rating from ${raterName}!`, "/bell.jpg");
       await admindb.create({
         userid: creatorId,
         message: `You received a ${rating}-star rating from ${raterName} ${raterUser.lastname || ''}`.trim(),
@@ -214,7 +214,7 @@ exports.submitRating = async (req, res) => {
       // Creator rated fan - notify fan
       console.log('📱 [submitRating] Sending notification to fan:', fanId);
       const raterName = raterUser.firstname || raterUser.creatorname || raterUser.name || 'User';
-      await pushmessage(fanId, `You received a ${rating}-star rating from ${raterName}!`, "fanicon");
+      await pushmessage(fanId, `You received a ${rating}-star rating from ${raterName}!`, "/bell.jpg");
       await admindb.create({
         userid: fanId,
         message: `You received a ${rating}-star rating from ${raterName} ${raterUser.lastname || ''}`.trim(),

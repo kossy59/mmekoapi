@@ -77,6 +77,12 @@ const getAllFanRequests = async (req, res) => {
                 if (isCreator) {
                   // Current user is creator, get fan details
                   otherUser = await userdb.findOne({ _id: request.userid }).exec();
+                  console.log('🔍 [getAllFanRequests] Fan user data:', {
+                    firstname: otherUser?.firstname,
+                    lastname: otherUser?.lastname,
+                    name: otherUser?.name,
+                    nickname: otherUser?.nickname
+                  });
                   userType = 'creator';
                 } else if (isFan) {
                   // Current user is fan, get creator details
@@ -84,12 +90,21 @@ const getAllFanRequests = async (req, res) => {
                   // Also get the creator's user data for VIP status
                   const creatorUserData = await userdb.findOne({ _id: creatorData?.userid }).exec();
                   
+                  console.log('🔍 [getAllFanRequests] Creator user data:', {
+                    firstname: creatorUserData?.firstname,
+                    lastname: creatorUserData?.lastname,
+                    name: creatorUserData?.name,
+                    nickname: creatorUserData?.nickname
+                  });
+                  
                   // Combine creator data with user VIP data
                   otherUser = {
                     ...creatorData?.toObject(),
                     isVip: creatorUserData?.isVip || false,
                     vipEndDate: creatorUserData?.vipEndDate,
-                    nickname: creatorUserData?.nickname // Include nickname from user data
+                    nickname: creatorUserData?.nickname, // Include nickname from user data
+                    firstname: creatorUserData?.firstname, // Include first name
+                    lastname: creatorUserData?.lastname // Include last name
                   };
                   userType = 'fan';
                 } else {
@@ -171,6 +186,8 @@ const getAllFanRequests = async (req, res) => {
         const finalOtherUser = otherUser ? {
           name: otherUser.name || `${otherUser.firstname || ''} ${otherUser.lastname || ''}`.trim() || 'Unknown User',
           nickname: otherUser.nickname || otherUser.firstname || otherUser.name, // Include nickname field with fallbacks
+          firstname: otherUser.firstname || null, // Include first name field
+          lastname: otherUser.lastname || null, // Include last name field
           photolink: otherUser.photolink || '/picture-1.jfif',
           isCreator: userType === 'fan', // If current user is fan, other user is creator
           isVip: otherUser.isVip || false, // Include VIP status
@@ -178,11 +195,20 @@ const getAllFanRequests = async (req, res) => {
         } : {
           name: 'Unknown User',
           nickname: null, // Include nickname field
+          firstname: null, // Include first name field
+          lastname: null, // Include last name field
           photolink: '/picture-1.jfif',
           isCreator: userType === 'fan',
           isVip: false,
           vipEndDate: null
         };
+
+        console.log('🔍 [getAllFanRequests] Final otherUser object:', {
+          name: finalOtherUser.name,
+          nickname: finalOtherUser.nickname,
+          firstname: finalOtherUser.firstname,
+          lastname: finalOtherUser.lastname
+        });
 
         return {
           id: request._id,
