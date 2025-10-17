@@ -60,9 +60,9 @@ const getTransactionHistory = async (req, res) => {
         // Any host type payments (fan pays) - Fan meet, Fan date, Fan call, etc.
         details.includes("completed - payment transferred") ||
         // Video call earnings (creator receives)
-        details.includes("Video call - payment received") ||
+        details.includes("Fan call - payment received") ||
         // Video call payments (fan pays)
-        details.includes("Video call - payment for") ||
+        details.includes("Fan call - payment for") ||
         // Withdrawal from earnings
         detailsLower.includes("withdrawal") ||
         detailsLower.includes("withdraw") ||

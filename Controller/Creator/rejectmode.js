@@ -19,7 +19,7 @@ const createCreator = async (req, res) => {
     let respond = {
       userid: userid,
       message: `you exclusive application has been rejected`,
-      seen: true
+      seen: false
     }
     const user = userdb.findOne({ "_id": userid })
     user.creator_portfolio_id = "";

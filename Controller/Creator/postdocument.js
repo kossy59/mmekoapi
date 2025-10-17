@@ -127,7 +127,7 @@ const createCreator = async (req, res) => {
     let respond = {
       userid,
       message: `Your application has been submitted and is now in review. You will hear from us within few hours.`,
-      seen: true,
+      seen: false,
     };
 
     await admindb.create(respond);

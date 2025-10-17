@@ -9,36 +9,37 @@ const createLike = async (req,res)=>{
     if( !creator_portfolio_id){
         return res.status(400).json({"ok":false,'message': 'please provide user and creator ID!!'})
     }
-    console.log('untop init db')
-
-    //let data = await connectdatabase()
-
+   
     try{
-
-         let review = await reviewdb.find({creator_portfolio_id:creator_portfolio_id}).exec()
-
-         if(!review[0]){
+         // Debug: Check all ratings in database
+         let allRatings = await reviewdb.find({}).exec()
+       
+         // Fetch 5-star ratings from request cards for this creator
+         let ratings = await reviewdb.find({creatorId: creator_portfolio_id}).sort({createdAt: -1}).exec()
+         
+         if(!ratings[0]){
               return res.status(200).json({"ok":true,"message":` Success`, reviews:[]})
 
          }
 
         let reviews = []
 
-        for(let i = 0; i < review.length; i++){
-            let username = await userdb.findOne({_id:review[i].userid}).exec()
-            let image = await userphotodb.findOne({useraccountId:review[i].userid}).exec()
+        for(let i = 0; i < ratings.length; i++){
+            // Get fan details (fallback if not stored in rating)
+            let fan = await userdb.findOne({_id: ratings[i].fanId}).exec()
+            let image = await userphotodb.findOne({useraccountId: ratings[i].fanId}).exec()
 
             reviews.push({
-                content : review[i].content,
-                posttime : review[i].posttime,
-                userid : review[i].userid,
-                id : review[i]._id,
-                name : username.firstname,
-                photolink : image.photoLink
-
+                content : ratings[i].feedback,
+                posttime : ratings[i].createdAt.getTime().toString(),
+                userid : ratings[i].fanId,
+                id : ratings[i]._id,
+                name : ratings[i].fanName || (fan ? fan.firstname : "Unknown"),
+                photolink : ratings[i].fanPhoto || (image ? image.photoLink : ""),
+                rating : ratings[i].rating,
+                hostType : ratings[i].hostType,
+                requestId : ratings[i].requestId
             })
-
-
         }
 
             return res.status(200).json({"ok":true,"message":` Success`, reviews:reviews})

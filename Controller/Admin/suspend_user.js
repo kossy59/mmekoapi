@@ -1,7 +1,7 @@
 const userdb = require("../../Creators/userdb")
 const admin = require("../../Creators/admindb")
 let sendEmail = require("../../utiils/sendEmailnot")
-let sendpushnote = require("../../utiils/sendPushnot")
+const { pushmessage } = require("../../utiils/sendPushnot")
 
 const updatePost = async (req,res)=>{
     const userid = req.body.userid;
@@ -38,7 +38,7 @@ const updatePost = async (req,res)=>{
                 await admin.create(data)
 
                 await sendEmail(userid,"your account has been suspended")
-                await sendpushnote(userid,"your account has been suspended","creatoricon")
+                await pushmessage(userid,"your account has been suspended","creatoricon")
 
 
 

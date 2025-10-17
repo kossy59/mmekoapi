@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getNotifications,
   markNotificationsSeen,
+  markActivityNotificationsSeen,
   deleteNotification,
 } = require("../../../Controller/Notifications/notificationController");
 
@@ -11,6 +12,9 @@ router.get("/:userid", getNotifications);
 
 // Mark all user notifications as seen
 router.put("/mark-seen/:userid", markNotificationsSeen);
+
+// Mark only activity notifications as seen
+router.put("/mark-activity-seen/:userid", markActivityNotificationsSeen);
 
 // Delete a specific notification
 router.delete("/:id", deleteNotification);

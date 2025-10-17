@@ -2,7 +2,7 @@ const followerdb = require("../../Creators/followers");
 const userdb = require("../../Creators/userdb");
 const admindb = require("../../Creators/admindb");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+const { pushmessage } = require("../../utiils/sendPushnot");
 
 const createCreator = async (req, res) => {
   const followerid = req.body.followerid;
@@ -32,14 +32,14 @@ const createCreator = async (req, res) => {
     let respond = {
       userid: userid,
       message: `${client.firstname} ${client.lastname} unfollowed you`,
-      seen: true,
+      seen: false,
     };
 
     await admindb.create(respond);
 
     await followerdb.deleteOne({ _id: Isfollowed._id });
     await sendEmail(userid, "user unfollow you");
-    await sendpushnote(userid, "user unfollow you", "creatoricon");
+    await pushmessage(userid, "user unfollow you", "creatoricon");
 
     // No need to sync userdb arrays - followers collection is the single source of truth
 

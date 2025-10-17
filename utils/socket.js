@@ -13,16 +13,16 @@ const getSocketIO = () => {
 };
 
 // Emit fan meet status update
-const emitFanMeetStatusUpdate = (data) => {
+const emitFanRequestStatusUpdate = (data) => {
   const socketIO = getSocketIO();
   if (socketIO) {
-    socketIO.emit('fan_meet_status_update', data);
-    console.log('📡 [Socket] Emitted fan meet status update:', data);
+    socketIO.emit('fan_request_status_update', data);
+    console.log('📡 [Socket] Emitted fan request status update:', data);
   }
 };
 
 module.exports = {
   setSocketIO,
   getSocketIO,
-  emitFanMeetStatusUpdate
+  emitFanRequestStatusUpdate
 };

@@ -41,7 +41,7 @@ const createCreator = async (req,res)=>{
         let respond = {
             userid:userid,
             message:`${client.firstname} ${client.lastname} followed you`,
-            seen:true
+            seen:false
         }
 
         await admindb.create(respond)

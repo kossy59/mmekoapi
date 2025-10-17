@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const withdrawRequestSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "User", // Adjust if your user creator is named differently
+    ref: "UserDB", // Correct model name
     required: true,
   },
   amount: {

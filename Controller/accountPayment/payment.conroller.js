@@ -7,9 +7,9 @@ exports.savePaymentAccount = async (req, res) => {
     const { method, fullName, email, phone, country, currency, cryptoType, walletAddress } = req.body;
 
     // Validate required fields per the pattern
-    if (!method || !fullName || !email || !country || !cryptoType || !walletAddress) {
+    if (!method || !fullName || !country || !walletAddress) {
       return res.status(400).json({
-        message: "Missing required fields: method, fullName, email, country, cryptoType, or walletAddress",
+        message: "Missing required fields: method, fullName, country, or walletAddress",
       });
     }
 
@@ -24,9 +24,15 @@ exports.savePaymentAccount = async (req, res) => {
       return res.status(400).json({ message: "You have already added a cryptocurrency account." });
     }
 
-    // Basic wallet address validation (adjust based on needs)
-    if (!walletAddress.match(/^[A-Za-z0-9]+$/)) {
-      return res.status(400).json({ message: "Invalid wallet address format" });
+    // Basic wallet address validation - check if it starts with 0x and is 42 characters
+    if (!walletAddress.startsWith('0x') || walletAddress.length !== 42) {
+      return res.status(400).json({ message: "Invalid wallet address format. Must start with 0x and be 42 characters long." });
+    }
+    
+    // Check if remaining characters are valid hexadecimal
+    const hexPattern = /^0x[0-9a-fA-F]{40}$/;
+    if (!hexPattern.test(walletAddress)) {
+      return res.status(400).json({ message: "Invalid wallet address. Must contain only valid hexadecimal characters after 0x." });
     }
 
     // Prepare account data
@@ -38,7 +44,7 @@ exports.savePaymentAccount = async (req, res) => {
       phone,
       country,
       currency: currency || "USD", // Default to USD if not provided
-      cryptoType,
+      cryptoType: cryptoType || "USDT_BEP20", // Default to USDT_BEP20 if not provided
       walletAddress,
     };
 

@@ -2,8 +2,10 @@
 // const sdk = require("node-appwrite");
 const likedata = require("../../Creators/like");
 const postdbs = require("../../Creators/post");
+const admindb = require("../../Creators/admindb");
+const userdb = require("../../Creators/userdb");
 let sendEmail = require("../../utiils/sendEmailnot");
-let sendpushnote = require("../../utiils/sendPushnot");
+const { pushmessage } = require("../../utiils/sendPushnot");
 const createLike = async (req, res) => {
   const userid = req.body.userid;
   let sharedid = req.body.sharedid;
@@ -35,11 +37,21 @@ const createLike = async (req, res) => {
       await likedata.deleteOne({ _id: du1._id });
       if (postuser) {
         await sendEmail(postuser.userid, "user unlike your Post");
-        await sendpushnote(
+        await pushmessage(
           postuser.userid,
           "user unlike your Post",
           "creatoricon"
         );
+        
+        // Create database notification for unlike
+        const liker = await userdb.findOne({ _id: userid }).exec();
+        if (liker) {
+          await admindb.create({
+            userid: postuser.userid,
+            message: `${liker.firstname} ${liker.lastname} unliked your post`,
+            seen: false
+          });
+        }
       }
       // After unlike, return updated likeCount and likedBy
       const likes = await likedata.find({ postid });
@@ -68,7 +80,17 @@ const createLike = async (req, res) => {
     await likedata.create(like);
     if (postuser) {
       await sendEmail(postuser.userid, "user like your Post");
-      await sendpushnote(postuser.userid, "user like your Post", "creatoricon");
+      await pushmessage(postuser.userid, "user like your Post", "creatoricon");
+      
+      // Create database notification for like
+      const liker = await userdb.findOne({ _id: userid }).exec();
+      if (liker) {
+        await admindb.create({
+          userid: postuser.userid,
+          message: `${liker.firstname} ${liker.lastname} liked your post`,
+          seen: false
+        });
+      }
     }
     // After like, return updated likeCount and likedBy
   const likes = await likedata.find({ postid });

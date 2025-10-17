@@ -21,18 +21,19 @@ const createCreator = async (req,res)=>{
           //   return value.$id === hostid
           //  })
 
-           let currentuser = await crushdb.findOne({creator_portfolio_id:creator_portfolio_id}).exec()
+           // Check if this specific user has this creator in their crush list
+           let currentuser = await crushdb.findOne({
+             creator_portfolio_id: creator_portfolio_id,
+             userid: userid
+           }).exec()
 
            if(!currentuser){
             return res.status(409).json({"ok":false,"message":`creator crush not found`})
            }
 
-          if(String(currentuser.userid) === String(userid)){
-             await crushdb.deleteOne({_id:currentuser._id}).exec()
-             return res.status(200).json({"ok":true,"message":`creator crush delete successfully`})
-          }
-
-            return res.status(409).json({"ok":false,"message":`Creator not found`})
+           // Delete the crush record
+           await crushdb.deleteOne({_id:currentuser._id}).exec()
+           return res.status(200).json({"ok":true,"message":`creator crush delete successfully`})
       
           
           }catch(err){

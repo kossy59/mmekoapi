@@ -37,18 +37,16 @@ const createCreator = async (req, res) => {
       });
     }
 
+    // Check if the current user has this creator in their crush list
     let istrue = await crushdb
       .findOne({
         creator_portfolio_id: currentuser._id,
+        userid: userid
       })
       .exec();
 
-    if (userid) {
-      if (istrue) {
-        if (String(istrue.userid) === userid) {
-          added = true;
-        }
-      }
+    if (userid && istrue) {
+      added = true;
     }
 
     let modState = await userdb
@@ -57,13 +55,11 @@ const createCreator = async (req, res) => {
       })
       .exec();
 
-    console.log("🔍 Backend - creatorfiles:", currentuser.creatorfiles);
     const photolink = currentuser.creatorfiles
       .map((photolink) => {
         return photolink?.creatorfilelink;
       })
       .filter((link) => link && link.trim() !== ""); // Filter out null/undefined/empty links
-    console.log("🔍 Backend - photolink after filtering:", photolink);
     const isFollowingUser = modState.followers.includes(userid);
 
     let host = {
@@ -72,6 +68,7 @@ const createCreator = async (req, res) => {
       photolink,
       verify: modState.creator_verified,
       name: currentuser.name,
+      nickname: modState.nickname, // Include nickname from user data
       age: currentuser.age,
       location: currentuser.location,
       price: currentuser.price,
@@ -99,13 +96,6 @@ const createCreator = async (req, res) => {
       vipEndDate: modState.vipEndDate || null,
     };
 
-    // Debug logging for VIP status
-    console.log("🔍 [GETCREATORBYID] VIP Status for creator:", {
-      name: currentuser.name,
-      userid: currentuser.userid,
-      isVip: modState.isVip,
-      vipEndDate: modState.vipEndDate
-    });
 
     res.status(200).json({
       ok: true,
