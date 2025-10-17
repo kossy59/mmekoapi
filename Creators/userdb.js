@@ -100,7 +100,7 @@ const markertdata = new Scheme(
     },
 
     balance: {
-      type: String,
+      type: Number,
       required: false,
     },
     withdrawbalance: {

@@ -78,6 +78,7 @@ const readProfile = async (req, res) => {
       creatortype: "",
       dob: dob,
       likecount: 0,
+      balance: du.balance,
       // VIP status fields
       isVip: du.isVip || false,
       vipStartDate: du.vipStartDate || null,
