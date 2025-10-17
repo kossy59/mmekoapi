@@ -65,6 +65,7 @@ const createLike = async (req, res) => {
 
     creator_list.push({
       name: client.firstname,
+      nickname: client.nickname, // Include nickname field
       type: user[i].type,
       date: user[i].date,
       time: user[i].time,

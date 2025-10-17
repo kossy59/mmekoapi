@@ -126,6 +126,7 @@ const MsgNotify = async (req, res) => {
           files: conversation.latestMessage.files || [],
           fileCount: conversation.latestMessage.fileCount || 0,
           name: userInfo.firstname,
+          nickname: userInfo.nickname, // Include nickname field
           photolink: userPhoto?.photoLink || "",
           unreadCount: conversation.unreadCount,
           lastActivity: conversation.lastActivity
