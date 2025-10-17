@@ -66,7 +66,7 @@ const declineFanRequest = async (req, res) => {
 
     // Send notifications
     await sendEmail(userid, `Your ${hostType.toLowerCase()} request has been declined`);
-    await pushmessage(userid, `Your ${hostType.toLowerCase()} request has been declined`, "fanicon");
+    await pushmessage(userid, `Your ${hostType.toLowerCase()} request has been declined`, "/bell.jpg");
     
     // Create database notification for fan
     await admindb.create({
@@ -76,7 +76,7 @@ const declineFanRequest = async (req, res) => {
     });
     
     await sendEmail(creator_portfolio_id, `You declined a ${hostType.toLowerCase()} request`);
-    await pushmessage(creator_portfolio_id, `You declined a ${hostType.toLowerCase()} request`, "creatoricon");
+    await pushmessage(creator_portfolio_id, `You declined a ${hostType.toLowerCase()} request`, "/bell.jpg");
     
     // Create database notification for creator
     await admindb.create({
