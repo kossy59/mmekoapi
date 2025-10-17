@@ -33,6 +33,10 @@ const paymentTransactionSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
+    paymentId: { 
+      type: Number, 
+      required: false,
+     },
     txData: {
       type: Object, // store NOWPayments response data
       required: false,

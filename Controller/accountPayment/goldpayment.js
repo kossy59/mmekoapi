@@ -53,6 +53,7 @@ exports.createPayment = async (req, res) => {
       txData: response.data,
       status: "waiting",
       isCredited: false,
+      paymentId: response.data.id,
     });
 
     await newTx.save();
@@ -113,6 +114,9 @@ exports.handleWebhook = async (req, res) => {
 /**
  * Verify Latest Payment — used by frontend success page (no NP_id in URL)
  */
+/**
+ * Verify Latest Payment — used by frontend success page (no NP_id in URL)
+ */
 exports.verifyPayment = async (req, res) => {
   try {
     const { userId, NP_id } = req.query;
@@ -141,25 +145,41 @@ exports.verifyPayment = async (req, res) => {
       ["waiting", "pending", "confirming", "sending"].includes(transaction.status)
     ) {
       try {
-        const response = await axios.get(
-          `${BASE_URL}/payment/${transaction.txData?.id || NP_id}`,
-          {
-            headers: { "x-api-key": NOWPAYMENTS_API_KEY },
+        // Use the Invoice ID you saved (which you call 'paymentId' or 'txData.id')
+        const invoiceId = transaction.paymentId || transaction.txData?.id || NP_id;
+
+        if (!invoiceId) {
+          console.warn("No Invoice ID found on transaction, cannot verify.");
+        } else {
+          const response = await axios.get(
+            `${BASE_URL}/invoice/${invoiceId}`,
+            {
+              headers: { "x-api-key": NOWPAYMENTS_API_KEY },
+            }
+          );
+
+          // ✅ FIX: The response.data is an ARRAY of payments
+          const payments = response.data;
+
+          if (payments && payments.length > 0) {
+            // Get the first payment from the array
+            const payment = payments[0]; 
+            const { payment_status, order_id, price_amount } = payment || {};
+
+            // If confirmed or finished → trigger webhook logic internally
+            if (["confirmed", "finished"].includes(payment_status)) {
+              console.log("💡 IPN missed — manually triggering webhook logic...");
+              req.body = { payment_status, order_id, price_amount };
+              await exports.handleWebhook(req, {
+                status: (code) => ({
+                  send: (msg) => console.log("Manual webhook response:", code, msg),
+                }),
+                send: (msg) => console.log("Manual webhook:", msg),
+              });
+            }
+          } else {
+            console.log("No payments found for this invoice ID yet.");
           }
-        );
-
-        const { payment_status, order_id, price_amount } = response.data || {};
-
-        // If confirmed or finished → trigger webhook logic internally
-        if (["confirmed", "finished"].includes(payment_status)) {
-          console.log("💡 IPN missed — manually triggering webhook logic...");
-          req.body = { payment_status, order_id, price_amount };
-          await exports.handleWebhook(req, {
-            status: (code) => ({
-              send: (msg) => console.log("Manual webhook response:", code, msg),
-            }),
-            send: (msg) => console.log("Manual webhook:", msg),
-          });
         }
       } catch (err) {
         console.warn("NOWPayments API check failed:", err.message);
@@ -187,7 +207,6 @@ exports.verifyPayment = async (req, res) => {
     });
   }
 };
-
 
 exports.updateGoldBalance = async (userId, amount) => {
   try {
