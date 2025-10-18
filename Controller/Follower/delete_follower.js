@@ -39,7 +39,7 @@ const createCreator = async (req, res) => {
 
     await followerdb.deleteOne({ _id: Isfollowed._id });
     await sendEmail(userid, "user unfollow you");
-    await pushmessage(userid, "user unfollow you", "/bell.jpg");
+    await pushmessage(userid, "user unfollow you", "/icons/m-logo.png");
 
     // No need to sync userdb arrays - followers collection is the single source of truth
 

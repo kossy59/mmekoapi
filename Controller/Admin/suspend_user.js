@@ -38,7 +38,7 @@ const updatePost = async (req,res)=>{
                 await admin.create(data)
 
                 await sendEmail(userid,"your account has been suspended")
-                await pushmessage(userid,"your account has been suspended","/bell.jpg")
+                await pushmessage(userid,"your account has been suspended","/icons/m-logo.png")
 
 
 

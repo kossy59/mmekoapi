@@ -58,7 +58,7 @@ const updateView = async (req, res) => {
           await admindb.create(respond);
 
           await sendEmail(id, "you have new follower");
-          await pushmessage(id, "you have new follower", "/bell.jpg");
+          await pushmessage(id, "you have new follower", "/icons/m-logo.png");
 
           console.log("Added follower successfully");
         } catch (error) {
@@ -88,7 +88,7 @@ const updateView = async (req, res) => {
           await admindb.create(respond);
 
           await sendEmail(id, "A user unfollowed you");
-          await pushmessage(id, "A user unfollowed you", "/bell.jpg");
+          await pushmessage(id, "A user unfollowed you", "/icons/m-logo.png");
 
           isFollowing = false;
         } catch (error) {
