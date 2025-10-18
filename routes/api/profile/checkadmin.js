@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const isAdmin = require("../../../Middleware/isAdmin"); 
+const { checkAdmin } = require("../../../Controller/profile/isadmin");
 
-router.get("/check", isAdmin);
+router.get("/check", checkAdmin);
 
 module.exports = router;
