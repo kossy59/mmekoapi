@@ -48,6 +48,9 @@ const getAllFanRequests = async (req, res) => {
       index === self.findIndex(r => r._id.toString() === request._id.toString())
     );
 
+    // Sort all requests by createdAt (most recent first) regardless of type
+    uniqueRequests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
     // Pre-fetch all creator data to avoid multiple database calls
     const creatorPortfolioIds = uniqueRequests
       .filter(req => req._userRole === 'fan')
@@ -77,12 +80,6 @@ const getAllFanRequests = async (req, res) => {
                 if (isCreator) {
                   // Current user is creator, get fan details
                   otherUser = await userdb.findOne({ _id: request.userid }).exec();
-                  console.log('🔍 [getAllFanRequests] Fan user data:', {
-                    firstname: otherUser?.firstname,
-                    lastname: otherUser?.lastname,
-                    name: otherUser?.name,
-                    nickname: otherUser?.nickname
-                  });
                   userType = 'creator';
                 } else if (isFan) {
                   // Current user is fan, get creator details
@@ -90,12 +87,6 @@ const getAllFanRequests = async (req, res) => {
                   // Also get the creator's user data for VIP status
                   const creatorUserData = await userdb.findOne({ _id: creatorData?.userid }).exec();
                   
-                  console.log('🔍 [getAllFanRequests] Creator user data:', {
-                    firstname: creatorUserData?.firstname,
-                    lastname: creatorUserData?.lastname,
-                    name: creatorUserData?.name,
-                    nickname: creatorUserData?.nickname
-                  });
                   
                   // Combine creator data with user VIP data
                   otherUser = {
@@ -203,12 +194,6 @@ const getAllFanRequests = async (req, res) => {
           vipEndDate: null
         };
 
-        console.log('🔍 [getAllFanRequests] Final otherUser object:', {
-          name: finalOtherUser.name,
-          nickname: finalOtherUser.nickname,
-          firstname: finalOtherUser.firstname,
-          lastname: finalOtherUser.lastname
-        });
 
         return {
           id: request._id,
