@@ -1,10 +1,8 @@
 const express = require("express");
 const router = express.Router();
-const isAdmin = require("../../../Middleware/isAdmin"); 
+const handleRefresh = require("../../../Middleware/refresh"); // must decode token
+const { checkAdmin } = require("../../../Controller/profile/isadmin");
 
-// Example: simple admin check endpoint
-router.get("/check", isAdmin, (req, res) => {
-  res.json({ success: true, isAdmin: true });
-});
+router.get("/check", handleRefresh, checkAdmin); // ✅ add auth middleware
 
 module.exports = router;

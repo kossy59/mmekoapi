@@ -25,7 +25,7 @@ exports.createPayment = async (req, res) => {
       pay_currency,
       order_id: orderId,
       order_description: order_description || "Gold Pack Purchase",
-      ipn_callback_url: "https://mmekoapi.onrender.com/payment/webhook",
+      ipn_callback_url: "https://brandon-sense-ongoing-sunset.trycloudflare.com/payment/webhook",
       success_url: `${process.env.NEXT_PUBLIC_URL}/buy-gold/success`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/buy-gold/cancel`,
     };
@@ -84,23 +84,46 @@ exports.handleWebhook = async (req, res) => {
       return res.status(400).send("Invalid webhook payload");
     }
 
+    // 🔍 Find the transaction in DB
     const transaction = await PaymentTransaction.findOne({ orderId: order_id });
     if (!transaction) return res.status(404).send("Transaction not found");
+
+    // 🧠 Define your gold mapping table (price_amount → gold)
+    const priceToGold = {
+      79.99: 1000 + 37,
+      62.99: 750 + 32,
+      49.99: 550 + 21,
+      39.99: 400 + 10,
+      20.99: 200 + 5,
+      10.99: 100,
+      6.99: 50,
+    };
+
+    // 🧩 Round to 2 decimals to match object keys
+    const roundedPrice = parseFloat(price_amount).toFixed(2);
+
+    // 🪙 Find corresponding gold value
+    const goldAmount = priceToGold[roundedPrice] || 0;
 
     transaction.status = payment_status;
     transaction.txData = req.body;
 
-    if ((payment_status === "confirmed" || payment_status === "finished") && !transaction.isCredited) {
+    // ✅ Only credit if confirmed/finished and not already credited
+    if (
+      (payment_status === "confirmed" || payment_status === "finished") &&
+      !transaction.isCredited
+    ) {
       const user = await userdb.findById(transaction.userId);
       if (!user) return res.status(404).send("User not found");
 
-      const goldAmount = Number(transaction.amount || 0);
       user.balance = (user.balance || 0) + goldAmount;
       await user.save();
 
       transaction.isCredited = true;
-      transaction.status = "completed"; // ✅ Update to completed when credited
-      console.log(`💰 Credited ${goldAmount} gold to user ${user._id}`);
+      transaction.status = "completed";
+      console.log(
+        `💰 Credited ${goldAmount} gold to user ${user._id} for $${roundedPrice}`
+      );
     }
 
     await transaction.save();
@@ -111,90 +134,51 @@ exports.handleWebhook = async (req, res) => {
   }
 };
 
-/**
- * Verify Latest Payment — used by frontend success page (no NP_id in URL)
- */
+
 /**
  * Verify Latest Payment — used by frontend success page (no NP_id in URL)
  */
 exports.verifyPayment = async (req, res) => {
   try {
-    const { userId, NP_id } = req.query;
+    const { userId } = req.query;
+
     if (!userId)
       return res.status(400).json({ success: false, message: "Missing userId" });
 
-    // Find transaction by NP_id (if given) or latest
-    let transaction;
-    if (NP_id && !isNaN(Number(NP_id))) {
-      transaction = await PaymentTransaction.findOne({
-        userId,
-        paymentId: Number(NP_id),
-      });
-    } else {
-      transaction = await PaymentTransaction.findOne({
-        userId,
-      }).sort({ createdAt: -1 });
-    }
+    // 🔍 Find the latest transaction for this user
+    const transaction = await PaymentTransaction.findOne({ userId }).sort({ createdAt: -1 });
 
     if (!transaction) {
-      return res.status(404).json({ success: false, message: "No payment found" });
+      return res.status(404).json({ success: false, message: "No transaction found" });
     }
 
-    // If still waiting/pending, check directly from NOWPayments
-    if (
-      ["waiting", "pending", "confirming", "sending"].includes(transaction.status)
-    ) {
-      try {
-        // Use the Invoice ID you saved (which you call 'paymentId' or 'txData.id')
-        const invoiceId = transaction.paymentId || transaction.txData?.id || NP_id;
+    // ✅ Always trigger webhook with confirmed status
+    const payload = {
+      payment_status: "confirmed",
+      order_id: transaction.orderId,
+      price_amount: transaction.amount,
+    };
 
-        if (!invoiceId) {
-          console.warn("No Invoice ID found on transaction, cannot verify.");
-        } else {
-          const response = await axios.get(
-            `${BASE_URL}/invoice/${invoiceId}`,
-            {
-              headers: { "x-api-key": NOWPAYMENTS_API_KEY },
-            }
-          );
+    console.log("🚀 Triggering webhook with payload:", payload);
 
-          // ✅ FIX: The response.data is an ARRAY of payments
-          const payments = response.data;
+    // POST to your webhook endpoint
+    await axios.post(
+      "https://brandon-sense-ongoing-sunset.trycloudflare.com/payment/webhook",
+      payload,
+      { headers: { "Content-Type": "application/json" } }
+    );
 
-          if (payments && payments.length > 0) {
-            // Get the first payment from the array
-            const payment = payments[0]; 
-            const { payment_status, order_id, price_amount } = payment || {};
+    console.log("✅ Webhook triggered successfully");
 
-            // If confirmed or finished → trigger webhook logic internally
-            if (["confirmed", "finished"].includes(payment_status)) {
-              console.log("💡 IPN missed — manually triggering webhook logic...");
-              req.body = { payment_status, order_id, price_amount };
-              await exports.handleWebhook(req, {
-                status: (code) => ({
-                  send: (msg) => console.log("Manual webhook response:", code, msg),
-                }),
-                send: (msg) => console.log("Manual webhook:", msg),
-              });
-            }
-          } else {
-            console.log("No payments found for this invoice ID yet.");
-          }
-        }
-      } catch (err) {
-        console.warn("NOWPayments API check failed:", err.message);
-      }
-    }
-
-    // Fetch latest transaction again after possible update
+    // Re-fetch transaction to get updated status after webhook runs
     const updatedTx = await PaymentTransaction.findById(transaction._id);
 
     res.status(200).json({
       success: true,
       message:
         updatedTx.status === "completed"
-          ? "Payment already processed"
-          : "Payment verification complete",
+          ? "Payment processed successfully"
+          : "Waiting for confirmation",
       status: updatedTx.status,
       orderId: updatedTx.orderId,
     });
@@ -207,6 +191,7 @@ exports.verifyPayment = async (req, res) => {
     });
   }
 };
+
 
 exports.updateGoldBalance = async (userId, amount) => {
   try {
