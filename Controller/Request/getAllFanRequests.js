@@ -48,6 +48,9 @@ const getAllFanRequests = async (req, res) => {
       index === self.findIndex(r => r._id.toString() === request._id.toString())
     );
 
+    // Sort all requests by createdAt (most recent first) regardless of type
+    uniqueRequests.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
     // Pre-fetch all creator data to avoid multiple database calls
     const creatorPortfolioIds = uniqueRequests
       .filter(req => req._userRole === 'fan')
@@ -84,12 +87,15 @@ const getAllFanRequests = async (req, res) => {
                   // Also get the creator's user data for VIP status
                   const creatorUserData = await userdb.findOne({ _id: creatorData?.userid }).exec();
                   
+                  
                   // Combine creator data with user VIP data
                   otherUser = {
                     ...creatorData?.toObject(),
                     isVip: creatorUserData?.isVip || false,
                     vipEndDate: creatorUserData?.vipEndDate,
-                    nickname: creatorUserData?.nickname // Include nickname from user data
+                    nickname: creatorUserData?.nickname, // Include nickname from user data
+                    firstname: creatorUserData?.firstname, // Include first name
+                    lastname: creatorUserData?.lastname // Include last name
                   };
                   userType = 'fan';
                 } else {
@@ -171,6 +177,8 @@ const getAllFanRequests = async (req, res) => {
         const finalOtherUser = otherUser ? {
           name: otherUser.name || `${otherUser.firstname || ''} ${otherUser.lastname || ''}`.trim() || 'Unknown User',
           nickname: otherUser.nickname || otherUser.firstname || otherUser.name, // Include nickname field with fallbacks
+          firstname: otherUser.firstname || null, // Include first name field
+          lastname: otherUser.lastname || null, // Include last name field
           photolink: otherUser.photolink || '/picture-1.jfif',
           isCreator: userType === 'fan', // If current user is fan, other user is creator
           isVip: otherUser.isVip || false, // Include VIP status
@@ -178,11 +186,14 @@ const getAllFanRequests = async (req, res) => {
         } : {
           name: 'Unknown User',
           nickname: null, // Include nickname field
+          firstname: null, // Include first name field
+          lastname: null, // Include last name field
           photolink: '/picture-1.jfif',
           isCreator: userType === 'fan',
           isVip: false,
           vipEndDate: null
         };
+
 
         return {
           id: request._id,

@@ -1,6 +1,8 @@
 const documentdb = require("../../Creators/document");
 const admindb = require("../../Creators/admindb");
+const userdb = require("../../Creators/userdb");
 const { uploadManyFilesToCloudinary } = require("../../utiils/appwrite");
+const { pushAdminNotification } = require("../../utiils/sendPushnot");
 
 const createCreator = async (req, res) => {
   console.log("Trying to verify a form: ", req.body);
@@ -131,6 +133,33 @@ const createCreator = async (req, res) => {
     };
 
     await admindb.create(respond);
+
+    // ✅ Send push notification to user about application submission
+    try {
+      await pushAdminNotification(
+        userid, 
+        `Your creator application has been submitted and is now in review. You will hear from us within few hours.`,
+        "application_submitted"
+      );
+    } catch (pushError) {
+      console.error("Error sending push notification for application submission:", pushError);
+      // Don't fail the request if push notification fails
+    }
+
+    // ✅ Send push notification to all admins about new application
+    try {
+      const admins = await userdb.find({ isAdmin: true }).exec();
+      for (const admin of admins) {
+        await pushAdminNotification(
+          admin._id, 
+          `📋 New creator application submitted by ${firstname} ${lastname}. Please review the documents.`,
+          "new_application"
+        );
+      }
+    } catch (adminPushError) {
+      console.error("Error sending push notification to admins for new application:", adminPushError);
+      // Don't fail the request if push notification fails
+    }
 
     return res.status(200).json({
       ok: true,

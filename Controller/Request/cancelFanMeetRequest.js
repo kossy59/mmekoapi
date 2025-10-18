@@ -64,7 +64,7 @@ const cancelFanRequest = async (req, res) => {
 
     // Send notifications
     await sendEmail(userid, `Your ${hostType.toLowerCase()} request has been cancelled`);
-    await pushmessage(userid, `Your ${hostType.toLowerCase()} request has been cancelled`, "fanicon");
+    await pushmessage(userid, `Your ${hostType.toLowerCase()} request has been cancelled`, "/bell.jpg");
     
     // Create database notification for fan
     await admindb.create({
@@ -74,7 +74,7 @@ const cancelFanRequest = async (req, res) => {
     });
     
     await sendEmail(request.creator_portfolio_id, `A fan cancelled their ${hostType.toLowerCase()} request`);
-    await pushmessage(request.creator_portfolio_id, `A fan cancelled their ${hostType.toLowerCase()} request`, "creatoricon");
+    await pushmessage(request.creator_portfolio_id, `A fan cancelled their ${hostType.toLowerCase()} request`, "/bell.jpg");
     
     // Create database notification for creator
     await admindb.create({
