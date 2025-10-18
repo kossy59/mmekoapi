@@ -179,6 +179,7 @@ app.use("/comment", require("./routes/api/comment/Comment"));
 app.use("/like", require("./routes/api/like/Like"));
 app.use("/sharepost", require("./routes/api/share/share"));
 app.use("/editprofile", require("./routes/api/profile/Editprofile"));
+app.use("/admin", require("./routes/api/profile/checkadmin"));
 app.use("/checkusername", require("./routes/api/profile/checkusername"));
 app.use("/rejectcreator", require("./routes/api/creator/rejectcreator"));
 app.use("/verifycreator", require("./routes/api/creator/verifycreator"));

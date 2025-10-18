@@ -13,17 +13,106 @@ const readPost = async (req, res) => {
   }
 
   try {
-    let du = await postdb.find({ userid: userid }).exec();
+    // Use aggregation to join posts with user data (same as getpost.js)
+    const posts = await postdb.aggregate([
+      // Filter posts for the specific user
+      { $match: { userid: userid } },
+      
+      // make ObjectId copy of userid for joins
+      {
+        $addFields: {
+          useridObj: { $toObjectId: "$userid" },
+        },
+      },
 
-    // If du is null or undefined, return an empty array instead of error
-    if (!du) {
-      du = [];
+      // join with users
+      {
+        $lookup: {
+          from: "userdbs", // your users collection name
+          localField: "useridObj",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+
+      // join with likes
+      {
+        $lookup: {
+          from: "likes", // your Like creator collection
+          localField: "_id",
+          foreignField: "postid",
+          as: "likes",
+        },
+      },
+      // Add likeCount and likedBy
+      {
+        $addFields: {
+          likeCount: { $size: "$likes" },
+          likedBy: {
+            $map: {
+              input: "$likes",
+              as: "like",
+              in: "$$like.userid"
+            }
+          }
+        }
+      },
+
+      // join with comments
+      {
+        $lookup: {
+          from: "comments", // your Comment creator collection
+          localField: "_id",
+          foreignField: "postid",
+          as: "comments",
+        },
+      },
+      {
+        $project: {
+          userid: 1,
+          postfilelink: 1,
+          postfilepublicid: 1,
+          posttime: 1,
+          content: 1,
+          posttype: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          likeCount: 1,
+          likedBy: 1,
+          comments: 1,
+          user: {
+            _id: 1,
+            firstname: 1,
+            lastname: 1,
+            nickname: 1,
+            gender: 1,
+            country: 1,
+            age: 1,
+            followers: 1,
+            following: 1,
+            creator_portfolio: 1,
+            creator_portfolio_id: 1,
+            creator_verified: 1,
+            photolink: 1,
+            photoID: 1,
+            isVip: 1,
+            vipStartDate: 1,
+            vipEndDate: 1,
+          },
+        },
+      },
+    ]);
+
+    // If posts is null or undefined, return an empty array instead of error
+    if (!posts) {
+      posts = [];
     }
     
     return res.status(200).json({ 
       ok: true, 
       message: `Posts for user ${userid}`, 
-      post: du 
+      post: posts 
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: `${err.message}!` });
