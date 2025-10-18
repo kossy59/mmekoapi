@@ -2,6 +2,7 @@ let userdb = require("../../Creators/userdb");
 let documentdb = require("../../Creators/document");
 let admindb = require("../../Creators/admindb");
 const creators = require("../../Creators/creators");
+const { pushAdminNotification } = require("../../utiils/sendPushnot");
 
 const createCreator = async (req, res) => {
   const { userid, docid } = req.body;
@@ -38,6 +39,18 @@ const createCreator = async (req, res) => {
       message: `Congratulations! Your creator application has been approved.`,
       seen: false,
     }); 
+
+    // ✅ 5. Send push notification to user about approval
+    try {
+      await pushAdminNotification(
+        userid, 
+        `🎉 Congratulations! Your creator application has been approved. You can now start creating your portfolio!`,
+        "application_approved"
+      );
+    } catch (pushError) {
+      console.error("Error sending push notification for application approval:", pushError);
+      // Don't fail the request if push notification fails
+    }
 
     return res.status(200).json({
       ok: true,
