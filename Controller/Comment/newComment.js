@@ -45,7 +45,7 @@ const createComment = async (req,res)=>{
             const postuser = await postdbs.findOne({ _id: postid }).exec();
             if (postuser && postuser.userid !== userid) { // Don't notify if user is commenting on their own post
               await sendEmail(postuser.userid, "user commented on your Post");
-              await pushmessage(postuser.userid, "user commented on your Post", "/icons/m-logo.png");
+              await pushmessage(postuser.userid, "user commented on your Post", "/bell.jpg");
               
               // Create database notification for comment
               const commenter = await userdb.findOne({ _id: userid }).exec();
