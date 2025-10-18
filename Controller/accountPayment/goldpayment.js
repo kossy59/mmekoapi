@@ -25,7 +25,7 @@ exports.createPayment = async (req, res) => {
       pay_currency,
       order_id: orderId,
       order_description: order_description || "Gold Pack Purchase",
-      ipn_callback_url: "https://brandon-sense-ongoing-sunset.trycloudflare.com/payment/webhook",
+      ipn_callback_url: "https://mmekoapi.onrender.com/payment/webhook",
       success_url: `${process.env.NEXT_PUBLIC_URL}/buy-gold/success`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL}/buy-gold/cancel`,
     };
@@ -163,7 +163,7 @@ exports.verifyPayment = async (req, res) => {
 
     // POST to your webhook endpoint
     await axios.post(
-      "https://brandon-sense-ongoing-sunset.trycloudflare.com/payment/webhook",
+      "https://mmekoapi.onrender.com/payment/webhook",
       payload,
       { headers: { "Content-Type": "application/json" } }
     );
