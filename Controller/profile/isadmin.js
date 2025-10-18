@@ -10,7 +10,7 @@ exports.checkAdmin = async (req, res) => {
 
     return res.json({
       success: true,
-      isAdmin: !!user.admin, // converts truthy value to boolean
+      isAdmin: user.admin === true, // explicitly check for true
     });
   } catch (err) {
     console.error("Error checking admin:", err);

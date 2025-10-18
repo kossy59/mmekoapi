@@ -179,6 +179,7 @@ app.use("/comment", require("./routes/api/comment/Comment"));
 app.use("/like", require("./routes/api/like/Like"));
 app.use("/sharepost", require("./routes/api/share/share"));
 app.use("/editprofile", require("./routes/api/profile/Editprofile"));
+app.use("/admin", require("./routes/api/profile/checkadmin"));
 app.use("/checkusername", require("./routes/api/profile/checkusername"));
 app.use("/rejectcreator", require("./routes/api/creator/rejectcreator"));
 app.use("/verifycreator", require("./routes/api/creator/verifycreator"));
@@ -234,7 +235,6 @@ app.use("/video-call", require("./routes/api/videoCall/videoCallRoutes"));
 app.use("/support-chat", require("./routes/api/supportChat"));
 app.use("/review", require("./routes/api/Review/reviewRoutes"));
 app.use("/api", require("./routes/api/updateRatingsVip"));
-app.use("/admin", require("./routes/api/profile/checkadmin"));
 // Track online users
 const onlineUsers = new Set();
 

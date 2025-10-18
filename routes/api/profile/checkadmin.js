@@ -1,8 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const handleRefresh = require("../../../Middleware/refresh"); // must decode token
-const { checkAdmin } = require("../../../Controller/profile/isadmin");
+const isAdmin = require("../../../Middleware/isAdmin"); 
 
-router.get("/check", handleRefresh, checkAdmin); // ✅ add auth middleware
+router.get("/check", isAdmin);
 
 module.exports = router;
