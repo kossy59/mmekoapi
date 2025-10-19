@@ -74,7 +74,7 @@ const pushmessage = async (userid, message, icon, options = {}) => {
 
 // Enhanced push notification functions for different types
 const pushActivityNotification = async (userid, message, activityType = "activity") => {
-  await pushmessage(userid, message, "/bell.jpg", {
+  await pushmessage(userid, message, "/icons/m-logo.png", {
     title: "New Activity",
     type: "activity",
     url: "/notifications"
@@ -82,7 +82,7 @@ const pushActivityNotification = async (userid, message, activityType = "activit
 };
 
 const pushMessageNotification = async (userid, message, senderName = "Someone") => {
-  await pushmessage(userid, message, "/bell.jpg", {
+  await pushmessage(userid, message, "/icons/m-logo.png", {
     title: `Message from ${senderName}`,
     type: "message",
     url: "/message"
@@ -90,7 +90,7 @@ const pushMessageNotification = async (userid, message, senderName = "Someone") 
 };
 
 const pushSupportNotification = async (userid, message) => {
-  await pushmessage(userid, message, "/bell.jpg", {
+  await pushmessage(userid, message, "/icons/m-logo.png", {
     title: "Chat Support",
     type: "support",
     url: "/message/supportchat"
@@ -98,7 +98,7 @@ const pushSupportNotification = async (userid, message) => {
 };
 
 const pushAdminNotification = async (userid, message, adminType = "admin") => {
-  await pushmessage(userid, message, "/bell.jpg", {
+  await pushmessage(userid, message, "/icons/m-logo.png", {
     title: "MMEKO SUPPORT",
     type: "support",
     url: "/message/supportchat"

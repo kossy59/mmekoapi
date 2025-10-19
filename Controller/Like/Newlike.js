@@ -80,7 +80,7 @@ const createLike = async (req, res) => {
     await likedata.create(like);
     if (postuser) {
       await sendEmail(postuser.userid, "user like your Post");
-      await pushmessage(postuser.userid, "user like your Post", "/bell.jpg");
+      await pushmessage(postuser.userid, "user like your Post", "/icons/m-logo.png");
       
       // Create database notification for like
       const liker = await userdb.findOne({ _id: userid }).exec();
