@@ -75,7 +75,10 @@ router.route('/:pid')
                             creator_portfolio_id: 1,
                             creator_verified: 1,
                             photolink: 1,
-                            photoID: 1
+                            photoID: 1,
+                            isVip: 1,
+                            vipStartDate: 1,
+                            vipEndDate: 1
                         }
                     }
                 }

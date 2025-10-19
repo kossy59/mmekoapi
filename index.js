@@ -739,6 +739,12 @@ io.on("connection", (socket) => {
       let answererVipEndDate = null;
       let callerVipStatus = false;
       let callerVipEndDate = null;
+      let callerFirstName = '';
+      let callerLastName = '';
+      let callerUsername = '';
+      let answererFirstName = '';
+      let answererLastName = '';
+      let answererUsername = '';
       
       // Try to find the creator's user ID from their creator ID (which is the creator's _id)
       try {
@@ -754,7 +760,7 @@ io.on("connection", (socket) => {
           // Creator not found, using original ID
         }
         
-        // Fetch VIP status for both caller and answerer
+        // Fetch VIP status and name details for both caller and answerer
         const [caller, answerer] = await Promise.all([
           userdb.findOne({ _id: callerId }).exec(),
           userdb.findOne({ _id: actualAnswererId }).exec()
@@ -763,21 +769,19 @@ io.on("connection", (socket) => {
         if (caller) {
           callerVipStatus = caller.isVip || false;
           callerVipEndDate = caller.vipEndDate || null;
+          callerFirstName = caller.firstname || '';
+          callerLastName = caller.lastname || '';
+          callerUsername = caller.nickname || '';
         }
         
         if (answerer) {
           answererVipStatus = answerer.isVip || false;
           answererVipEndDate = answerer.vipEndDate || null;
+          answererFirstName = answerer.firstname || '';
+          answererLastName = answerer.lastname || '';
+          answererUsername = answerer.nickname || '';
         }
         
-        console.log('🔍 [VIP Debug] Backend VIP Status:', {
-          callerId,
-          callerVipStatus,
-          callerVipEndDate,
-          answererId: actualAnswererId,
-          answererVipStatus,
-          answererVipEndDate
-        });
         
       } catch (error) {
         console.error('Error fetching VIP status:', error);
@@ -830,8 +834,14 @@ io.on("connection", (socket) => {
         callId: call._id,
         callerId: callerId,
         callerName: callerName,
+        callerFirstName: callerFirstName,
+        callerLastName: callerLastName,
+        callerUsername: callerUsername,
         callerIsVip: callerVipStatus,
         callerVipEndDate: callerVipEndDate,
+        answererFirstName: answererFirstName,
+        answererLastName: answererLastName,
+        answererUsername: answererUsername,
         answererIsVip: answererVipStatus,
         answererVipEndDate: answererVipEndDate,
         isIncoming: true
@@ -859,8 +869,8 @@ io.on("connection", (socket) => {
         call.connected = true;
         call.waiting = "connected";
         await call.save();
-
-        // Fetch VIP status for both users
+        
+        // Fetch VIP status and name details for both users
         const [caller, answerer] = await Promise.all([
           userdb.findOne({ _id: callerId }).exec(),
           userdb.findOne({ _id: answererId }).exec()
@@ -868,15 +878,27 @@ io.on("connection", (socket) => {
         
         const callerVipStatus = caller?.isVip || false;
         const callerVipEndDate = caller?.vipEndDate || null;
+        const callerFirstName = caller?.firstname || '';
+        const callerLastName = caller?.lastname || '';
+        const callerUsername = caller?.nickname || '';
         const answererVipStatus = answerer?.isVip || false;
         const answererVipEndDate = answerer?.vipEndDate || null;
+        const answererFirstName = answerer?.firstname || '';
+        const answererLastName = answerer?.lastname || '';
+        const answererUsername = answerer?.nickname || '';
 
         // Emit call accepted to caller
         socket.to(`user_${callerId}`).emit('fan_call_accepted', {
           callId: callId,
           callerId: callerId,
+          callerFirstName: callerFirstName,
+          callerLastName: callerLastName,
+          callerUsername: callerUsername,
           answererId: answererId,
           answererName: answererName,
+          answererFirstName: answererFirstName,
+          answererLastName: answererLastName,
+          answererUsername: answererUsername,
           callerIsVip: callerVipStatus,
           callerVipEndDate: callerVipEndDate,
           answererIsVip: answererVipStatus,
