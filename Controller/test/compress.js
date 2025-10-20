@@ -1,6 +1,6 @@
 const express = require("express");
 const multer = require("multer");
-const { uploadSingleFileToCloudinary } = require("../../utiils/appwrite");
+const { uploadSingleFileToCloudinary } = require("../../utiils/storj");
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() }); // file.buffer will be available

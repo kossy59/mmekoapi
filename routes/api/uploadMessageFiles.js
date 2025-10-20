@@ -2,7 +2,7 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { uploadManyFilesToCloudinary } = require('../../utiils/appwrite');
+const { uploadManyFilesToCloudinary } = require('../../utiils/storj');
 const router = express.Router();
 
 // Configure multer for memory storage
@@ -57,8 +57,8 @@ router.post('/', upload.array('file', 5), async (req, res) => {
       }
     }
 
-    // Upload files to Appwrite
-    console.log('📤 [UPLOAD] Starting upload to Appwrite...');
+    // Upload files to Storj
+    console.log('📤 [UPLOAD] Starting upload to Storj...');
     const uploadResults = await uploadManyFilesToCloudinary(req.files, 'post');
     console.log('📤 [UPLOAD] Upload results:', uploadResults);
     
@@ -99,7 +99,7 @@ router.post('/', upload.array('file', 5), async (req, res) => {
       if (localUrls.length === 0) {
         return res.status(500).json({
           ok: false,
-          message: 'Failed to upload files - both Appwrite and local storage failed',
+          message: 'Failed to upload files - both Storj and local storage failed',
           details: uploadResults
         });
       }

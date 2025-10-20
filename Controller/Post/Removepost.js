@@ -5,7 +5,7 @@
 const postdata = require('../../Creators/post')
 const commentdata = require('../../Creators/comment')
 const likedata = require('../../Creators/like')
-const { deleteFile } = require('../../utiils/appwrite')
+const { deleteFile } = require('../../utiils/storj')
 
 
 const deletePost = async (req, res) => {

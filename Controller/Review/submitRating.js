@@ -296,7 +296,6 @@ exports.getAllCreatorRatings = async (req, res) => {
   const { creatorId } = req.params;
 
   try {
-    console.log('🔍 [getAllCreatorRatings] Backend called with creatorId:', creatorId);
     
     if (!creatorId) {
       return res.status(400).json({
@@ -313,9 +312,7 @@ exports.getAllCreatorRatings = async (req, res) => {
       ]
     };
 
-    console.log('🔍 [getAllCreatorRatings] Query:', JSON.stringify(query, null, 2));
     let ratings = await reviewdb.find(query).sort({ createdAt: -1 });
-    console.log('🔍 [getAllCreatorRatings] Found ratings count:', ratings.length);
 
     // Update ratings with VIP data if missing
     const updatedRatings = [];
@@ -355,7 +352,6 @@ exports.getAllCreatorRatings = async (req, res) => {
       // Update the rating if needed
       if (needsUpdate) {
         await reviewdb.updateOne({ _id: rating._id }, { $set: updateData });
-        console.log(`🔄 [getCreatorRatings] Updated rating ${rating._id} with VIP data:`, updateData);
         
         // Update the local rating object
         const updatedRating = { ...rating.toObject(), ...updateData };
@@ -367,17 +363,6 @@ exports.getAllCreatorRatings = async (req, res) => {
     
     ratings = updatedRatings;
 
-    // Debug log to see VIP data in ratings
-    console.log('🔍 [getAllCreatorRatings] Found ratings with VIP data:', ratings.map(r => ({
-      id: r._id,
-      ratingType: r.ratingType,
-      fanIsVip: r.fanIsVip,
-      fanVipEndDate: r.fanVipEndDate,
-      creatorIsVip: r.creatorIsVip,
-      creatorVipEndDate: r.creatorVipEndDate,
-      fanName: r.fanName,
-      creatorName: r.creatorName
-    })));
 
     // Calculate average rating
     const totalRatings = ratings.length;
@@ -402,12 +387,6 @@ exports.getAllCreatorRatings = async (req, res) => {
       ratingCounts
     };
     
-    console.log('✅ [getAllCreatorRatings] Sending response:', {
-      ok: response.ok,
-      totalRatings: response.totalRatings,
-      averageRating: response.averageRating,
-      ratingsCount: response.ratings.length
-    });
     
     return res.status(200).json(response);
 
@@ -600,7 +579,6 @@ exports.getCreatorRatings = async (req, res) => {
       
       if (needsUpdate) {
         await reviewdb.updateOne({ _id: rating._id }, { $set: updateData });
-        console.log(`🔄 [getCreatorRatings] Updated rating ${rating._id} with VIP data:`, updateData);
         const updatedRating = { ...rating.toObject(), ...updateData };
         updatedRatings.push(updatedRating);
       } else {
@@ -610,17 +588,6 @@ exports.getCreatorRatings = async (req, res) => {
     
     ratings = updatedRatings;
 
-    // Debug log to see VIP data in ratings
-    console.log('🔍 [getCreatorRatings] Found ratings with VIP data:', ratings.map(r => ({
-      id: r._id,
-      ratingType: r.ratingType,
-      fanIsVip: r.fanIsVip,
-      fanVipEndDate: r.fanVipEndDate,
-      creatorIsVip: r.creatorIsVip,
-      creatorVipEndDate: r.creatorVipEndDate,
-      fanName: r.fanName,
-      creatorName: r.creatorName
-    })));
 
     // Calculate average rating
     const totalRatings = ratings.length;

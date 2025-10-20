@@ -1,7 +1,7 @@
 const documentdb = require("../../Creators/document");
 const admindb = require("../../Creators/admindb");
 const userdb = require("../../Creators/userdb");
-const { uploadManyFilesToCloudinary } = require("../../utiils/appwrite");
+const { uploadManyFilesToCloudinary } = require("../../utiils/storj");
 const { pushAdminNotification } = require("../../utiils/sendPushnot");
 
 const createCreator = async (req, res) => {

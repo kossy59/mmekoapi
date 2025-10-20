@@ -7,7 +7,6 @@ const deleteOldMessages = async () => {
     const sixtyDaysAgo = new Date();
     sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
     
-    console.log(`🗑️ [MessageCleanup] Deleting messages older than ${sixtyDaysAgo.toISOString()}`);
     
     // Connect to database if not already connected
     if (mongoose.connection.readyState !== 1) {
@@ -23,7 +22,6 @@ const deleteOldMessages = async () => {
       date: { $lt: sixtyDaysAgo.getTime().toString() }
     });
     
-    console.log(`✅ [MessageCleanup] Deleted ${result.deletedCount} old messages`);
     
     return {
       success: true,
@@ -47,11 +45,9 @@ const scheduleMessageCleanup = () => {
   
   // Schedule cleanup to run every 24 hours
   setInterval(() => {
-    console.log("🔄 [MessageCleanup] Running scheduled cleanup...");
     deleteOldMessages();
   }, 24 * 60 * 60 * 1000); // 24 hours in milliseconds
   
-  console.log("⏰ [MessageCleanup] Scheduled automatic message cleanup every 24 hours");
 };
 
 module.exports = {

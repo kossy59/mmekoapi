@@ -1,6 +1,6 @@
 const creators = require("../../Creators/creators");
 const userdb = require("../../Creators/userdb");
-const { uploadManyFilesToCloudinary } = require("../../utiils/appwrite");
+const { uploadManyFilesToCloudinary } = require("../../utiils/storj");
 
 const createCreator = async (req, res) => {
   const data = req.body;
@@ -58,7 +58,7 @@ const createCreator = async (req, res) => {
 
   // Upload new files - always upload if files are provided
   const results = (req.files && req.files.length > 0)
-    ? (await uploadManyFilesToCloudinary(req.files)) || []
+    ? (await uploadManyFilesToCloudinary(req.files, 'creator')) || []
     : [];
 
   // Merge uploaded files with any photolinks passed from frontend

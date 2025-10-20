@@ -3,7 +3,7 @@ const mongoose = require('mongoose'); // <--- ADD THIS
 const router = express.Router();
 const readPost = require('../../../Controller/Post/Getpost');
 const postdbs = require("../../../Creators/post");
-const { deleteFile } = require('../../../utiils/appwrite');
+const { deleteFile } = require('../../../utiils/storj');
 
 router.route('/')
     .post(readPost);

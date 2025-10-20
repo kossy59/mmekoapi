@@ -7,16 +7,16 @@ const {
   deleteFile,
   updateSingleFileToCloudinary,
   previewFile,
-} = require("../utiils/appwrite");
+  getFileUrl,
+  streamFile,
+} = require("../utiils/storj");
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() }); // Use memory storage so file.buffer is available
 
-// Appwrite API endpoint and project from env (fallbacks for local dev)
-const ENDPOINT = "https://cloud.appwrite.io/v1";
-const PROJECT_ID = process.env.APPWRITE_PROJECT_ID || "668f9f8c0011a761d118";
-const BUCKET_ID = "post"; // Force use of "post" bucket
-const APPWRITE_API_KEY = process.env.APPWRITE_API_KEY || "";
+// Storj configuration from env
+const STORJ_ENDPOINT = process.env.STORJ_ENDPOINT;
+const STORJ_BUCKET_POST = process.env.STORJ_BUCKET_POST || "post";
 
 // POST route to upload an image and save it to Cloudinary
 router.post(
@@ -32,16 +32,13 @@ router.post(
         return res.status(400).json({ error: "No file uploaded." });
       }
 
-      console.log("File received:", file);
-
       const result = await uploadSingleFileToCloudinary(file);
-      console.log("Upload result:", result);
       const publicId = result?.public_id;
 
       if (!publicId) {
         return res
           .status(500)
-          .json({ error: "Failed to receive public_id from Appwrite" });
+          .json({ error: "Failed to receive public_id from Storj" });
       }
 
       const baseUrl = `${req.protocol}://${req.get("host")}`;
@@ -56,7 +53,6 @@ router.post(
         proxy_download,
       });
     } catch (err) {
-      console.error("Error uploading file:", err);
       res.status(500).json({ error: err.message });
     }
   }
@@ -69,26 +65,17 @@ router.get("/info", async (req, res) => {
     if (!publicId) {
       return res.status(400).json({ error: "Public ID is required." });
     }
-    if (!APPWRITE_API_KEY) {
-      return res
-        .status(500)
-        .json({ error: "APPWRITE_API_KEY is not set on server." });
+    
+    const fileInfo = await previewFile(publicId, bucket || STORJ_BUCKET_POST);
+    if (!fileInfo) {
+      return res.status(404).json({ error: "File not found." });
     }
-    const bucketId = bucket && bucket !== "default" ? bucket : BUCKET_ID;
-    const url = `${ENDPOINT}/storage/buckets/${bucketId}/files/${publicId}`;
-    const resp = await axios.get(url, {
-      headers: {
-        "X-Appwrite-Project": PROJECT_ID,
-        "X-Appwrite-Key": APPWRITE_API_KEY,
-      },
-    });
-    res.json(resp.data);
+    
+    res.json(fileInfo);
   } catch (err) {
-    const status = err?.response?.status || 500;
-    const data = err?.response?.data || err.message;
-    res.status(status).json({ 
-      error: typeof data === 'string' ? data : 'Request error',
-      status: status 
+    res.status(500).json({ 
+      error: typeof err.message === 'string' ? err.message : 'Request error',
+      status: 500 
     });
   }
 });
@@ -101,15 +88,11 @@ router.get("/download", async (req, res) => {
       return res.status(400).json({ error: "Public ID is required." });
     }
 
-    const bucketId = bucket && bucket !== "default" ? bucket : BUCKET_ID;
-    const url = `${ENDPOINT}/storage/buckets/${bucketId}/files/${publicId}/download?project=${PROJECT_ID}`;
+    const bucketName = bucket && bucket !== "default" ? bucket : STORJ_BUCKET_POST;
+    const fileUrl = getFileUrl(bucketName, publicId);
 
-    const resp = await axios.get(url, {
+    const resp = await axios.get(fileUrl, {
       responseType: "stream",
-      headers: {
-        "X-Appwrite-Project": PROJECT_ID,
-        ...(APPWRITE_API_KEY ? { "X-Appwrite-Key": APPWRITE_API_KEY } : {}),
-      },
     });
 
     // Propagate content headers so browsers treat as download
@@ -138,38 +121,23 @@ router.get("/download", async (req, res) => {
 router.get("/view", async (req, res) => {
   try {
     const { publicId, bucket } = req.query;
-    
-    if (!publicId) {
-      return res.status(400).json({ error: "Public ID is required." });
-    }
-    const bucketId = bucket && bucket !== "default" ? bucket : BUCKET_ID;
-    const url = `${ENDPOINT}/storage/buckets/${bucketId}/files/${publicId}/view?project=${PROJECT_ID}`;
+    if (!publicId) return res.status(400).json({ error: "Public ID is required." });
+    const bucketName = bucket && bucket !== "default" ? bucket : STORJ_BUCKET_POST;
 
-    const resp = await axios.get(url, {
-      responseType: "stream",
-      headers: {
-        "X-Appwrite-Project": PROJECT_ID,
-        ...(APPWRITE_API_KEY ? { "X-Appwrite-Key": APPWRITE_API_KEY } : {}),
-      },
-      // Note: No API key needed for publicly readable files
+    const streamResp = await streamFile(publicId, bucketName);
+    if (!streamResp) return res.status(404).json({ error: "File not found" });
+
+    res.setHeader("Content-Type", streamResp.contentType || "application/octet-stream");
+    if (streamResp.contentLength) res.setHeader("Content-Length", String(streamResp.contentLength));
+
+    streamResp.body.on('error', (e) => {
+      try { res.destroy(e); } catch {}
     });
-
-    // Propagate content headers
-    if (resp.headers["content-type"]) {
-      res.setHeader("Content-Type", resp.headers["content-type"]);
-    }
-    if (resp.headers["content-length"]) {
-      res.setHeader("Content-Length", resp.headers["content-length"]);
-    }
-
-    resp.data.pipe(res);
+    return streamResp.body.pipe(res);
   } catch (err) {
     const status = err?.response?.status || 500;
     const data = err?.response?.data || err.message;
-    res.status(status).json({ 
-      error: typeof data === 'string' ? data : 'File view error',
-      status: status 
-    });
+    res.status(status).json({ error: typeof data === 'string' ? data : 'File view error', status });
   }
 });
 

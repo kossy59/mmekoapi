@@ -153,7 +153,7 @@ const userdata = require("../../Creators/userdb");
 const comdata = require("../../Creators/usercomplete");
 const {
   uploadSingleFileToCloudinary,
-} = require("../../utiils/appwrite");
+} = require("../../utiils/storj");
 
 const ffmpegPath = require("@ffmpeg-installer/ffmpeg").path;
 const ffmpeg = require("fluent-ffmpeg");
@@ -165,7 +165,6 @@ const os = require("os");
 const mime = require("mime-types");
 
 const createPost = async (req, res) => {
-  console.log("incoming body keys", Object.keys(req.body || {}));
   // Support both: JSON string in req.body.data OR plain fields in req.body
   let data;
   if (req.body && typeof req.body.data === "string") {

@@ -4,6 +4,7 @@
 // var sdk = require("node-appwrite");
 
 const usercompletedb = require("../../Creators/usercomplete")
+const { uploadSingleFileToCloudinary } = require("../../utiils/storj");
 
 
 const handleNewUser = async (req, res) => {
