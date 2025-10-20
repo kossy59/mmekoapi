@@ -2,7 +2,7 @@
 // const sdk = require("node-appwrite");
 const creators = require("../../Creators/creators");
 const userdb = require("../../Creators/userdb");
-const { deleteFile } = require("../../utiils/appwrite");
+const { deleteFile } = require("../../utiils/storj");
 
 const createCreator = async (req, res) => {
   const hostid = req.body.hostid;

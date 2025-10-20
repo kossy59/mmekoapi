@@ -6,11 +6,6 @@ require("dotenv").config();
 const handleLogin = async (req, res) => {
   const { nickname, password } = req.body;
 
-  // Log payload with sensitive data masked
-  console.log("Incoming login payload:", {
-    nickname,
-    password,
-  });
 
   // Validate required fields
   if (!nickname || !password) {
@@ -83,8 +78,6 @@ const handleLogin = async (req, res) => {
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: "1d" }
       );
-      console.log("ACCESS:", process.env.ACCESS_TOKEN_SECRET);
-      console.log("REFRESH:", process.env.REFRESH_TOKEN_SECRET);
       // Update user's refresh token
       user.refreshtoken = refreshToken;
       await user.save();

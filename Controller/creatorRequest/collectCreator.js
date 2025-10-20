@@ -1,6 +1,6 @@
 const userValidationSchema = require("../../config/validate");
 const Application_creator = require("../../Creators/Application_creator");
-const appwriteHelper = require("../../utiils/appwrite");
+const storjHelper = require("../../utiils/storj");
 const createUsercreator = async (req, res) => {
   try {
     const { fullName, address, country, city, residentialAddress } = req.body;

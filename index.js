@@ -234,6 +234,7 @@ app.use("/video-call", require("./routes/api/videoCall/videoCallRoutes"));
 app.use("/support-chat", require("./routes/api/supportChat"));
 app.use("/review", require("./routes/api/Review/reviewRoutes"));
 app.use("/api", require("./routes/api/updateRatingsVip"));
+app.use("/api/backup", require("./routes/api/backupRoutes"));
 // Track online users
 const onlineUsers = new Set();
 
@@ -1232,6 +1233,10 @@ mongoose.connection.once("open", () => {
   
   // Start message cleanup scheduler
   scheduleMessageCleanup();
+  
+  // Start MongoDB backup cron job
+  const { setupBackupCron } = require('./scripts/setupBackupCron');
+  setupBackupCron();
   
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);

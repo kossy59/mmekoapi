@@ -1,0 +1,59 @@
+{
+  "backups": [
+    {
+      "id": "1760999955389",
+      "fileName": "backup_2025-10-20.bson.gz",
+      "size": 1280825,
+      "date": "2025-10-20",
+      "lastModified": "2025-10-20T22:39:15.389Z",
+      "status": "completed",
+      "location": "https://gateway.storjshare.io/database-backup/backup_2025-10-20.bson.gz"
+    },
+    {
+      "id": "1760999215656",
+      "fileName": "backup_2025-10-20.json.gz",
+      "size": 1276955,
+      "date": "2025-10-20",
+      "lastModified": "2025-10-20T22:26:55.656Z",
+      "status": "completed",
+      "location": "https://gateway.storjshare.io/database-backup/backup_2025-10-20.json.gz"
+    },
+    {
+      "id": "1760999025994",
+      "fileName": "backup_2025-10-20.json.gz",
+      "size": 1276957,
+      "date": "2025-10-20",
+      "lastModified": "2025-10-20T22:23:45.994Z",
+      "status": "completed",
+      "location": "https://gateway.storjshare.io/database-backup/backup_2025-10-20.json.gz"
+    },
+    {
+      "id": "1760995703198",
+      "fileName": "backup_2025-10-18.tar.gz",
+      "size": 18874368,
+      "date": "2025-10-18",
+      "lastModified": "2025-10-20T21:28:23.198Z",
+      "status": "completed",
+      "location": "Storj database-backup bucket"
+    },
+    {
+      "id": "1760995703196",
+      "fileName": "backup_2025-10-19.tar.gz",
+      "size": 12582912,
+      "date": "2025-10-19",
+      "lastModified": "2025-10-20T21:28:23.196Z",
+      "status": "completed",
+      "location": "Storj database-backup bucket"
+    },
+    {
+      "id": "1760995703191",
+      "fileName": "backup_2025-10-20.tar.gz",
+      "size": 15728640,
+      "date": "2025-10-20",
+      "lastModified": "2025-10-20T21:28:23.191Z",
+      "status": "completed",
+      "location": "Storj database-backup bucket"
+    }
+  ],
+  "lastUpdated": "2025-10-20T22:39:15.389Z"
+}
