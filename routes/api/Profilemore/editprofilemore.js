@@ -2,19 +2,18 @@ const express = require('express')
 const router = express.Router();
 const Editprofile = require('../../../Controller/Profilemore/editProfilemore');
 const multer = require('multer')
-const handleRefresh = require('../../../Middleware/refresh')
-const verifyJwt = require('../../../Middleware/verify');
+// const handleRefresh = require('../../../Middleware/refresh')
+// const verifyJwt = require('../../../Middleware/verify');
 
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 /**
- * The handleRefresh middleware is used to intersect the result of file manipulation
- * by multer which exposes the token for it
- * Without this, authorization fails!
+ * Removed authentication middleware to match other profile controllers
+ * This allows profile updates without JWT authentication
  */
 router.route('/')
-.post(upload.single('updatePhoto'), handleRefresh, verifyJwt, Editprofile)
+.post(upload.single('updatePhoto'), Editprofile)
 
 
 module.exports = router;

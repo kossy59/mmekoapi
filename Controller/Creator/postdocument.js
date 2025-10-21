@@ -59,7 +59,7 @@ const createCreator = async (req, res) => {
   }
 
   // Upload files to Cloudinary
-  let results = await uploadManyFilesToCloudinary(req.files, `post`);
+  let results = await uploadManyFilesToCloudinary(req.files, `creator-application`);
   console.log("results from cloudinary: ", results);
 
   let holdingIdPhotofile = {};

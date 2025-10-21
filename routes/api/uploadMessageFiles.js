@@ -59,7 +59,7 @@ router.post('/', upload.array('file', 5), async (req, res) => {
 
     // Upload files to Storj
     console.log('📤 [UPLOAD] Starting upload to Storj...');
-    const uploadResults = await uploadManyFilesToCloudinary(req.files, 'post');
+    const uploadResults = await uploadManyFilesToCloudinary(req.files, 'message');
     console.log('📤 [UPLOAD] Upload results:', uploadResults);
     
     // Extract file URLs
