@@ -150,6 +150,7 @@ app.use("/post", require("./routes/api/post/Post"));
 app.use("/creator/all", require("./routes/api/creator/mycreators"));
 app.use("/addpayment", require("./routes/api/payment/payment.routes"));
 app.use("/payment", require("./routes/api/payment/transaction.routes"));
+app.use("/web3", require("./routes/api/payment/web3.routes"));
 app.use(
   "/withdraw-request",
   require("./routes/api/withdrawRequest/withdraw.route")
@@ -210,6 +211,7 @@ app.use("/sendmessages", require("./routes/api/Admin/sendmessage"));
 app.use("/recivemessage", require("./routes/api/Admin/recivemessage"));
 app.use("/adminnotify", require("./routes/api/Admin/adminnotify"));
 app.use("/vipanalysis", require("./routes/api/Admin/vipAnalysis"));
+app.use("/api/admin/transactions", require("./routes/api/Admin/transactions.routes"));
 app.use("/useredit", require("./routes/api/Profilemore/getuseredit"));
 app.use("/addcrush", require("./routes/api/creator/addcrush"));
 app.use("/getcrush", require("./routes/api/creator/getcrush"));
@@ -1241,6 +1243,12 @@ mongoose.connection.once("open", () => {
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
     console.log(`🌐 Server accessible on network at http://10.245.95.157:${PORT}`);
+    
+    // Initialize Web3 payment listener
+    const { initializeWeb3Listener } = require('./Controller/accountPayment/web3payment');
+    initializeWeb3Listener().catch(err => {
+      console.error('❌ Failed to start Web3 listener:', err);
+    });
   });
 
   // Video call billing event
