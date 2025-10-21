@@ -73,10 +73,19 @@ const updatePost = async (req, res) => {
         if (lastname) {
             usersedit.lastname = lastname
         }
-                 
-
         if (country) {
             usersedit.country = country
+        }
+        
+        // Update photolink and photoID in userdb collection so it's accessible everywhere
+        if (photoLink && photoID) {
+            usersedit.photolink = photoLink
+            usersedit.photoID = photoID
+            console.log("Updated userdb with new profile image:", {
+                photolink: photoLink,
+                photoID: photoID,
+                userid: userid
+            });
         }
 
         await usersedit.save()
@@ -85,7 +94,18 @@ const updatePost = async (req, res) => {
 
            
 
-        return res.status(200).json({ "ok": true, "message": `Profile updated Successfully` })
+        return res.status(200).json({ 
+            "ok": true, 
+            "message": `Profile updated Successfully`,
+            "profile": {
+                photolink: usersedit.photolink,
+                photoID: usersedit.photoID,
+                firstname: usersedit.firstname,
+                lastname: usersedit.lastname,
+                bio: du.details,
+                country: usersedit.country
+            }
+        })
       
           
     } catch (err) {
