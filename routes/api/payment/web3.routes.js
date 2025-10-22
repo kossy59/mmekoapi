@@ -4,19 +4,17 @@ const {
   createWeb3Payment,
   checkWeb3PaymentStatus,
   getWalletBalance,
-  startListening,
-  stopListening,
-  verifyPayment,
-  cancelWeb3Payment
+  verifyTransactionHash,
+  cancelWeb3Payment,
+  manualProcessExpired
 } = require("../../../Controller/accountPayment/web3payment");
 
 // Web3 Payment Routes
 router.post("/create", createWeb3Payment);
 router.get("/status/:orderId", checkWeb3PaymentStatus);
 router.get("/balance/:walletAddress", getWalletBalance);
-router.post("/start-listening", startListening);
-router.post("/stop-listening", stopListening);
-router.post("/verify-payment", verifyPayment);
+router.post("/verify-tx", verifyTransactionHash);
 router.post("/cancel/:orderId", cancelWeb3Payment);
+router.post("/process-expired", manualProcessExpired);
 
 module.exports = router;
