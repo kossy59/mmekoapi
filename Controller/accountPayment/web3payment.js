@@ -38,39 +38,168 @@ const initializeWeb3 = () => {
 initializeWeb3();
 
 /**
- * Parse transaction memo from transaction data
+ * Verify transaction hash using Etherscan API V2
  */
-const parseTransactionMemo = (data) => {
+const verifyTransactionHash = async (txHash, expectedAmount = null) => {
   try {
-    if (!data || data === '0x') return null;
+    const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
+    const ETHERSCAN_API_URL = "https://api.etherscan.io/v2/api";
     
-    // Remove '0x' prefix and convert to string
-    const hexString = data.slice(2);
-    const memo = Buffer.from(hexString, 'hex').toString('utf8').replace(/\0/g, '');
+    if (!ETHERSCAN_API_KEY) {
+      console.error("ETHERSCAN_API_KEY not configured in environment variables");
+      return { valid: false, error: "Etherscan API key not configured" };
+    }
+
+    // Validate transaction hash format
+    if (!txHash || typeof txHash !== 'string') {
+      return { valid: false, error: "Transaction hash is required" };
+    }
+
+    // Check if it's a valid Ethereum transaction hash format
+    if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
+      return { valid: false, error: "Invalid transaction hash format. Must be 66 characters starting with 0x" };
+    }
+
+    console.log(`🔍 [ETHERSCAN] Verifying transaction: ${txHash}`);
+    if (expectedAmount) {
+      console.log(`🔍 [ETHERSCAN] Expected amount: ${expectedAmount} USDT`);
+    }
+
+    // Get transaction details from Etherscan API V2
+    const txResponse = await fetch(
+      `${ETHERSCAN_API_URL}?module=proxy&action=eth_getTransactionByHash&txhash=${txHash}&apikey=${ETHERSCAN_API_KEY}`
+    );
     
-    return memo.trim() || null;
+    if (!txResponse.ok) {
+      return { valid: false, error: "Failed to fetch transaction from Etherscan" };
+    }
+
+    const txData = await txResponse.json();
+    
+    if (txData.error) {
+      return { valid: false, error: `Etherscan error: ${txData.error.message}` };
+    }
+
+    if (!txData.result) {
+      return { valid: false, error: "Transaction not found. Please check the transaction hash and try again." };
+    }
+
+    const tx = txData.result;
+
+    // Validate transaction hash format
+    if (!tx.hash || tx.hash !== txHash) {
+      return { valid: false, error: "Invalid transaction hash format" };
+    }
+
+    // Get transaction receipt to check if it was successful
+    const receiptResponse = await fetch(
+      `${ETHERSCAN_API_URL}?module=proxy&action=eth_getTransactionReceipt&txhash=${txHash}&apikey=${ETHERSCAN_API_KEY}`
+    );
+
+    if (!receiptResponse.ok) {
+      return { valid: false, error: "Failed to fetch transaction receipt from Etherscan" };
+    }
+
+    const receiptData = await receiptResponse.json();
+    
+    if (receiptData.error) {
+      return { valid: false, error: `Etherscan receipt error: ${receiptData.error.message}` };
+    }
+
+    if (!receiptData.result) {
+      return { valid: false, error: "Transaction receipt not found. Transaction may still be pending." };
+    }
+
+    const receipt = receiptData.result;
+
+    // Check if transaction was successful
+    if (receipt.status !== "0x1") {
+      return { valid: false, error: "Transaction failed or was reverted" };
+    }
+
+    // Check if transaction is to our wallet
+    if (tx.to.toLowerCase() !== WALLET_ADDRESS.toLowerCase()) {
+      return { valid: false, error: "Transaction not sent to our wallet" };
+    }
+
+    // Get USDT transfer logs from the transaction
+    let usdtAmount = 0;
+    let fromAddress = null;
+
+    // Parse logs to find USDT transfer
+    if (receipt.logs && receipt.logs.length > 0) {
+      for (const log of receipt.logs) {
+        if (log.address.toLowerCase() === USDT_CONTRACT.toLowerCase()) {
+          try {
+            // Parse the log data manually since we're using BSC Scan API
+            // USDT Transfer event: Transfer(address indexed from, address indexed to, uint256 value)
+            if (log.topics && log.topics.length === 3) {
+              const fromTopic = log.topics[1]; // from address
+              const toTopic = log.topics[2];   // to address
+              const data = log.data;           // value
+              
+              // Convert from topic to address (remove 0x and pad)
+              const fromAddr = "0x" + fromTopic.slice(26);
+              const toAddr = "0x" + toTopic.slice(26);
+              
+              // Check if this transfer is to our wallet
+              if (toAddr.toLowerCase() === WALLET_ADDRESS.toLowerCase()) {
+                // Convert hex data to decimal
+                const valueHex = data.slice(2); // Remove 0x
+                const valueBigInt = BigInt("0x" + valueHex);
+                usdtAmount = Number(valueBigInt) / Math.pow(10, 18); // USDT has 18 decimals
+                fromAddress = fromAddr;
+                break;
+              }
+            }
+          } catch (logError) {
+            console.error("Error parsing log:", logError);
+          }
+        }
+      }
+    }
+
+    if (usdtAmount === 0 || !fromAddress) {
+      return { valid: false, error: "No USDT transfer found in transaction" };
+    }
+
+    // Amount verification - check if the transaction amount matches expected amount
+    if (expectedAmount !== null) {
+      const tolerance = 0.01; // Allow 0.01 USDT tolerance for rounding differences
+      const amountDifference = Math.abs(usdtAmount - expectedAmount);
+      
+      if (amountDifference > tolerance) {
+        console.log(`❌ [ETHERSCAN] Amount mismatch: Expected ${expectedAmount} USDT, got ${usdtAmount} USDT`);
+        return { 
+          valid: false, 
+          error: `Amount mismatch. Expected ${expectedAmount} USDT, but transaction shows ${usdtAmount} USDT. Please send the correct amount.` 
+        };
+      }
+      
+      console.log(`✅ [ETHERSCAN] Amount verified: ${usdtAmount} USDT matches expected ${expectedAmount} USDT`);
+    }
+
+    console.log(`✅ [ETHERSCAN] Transaction verified: ${usdtAmount} USDT from ${fromAddress}`);
+
+    return {
+      valid: true,
+      amount: usdtAmount,
+      fromAddress: fromAddress,
+      toAddress: WALLET_ADDRESS,
+      txHash: txHash,
+      blockNumber: parseInt(receipt.blockNumber, 16),
+      gasUsed: receipt.gasUsed,
+      timestamp: parseInt(tx.timeStamp, 16) * 1000 // Convert to milliseconds
+    };
+
   } catch (error) {
-    console.error('Error parsing transaction memo:', error);
-    return null;
+    console.error('Error verifying transaction hash with Etherscan:', error);
+    return { valid: false, error: error.message };
   }
 };
 
 /**
- * Extract order ID from memo
- */
-const extractOrderIdFromMemo = (memo) => {
-  try {
-    // Look for order ID pattern: web3_userId_timestamp_random
-    const orderIdMatch = memo.match(/web3_\w+_\d+_\w+/);
-    return orderIdMatch ? orderIdMatch[0] : null;
-  } catch (error) {
-    console.error('Error extracting order ID from memo:', error);
-    return null;
-  }
-};
-
-/**
- * Initialize Web3 listener for server startup
+ * Initialize Web3 listener for server startup (simplified - no auto-processing)
  */
 exports.initializeWeb3Listener = async () => {
   try {
@@ -84,89 +213,13 @@ exports.initializeWeb3Listener = async () => {
       return false;
     }
 
-    // Listen for incoming USDT transfers
-    contract.on("Transfer", async (from, to, value, data) => {
-      if (to.toLowerCase() === WALLET_ADDRESS.toLowerCase()) {
-        const amount = Number(ethers.formatUnits(value, 18));
-        console.log(`💰 ${amount} USDT received from ${from}`);
-
-        try {
-          // Try to parse memo from transaction data
-          const memo = parseTransactionMemo(data);
-          console.log(`📝 Transaction memo: ${memo || 'none'}`);
-
-          let transaction = null;
-
-          // Method 1: Try to match by order ID in memo
-          if (memo && memo.includes('web3_')) {
-            const orderId = extractOrderIdFromMemo(memo);
-            if (orderId) {
-              console.log(`🔍 Looking for transaction with order ID: ${orderId}`);
-              transaction = await PaymentTransaction.findOne({
-                orderId: orderId,
-                status: "waiting"
-              });
-              
-              if (transaction) {
-                console.log(`✅ Found transaction by order ID: ${orderId}`);
-              }
-            }
-          }
-
-          // Method 2: Fallback to amount matching (atomic operation)
-          if (!transaction) {
-            console.log(`🔍 No memo match, trying amount matching for ${amount} USDT`);
-            transaction = await PaymentTransaction.findOneAndUpdate(
-              {
-                amount: amount,
-                status: "waiting",
-                "txData.paymentMethod": "web3"
-              },
-              {
-                status: "confirmed",
-                $set: {
-                  "txData.fromAddress": from,
-                  "txData.toAddress": to,
-                  "txData.amount": amount,
-                  "txData.confirmedAt": new Date(),
-                  "txData.memo": memo || null
-                }
-              },
-              { new: true }
-            );
-          } else {
-            // Update the found transaction
-            transaction.status = "confirmed";
-            transaction.txData = {
-              ...transaction.txData,
-              fromAddress: from,
-              toAddress: to,
-              amount: amount,
-              confirmedAt: new Date(),
-              memo: memo || null
-            };
-            await transaction.save();
-          }
-
-          if (transaction) {
-            // Credit user's gold balance
-            await creditUserGold(transaction.userId, amount);
-            console.log(`✅ Payment confirmed for order ${transaction.orderId} from user ${transaction.userId}`);
-          } else {
-            console.log(`⚠️ No pending transaction found for amount ${amount} USDT from ${from}`);
-            console.log(`📝 Memo was: ${memo || 'none'}`);
-          }
-        } catch (error) {
-          console.error(`❌ Error processing payment from ${from}:`, error);
-        }
-      }
-    });
-
-    console.log("✅ Web3 listener initialized successfully");
+    console.log("✅ Web3 connection ready for transaction hash verification");
+    console.log(`🔍 Wallet address: ${WALLET_ADDRESS}`);
+    console.log(`🔍 USDT Contract: ${USDT_CONTRACT}`);
     return true;
 
   } catch (error) {
-    console.error("❌ Failed to initialize Web3 listener:", error);
+    console.error("❌ Failed to initialize Web3 connection:", error);
     return false;
   }
 };
@@ -189,6 +242,9 @@ exports.createWeb3Payment = async (req, res) => {
 
     const orderId = `web3_${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
+    // Set expiry time to 30 minutes from now
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
+    
     // Create payment transaction record
     const newTx = new PaymentTransaction({
       userId,
@@ -196,13 +252,14 @@ exports.createWeb3Payment = async (req, res) => {
       amount: Number(amount),
       payCurrency: "USDT_BEP20",
       description: order_description || "Gold Pack Purchase",
-      status: "waiting", // Use "waiting" instead of "pending"
+      status: "waiting",
+      expiresAt: expiresAt,
       txData: {
         type: "web3_payment",
         contractAddress: USDT_CONTRACT,
         network: "BSC",
         walletAddress: WALLET_ADDRESS,
-        "txData.paymentMethod": "web3"
+        paymentMethod: "web3"
       }
     });
 
@@ -216,7 +273,8 @@ exports.createWeb3Payment = async (req, res) => {
       currency: "USDT",
       network: "BSC",
       contractAddress: USDT_CONTRACT,
-      instructions: `Send exactly ${amount} USDT (BEP20) to the wallet address above. Your order ID is: ${orderId}. Include this order ID in the transaction memo if your wallet supports it.`
+      expiresAt: expiresAt,
+      instructions: `Send exactly ${amount} USDT (BEP20) to the wallet address above. After sending, paste your transaction hash to confirm the payment.`
     });
 
   } catch (error) {
@@ -252,6 +310,13 @@ exports.checkWeb3PaymentStatus = async (req, res) => {
       return res.status(404).json({ message: "Transaction not found" });
     }
 
+    // Check if payment has expired
+    if (transaction.expiresAt && new Date() > transaction.expiresAt && transaction.status === 'waiting') {
+      console.log(`⏰ [STATUS CHECK] Payment expired, cancelling...`);
+      transaction.status = 'expired';
+      await transaction.save();
+    }
+
     console.log(`✅ [STATUS CHECK] Transaction found:`);
     console.log(`📊 [STATUS CHECK] - Order ID: ${transaction.orderId}`);
     console.log(`📊 [STATUS CHECK] - User ID: ${transaction.userId}`);
@@ -260,6 +325,7 @@ exports.checkWeb3PaymentStatus = async (req, res) => {
     console.log(`📊 [STATUS CHECK] - Currency: ${transaction.payCurrency}`);
     console.log(`📊 [STATUS CHECK] - Created: ${transaction.createdAt}`);
     console.log(`📊 [STATUS CHECK] - Updated: ${transaction.updatedAt}`);
+    console.log(`📊 [STATUS CHECK] - Expires At: ${transaction.expiresAt}`);
     console.log(`📊 [STATUS CHECK] - Description: ${transaction.description}`);
     
     if (transaction.txData) {
@@ -268,7 +334,7 @@ exports.checkWeb3PaymentStatus = async (req, res) => {
       console.log(`📊 [STATUS CHECK]   - From Address: ${transaction.txData.fromAddress || 'N/A'}`);
       console.log(`📊 [STATUS CHECK]   - To Address: ${transaction.txData.toAddress || 'N/A'}`);
       console.log(`📊 [STATUS CHECK]   - Confirmed At: ${transaction.txData.confirmedAt || 'N/A'}`);
-      console.log(`📊 [STATUS CHECK]   - Memo: ${transaction.txData.memo || 'N/A'}`);
+      console.log(`📊 [STATUS CHECK]   - TX Hash: ${transaction.txData.txHash || 'N/A'}`);
       console.log(`📊 [STATUS CHECK]   - Network: ${transaction.txData.network || 'N/A'}`);
       console.log(`📊 [STATUS CHECK]   - Contract Address: ${transaction.txData.contractAddress || 'N/A'}`);
     }
@@ -279,6 +345,7 @@ exports.checkWeb3PaymentStatus = async (req, res) => {
       amount: transaction.amount,
       createdAt: transaction.createdAt,
       updatedAt: transaction.updatedAt,
+      expiresAt: transaction.expiresAt,
       txData: transaction.txData
     };
 
@@ -286,25 +353,6 @@ exports.checkWeb3PaymentStatus = async (req, res) => {
     console.log(`📤 [STATUS CHECK] - Status: ${responseData.status}`);
     console.log(`📤 [STATUS CHECK] - Amount: ${responseData.amount}`);
     console.log(`📤 [STATUS CHECK] - Has TX Data: ${responseData.txData ? 'Yes' : 'No'}`);
-
-    // Additional check: Verify if any USDT was actually received
-    if (transaction.status === 'waiting' && WALLET_ADDRESS) {
-      try {
-        console.log(`🔍 [WALLET CHECK] Checking wallet balance for: ${WALLET_ADDRESS}`);
-        const balance = await contract.balanceOf(WALLET_ADDRESS);
-        const balanceInUSDT = Number(ethers.formatUnits(balance, 18));
-        console.log(`💰 [WALLET CHECK] Current wallet balance: ${balanceInUSDT} USDT`);
-        
-        if (balanceInUSDT > 0) {
-          console.log(`⚠️ [WALLET CHECK] Wallet has ${balanceInUSDT} USDT but transaction still shows 'waiting'`);
-          console.log(`⚠️ [WALLET CHECK] This might indicate a payment was received but not processed`);
-        } else {
-          console.log(`ℹ️ [WALLET CHECK] No USDT received yet - wallet balance is 0`);
-        }
-      } catch (walletError) {
-        console.error(`❌ [WALLET CHECK] Error checking wallet balance:`, walletError);
-      }
-    }
 
     res.status(200).json(responseData);
 
@@ -318,6 +366,129 @@ exports.checkWeb3PaymentStatus = async (req, res) => {
     
     res.status(500).json({
       message: "Failed to check payment status",
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc Verify transaction hash and confirm payment
+ * @route POST /api/payment/web3/verify-tx
+ */
+exports.verifyTransactionHash = async (req, res) => {
+  try {
+    const { orderId, txHash } = req.body;
+
+    if (!orderId || !txHash) {
+      return res.status(400).json({ 
+        message: "Missing required fields: orderId, txHash" 
+      });
+    }
+
+    console.log(`🔍 [TX VERIFY] Starting verification for order: ${orderId}, txHash: ${txHash}`);
+
+    // Find the transaction
+    const transaction = await PaymentTransaction.findOne({ orderId });
+
+    if (!transaction) {
+      console.log(`❌ [TX VERIFY] Transaction not found for order ID: ${orderId}`);
+      return res.status(404).json({ message: "Transaction not found" });
+    }
+
+    // Check if payment has expired
+    if (transaction.expiresAt && new Date() > transaction.expiresAt) {
+      console.log(`⏰ [TX VERIFY] Payment expired for order: ${orderId}`);
+      transaction.status = 'expired';
+      await transaction.save();
+      return res.status(400).json({ 
+        message: "Payment has expired. Please create a new payment.",
+        status: "expired"
+      });
+    }
+
+    // Check if already confirmed
+    if (transaction.status === 'confirmed') {
+      console.log(`✅ [TX VERIFY] Payment already confirmed for order: ${orderId}`);
+      return res.status(200).json({ 
+        message: "Payment already confirmed",
+        status: "confirmed"
+      });
+    }
+
+    // Verify the transaction hash with expected amount
+    console.log(`🔍 [TX VERIFY] Verifying transaction hash: ${txHash}`);
+    console.log(`🔍 [TX VERIFY] Expected amount: ${transaction.amount} USDT`);
+    const verification = await verifyTransactionHash(txHash, transaction.amount);
+
+    if (!verification.valid) {
+      console.log(`❌ [TX VERIFY] Transaction verification failed: ${verification.error}`);
+      
+      // Provide more specific error messages based on the error type
+      let userMessage = verification.error;
+      let statusCode = 400;
+      
+      if (verification.error.includes("not found") || verification.error.includes("Invalid transaction hash")) {
+        userMessage = "Transaction not found. Please check the transaction hash and try again.";
+        statusCode = 404;
+      } else if (verification.error.includes("failed") || verification.error.includes("reverted")) {
+        userMessage = "Transaction failed or was reverted on the blockchain.";
+        statusCode = 400;
+      } else if (verification.error.includes("not sent to our wallet")) {
+        userMessage = "This transaction was not sent to our wallet address.";
+        statusCode = 400;
+      } else if (verification.error.includes("No USDT transfer found")) {
+        userMessage = "No USDT transfer found in this transaction.";
+        statusCode = 400;
+      } else if (verification.error.includes("Amount mismatch")) {
+        userMessage = verification.error; // Use the specific amount mismatch message
+        statusCode = 400;
+      }
+      
+      return res.status(statusCode).json({ 
+        message: userMessage,
+        status: "verification_failed",
+        details: verification.error
+      });
+    }
+
+    // Transaction verified successfully with amount check
+    console.log(`✅ [TX VERIFY] Transaction verified via Etherscan: ${verification.amount} USDT`);
+
+    // Update transaction with verification details
+    transaction.status = "confirmed";
+    transaction.txData = {
+      ...transaction.txData,
+      fromAddress: verification.fromAddress,
+      toAddress: verification.toAddress,
+      amount: verification.amount,
+      txHash: verification.txHash,
+      blockNumber: verification.blockNumber,
+      gasUsed: verification.gasUsed,
+      timestamp: verification.timestamp,
+      confirmedAt: new Date(),
+      verifiedVia: "ETHERSCAN_API_V2"
+    };
+    await transaction.save();
+
+    // Credit user's gold balance - use the gold amount from the selected pack, not USDT amount
+    const goldAmount = await getGoldAmountFromTransaction(transaction);
+    await creditUserGold(transaction.userId, goldAmount);
+
+    console.log(`✅ [TX VERIFY] Payment confirmed for order ${orderId} from user ${transaction.userId}`);
+
+    res.status(200).json({
+      message: "Payment verified and confirmed successfully",
+      status: "confirmed",
+      orderId: transaction.orderId,
+      amount: verification.amount,
+      txHash: verification.txHash,
+      fromAddress: verification.fromAddress
+    });
+
+  } catch (error) {
+    console.error(`❌ [TX VERIFY] Error verifying transaction for order ${orderId}:`, error);
+    res.status(500).json({
+      message: "Transaction verification failed",
       error: error.message
     });
   }
@@ -355,197 +526,123 @@ exports.getWalletBalance = async (req, res) => {
 };
 
 /**
- * @desc Start listening for USDT transfers (call this once on server start)
- * @route POST /api/payment/web3/start-listening
+ * @desc Process expired payments (cron job function)
+ * This function should be called every minute to check for expired payments
  */
-exports.startListening = async (req, res) => {
+exports.processExpiredPayments = async () => {
   try {
-    if (!contract || !WALLET_ADDRESS) {
-      if (res && res.status) {
-        return res.status(500).json({ message: "Web3 not properly configured" });
-      }
-      throw new Error("Web3 not properly configured");
-    }
-
-    // Listen for incoming USDT transfers
-    contract.on("Transfer", async (from, to, value) => {
-      if (to.toLowerCase() === WALLET_ADDRESS.toLowerCase()) {
-        const amount = Number(ethers.formatUnits(value, 18));
-        console.log(`💰 ${amount} USDT received from ${from}`);
-
-        // Find pending transactions that match this amount
-        const pendingTx = await PaymentTransaction.findOne({
-          amount: amount,
-          status: "waiting",
-          "txData.paymentMethod": "web3"
-        });
-
-        if (pendingTx) {
-          // Update transaction status
-          pendingTx.status = "confirmed";
-          pendingTx.txData = {
-            ...pendingTx.txData,
-            fromAddress: from,
-            toAddress: to,
-            amount: amount,
-            confirmedAt: new Date()
-          };
-          await pendingTx.save();
-
-          // Credit user's gold balance
-          await creditUserGold(pendingTx.userId, amount);
-
-          console.log(`✅ Payment confirmed for order ${pendingTx.orderId}`);
-        }
-      }
+    console.log(`🕐 [CRON] Checking for expired payments...`);
+    
+    const expiredPayments = await PaymentTransaction.find({
+      status: "waiting",
+      expiresAt: { $lt: new Date() }
     });
 
-    if (res && res.status) {
-      res.status(200).json({ 
-        message: "Started listening for USDT transfers",
-        walletAddress: WALLET_ADDRESS 
-      });
-    } else {
-      console.log("✅ Started listening for USDT transfers");
+    if (expiredPayments.length === 0) {
+      console.log(`✅ [CRON] No expired payments found`);
+      return { processed: 0 };
     }
 
-  } catch (error) {
-    console.error("Start listening error:", error);
-    if (res && res.status) {
-      res.status(500).json({
-        message: "Failed to start listening",
-        error: error.message
-      });
-    } else {
-      throw error;
+    console.log(`⏰ [CRON] Found ${expiredPayments.length} expired payments`);
+
+    let processedCount = 0;
+    for (const payment of expiredPayments) {
+      try {
+        payment.status = "expired";
+        await payment.save();
+        console.log(`✅ [CRON] Expired payment: ${payment.orderId}`);
+        processedCount++;
+      } catch (error) {
+        console.error(`❌ [CRON] Error expiring payment ${payment.orderId}:`, error);
+      }
     }
+
+    console.log(`✅ [CRON] Processed ${processedCount} expired payments`);
+    return { processed: processedCount };
+
+  } catch (error) {
+    console.error(`❌ [CRON] Error processing expired payments:`, error);
+    return { processed: 0, error: error.message };
   }
 };
 
 /**
- * @desc Stop listening for USDT transfers
- * @route POST /api/payment/web3/stop-listening
+ * @desc Manual trigger for processing expired payments (for testing)
+ * @route POST /api/payment/web3/process-expired
  */
-exports.stopListening = async (req, res) => {
+exports.manualProcessExpired = async (req, res) => {
   try {
-    if (contract) {
-      contract.removeAllListeners("Transfer");
-      console.log("🛑 Stopped listening for USDT transfers");
-    }
-
-    res.status(200).json({ message: "Stopped listening for USDT transfers" });
-
+    const result = await exports.processExpiredPayments();
+    res.status(200).json({
+      message: "Expired payments processed",
+      ...result
+    });
   } catch (error) {
-    console.error("Stop listening error:", error);
+    console.error("Manual process expired error:", error);
     res.status(500).json({
-      message: "Failed to stop listening",
+      message: "Failed to process expired payments",
       error: error.message
     });
+  }
+};
+
+/**
+ * Helper function to get gold amount from transaction description
+ */
+const getGoldAmountFromTransaction = async (transaction) => {
+  try {
+    // Extract gold amount from description like "Gold Pack Purchase: 100 Gold"
+    const description = transaction.description || "";
+    const goldMatch = description.match(/(\d+)\s+Gold/i);
+    
+    if (goldMatch) {
+      const goldAmount = parseInt(goldMatch[1]);
+      console.log(`✅ [GOLD] Extracted gold amount: ${goldAmount} from description: "${description}"`);
+      return goldAmount;
+    }
+    
+    // Fallback: if no gold amount found in description, use USDT amount as gold
+    console.log(`⚠️ [GOLD] No gold amount found in description, using USDT amount as fallback: ${transaction.amount}`);
+    return Math.floor(transaction.amount);
+    
+  } catch (error) {
+    console.error("Error extracting gold amount from transaction:", error);
+    // Fallback to USDT amount
+    return Math.floor(transaction.amount);
   }
 };
 
 /**
  * Helper function to credit user's gold balance
  */
-const creditUserGold = async (userId, usdtAmount) => {
+const creditUserGold = async (userId, goldAmount) => {
   try {
-    // Convert USDT amount to gold (1 USDT = 1 Gold, adjust as needed)
-    const goldAmount = Math.floor(usdtAmount);
+    console.log(`💰 [GOLD] Crediting ${goldAmount} gold to user ${userId}`);
     
     // Update user's main balance
     const userBalance = await mainbalance.findOne({ userid: userId });
     if (userBalance) {
       userBalance.balance += goldAmount;
       await userBalance.save();
+      console.log(`✅ [GOLD] Updated existing balance for user ${userId}: ${userBalance.balance} total`);
     } else {
       // Create new balance record
       await mainbalance.create({
         userid: userId,
         balance: goldAmount
       });
+      console.log(`✅ [GOLD] Created new balance record for user ${userId}: ${goldAmount} gold`);
     }
 
-    console.log(`✅ Credited ${goldAmount} gold to user ${userId}`);
+    console.log(`✅ [GOLD] Successfully credited ${goldAmount} gold to user ${userId}`);
     return true;
 
   } catch (error) {
-    console.error("Error crediting user gold:", error);
+    console.error("❌ [GOLD] Error crediting user gold:", error);
     return false;
   }
 };
 
-/**
- * @desc Manual payment verification (for testing or manual checks)
- * @route POST /api/payment/web3/verify-payment
- */
-exports.verifyPayment = async (req, res) => {
-  try {
-    const { orderId, fromAddress } = req.body;
-
-    if (!orderId || !fromAddress) {
-      return res.status(400).json({ message: "Missing orderId or fromAddress" });
-    }
-
-    const transaction = await PaymentTransaction.findOne({ orderId });
-    if (!transaction) {
-      return res.status(404).json({ message: "Transaction not found" });
-    }
-
-    if (transaction.status === "confirmed") {
-      return res.status(200).json({ 
-        message: "Payment already confirmed",
-        status: "confirmed"
-      });
-    }
-
-    // Check if payment was received from this address
-    if (contract) {
-      try {
-        const balance = await contract.balanceOf(fromAddress);
-        const balanceInUSDT = Number(ethers.formatUnits(balance, 18));
-        
-        // Simple verification - in production, you'd want more sophisticated checks
-        if (balanceInUSDT >= transaction.amount) {
-          // Update transaction status
-          transaction.status = "confirmed";
-          transaction.txData = {
-            ...transaction.txData,
-            fromAddress: fromAddress,
-            verifiedAt: new Date()
-          };
-          await transaction.save();
-
-          // Credit user's gold balance
-          await creditUserGold(transaction.userId, transaction.amount);
-
-          res.status(200).json({ 
-            message: "Payment verified and confirmed",
-            status: "confirmed"
-          });
-        } else {
-          res.status(400).json({ 
-            message: "Insufficient balance for this payment",
-            status: "waiting"
-          });
-        }
-      } catch (error) {
-        res.status(500).json({ 
-          message: "Failed to verify payment",
-          error: error.message
-        });
-      }
-    } else {
-      res.status(500).json({ message: "Web3 not initialized" });
-    }
-
-  } catch (error) {
-    console.error("Verify payment error:", error);
-    res.status(500).json({
-      message: "Payment verification failed",
-      error: error.message
-    });
-  }
-};
 
 /**
  * Cancel a Web3 payment transaction
