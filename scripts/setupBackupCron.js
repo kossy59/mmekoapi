@@ -3,34 +3,24 @@ const { performPureNodeBackup } = require('./pureNodeBackup');
 
 /**
  * Setup MongoDB backup cron job
- * Runs every day at 00:00 (midnight UTC)
+ * Runs every day at 00:00 (12:00 AM midnight Nigeria time)
  */
 function setupBackupCron() {
-  
-  // Schedule backup to run every day at 00:00 (midnight UTC)
+  // Schedule backup to run every day at 00:00 (12:00 AM midnight Nigeria time)
   const backupTask = cron.schedule('0 0 * * *', async () => {
-    const startTime = new Date();
-    
     try {
-      const result = await performPureNodeBackup();
-      
-      if (result.success) {
-      } else {
-        console.error('[Cron] Scheduled backup failed:', result.error);
-      }
-      
+      await performPureNodeBackup();
     } catch (error) {
-      console.error('[Cron] Scheduled backup error:', error.message);
+      console.error('Backup error:', error.message);
     }
     
   }, {
     scheduled: true, // Start automatically
-    timezone: "UTC"
+    timezone: "Africa/Lagos" // Use Nigeria timezone
   });
   
   // Start the cron job
   backupTask.start();
-  
   
   return backupTask;
 }
@@ -39,24 +29,31 @@ function setupBackupCron() {
  * Manual backup trigger (for testing or on-demand backups)
  */
 async function triggerManualBackup() {
-  
   try {
     const result = await performPureNodeBackup();
-    
-    if (result.success) {
-    } else {
-      console.error('[Manual Backup] Manual backup failed:', result.error);
-    }
-    
     return result;
-    
   } catch (error) {
-    console.error('[Manual Backup] Manual backup error:', error.message);
+    return {
+      success: false,
+      error: error.message
+    };
+  }
+}
+
+/**
+ * Test function to trigger backup immediately (for testing)
+ */
+async function testBackupNow() {
+  try {
+    const result = await triggerManualBackup();
+    return result;
+  } catch (error) {
     throw error;
   }
 }
 
 module.exports = {
   setupBackupCron,
-  triggerManualBackup
+  triggerManualBackup,
+  testBackupNow
 };
