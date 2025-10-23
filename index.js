@@ -212,6 +212,7 @@ app.use("/recivemessage", require("./routes/api/Admin/recivemessage"));
 app.use("/adminnotify", require("./routes/api/Admin/adminnotify"));
 app.use("/vipanalysis", require("./routes/api/Admin/vipAnalysis"));
 app.use("/api/admin/transactions", require("./routes/api/Admin/transactions.routes"));
+app.use("/api/admin/notifications", require("./routes/api/Admin/notificationCleanupRoutes"));
 app.use("/useredit", require("./routes/api/Profilemore/getuseredit"));
 app.use("/addcrush", require("./routes/api/creator/addcrush"));
 app.use("/getcrush", require("./routes/api/creator/getcrush"));
@@ -1239,6 +1240,10 @@ mongoose.connection.once("open", () => {
   // Start MongoDB backup cron job
   const { setupBackupCron } = require('./scripts/setupBackupCron');
   setupBackupCron();
+  
+  // Start notification cleanup cron job
+  const { setupNotificationCleanup } = require('./scripts/setupNotificationCleanup');
+  setupNotificationCleanup();
   
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);

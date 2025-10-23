@@ -9,30 +9,29 @@ const verifyJwt = (req, res, next) => {
 
   const token = authHeader.split(" ")[1];
 
-  // Try multiple possible secrets
+  // Try multiple possible secrets to handle JWT secret mismatches
   const possibleSecrets = [
     process.env.ACCESS_TOKEN_SECRET,
-    process.env.accessToken,
-    "access_token",
+    process.env.REFRESH_TOKEN_SECRET,
     "NEXT_PUBLIC_SECERET",
-    "accessToken",
-    "ACCESS_TOKEN_SECRET"
-  ].filter(Boolean); // Remove undefined values
+    "access_token",
+    "refrsh_token"
+  ].filter(Boolean);
 
   let tokenVerified = false;
   let finalDecode = null;
 
-  // Try each secret
-  for (const secret of possibleSecrets) {
-    try {
-      const decode = jwt.verify(token, secret);
-      tokenVerified = true;
-      finalDecode = decode;
-      break;
-    } catch (err) {
-      // Continue to next secret
-    }
-  }
+         // Try each secret
+         for (const secret of possibleSecrets) {
+           try {
+             const decode = jwt.verify(token, secret);
+             tokenVerified = true;
+             finalDecode = decode;
+             break;
+           } catch (err) {
+             // Continue to next secret
+           }
+         }
 
   if (!tokenVerified) {
     // Use the decoded token without signature verification as a fallback

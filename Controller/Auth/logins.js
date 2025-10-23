@@ -70,13 +70,13 @@ const handleLogin = async (req, res) => {
       const refreshToken = jwt.sign(
         { UserInfo: { username: user.nickname, userId: user._id.toString(), isAdmin: user.admin } },
         process.env.REFRESH_TOKEN_SECRET,
-        { expiresIn: "7d" }
+        { expiresIn: "30d" }
       );
 
       const accessToken = jwt.sign(
         { UserInfo: { username: user.nickname, userId: user._id.toString(), isAdmin: user.admin } },
         process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: "1d" }
+        { expiresIn: "30d" }
       );
       // Update user's refresh token
       user.refreshtoken = refreshToken;
@@ -88,14 +88,14 @@ const handleLogin = async (req, res) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 24 * 60 * 60 * 1000, // 1 day
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       });
 
       res.cookie("refresh_token", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       });
 
       return res.status(200).json({
@@ -109,6 +109,41 @@ const handleLogin = async (req, res) => {
         isVip: user.isVip || false,
         vipStartDate: user.vipStartDate || null,
         vipEndDate: user.vipEndDate || null,
+        // Include all user information
+        user: {
+          _id: user._id,
+          firstname: user.firstname,
+          lastname: user.lastname,
+          nickname: user.nickname,
+          bio: user.bio,
+          photolink: user.photolink,
+          photoID: user.photoID,
+          gender: user.gender,
+          age: user.age,
+          country: user.country,
+          dob: user.dob,
+          balance: user.balance,
+          withdrawbalance: user.withdrawbalance,
+          coinBalance: user.coinBalance,
+          earnings: user.earnings,
+          pending: user.pending,
+          creator_verified: user.creator_verified,
+          creator_portfolio: user.creator_portfolio,
+          creator_portfolio_id: user.creator_portfolio_id,
+          Creator_Application_status: user.Creator_Application_status,
+          followers: user.followers,
+          following: user.following,
+          isVip: user.isVip,
+          vipStartDate: user.vipStartDate,
+          vipEndDate: user.vipEndDate,
+          vipAutoRenewal: user.vipAutoRenewal,
+          vipCelebrationViewed: user.vipCelebrationViewed,
+          active: user.active,
+          admin: user.admin,
+          passcode: user.passcode,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt
+        }
       });
     } else {
       return res.status(401).json({
