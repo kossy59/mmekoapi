@@ -16,8 +16,9 @@ const readPost = async (req, res) => {
   // let data = await connectdatabase()
 
   const userid = req.body.userid;
-
-  // console.log(`📄 [BACKEND] Fetching all posts`);
+  const page = parseInt(req.body.page) || 1;
+  const limit = parseInt(req.body.limit) || 20;
+  const skip = (page - 1) * limit;
 
 
   try {
@@ -44,7 +45,6 @@ const readPost = async (req, res) => {
     }
 
     // Get all posts without pagination
-
     const posts = await postdbs.aggregate([
       // make ObjectId copy of userid for joins
       {
@@ -68,8 +68,14 @@ const readPost = async (req, res) => {
       {
         $lookup: {
           from: "likes", // your Like creator collection
-          localField: "_id",
-          foreignField: "postid",
+          let: { postId: { $toString: "$_id" } },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$postid", "$$postId"] }
+              }
+            }
+          ],
           as: "likes",
         },
       },
@@ -91,8 +97,14 @@ const readPost = async (req, res) => {
       {
         $lookup: {
           from: "comments", // your Comment creator collection
-          localField: "_id",
-          foreignField: "postid",
+          let: { postId: { $toString: "$_id" } },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$postid", "$$postId"] }
+              }
+            }
+          ],
           as: "comments",
         },
       },
@@ -132,8 +144,12 @@ const readPost = async (req, res) => {
         },
       },
       // Sort by newest first initially
-      { $sort: { createdAt: -1 } }
+      { $sort: { createdAt: -1 } },
+      // Add pagination
+      { $skip: skip },
+      { $limit: limit }
     ]);
+    
     
     // Custom sort: prioritize followed users only if they have recent posts, otherwise sort by date globally
     const sortedPosts = posts.sort((a, b) => {
@@ -191,24 +207,77 @@ const readPost = async (req, res) => {
     // Filter out posts from blocked users
     const filteredPosts = await filterBlockedPosts(sortedPosts, userid);
     
-    // Filter comments from blocked users in each post
+    // Filter comments from blocked users and enrich with user information
     const postsWithFilteredComments = await Promise.all(
       filteredPosts.map(async (post) => {
         if (post.comments && post.comments.length > 0) {
+          
           const filteredComments = await filterBlockedComments(post.comments, userid);
-          return { ...post, comments: filteredComments };
+          
+          // Enrich comments with user information
+          const enrichedComments = await Promise.all(
+            filteredComments.map(async (comment) => {
+              try {
+                // Get user information for this comment
+                const user = await userdbs.findById(comment.userid).exec();
+                const userComplete = await comdbs.findOne({ useraccountId: comment.userid }).exec();
+                
+                if (user) {
+                  const enrichedComment = {
+                    ...comment,
+                    commentuserphoto: userComplete?.photoLink || user.photolink || "",
+                    commentusername: `${user.firstname || ''} ${user.lastname || ''}`.trim(),
+                    commentnickname: user.nickname || "",
+                    commentuserid: user._id,
+                    isVip: user.isVip || false,
+                    vipStartDate: user.vipStartDate,
+                    vipEndDate: user.vipEndDate,
+                    firstname: user.firstname || "",
+                    lastname: user.lastname || ""
+                  };
+                  
+                  
+                  return enrichedComment;
+                }
+                
+                return comment;
+              } catch (err) {
+                console.error('Error enriching comment:', err);
+                return comment;
+              }
+            })
+          );
+          
+          
+          return { ...post, comments: enrichedComments };
         }
         return post;
       })
     );
     
     
+    // Get total count for pagination metadata
+    const totalPosts = await postdbs.countDocuments();
+    const totalPages = Math.ceil(totalPosts / limit);
+    const hasNextPage = page < totalPages;
+    const hasPrevPage = page > 1;
+
+
+
     return res
       .status(200)
       .json({ 
         ok: true, 
         message: `Posts fetched successfully`, 
-        post: postsWithFilteredComments
+        post: postsWithFilteredComments,
+        pagination: {
+          currentPage: page,
+          totalPages,
+          totalPosts,
+          hasNextPage,
+          hasPrevPage,
+          limit
+        }
       });
   } catch (err) {
     console.log(err);
