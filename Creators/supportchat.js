@@ -9,7 +9,7 @@ const supportChatSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['Account Issues', 'Payment & Billing', 'Technical Support', 'Feature Request', 'Bug Report', 'Other']
+    enum: ['Account Issues', 'Payment & Billing', 'Technical Support', 'Feature Request', 'Bug Report', 'Report a Fan', 'Report a Creator', 'Other']
   },
   status: {
     type: String,
@@ -62,6 +62,16 @@ const supportChatSchema = new mongoose.Schema({
   updatedAt: {
     type: Number,
     default: Date.now
+  },
+  priority: {
+    type: String,
+    enum: ['low', 'medium', 'high', 'urgent'],
+    default: 'medium'
+  },
+  reportId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Report',
+    default: null
   }
 }, {
   timestamps: false

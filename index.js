@@ -1,6 +1,8 @@
+const dotenv = require("dotenv");
+dotenv.config();
 const express = require("express");
 const http = require("http");
-require("dotenv").config();
+
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
 const { Server } = require("socket.io");
@@ -27,6 +29,7 @@ const updatebalance = require("./utiils/deductPVC");
 const { pushmessage, pushMessageNotification, pushSupportNotification, pushActivityNotification, pushAdminNotification } = require("./utiils/sendPushnot");
 const imageRoutes = require("./routes/imageRoutes");
 const { scheduleMessageCleanup } = require("./utiils/deleteOldMessages");
+const scheduledCleanup = require("./scripts/scheduledCleanup");
 
 const PORT = process.env.PORT || 3100;
 const app = express();
@@ -238,6 +241,9 @@ app.use("/support-chat", require("./routes/api/supportChat"));
 app.use("/review", require("./routes/api/Review/reviewRoutes"));
 app.use("/api", require("./routes/api/updateRatingsVip"));
 app.use("/api/backup", require("./routes/api/backupRoutes"));
+app.use("/api/pending-balance", require("./routes/api/pendingBalanceRoutes"));
+app.use("/api/reports", require("./routes/api/reportRoutes"));
+
 // Track online users
 const onlineUsers = new Set();
 
@@ -1240,6 +1246,9 @@ mongoose.connection.once("open", () => {
   // Start MongoDB backup cron job
   const { setupBackupCron } = require('./scripts/setupBackupCron');
   setupBackupCron();
+  
+  // Start orphaned pending balances cleanup scheduler
+  scheduledCleanup.start();
   
   // Start notification cleanup cron job
   const { setupNotificationCleanup } = require('./scripts/setupNotificationCleanup');

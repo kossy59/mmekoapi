@@ -3,6 +3,7 @@
 const creators = require("../../Creators/creators");
 const userdb = require("../../Creators/userdb");
 const { deleteFile } = require("../../utiils/storj");
+const { processPortfolioDeletionRefund } = require("../../scripts/refundPendingBalances");
 
 const createCreator = async (req, res) => {
   const hostid = req.body.hostid;
@@ -42,6 +43,20 @@ const createCreator = async (req, res) => {
     await user.save()
 
     //await data.databar.deleteDocument(data.dataid,data.creatorCol,currentuser.$id)
+
+    // Process refunds for pending requests BEFORE portfolio deletion
+    console.log(`🔄 Starting refund process for portfolio ${hostid}`);
+    try {
+      const refundResult = await processPortfolioDeletionRefund(hostid);
+      if (refundResult.success) {
+        console.log(`✅ Processed ${refundResult.processed} refunds totaling ${refundResult.totalAmount} for deleted portfolio ${hostid}`);
+      } else {
+        console.log(`⚠️ Refund process completed but no refunds were processed for portfolio ${hostid}`);
+      }
+    } catch (refundError) {
+      console.error("❌ Error processing refunds for deleted portfolio:", refundError);
+      // Don't fail the deletion if refund processing fails
+    }
 
     await creators
       .deleteOne({

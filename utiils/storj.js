@@ -10,6 +10,19 @@ const { processVideo, compressImage } = require("./compress");
 // -----------------------------
 // Configuration (env required)
 // -----------------------------
+
+// Try to load dotenv if not already loaded
+if (!process.env.STORJ_ACCESS_KEY_ID) {
+  try {
+    console.log('[Storj Debug] Attempting to load dotenv...');
+    const result = require('dotenv').config();
+    console.log('[Storj Debug] Dotenv result:', result);
+  } catch (e) {
+    console.log('[Storj Debug] Dotenv error:', e.message);
+    // dotenv might not be available, continue with system env vars
+  }
+}
+
 const STORJ_ACCESS_KEY_ID = process.env.STORJ_ACCESS_KEY_ID;
 const STORJ_SECRET_ACCESS_KEY = process.env.STORJ_SECRET_ACCESS_KEY;
 const STORJ_ENDPOINT = process.env.STORJ_ENDPOINT;
@@ -23,8 +36,16 @@ const STORJ_PUBLIC_ACCESS_GRANT = process.env.STORJ_PUBLIC_ACCESS_GRANT || "";
 const STORJ_LINKSHARE_API = process.env.STORJ_LINKSHARE_API || "https://api.link.storjshare.io";
 
 if (!STORJ_ACCESS_KEY_ID || !STORJ_SECRET_ACCESS_KEY || !STORJ_ENDPOINT) {
+  console.error('[Storj Config Debug] Environment variables status:');
+  console.error('STORJ_ACCESS_KEY_ID:', STORJ_ACCESS_KEY_ID ? 'SET' : 'NOT SET');
+  console.error('STORJ_SECRET_ACCESS_KEY:', STORJ_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET');
+  console.error('STORJ_ENDPOINT:', STORJ_ENDPOINT ? 'SET' : 'NOT SET');
+  console.error('Current working directory:', process.cwd());
+  console.error('Node environment:', process.env.NODE_ENV);
+  
   throw new Error(
-    "[Storj Config] Missing one of STORJ_ACCESS_KEY_ID / STORJ_SECRET_ACCESS_KEY / STORJ_ENDPOINT env vars."
+    "[Storj Config] Missing one of STORJ_ACCESS_KEY_ID / STORJ_SECRET_ACCESS_KEY / STORJ_ENDPOINT env vars. " +
+    "Please check your .env file or system environment variables."
   );
 }
 

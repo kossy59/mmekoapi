@@ -1,6 +1,7 @@
 const SupportChat = require('../../Creators/supportchat');
 const User = require('../../Creators/userdb');
 const { pushAdminNotification, pushSupportNotification } = require('../../utiils/sendPushnot');
+const { handleReportCategory } = require('./reportHandler');
 
 // Create or get support chat
 const createOrGetSupportChat = async (req, res) => {
@@ -62,6 +63,19 @@ const createOrGetSupportChat = async (req, res) => {
 
     await newSupportChat.save();
 
+    // Handle report categories specially
+    if (['Report a Fan', 'Report a Creator'].includes(category) && message) {
+      const reportResult = await handleReportCategory(newSupportChat, message, userid);
+      if (reportResult.success && reportResult.handled) {
+        return res.status(201).json({ 
+          ok: true, 
+          supportChat: newSupportChat,
+          reportId: reportResult.reportId,
+          message: reportResult.message || 'Support chat created and report submitted successfully' 
+        });
+      }
+    }
+
     res.status(201).json({ 
       ok: true, 
       supportChat: newSupportChat,
@@ -118,6 +132,16 @@ const sendMessage = async (req, res) => {
     supportChat.updatedAt = Date.now();
 
     await supportChat.save();
+
+    // Handle report categories for new messages
+    if (['Report a Fan', 'Report a Creator'].includes(supportChat.category)) {
+      const reportResult = await handleReportCategory(supportChat, message, userid);
+      if (reportResult.success && reportResult.handled) {
+        // Add report info to the message
+        newMessage.reportId = reportResult.reportId;
+        newMessage.isReport = true;
+      }
+    }
 
     // Emit socket event for real-time updates
     const io = req.app.get('io');
