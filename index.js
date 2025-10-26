@@ -233,6 +233,9 @@ app.use("/deletecrush", require("./routes/api/creator/deletecrush"));
 app.use("/checkdocumentstatus", require("./routes/api/creator/checkDocumentStatus"));
 app.use("/notifications", require("./routes/api/Notifications/notificationRoutes"));
 
+// Push notification test route
+app.use("/api/push", require("./routes/api/push/test"));
+
 // Block user functionality
 app.use("/block", require("./routes/api/block/blockUser"));
 
