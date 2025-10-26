@@ -77,7 +77,8 @@ const pushActivityNotification = async (userid, message, activityType = "activit
   await pushmessage(userid, message, "/icons/m-logo.png", {
     title: "New Activity",
     type: "activity",
-    url: "/notifications"
+    url: "/notifications",
+    icon: "/icons/m-logo.png"
   });
 };
 
@@ -85,7 +86,8 @@ const pushMessageNotification = async (userid, message, senderName = "Someone") 
   await pushmessage(userid, message, "/icons/m-logo.png", {
     title: `Message from ${senderName}`,
     type: "message",
-    url: "/message"
+    url: "/message",
+    icon: "/icons/m-logo.png"
   });
 };
 
@@ -93,7 +95,8 @@ const pushSupportNotification = async (userid, message) => {
   await pushmessage(userid, message, "/icons/m-logo.png", {
     title: "Chat Support",
     type: "support",
-    url: "/message/supportchat"
+    url: "/message/supportchat",
+    icon: "/icons/m-logo.png"
   });
 };
 
@@ -101,7 +104,8 @@ const pushAdminNotification = async (userid, message, adminType = "admin") => {
   await pushmessage(userid, message, "/icons/m-logo.png", {
     title: "MMEKO SUPPORT",
     type: "support",
-    url: "/message/supportchat"
+    url: "/message/supportchat",
+    icon: "/icons/m-logo.png"
   });
 };
 

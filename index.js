@@ -252,6 +252,7 @@ app.use("/api", require("./routes/api/updateRatingsVip"));
 app.use("/api/backup", require("./routes/api/backupRoutes"));
 app.use("/api/pending-balance", require("./routes/api/pendingBalanceRoutes"));
 app.use("/api/reports", require("./routes/api/reportRoutes"));
+app.use("/api/push", require("./routes/api/pushTest"));
 
 // Track online users
 const onlineUsers = new Set();
