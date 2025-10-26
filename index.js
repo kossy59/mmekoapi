@@ -217,6 +217,14 @@ app.use("/adminnotify", require("./routes/api/Admin/adminnotify"));
 app.use("/vipanalysis", require("./routes/api/Admin/vipAnalysis"));
 app.use("/api/admin/transactions", require("./routes/api/Admin/transactions.routes"));
 app.use("/api/admin/notifications", require("./routes/api/Admin/notificationCleanupRoutes"));
+
+// New Admin Routes
+app.use("/edituser", require("./routes/api/Admin/edituser"));
+app.use("/sendNotificationWithFilter", require("./routes/api/Admin/sendNotificationWithFilter"));
+app.use("/adminNotificationSystem", require("./routes/api/Admin/adminNotificationSystem"));
+app.use("/getUserStatistics", require("./routes/api/Admin/getUserStatistics"));
+app.use("/getAdminDashboard", require("./routes/api/Admin/getAdminDashboard"));
+app.use("/getUserFollowers", require("./routes/api/Admin/getUserFollowers"));
 app.use("/useredit", require("./routes/api/Profilemore/getuseredit"));
 app.use("/addcrush", require("./routes/api/creator/addcrush"));
 app.use("/getcrush", require("./routes/api/creator/getcrush"));

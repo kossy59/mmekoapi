@@ -1,6 +1,13 @@
 {
   "backups": [
     {
+      "id": "1761433261150",
+      "size": 1494709,
+      "lastModified": "2025-10-25T23:01:01.151Z",
+      "status": "completed",
+      "location": "https://gateway.storjshare.io/database-backup/backup_2025-10-25.bson.gz"
+    },
+    {
       "id": "1761247570985",
       "fileName": "backup_2025-10-23.bson.gz",
       "size": 1494099,
@@ -82,5 +89,5 @@
       "location": "Storj database-backup bucket"
     }
   ],
-  "lastUpdated": "2025-10-23T19:26:10.985Z"
+  "lastUpdated": "2025-10-25T23:01:01.151Z"
 }
