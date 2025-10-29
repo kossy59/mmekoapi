@@ -1,7 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const userdb = require("../../Creators/userdb");
-const baneddb = require("../../Creators/admindb");
 require("dotenv").config();
 const handleLogin = async (req, res) => {
   const { nickname, password } = req.body;
@@ -17,37 +16,6 @@ const handleLogin = async (req, res) => {
 
   const normalizedNickname = nickname.toLowerCase().trim();
 
-  // Check if the nickname is banned or suspended
-  let nicknameBanned = await baneddb
-    .findOne({ nickname: normalizedNickname })
-    .exec();
-
-  if (nicknameBanned) {
-    if (nicknameBanned.delete === true) {
-      return res.status(400).json({
-        ok: false,
-        message: "Your account has been banned.",
-      });
-    }
-
-    if (nicknameBanned.suspend === true) {
-      let currentDate = Date.now();
-      let endDate = new Date(Number(nicknameBanned.end_date));
-      let current_date = new Date(currentDate);
-
-      if (current_date.getTime() >= endDate.getTime()) {
-        await baneddb.deleteOne({ nickname: normalizedNickname });
-      } else {
-        const diffTime = Math.abs(endDate - current_date);
-        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        return res.status(400).json({
-          ok: false,
-          message: `Your account is suspended for ${diffDays} days.`,
-        });
-      }
-    }
-  }
-
   try {
     // Find user by nickname
     const user = await userdb.findOne({ nickname: normalizedNickname }).exec();
@@ -56,6 +24,17 @@ const handleLogin = async (req, res) => {
       return res.status(400).json({
         ok: false,
         message: "User not registered.",
+      });
+    }
+
+    // Check if user is banned
+    if (user.banned) {
+      return res.status(403).json({
+        ok: false,
+        message: "This account has been banned for violating our rules",
+        banned: true,
+        banReason: user.banReason || "Violation of terms of service",
+        bannedAt: user.bannedAt
       });
     }
 
@@ -87,14 +66,14 @@ const handleLogin = async (req, res) => {
       res.cookie("auth_token", accessToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "Lax",
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       });
 
       res.cookie("refresh_token", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "Lax",
         maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       });
 

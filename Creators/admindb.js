@@ -5,9 +5,13 @@ const markertdata = new Scheme(
   {
     userid: {
       type: String,
-      required: true,
+      required: false, // Made optional for global notifications
     },
     message: {
+      type: String,
+      required: true,
+    },
+    title: {
       type: String,
       required: false,
     },
@@ -31,10 +35,36 @@ const markertdata = new Scheme(
       type: String,
       required: false,
     },
-    message: { 
+    // New fields for admin notifications
+    adminNotification: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    hasLearnMore: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    learnMoreUrl: {
       type: String,
-      required: true
-   },
+      required: false,
+    },
+    targetGender: {
+      type: String,
+      required: false,
+      enum: ['all', 'male', 'female', 'creators'],
+    },
+    isActive: {
+      type: Boolean,
+      required: false,
+      default: true,
+    },
+    type: {
+      type: String,
+      required: false,
+      default: 'admin_broadcast',
+    },
   },
   { timestamps: true }
 );

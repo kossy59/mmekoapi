@@ -8,13 +8,21 @@ const adminNotificationSystem = async (req, res) => {
         targetGender, 
         targetUserIds,
         notificationType = 'admin_broadcast',
-        title = 'Admin Notification'
+        title = 'Admin Notification',
+        hasLearnMore = false,
+        learnMoreUrl = null
     } = req.body;
     const token = req.headers.authorization?.replace('Bearer ', '');
 
     if (!message) {
         return res.status(400).json({ "ok": false, 'message': 'Message is required' });
     }
+
+    if (!title) {
+        return res.status(400).json({ "ok": false, 'message': 'Title is required' });
+    }
+
+    // Learn More URL is optional - if hasLearnMore is true, it can be empty
 
     if (!token) {
         return res.status(401).json({ "ok": false, 'message': 'Authorization token required' });
@@ -30,12 +38,17 @@ const adminNotificationSystem = async (req, res) => {
             targetUsers = users;
             filterDescription = `Specific users (${targetUserIds.length} IDs)`;
         } else {
-            // Get users based on gender filter
+            // Get users based on target audience filter
             let query = {};
             
             if (targetGender && targetGender !== 'all') {
-                query.gender = targetGender.toLowerCase();
-                filterDescription = `All ${targetGender} users`;
+                if (targetGender === 'creators') {
+                    query.creator_verified = true;
+                    filterDescription = 'All creators';
+                } else {
+                    query.gender = targetGender.toLowerCase();
+                    filterDescription = `All ${targetGender} users`;
+                }
             } else {
                 filterDescription = 'All users';
             }
@@ -62,13 +75,23 @@ const adminNotificationSystem = async (req, res) => {
                 seen: false,
                 type: notificationType,
                 createdAt: new Date(),
-                adminNotification: true
+                adminNotification: true,
+                hasLearnMore: hasLearnMore,
+                learnMoreUrl: learnMoreUrl,
+                targetGender: targetGender,
+                isActive: true // New field to track if notification is still active
             };
 
             notificationData.push(notification);
         }
 
-        // Insert all notifications
+        // First, deactivate all existing admin notifications
+        await admindb.updateMany(
+            { adminNotification: true, isActive: true },
+            { isActive: false }
+        );
+
+        // Insert all new notifications
         await admindb.insertMany(notificationData);
 
         // Send push notifications based on type

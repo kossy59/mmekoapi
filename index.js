@@ -222,9 +222,14 @@ app.use("/api/admin/notifications", require("./routes/api/Admin/notificationClea
 app.use("/edituser", require("./routes/api/Admin/edituser"));
 app.use("/sendNotificationWithFilter", require("./routes/api/Admin/sendNotificationWithFilter"));
 app.use("/adminNotificationSystem", require("./routes/api/Admin/adminNotificationSystem"));
+app.use("/getAdminNotification", require("./routes/api/Admin/getAdminNotification"));
+app.use("/getNotificationDetails", require("./routes/api/Admin/getNotificationDetails"));
 app.use("/getUserStatistics", require("./routes/api/Admin/getUserStatistics"));
 app.use("/getAdminDashboard", require("./routes/api/Admin/getAdminDashboard"));
 app.use("/getUserFollowers", require("./routes/api/Admin/getUserFollowers"));
+app.use("/banuser", require("./routes/api/Admin/banuser"));
+app.use("/unbanuser", require("./routes/api/Admin/unbanuser"));
+app.use("/checkBanStatus", require("./routes/api/Admin/checkBanStatus"));
 app.use("/useredit", require("./routes/api/Profilemore/getuseredit"));
 app.use("/addcrush", require("./routes/api/creator/addcrush"));
 app.use("/getcrush", require("./routes/api/creator/getcrush"));

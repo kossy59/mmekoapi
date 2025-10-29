@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 // Database connection
-const MONGODB_URI = process.env.DB || process.env.MONGODB_URI || 'mongodb://localhost:27017/mmeko';
+const MONGODB_URI = process.env.DB
 
 async function addDatabaseIndexes() {
   try {
