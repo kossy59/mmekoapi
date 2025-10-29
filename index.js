@@ -40,7 +40,7 @@ const allowedOrigins = [
   process.env.NEXT_PUBLIC_URL,
   "https://mmeko.com",
 
-  "https://mmekowebsite-.vercel.app", // Vercel deployment
+  "https://mmekowebsite-mu.vercel.app", // Vercel deployment
 
   "http://localhost:3000", // Add localhost for development
   "http://10.245.95.157:3000", // Add network URL for device access
