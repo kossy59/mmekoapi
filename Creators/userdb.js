@@ -181,6 +181,20 @@ const markertdata = new Scheme(
       required: false,
       default: 0,
     },
+    banned: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+    banReason: {
+      type: String,
+      required: false,
+      default: "",
+    },
+    bannedAt: {
+      type: Date,
+      required: false,
+    },
   },
   { timestamps: true }
 );

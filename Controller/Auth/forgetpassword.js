@@ -64,14 +64,14 @@ const forgetpass = async (req, res) => {
     res.cookie("auth_token", accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "Lax",
       maxAge: 15 * 60 * 1000,
     });
 
     res.cookie("refresh_token", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "Lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
