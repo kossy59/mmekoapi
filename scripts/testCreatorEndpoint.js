@@ -9,7 +9,7 @@ const axios = require('axios');
 
 console.log('🔍 [CREATOR ENDPOINT TEST] Testing creator endpoint...\n');
 
-const BASE_URL = 'https://mmekoapi.onrender.com';
+const BASE_URL = 'https://backendritual.work';
 
 console.log(`🌐 Testing against: ${BASE_URL}\n`);
 

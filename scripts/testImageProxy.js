@@ -10,7 +10,7 @@ const axios = require('axios');
 console.log('🔍 [IMAGE PROXY TEST] Testing image proxy endpoints...\n');
 
 const BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://mmekoapi.onrender.com' 
+  ? 'https://backendritual.work' 
   : 'http://localhost:3100';
 
 console.log(`🌐 Testing against: ${BASE_URL}\n`);
