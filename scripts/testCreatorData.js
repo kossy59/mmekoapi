@@ -9,7 +9,7 @@ const axios = require('axios');
 
 console.log('🔍 [CREATOR DATA TEST] Testing creator data response...\n');
 
-const BASE_URL = 'https://mmekoapi.onrender.com';
+const BASE_URL = 'https://backendritual.work';
 
 async function testCreatorData() {
   try {

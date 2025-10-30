@@ -60,7 +60,7 @@ curl -X POST https://your-backend-url.com/api/image/save \
 
 ### Images Not Loading:
 1. Check if Storj environment variables are set in production
-2. Verify backend is accessible: `https://mmekoapi.onrender.com/api/image/info`
+2. Verify backend is accessible: `https://backendritual.work/api/image/info`
 3. Check browser console for CORS errors
 4. Verify image URLs are using proxy: `/api/image/view?publicId=...`
 
