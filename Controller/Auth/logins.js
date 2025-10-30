@@ -3,22 +3,22 @@ const jwt = require("jsonwebtoken");
 const userdb = require("../../Creators/userdb");
 require("dotenv").config();
 const handleLogin = async (req, res) => {
-  const { nickname, password } = req.body;
+  const { username, password } = req.body;
 
 
   // Validate required fields
-  if (!nickname || !password) {
+  if (!username || !password) {
     return res.status(400).json({
       ok: false,
-      message: "Nickname and password are required.",
+      message: "Username and password are required.",
     });
   }
 
-  const normalizedNickname = nickname.toLowerCase().trim();
+  const normalizedUsername = username.toLowerCase().trim();
 
   try {
-    // Find user by nickname
-    const user = await userdb.findOne({ nickname: normalizedNickname }).exec();
+    // Find user by username
+    const user = await userdb.findOne({ username: normalizedUsername }).exec();
 
     if (!user) {
       return res.status(400).json({
@@ -47,13 +47,13 @@ const handleLogin = async (req, res) => {
       const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET || "NEXT_PUBLIC_SECERET";
       
       const refreshToken = jwt.sign(
-        { UserInfo: { username: user.nickname, userId: user._id.toString(), isAdmin: user.admin } },
+        { UserInfo: { username: user.username, userId: user._id.toString(), isAdmin: user.admin } },
         process.env.REFRESH_TOKEN_SECRET,
         { expiresIn: "30d" }
       );
 
       const accessToken = jwt.sign(
-        { UserInfo: { username: user.nickname, userId: user._id.toString(), isAdmin: user.admin } },
+        { UserInfo: { username: user.username, userId: user._id.toString(), isAdmin: user.admin } },
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: "30d" }
       );
@@ -93,7 +93,7 @@ const handleLogin = async (req, res) => {
           _id: user._id,
           firstname: user.firstname,
           lastname: user.lastname,
-          nickname: user.nickname,
+          username: user.username,
           bio: user.bio,
           photolink: user.photolink,
           photoID: user.photoID,

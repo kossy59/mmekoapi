@@ -6,7 +6,7 @@ const updatePost = async (req,res)=>{
     const userid = req.body.userid;
     const firstname = req.body.firstname;
     const lastname = req.body.lastname;
-    const nickname = req.body.nickname;
+    const username = req.body.username;
     const bio = req.body.bio;
     const state = req.body.state;
     const photolink = req.body.photolink;
@@ -41,7 +41,7 @@ const updatePost = async (req,res)=>{
 
                let Firstname = du.firstname;
                let Lastname = du.lastname;
-               let Nickname = du.nickname;
+               let Username = du.username;
                let Bio = du.bio;
                let State = du.state;
                let Photolink = du.photolink;
@@ -57,8 +57,8 @@ const updatePost = async (req,res)=>{
                 du.lastname = lastname;
             }
 
-            if(nickname){
-                du.nickname = nickname;
+            if(username){
+                du.username = username;
             }
 
             if(bio){
@@ -92,7 +92,7 @@ const updatePost = async (req,res)=>{
             //     {
             //         firstname,
             //         lastname,
-            //         nickname,
+            //         username,
             //         state
             //     }
             // )

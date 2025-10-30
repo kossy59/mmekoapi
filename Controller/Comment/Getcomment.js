@@ -65,7 +65,7 @@ const readComment = async (req,res)=>{
                     commentid: filteredComments[i]._id,
                     commenttime: filteredComments[i].commenttime,
                     commentuserid: user._id,
-                    commentnickname: user.nickname,
+                    commentusername: user.username,
                     isVip: isVip,
                     vipStartDate: user.vipStartDate,
                     vipEndDate: user.vipEndDate
@@ -81,7 +81,7 @@ const readComment = async (req,res)=>{
                         commentid: filteredComments[i]._id,
                         commenttime: filteredComments[i].commenttime,
                         commentuserid: user._id,
-                        commentnickname: user.nickname,
+                        commentusername: user.username,
                         isVip: user.isVip || false,
                         vipStartDate: user.vipStartDate,
                         vipEndDate: user.vipEndDate

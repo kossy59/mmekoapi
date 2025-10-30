@@ -80,14 +80,14 @@ const getBlockedUsers = async (req, res) => {
     const blockedRelationships = await BlockUser.find({ blockerId: userId })
       .populate({
         path: 'blockedUserId',
-        select: 'firstname lastname nickname photolink online location',
+        select: 'firstname lastname username photolink online location',
         model: 'UserDB'
       })
       .exec();
 
     const blockedUsers = blockedRelationships.map(rel => ({
       id: rel.blockedUserId._id,
-      name: rel.blockedUserId.nickname || `${rel.blockedUserId.firstname} ${rel.blockedUserId.lastname}`,
+      name: rel.blockedUserId.username || `${rel.blockedUserId.firstname} ${rel.blockedUserId.lastname}`,
       firstname: rel.blockedUserId.firstname,
       lastname: rel.blockedUserId.lastname,
       photolink: rel.blockedUserId.photolink,

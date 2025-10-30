@@ -30,7 +30,7 @@ const handleRefresh = async (req, res, next) => {
 
     if (du) {
       jwt.verify(refreshToken, process.env.refreshToken, (err, decode) => {
-        if (err || du.nickname !== decode.UserInfo.username) {
+        if (err || du.username !== decode.UserInfo.username) {
           return res
             .status(403)
             .json({ message: `${err.message} please login again` });

@@ -60,7 +60,7 @@ const readProfile = async (req, res) => {
       username: `${du.firstname} ${du.lastname}`,
       admin: du.admin,
       userphoto: com?.photoLink || "",
-      nickname: `${du.nickname}`,
+      username: `${du.username}`,
       aboutuser: `${com?.details || ""}`,
       location: `${du.country}`,
       active: du.active,

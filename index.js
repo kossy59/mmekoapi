@@ -799,7 +799,7 @@ io.on("connection", (socket) => {
           callerVipEndDate = caller.vipEndDate || null;
           callerFirstName = caller.firstname || '';
           callerLastName = caller.lastname || '';
-          callerUsername = caller.nickname || '';
+          callerUsername = caller.username || '';
         }
         
         if (answerer) {
@@ -807,7 +807,7 @@ io.on("connection", (socket) => {
           answererVipEndDate = answerer.vipEndDate || null;
           answererFirstName = answerer.firstname || '';
           answererLastName = answerer.lastname || '';
-          answererUsername = answerer.nickname || '';
+          answererUsername = answerer.username || '';
         }
         
         
@@ -908,12 +908,12 @@ io.on("connection", (socket) => {
         const callerVipEndDate = caller?.vipEndDate || null;
         const callerFirstName = caller?.firstname || '';
         const callerLastName = caller?.lastname || '';
-        const callerUsername = caller?.nickname || '';
+        const callerUsername = caller?.username || '';
         const answererVipStatus = answerer?.isVip || false;
         const answererVipEndDate = answerer?.vipEndDate || null;
         const answererFirstName = answerer?.firstname || '';
         const answererLastName = answerer?.lastname || '';
-        const answererUsername = answerer?.nickname || '';
+        const answererUsername = answerer?.username || '';
 
         // Emit call accepted to caller
         socket.to(`user_${callerId}`).emit('fan_call_accepted', {
@@ -1387,7 +1387,7 @@ mongoose.connection.once("open", () => {
             console.log('📝 [Billing] Creator IDs:', { 
               portfolioId: creator_portfolio_id, 
               actualCreatorId: creator._id,
-              creatorNickname: creator.nickname 
+              creatorUsername: creator.username 
             });
             
             // Billing successful

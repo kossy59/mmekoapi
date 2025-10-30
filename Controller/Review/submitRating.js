@@ -160,24 +160,24 @@ exports.submitRating = async (req, res) => {
     if (ratingType === 'fan-to-creator') {
       // Fan rating creator
       ratingData.fanName = `${raterUser.firstname || raterUser.creatorname || raterUser.name || ''} ${raterUser.lastname || ''}`.trim();
-      ratingData.fanNickname = raterUser.nickname || raterUser.username || "";
+      ratingData.fanUsername = raterUser.username || raterUser.username || "";
       ratingData.fanPhoto = raterUser.photolink || "";
       ratingData.fanIsVip = raterUser.isVip || false;
       ratingData.fanVipEndDate = raterUser.vipEndDate || null;
       ratingData.creatorName = `${ratedUser.firstname || ratedUser.creatorname || ratedUser.name || ''} ${ratedUser.lastname || ''}`.trim();
-      ratingData.creatorNickname = ratedUser.nickname || ratedUser.username || "";
+      ratingData.creatorUsername = ratedUser.username || ratedUser.username || "";
       ratingData.creatorPhoto = ratedUser.photolink || "";
       ratingData.creatorIsVip = ratedUser.isVip || false;
       ratingData.creatorVipEndDate = ratedUser.vipEndDate || null;
     } else {
       // Creator rating fan
       ratingData.creatorName = `${raterUser.firstname || raterUser.creatorname || raterUser.name || ''} ${raterUser.lastname || ''}`.trim();
-      ratingData.creatorNickname = raterUser.nickname || raterUser.username || "";
+      ratingData.creatorUsername = raterUser.username || raterUser.username || "";
       ratingData.creatorPhoto = raterUser.photolink || "";
       ratingData.creatorIsVip = raterUser.isVip || false;
       ratingData.creatorVipEndDate = raterUser.vipEndDate || null;
       ratingData.fanName = `${ratedUser.firstname || ratedUser.creatorname || ratedUser.name || ''} ${ratedUser.lastname || ''}`.trim();
-      ratingData.fanNickname = ratedUser.nickname || ratedUser.username || "";
+      ratingData.fanUsername = ratedUser.username || ratedUser.username || "";
       ratingData.fanPhoto = ratedUser.photolink || "";
       ratingData.fanIsVip = ratedUser.isVip || false;
       ratingData.fanVipEndDate = ratedUser.vipEndDate || null;

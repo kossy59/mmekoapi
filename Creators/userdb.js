@@ -18,7 +18,7 @@ const markertdata = new Scheme(
       required: true,
     },
 
-    nickname: {
+    username: {
       type: String,
       required: false,
     },

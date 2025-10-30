@@ -81,7 +81,7 @@ const checkBanStatus = async (req, res) => {
                 isAuthenticated: true, 
                 isBanned: false, 
                 userId: user._id,
-                nickname: user.nickname
+                username: user.username
             });
 
         } catch (dbError) {

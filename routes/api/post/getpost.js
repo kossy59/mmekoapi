@@ -65,7 +65,7 @@ router.route('/:pid')
                             _id: 1,
                             firstname: 1,
                             lastname: 1,
-                            nickname: 1,
+                            username: 1,
                             gender: 1,
                             country: 1,
                             age: 1,

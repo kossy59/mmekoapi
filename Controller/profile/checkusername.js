@@ -14,7 +14,7 @@ const checkUsername = async (req, res) => {
         // Check if username already exists (excluding current user)
         // Username comes with @ prefix from frontend
         const existingUser = await userdb.findOne({
-            nickname: username, // username already includes @ prefix
+            username: username, // username already includes @ prefix
             _id: { $ne: currentUserId } // Exclude current user from check
         });
 

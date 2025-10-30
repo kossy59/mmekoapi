@@ -35,7 +35,7 @@ async function addDatabaseIndexes() {
 
     // Add indexes for users collection
     console.log('📊 Adding indexes for users collection...');
-    await db.collection('userdbs').createIndex({ "nickname": 1 });
+    await db.collection('userdbs').createIndex({ "username": 1 });
     await db.collection('userdbs').createIndex({ "isVip": 1 });
     await db.collection('userdbs').createIndex({ "creator_verified": 1 });
     console.log('✅ Users indexes added');

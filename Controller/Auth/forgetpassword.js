@@ -3,12 +3,12 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const forgetpass = async (req, res) => {
-  const { nickname, secretPhrase, newPassword } = req.body;
+  const { username, secretPhrase, newPassword } = req.body;
 
-  if (!nickname || !secretPhrase || !newPassword) {
+  if (!username || !secretPhrase || !newPassword) {
     return res.status(400).json({
       ok: false,
-      message: "Nickname, secret phrase and new password are required!",
+      message: "Username, secret phrase and new password are required!",
     });
   }
 
@@ -21,7 +21,7 @@ const forgetpass = async (req, res) => {
 
   try {
     // 1️⃣ Find user
-    const user = await userdb.findOne({ nickname }).exec();
+    const user = await userdb.findOne({ username }).exec();
     if (!user) {
       return res.status(404).json({ ok: false, message: "User not found" });
     }
@@ -45,13 +45,13 @@ const forgetpass = async (req, res) => {
 
     // 4️⃣ Generate new tokens
     const refreshToken = jwt.sign(
-      { UserInfo: { username: user.nickname } },
+      { UserInfo: { username: user.username } },
       process.env.REFRESH_TOKEN_SECRET,
       { expiresIn: "7d" }
     );
 
     const accessToken = jwt.sign(
-      { UserInfo: { username: user.nickname, userId: user._id.toString() } },
+      { UserInfo: { username: user.username, userId: user._id.toString() } },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "15m" }
     );

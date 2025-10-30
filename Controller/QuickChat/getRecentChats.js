@@ -38,7 +38,7 @@ const getRecentChats = async (req, res) => {
             _id: targetUser._id,
             firstname: targetUser.firstname,
             lastname: targetUser.lastname,
-            nickname: targetUser.nickname,
+            username: targetUser.username,
             email: targetUser.email
           } : "No user found");
 
@@ -63,7 +63,7 @@ const getRecentChats = async (req, res) => {
           } : "No photo found");
 
           let chatInfo = {
-            name: targetUser?.nickname || `${targetUser?.firstname || ''} ${targetUser?.lastname || ''}`.trim() || 'Unknown User',
+            name: targetUser?.username || `${targetUser?.firstname || ''} ${targetUser?.lastname || ''}`.trim() || 'Unknown User',
             photolink: targetPhoto?.photoLink || "",
             firstname: targetUser?.firstname || "",
             lastname: targetUser?.lastname || "",

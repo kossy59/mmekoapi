@@ -48,7 +48,7 @@ const handleNewUser = async (req, res) => {
           firstname: match.firstname,
           lastname: match.lastname,
           gender: match.gender,
-          nickname: match.nickname,
+          username: match.username,
           email: match.email,
           password: match.password,
           emailconfirm: match.emailconfirm,

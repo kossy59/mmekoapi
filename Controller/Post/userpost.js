@@ -98,7 +98,7 @@
 //           console.log("found post");
 //           post = {
 //             username: `${userdb[j].firstname} ${userdb[j].lastname}`,
-//             nickname: `${userdb[j].nickname}`,
+//             username: `${userdb[j].username}`,
 //             userphoto: `${comdb[k].photoLink}`,
 //             content: `${currentpostid.content}`,
 //             postphoto: `${currentpostid.postlink}`,
@@ -322,7 +322,7 @@ if (req.file && posttype === "image") {
         ) {
           post = {
             username: `${userdb[j].firstname} ${userdb[j].lastname}`,
-            nickname: `${userdb[j].nickname}`,
+            username: `${userdb[j].username}`,
             userphoto: `${comdb[k].photoLink}`,
             content: currentPost.content,
             postphoto: currentPost.postfilelink,

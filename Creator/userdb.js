@@ -38,7 +38,7 @@ async function initalizeDB(memko_socialDB,database){
     await database.createStringAttribute(
         memko_socialDB,
         UsersDB.$id,
-        'nickname',
+        'username',
         255,false
     
     )

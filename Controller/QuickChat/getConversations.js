@@ -88,7 +88,7 @@ const getConversations = async (req, res) => {
               _id: user._id,
               firstname: user.firstname,
               lastname: user.lastname,
-              nickname: user.nickname,
+              username: user.username,
               email: user.email
             });
           });
@@ -148,7 +148,7 @@ const getConversations = async (req, res) => {
               toid: userid,
               content: conv.lastMessage,
               date: conv.lastMessageTime,
-              name: user?.nickname || `${user?.firstname || ''} ${user?.lastname || ''}`.trim() || 'Unknown User',
+              name: user?.username || `${user?.firstname || ''} ${user?.lastname || ''}`.trim() || 'Unknown User',
               firstname: user?.firstname,
               lastname: user?.lastname,
               photolink: photo?.photoLink || "",
@@ -168,7 +168,7 @@ const getConversations = async (req, res) => {
               isEmpty: !formattedConv.photolink || formattedConv.photolink.trim() === "",
               hasUser: !!user,
               hasPhoto: !!photo,
-              userData: user ? { firstname: user.firstname, lastname: user.lastname, nickname: user.nickname } : null,
+              userData: user ? { firstname: user.firstname, lastname: user.lastname, username: user.username } : null,
               photoData: photo ? { photoLink: photo.photoLink, useraccountId: photo.useraccountId } : null
             });
             

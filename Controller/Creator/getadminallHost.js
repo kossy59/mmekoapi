@@ -39,8 +39,8 @@ const createCreator = async (req,res)=>{
                 userPhotolink = image?.photoLink
             }
 
-            if(users?.nickname){
-                username = users?.nickname
+            if(users?.username){
+                username = users?.username
             }
             delete users._id
             let data = {

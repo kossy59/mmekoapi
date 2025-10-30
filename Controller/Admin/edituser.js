@@ -27,7 +27,7 @@ const editUser = async (req, res) => {
         // Update user basic information
         const allowedFields = [
             'firstname', 'lastname', 'email', 'gender', 'country', 'age', 'dob',
-            'nickname', 'bio', 'balance', 'withdrawbalance', 'coinBalance', 
+            'username', 'bio', 'balance', 'withdrawbalance', 'coinBalance', 
             'pending', 'earnings', 'active', 'creator_verified', 'creator_portfolio',
             'Creator_Application_status', 'creator_portfolio_id', 'isVip', 
             'vipStartDate', 'vipEndDate', 'vipAutoRenewal'
@@ -44,9 +44,9 @@ const editUser = async (req, res) => {
         await userdb.updateOne({ _id: userId }, { $set: updateData });
 
         // Update user complete information if provided
-        if (updates.nickname || updates.bio) {
+        if (updates.username || updates.bio) {
             const userCompleteData = {};
-            if (updates.nickname) userCompleteData.nickname = updates.nickname;
+            if (updates.username) userCompleteData.username = updates.username;
             if (updates.bio) userCompleteData.bio = updates.bio;
 
             await usercomplete.updateOne(

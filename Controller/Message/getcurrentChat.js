@@ -36,8 +36,8 @@ const getcurrentChat = async (req, res) => {
       }
 
       let username = "";
-      if (clientinfo.nickname) {
-        username = clientinfo.nickname;
+      if (clientinfo.username) {
+        username = clientinfo.username;
       } else {
         username = `${clientinfo.firstname} ${clientinfo.lastname}`;
       }

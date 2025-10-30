@@ -19,7 +19,7 @@ let deleteAcc = async (req, res) => {
 
       let data = {
         name: `${value.firstname} ${value.lastname}`,
-        nickname: value.nickname,
+        username: value.username,
         userid: value._id,
         photolink: photo,
         country: value.country,

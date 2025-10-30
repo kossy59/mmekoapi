@@ -68,7 +68,7 @@ const createCreator = async (req, res) => {
       photolink,
       verify: modState.creator_verified,
       name: currentuser.name,
-      nickname: modState.nickname, // Include nickname from user data
+      username: modState.username, // Include username from user data
       age: currentuser.age,
       location: currentuser.location,
       price: currentuser.price,

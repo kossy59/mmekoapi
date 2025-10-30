@@ -119,7 +119,7 @@ const MsgNotify = async (req, res) => {
           files: latestMessage.files || [],
           fileCount: latestMessage.fileCount || 0,
           name: notification.sender.firstname,
-          nickname: notification.sender.nickname, // Include nickname field
+          username: notification.sender.username, // Include username field
           photolink: notification.photo?.photoLink || "",
           unreadCount: notification.unreadCount
         });

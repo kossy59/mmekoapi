@@ -120,7 +120,7 @@ async function testWithRealData() {
             _id: 1,
             firstname: 1,
             lastname: 1,
-            nickname: 1
+            username: 1
           }
         }
       }
@@ -131,7 +131,7 @@ async function testWithRealData() {
     console.log('Like Count:', fullAggregation[0]?.likeCount);
     console.log('Liked By:', fullAggregation[0]?.likedBy);
     console.log('Comments Count:', fullAggregation[0]?.comments?.length);
-    console.log('User:', fullAggregation[0]?.user?.nickname);
+    console.log('User:', fullAggregation[0]?.user?.username);
 
   } catch (error) {
     console.error('❌ Error testing with real data:', error);

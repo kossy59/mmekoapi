@@ -93,7 +93,7 @@ const getAllFanRequests = async (req, res) => {
                     ...creatorData?.toObject(),
                     isVip: creatorUserData?.isVip || false,
                     vipEndDate: creatorUserData?.vipEndDate,
-                    nickname: creatorUserData?.nickname, // Include nickname from user data
+                    username: creatorUserData?.username, // Include username from user data
                     firstname: creatorUserData?.firstname, // Include first name
                     lastname: creatorUserData?.lastname // Include last name
                   };
@@ -176,7 +176,7 @@ const getAllFanRequests = async (req, res) => {
 
         const finalOtherUser = otherUser ? {
           name: otherUser.name || `${otherUser.firstname || ''} ${otherUser.lastname || ''}`.trim() || 'Unknown User',
-          nickname: otherUser.nickname || otherUser.firstname || otherUser.name, // Include nickname field with fallbacks
+          username: otherUser.username || otherUser.firstname || otherUser.name, // Include username field with fallbacks
           firstname: otherUser.firstname || null, // Include first name field
           lastname: otherUser.lastname || null, // Include last name field
           photolink: otherUser.photolink || '/picture-1.jfif',
@@ -185,7 +185,7 @@ const getAllFanRequests = async (req, res) => {
           vipEndDate: otherUser.vipEndDate // Include VIP end date
         } : {
           name: 'Unknown User',
-          nickname: null, // Include nickname field
+          username: null, // Include username field
           firstname: null, // Include first name field
           lastname: null, // Include last name field
           photolink: '/picture-1.jfif',

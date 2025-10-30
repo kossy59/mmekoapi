@@ -21,7 +21,7 @@ async function testAPI() {
       console.log('Like Count:', firstPost.likeCount);
       console.log('Liked By:', firstPost.likedBy);
       console.log('Comments Count:', firstPost.comments?.length);
-      console.log('User:', firstPost.user?.nickname);
+      console.log('User:', firstPost.user?.username);
       
       if (firstPost.comments && firstPost.comments.length > 0) {
         console.log('Sample comment:', firstPost.comments[0]);

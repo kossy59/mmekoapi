@@ -22,7 +22,7 @@ const reviewSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  fanNickname: {
+  fanUsername: {
     type: String,
     default: ""
   },
@@ -34,7 +34,7 @@ const reviewSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  creatorNickname: {
+  creatorUsername: {
     type: String,
     default: ""
   },

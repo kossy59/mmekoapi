@@ -19,7 +19,7 @@ const pushdb = require("../../Creators/settingsdb");
 const handleNewUser = async (req, res) => {
   console.log("Incoming registration payload:", req.body);
 
-  const { firstname, lastname, gender, nickname, password, age, country, dob, secretPhrase } = req.body;
+  const { firstname, lastname, gender, username, password, age, country, dob, secretPhrase } = req.body;
 
   // Validate required fields
   if (
@@ -29,7 +29,7 @@ const handleNewUser = async (req, res) => {
     !password ||
     !age ||
     !country ||
-    !nickname ||
+    !username ||
     !dob ||
     !secretPhrase ||
     !Array.isArray(secretPhrase) ||
@@ -50,12 +50,12 @@ const handleNewUser = async (req, res) => {
   }
 
   try {
-    // Ensure nickname is unique
-    const existingNickname = await userdb.findOne({ nickname }).exec();
-    if (existingNickname) {
+    // Ensure username is unique
+    const existingUsername = await userdb.findOne({ username }).exec();
+    if (existingUsername) {
       return res.status(400).json({
         ok: false,
-        message: "Nickname already taken!"
+        message: "Username already taken!"
       });
     }
 
@@ -71,13 +71,13 @@ const handleNewUser = async (req, res) => {
     const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET || "NEXT_PUBLIC_SECERET";
     
     const refreshToken = jwt.sign(
-      { UserInfo: { username: nickname, userId: "", isAdmin: false } },
+      { UserInfo: { username: username, userId: "", isAdmin: false } },
       refreshTokenSecret,
       { expiresIn: "7d" }
     );
 
     let accessToken = jwt.sign(
-      { UserInfo: { username: nickname, userId: "", isAdmin: false } },
+      { UserInfo: { username: username, userId: "", isAdmin: false } },
       accessTokenSecret,
       { expiresIn: "15m" }
     );
@@ -87,7 +87,7 @@ const handleNewUser = async (req, res) => {
       firstname,
       lastname,
       gender,
-      nickname,
+      username,
       password: hashPwd,
       secretPhraseHash: hashSecretPhrase,
       active: true,
@@ -103,7 +103,7 @@ const handleNewUser = async (req, res) => {
 
     // Update access token with user ID
     accessToken = jwt.sign(
-      { UserInfo: { username: nickname, userId: user._id.toString(), isAdmin: user.admin } },
+      { UserInfo: { username: username, userId: user._id.toString(), isAdmin: user.admin } },
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "15m" }
     );

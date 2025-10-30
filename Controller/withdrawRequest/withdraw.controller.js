@@ -110,7 +110,7 @@ exports.getAllWithdrawRequests = async (req, res) => {
     }
 
     const requests = await WithdrawRequest.find()
-      .populate('userId', 'firstname lastname nickname')
+      .populate('userId', 'firstname lastname username')
       .sort({ createdAt: -1 });
     res.status(200).json({ requests });
   } catch (err) {

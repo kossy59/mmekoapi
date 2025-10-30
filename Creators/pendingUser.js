@@ -18,7 +18,7 @@ const pendingUser = new Scheme(
       required: true,
     },
 
-    nickname: {
+    username: {
       type: String,
       required: false,
     },

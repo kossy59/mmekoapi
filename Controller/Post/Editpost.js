@@ -52,7 +52,7 @@ const updatePost = async (req, res) => {
 
                     post = {
                         username: `${username.firstname} ${username.lastname}`,
-                        nickname: `${username.nickname}`,
+                        username: `${username.username}`,
                         userphoto: `${userphoto.photoLink}`,
                         content: `${du.content}`,
                         postphoto: `${du.postlink}`,
