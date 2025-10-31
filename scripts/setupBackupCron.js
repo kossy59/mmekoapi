@@ -3,11 +3,11 @@ const { performPureNodeBackup } = require('./pureNodeBackup');
 
 /**
  * Setup MongoDB backup cron job
- * Runs every day at 00:00 (12:00 AM midnight Nigeria time)
+ * Runs every day at 12:30 PM Nigeria time
  */
 function setupBackupCron() {
-  // Schedule backup to run every day at 00:00 (12:00 AM midnight Nigeria time)
-  const backupTask = cron.schedule('0 0 * * *', async () => {
+  // Schedule backup to run every day at 12:30 PM Nigeria time
+  const backupTask = cron.schedule('30 12 * * *', async () => {
     try {
       await performPureNodeBackup();
     } catch (error) {

@@ -41,27 +41,34 @@ const declineFanRequest = async (req, res) => {
 
     // Get host type for dynamic messages
     const hostType = request.type || "Fan meet";
+    
+    // Normalize type for comparison
+    const normalizedType = (hostType || "").toLowerCase().trim();
+    const isFanCall = normalizedType.includes("fan call");
 
-    // Refund the user - move money from pending back to balance
-    const user = await userdb.findOne({ _id: userid }).exec();
-    if (user) {
-      let userBalance = parseFloat(user.balance) || 0;
-      let userPending = parseFloat(user.pending) || 0;
-      let refundAmount = parseFloat(request.price);
+    // Only refund for Fan meet and Fan date, not for Fan call
+    // Fan call requests don't deduct anything, so nothing to refund
+    if (!isFanCall) {
+      const user = await userdb.findOne({ _id: userid }).exec();
+      if (user) {
+        let userBalance = parseFloat(user.balance) || 0;
+        let userPending = parseFloat(user.pending) || 0;
+        let refundAmount = parseFloat(request.price);
 
-      user.balance = String(userBalance + refundAmount);
-      user.pending = String(userPending - refundAmount);
-      await user.save();
+        user.balance = String(userBalance + refundAmount);
+        user.pending = String(userPending - refundAmount);
+        await user.save();
 
-      // Create refund history
-      const refundHistory = {
-        userid,
-        details: `${hostType} request declined - refund processed`,
-        spent: "0",
-        income: `${refundAmount}`,
-        date: `${Date.now().toString()}`
-      };
-      await historydb.create(refundHistory);
+        // Create refund history
+        const refundHistory = {
+          userid,
+          details: `${hostType} request declined - refund processed`,
+          spent: "0",
+          income: `${refundAmount}`,
+          date: `${Date.now().toString()}`
+        };
+        await historydb.create(refundHistory);
+      }
     }
 
     // Send notifications

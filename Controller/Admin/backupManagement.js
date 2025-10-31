@@ -32,8 +32,11 @@ const getBackupStatus = async (req, res) => {
       lastModified: backup.lastModified,
       date: backup.date,
       status: backup.status,
-      location: backup.location
+      location: backup.location,
+      error: backup.error || null
     }));
+    
+    const failedBackups = mappedHistory.filter(backup => backup.status === 'failed');
 
     const status = {
       success: true,
@@ -43,10 +46,13 @@ const getBackupStatus = async (req, res) => {
         name: latestBackup.fileName,
         size: latestBackup.size,
         lastModified: latestBackup.lastModified,
-        date: latestBackup.date
+        date: latestBackup.date,
+        status: latestBackup.status,
+        error: latestBackup.error || null
       } : null,
       daysSinceLastBackup: daysSinceLastBackup,
       history: mappedHistory,
+      failedBackups: failedBackups.length,
       lastChecked: new Date().toISOString()
     };
     

@@ -45,6 +45,10 @@ const createLike = async (req, res) => {
     // Get host type for dynamic message
     const hostType = status.type || "Fan request";
     
+    // Normalize type for comparison
+    const normalizedType = (hostType || "").toLowerCase().trim();
+    const isFanCall = normalizedType.includes("fan call");
+    
     // Emit socket event for real-time updates
     emitFanRequestStatusUpdate({
       requestId: status._id,
@@ -54,26 +58,29 @@ const createLike = async (req, res) => {
       message: `❌ ${hostType} request was declined`
     });
 
-    // Refund the user - move money from pending back to balance
-    const clientuser = await userdb.findOne({ _id: userid }).exec();
-    if (clientuser) {
-      let clientbalance = parseFloat(clientuser.balance) || 0;
-      let clientpending = parseFloat(clientuser.pending) || 0;
-      let refundAmount = parseFloat(status.price);
+    // Only refund for Fan meet and Fan date, not for Fan call
+    // Fan call requests don't deduct anything, so nothing to refund
+    if (!isFanCall) {
+      const clientuser = await userdb.findOne({ _id: userid }).exec();
+      if (clientuser) {
+        let clientbalance = parseFloat(clientuser.balance) || 0;
+        let clientpending = parseFloat(clientuser.pending) || 0;
+        let refundAmount = parseFloat(status.price);
 
-      clientuser.balance = String(clientbalance + refundAmount);
-      clientuser.pending = String(clientpending - refundAmount);
-      await clientuser.save();
+        clientuser.balance = String(clientbalance + refundAmount);
+        clientuser.pending = String(clientpending - refundAmount);
+        await clientuser.save();
 
-      let creatorpaymenthistory = {
-        userid: userid,
-        details: `${hostType} request declined - refund processed`,
-        spent: "0",
-        income: `${refundAmount}`,
-        date: `${Date.now().toString()}`,
-      };
+        let creatorpaymenthistory = {
+          userid: userid,
+          details: `${hostType} request declined - refund processed`,
+          spent: "0",
+          income: `${refundAmount}`,
+          date: `${Date.now().toString()}`,
+        };
 
-      await historydb.create(creatorpaymenthistory);
+        await historydb.create(creatorpaymenthistory);
+      }
     }
     
     await sendEmail(userid, `Creator declined your ${hostType} request`);
