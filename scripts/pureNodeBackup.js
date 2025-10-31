@@ -92,14 +92,19 @@ async function performPureNodeBackup() {
     
     const uploadResult = await s3Client.upload(uploadParams).promise();
     
+    const recordTimestamp = new Date().toISOString();
+    const recordDate = recordTimestamp.split('T')[0];
+    
     // Record backup in tracker
     await addBackupRecord({
-      filename: backupName,
+      fileName: backupName,
       size: totalSize,
       collections: collectionsBackedUp,
-      timestamp: new Date().toISOString(),
+      timestamp: recordTimestamp,
+      date: recordDate,
       location: uploadResult.Location,
-      success: true
+      status: 'success',
+      error: null
     });
     
     const endTime = new Date();
@@ -118,13 +123,17 @@ async function performPureNodeBackup() {
   } catch (error) {
     console.error('Backup failed:', error.message);
     
+    const recordTimestamp = new Date().toISOString();
+    const recordDate = recordTimestamp.split('T')[0];
+    
     // Record failed backup
     await addBackupRecord({
-      filename: backupName || 'unknown',
+      fileName: backupName || 'unknown',
       size: totalSize,
       collections: collectionsBackedUp,
-      timestamp: new Date().toISOString(),
-      success: false,
+      timestamp: recordTimestamp,
+      date: recordDate,
+      status: 'failed',
       error: error.message
     });
     

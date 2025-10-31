@@ -55,7 +55,14 @@ const createLike = async (req, res) => {
     
     let creatorprice = parseFloat(creatoruser.price);
 
-    if (request.type !== "Private show") {
+    // Normalize type for comparison
+    const normalizedType = (request.type || "").toLowerCase().trim();
+    const isPrivateShow = normalizedType === "private show";
+    const isFanCall = normalizedType.includes("fan call");
+
+    // Only refund for Fan meet and Fan date, not for Fan call or Private show
+    // Fan call requests don't deduct anything, so nothing to refund
+    if (!isPrivateShow && !isFanCall) {
       let clientuser = await userdb.findOne({ _id: userid }).exec();
 
       let clientbalance = parseFloat(clientuser.balance);

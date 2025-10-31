@@ -43,40 +43,58 @@ const processExpiredRequests = async (req, res) => {
         request.status = "expired";
         await request.save();
 
-        // Refund the user - move money from pending back to balance
-        const user = await userdb.findOne({ _id: request.userid }).exec();
-        if (user) {
-          let userBalance = parseFloat(user.balance) || 0;
-          let userPending = parseFloat(user.pending) || 0;
-          let refundAmount = parseFloat(request.price);
+        // Get host type and normalize for comparison
+        const hostType = request.type || "Fan meet";
+        const normalizedType = (hostType || "").toLowerCase().trim();
+        const isFanCall = normalizedType.includes("fan call");
 
-          // Only refund if there's pending money to refund
-          if (userPending >= refundAmount) {
-            user.balance = String(userBalance + refundAmount);
-            user.pending = String(userPending - refundAmount);
-            await user.save();
+        // Only refund for Fan meet and Fan date, not for Fan call
+        // Fan call requests don't deduct anything, so nothing to refund
+        if (!isFanCall) {
+          const user = await userdb.findOne({ _id: request.userid }).exec();
+          if (user) {
+            let userBalance = parseFloat(user.balance) || 0;
+            let userPending = parseFloat(user.pending) || 0;
+            let refundAmount = parseFloat(request.price);
 
-            // Create refund history with dynamic host type
-            const hostType = request.type || "Fan meet";
-            const refundHistory = {
-              userid: request.userid,
-              details: `${hostType} request expired - automatic refund processed`,
-              spent: "0",
-              income: `${refundAmount}`,
-              date: `${Date.now().toString()}`
-            };
-            await historydb.create(refundHistory);
+            // Only refund if there's pending money to refund
+            if (userPending >= refundAmount) {
+              user.balance = String(userBalance + refundAmount);
+              user.pending = String(userPending - refundAmount);
+              await user.save();
 
-            // Send notifications with dynamic host type
-            await sendEmail(request.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`);
-            await pushActivityNotification(request.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`, "request_expired");
-            
-            // Find creator's actual user ID and send notification
-            const creatorRecord = await creatordb.findOne({ _id: request.creator_portfolio_id }).exec();
-            if (creatorRecord && creatorRecord.userid) {
-              await sendEmail(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`);
-              await pushActivityNotification(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`, "request_expired");
+              // Create refund history with dynamic host type
+              const refundHistory = {
+                userid: request.userid,
+                details: `${hostType} request expired - automatic refund processed`,
+                spent: "0",
+                income: `${refundAmount}`,
+                date: `${Date.now().toString()}`
+              };
+              await historydb.create(refundHistory);
+
+              // Send notifications with dynamic host type
+              await sendEmail(request.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`);
+              await pushActivityNotification(request.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`, "request_expired");
+              
+              // Find creator's actual user ID and send notification
+              const creatorRecord = await creatordb.findOne({ _id: request.creator_portfolio_id }).exec();
+              if (creatorRecord && creatorRecord.userid) {
+                await sendEmail(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`);
+                await pushActivityNotification(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`, "request_expired");
+              }
             }
+          }
+        } else {
+          // For Fan call, just send notification without refund
+          await sendEmail(request.userid, `Your ${hostType.toLowerCase()} request has expired`);
+          await pushActivityNotification(request.userid, `Your ${hostType.toLowerCase()} request has expired`, "request_expired");
+          
+          // Find creator's actual user ID and send notification
+          const creatorRecord = await creatordb.findOne({ _id: request.creator_portfolio_id }).exec();
+          if (creatorRecord && creatorRecord.userid) {
+            await sendEmail(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`);
+            await pushActivityNotification(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`, "request_expired");
           }
         }
       } catch (err) {

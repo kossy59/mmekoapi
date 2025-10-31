@@ -27,24 +27,32 @@ const createLike = async (req, res) => {
       return res.status(404).json({ ok: false, message: "User not found." });
     }
 
-    let clientbalance = parseFloat(clientuser.balance) || 0;
-    let clientpending = parseFloat(clientuser.pending) || 0;
-    let refundAmount = parseFloat(request.price);
+    // Get request type and normalize for comparison
+    const normalizedType = (request.type || "").toLowerCase().trim();
+    const isFanCall = normalizedType.includes("fan call");
 
-    // Move money from pending back to balance
-    clientuser.balance = String(clientbalance + refundAmount);
-    clientuser.pending = String(clientpending - refundAmount);
-    await clientuser.save();
+    // Only refund for Fan meet and Fan date, not for Fan call
+    // Fan call requests don't deduct anything, so nothing to refund
+    if (!isFanCall) {
+      let clientbalance = parseFloat(clientuser.balance) || 0;
+      let clientpending = parseFloat(clientuser.pending) || 0;
+      let refundAmount = parseFloat(request.price);
 
-    let creatorpaymenthistory = {
-      userid: userid,
-      details: "Fan request cancelled - refund processed",
-      spent: "0",
-      income: `${refundAmount}`,
-      date: `${Date.now().toString()}`,
-    };
+      // Move money from pending back to balance
+      clientuser.balance = String(clientbalance + refundAmount);
+      clientuser.pending = String(clientpending - refundAmount);
+      await clientuser.save();
 
-    await historydb.create(creatorpaymenthistory);
+      let creatorpaymenthistory = {
+        userid: userid,
+        details: "Fan request cancelled - refund processed",
+        spent: "0",
+        income: `${refundAmount}`,
+        date: `${Date.now().toString()}`,
+      };
+
+      await historydb.create(creatorpaymenthistory);
+    }
     
     // Get request details before deletion for socket emission
     const requestToDelete = await requestdb.findById(id).exec();

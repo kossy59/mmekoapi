@@ -25,15 +25,25 @@ function addBackupRecord(backupInfo) {
   
   try {
     const data = JSON.parse(fs.readFileSync(BACKUP_TRACKER_FILE, 'utf8'));
+    const timestamp = backupInfo.timestamp || new Date().toISOString();
+    const fileName = backupInfo.fileName || backupInfo.filename || backupInfo.backupName || 'unknown';
+    const status = backupInfo.status || (backupInfo.success === false ? 'failed' : 'success');
+    const error = backupInfo.error || null;
+    const location = backupInfo.location || null;
+    const date = backupInfo.date || timestamp.split('T')[0];
+    const collections = backupInfo.collections !== undefined ? backupInfo.collections : null;
+    const size = typeof backupInfo.size === 'number' ? backupInfo.size : 0;
     
     const backupRecord = {
       id: Date.now().toString(),
-      fileName: backupInfo.fileName,
-      size: backupInfo.size,
-      date: backupInfo.date,
-      lastModified: new Date().toISOString(),
-      status: 'completed',
-      location: backupInfo.location
+      fileName,
+      size,
+      date,
+      lastModified: timestamp,
+      status,
+      location,
+      error,
+      collections
     };
     
     data.backups.unshift(backupRecord); // Add to beginning
@@ -119,6 +129,11 @@ function getBackupStats() {
   
   const totalSize = backups.reduce((sum, backup) => sum + (backup.size || 0), 0);
   const averageSize = totalSize / backups.length;
+  const statusBreakdown = backups.reduce((acc, backup) => {
+    const status = backup.status || 'unknown';
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
   
   // Monthly statistics
   const monthlyStats = {};
@@ -150,6 +165,7 @@ function getBackupStats() {
     averageSize: averageSize,
     monthlyStats: monthlyStats,
     sizeDistribution: sizeDistribution,
+    statusBreakdown,
     lastUpdated: new Date().toISOString()
   };
 }
