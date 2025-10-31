@@ -46,8 +46,12 @@ const createLike = async (req,res)=>{
          }
 
          
+        // Normalize type for case-insensitive comparison
+        const normalizedType = (type || "").toLowerCase().trim();
+        
         // Only deduct gold for Fan meet and Fan date, not for Fan call or Private show
-        if(type !== "Private show" && type !== "Fan call" && type !== "Fan Call"){
+        // Fan call should never deduct gold, Fan meet should always deduct gold
+        if(normalizedType !== "private show" && !normalizedType.includes("fan call")){
 
             let total = userbalance - creatorprice
 
