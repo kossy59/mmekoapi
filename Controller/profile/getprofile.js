@@ -48,6 +48,14 @@ const readProfile = async (req, res) => {
     //   return value.userid === userid;
     //  })
 
+    // Check if user exists FIRST before accessing properties
+    if (!du) {
+      return res.status(409).json({
+        "ok": false,
+        'message': 'current user can not edit this post!!'
+      });
+    }
+
     if (creatorava) {
       Creator_portfolio = true
     } else {
@@ -58,14 +66,6 @@ const readProfile = async (req, res) => {
       exclusive = true
     } else {
       exclusive = false
-    }
-
-    if (!du) {
-      return res.status(409).json({
-        "ok": false,
-        'message': 'current user can not edit this post!!'
-      });
-
     }
 
     dues = du.toObject()
