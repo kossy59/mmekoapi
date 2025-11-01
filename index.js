@@ -962,16 +962,26 @@ io.on("connection", (socket) => {
 
   socket.on('fan_call_end', async (data) => {
     try {
-      const { callId, userId } = data;
+      const { callId, userId, callerId, answererId } = data;
       
       // Skip database operations for temporary call IDs
       if (callId && callId.startsWith('temp_')) {
-        // Ending temporary call
-        // Just emit the event without database operations
-        socket.to(`user_${userId}`).emit('fan_call_ended', {
+        // Ending temporary call - emit to both caller and answerer if provided
+        const endEvent = {
           callId: callId,
           endedBy: userId
-        });
+        };
+        
+        // Emit to both parties using io.to() to ensure both receive it
+        if (callerId) {
+          io.to(`user_${callerId}`).emit('fan_call_ended', endEvent);
+        }
+        if (answererId) {
+          io.to(`user_${answererId}`).emit('fan_call_ended', endEvent);
+        }
+        
+        // Also emit to all sockets as fallback (for temp calls without user IDs)
+        io.emit('fan_call_ended', endEvent);
         return;
       }
       
@@ -984,18 +994,17 @@ io.on("connection", (socket) => {
         // Delete call record
         await videocalldb.deleteOne({ _id: callId }).exec();
 
-        // Emit call ended to both participants
-        socket.to(`user_${userId}`).emit('fan_call_ended', {
+        // Emit call ended to both participants using io.to() for proper room targeting
+        const endEvent = {
           callId: callId,
           endedBy: userId
-        });
+        };
         
-          socket.to(`user_${otherUserId}`).emit('fan_call_ended', {
-          callId: callId,
-          endedBy: userId
-        });
+        // Emit to both users immediately
+        io.to(`user_${userId}`).emit('fan_call_ended', endEvent);
+        io.to(`user_${otherUserId}`).emit('fan_call_ended', endEvent);
         
-        // Call ended, notifications sent to users
+        // Call ended, notifications sent to both users
       }
     } catch (error) {
       console.error('Error in fan_call_end:', error);
