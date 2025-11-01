@@ -84,13 +84,25 @@ const getAllFanRequests = async (req, res) => {
                 } else if (isFan) {
                   // Current user is fan, get creator details
                   const creatorData = creatorDataMap.get(request.creator_portfolio_id.toString());
-                  // Also get the creator's user data for VIP status
+                  // Also get the creator's user data for VIP status and profile photo
                   const creatorUserData = await userdb.findOne({ _id: creatorData?.userid }).exec();
                   
+                  // Extract photolink from creator files (creators store photos in creatorfiles array)
+                  let creatorPhotolink = null;
+                  if (creatorData?.creatorfiles && Array.isArray(creatorData.creatorfiles) && creatorData.creatorfiles.length > 0) {
+                    // Get first photo from creatorfiles
+                    creatorPhotolink = creatorData.creatorfiles[0]?.creatorfilelink;
+                  }
+                  
+                  // Fallback to user's profile photo if creator files don't have photo
+                  if (!creatorPhotolink && creatorUserData?.photolink) {
+                    creatorPhotolink = creatorUserData.photolink;
+                  }
                   
                   // Combine creator data with user VIP data
                   otherUser = {
                     ...creatorData?.toObject(),
+                    photolink: creatorPhotolink || null, // Set photolink from creator files or user profile
                     isVip: creatorUserData?.isVip || false,
                     vipEndDate: creatorUserData?.vipEndDate,
                     username: creatorUserData?.username, // Include username from user data
@@ -174,12 +186,26 @@ const getAllFanRequests = async (req, res) => {
           }
         }
 
+        // Determine final photolink - prefer non-empty values
+        let finalPhotolink = '/picture-1.jfif';
+        if (otherUser) {
+          if (otherUser.photolink && otherUser.photolink.trim() !== '' && otherUser.photolink !== '/picture-1.jfif') {
+            finalPhotolink = otherUser.photolink;
+          } else if (otherUser.creatorfiles && Array.isArray(otherUser.creatorfiles) && otherUser.creatorfiles.length > 0) {
+            // Fallback to creator files if photolink is not available
+            const fileLink = otherUser.creatorfiles[0]?.creatorfilelink;
+            if (fileLink && fileLink.trim() !== '') {
+              finalPhotolink = fileLink;
+            }
+          }
+        }
+        
         const finalOtherUser = otherUser ? {
           name: otherUser.name || `${otherUser.firstname || ''} ${otherUser.lastname || ''}`.trim() || 'Unknown User',
           username: otherUser.username || otherUser.firstname || otherUser.name, // Include username field with fallbacks
           firstname: otherUser.firstname || null, // Include first name field
           lastname: otherUser.lastname || null, // Include last name field
-          photolink: otherUser.photolink || '/picture-1.jfif',
+          photolink: finalPhotolink,
           isCreator: userType === 'fan', // If current user is fan, other user is creator
           isVip: otherUser.isVip || false, // Include VIP status
           vipEndDate: otherUser.vipEndDate // Include VIP end date
@@ -193,7 +219,6 @@ const getAllFanRequests = async (req, res) => {
           isVip: false,
           vipEndDate: null
         };
-
 
         return {
           id: request._id,
