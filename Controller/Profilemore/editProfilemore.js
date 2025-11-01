@@ -26,9 +26,23 @@ const updatePost = async (req, res) => {
      * This implementation allows for in memory file upload manipulation
      * This prevents accessing the filesystem of the hosted server
      */
+    console.log("📤 [editProfilemore] Starting profile update for user:", userid);
+    console.log("📤 [editProfilemore] Request details:", {
+        hasFile: !!req.file,
+        fileName: req.file?.originalname || "no file",
+        fileSize: req.file?.size || 0,
+        deletePhotolink: deletePhotolink || "none",
+        deletePhotoID: deletePhotoID || "none"
+    });
+
     const result = await updateSingleFileToCloudinary(deletePhotoID, req.file, `profile`);
 
-    console.log("result: ", result)
+    console.log("📤 [editProfilemore] Cloudinary upload result:", {
+        hasFileLink: !!result.file_link,
+        hasPublicId: !!result.public_id,
+        fileLink: result.file_link || "none",
+        publicId: result.public_id || "none"
+    });
 
     const photoLink = result.file_link
     const photoID = result.public_id
@@ -59,12 +73,18 @@ const updatePost = async (req, res) => {
         if (photoLink && photoID) {
             du.photoLink = photoLink
             du.photoID = photoID
+            console.log("✅ [editProfilemore] Updated completedb with profile image:", {
+                photoLink: photoLink,
+                photoID: photoID,
+                userid: userid
+            });
         }
         if (aboutme) {
             du.details = aboutme
         }
                
         await du.save()
+        console.log("✅ [editProfilemore] Saved completedb for user:", userid);
 
 
         if (firstname) {
@@ -81,7 +101,7 @@ const updatePost = async (req, res) => {
         if (photoLink && photoID) {
             usersedit.photolink = photoLink
             usersedit.photoID = photoID
-            console.log("Updated userdb with new profile image:", {
+            console.log("✅ [editProfilemore] Updated userdb with new profile image:", {
                 photolink: photoLink,
                 photoID: photoID,
                 userid: userid
@@ -89,6 +109,7 @@ const updatePost = async (req, res) => {
         }
 
         await usersedit.save()
+        console.log("✅ [editProfilemore] Saved userdb for user:", userid);
 
 
 

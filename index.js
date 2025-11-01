@@ -1036,21 +1036,22 @@ io.on("connection", (socket) => {
           });
           
           // Send push notification for missed call
-          const { pushmessage } = require('./utiils/sendPushnot');
           const userdb = require('./Creators/userdb');
           const answerer = await userdb.findOne({ _id: actualCreatorUserId }).exec();
           
-          if (answerer && answerer.pushToken) {
-            await pushmessage({
-              title: 'Missed Fan Call',
-              body: `You missed a fan call from ${callerName || 'Unknown User'}`,
-              token: answerer.pushToken,
-              data: {
+          if (answerer) {
+            await pushmessage(
+              actualCreatorUserId,
+              `You missed a fan call from ${callerName || 'Unknown User'}`,
+              "/icons/m-logo.png",
+              {
+                title: 'Missed Fan Call',
                 type: 'missed_call',
+                url: "/notifications",
                 callerId: callerId,
                 callerName: callerName
               }
-            });
+            );
           }
           
           // Emit missed call notification to the answerer (creator)
@@ -1101,18 +1102,19 @@ io.on("connection", (socket) => {
           });
           
           // Send push notification for missed call
-          const { pushmessage } = require('./utiils/sendPushnot');
-          if (answerer.pushToken) {
-            await pushmessage({
-              title: 'Missed Fan Call',
-              body: `You missed a fan call from ${fullCallerName}`,
-              token: answerer.pushToken,
-              data: {
+          if (answerer) {
+            await pushmessage(
+              clientId,
+              `You missed a fan call from ${fullCallerName}`,
+              "/icons/m-logo.png",
+              {
+                title: 'Missed Fan Call',
                 type: 'missed_call',
+                url: "/notifications",
                 callerId: callerId,
                 callerName: fullCallerName
               }
-            });
+            );
           }
         }
         
