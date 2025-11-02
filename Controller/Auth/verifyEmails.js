@@ -84,7 +84,7 @@ const handleNewUser = async (req, res) => {
 
         // console.log({accessToken})
         // const allowedOrigins = [
-        //   "https://backendritual.work",
+        //   process.env.NEXT_PUBLIC_BACKEND,
         //   "https://mmeko.com",
         //   "https://mmekowebsite.onrender.com",
         // ];
