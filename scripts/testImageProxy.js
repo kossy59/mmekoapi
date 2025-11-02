@@ -5,13 +5,12 @@
  * Tests if the image proxy routes are working correctly
  */
 
+require('dotenv').config();
 const axios = require('axios');
 
 console.log('🔍 [IMAGE PROXY TEST] Testing image proxy endpoints...\n');
 
-const BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://backendritual.work' 
-  : 'http://localhost:3100';
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND;
 
 console.log(`🌐 Testing against: ${BASE_URL}\n`);
 

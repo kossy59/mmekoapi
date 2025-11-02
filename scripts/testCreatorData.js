@@ -9,9 +9,10 @@ const axios = require('axios');
 
 console.log('🔍 [CREATOR DATA TEST] Testing creator data response...\n');
 
-const BASE_URL = 'https://backendritual.work';
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND;
 
 async function testCreatorData() {
+  
   try {
     console.log('📋 Testing Creator Data Response:');
     console.log('================================');

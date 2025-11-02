@@ -5,11 +5,12 @@
  * Tests if the creator endpoint is working correctly
  */
 
+require('dotenv').config();
 const axios = require('axios');
 
 console.log('🔍 [CREATOR ENDPOINT TEST] Testing creator endpoint...\n');
 
-const BASE_URL = 'https://backendritual.work';
+const BASE_URL = process.env.NEXT_PUBLIC_BACKEND;
 
 console.log(`🌐 Testing against: ${BASE_URL}\n`);
 
