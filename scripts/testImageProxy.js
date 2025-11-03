@@ -10,7 +10,7 @@ const axios = require('axios');
 
 console.log('🔍 [IMAGE PROXY TEST] Testing image proxy endpoints...\n');
 
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND;
+const BASE_URL = process.env.NEXT_PUBLIC_API;
 
 console.log(`🌐 Testing against: ${BASE_URL}\n`);
 

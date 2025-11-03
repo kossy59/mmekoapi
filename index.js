@@ -223,6 +223,9 @@ app.use("/edituser", require("./routes/api/Admin/edituser"));
 app.use("/sendNotificationWithFilter", require("./routes/api/Admin/sendNotificationWithFilter"));
 app.use("/adminNotificationSystem", require("./routes/api/Admin/adminNotificationSystem"));
 app.use("/getAdminNotification", require("./routes/api/Admin/getAdminNotification"));
+app.use("/getAllAdminNotifications", require("./routes/api/Admin/getAllAdminNotifications"));
+app.use("/updateAdminNotification", require("./routes/api/Admin/updateAdminNotification"));
+app.use("/deleteAdminNotification", require("./routes/api/Admin/deleteAdminNotification"));
 app.use("/getNotificationDetails", require("./routes/api/Admin/getNotificationDetails"));
 app.use("/getUserStatistics", require("./routes/api/Admin/getUserStatistics"));
 app.use("/getAdminDashboard", require("./routes/api/Admin/getAdminDashboard"));
@@ -1282,6 +1285,10 @@ mongoose.connection.once("open", () => {
   // Start notification cleanup cron job
   const { setupNotificationCleanup } = require('./scripts/setupNotificationCleanup');
   setupNotificationCleanup();
+  
+  // Start expired requests processing cron job
+  const scheduledExpiredRequests = require('./scripts/scheduledExpiredRequests');
+  scheduledExpiredRequests.start();
   
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);

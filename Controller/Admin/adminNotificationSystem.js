@@ -37,6 +37,8 @@ const adminNotificationSystem = async (req, res) => {
             const users = await userdb.find({ _id: { $in: targetUserIds } }).exec();
             targetUsers = users;
             filterDescription = `Specific users (${targetUserIds.length} IDs)`;
+            // Mark targetGender as 'specific' for tracking
+            req.body.targetGender = 'specific';
         } else {
             // Get users based on target audience filter
             let query = {};
@@ -78,7 +80,7 @@ const adminNotificationSystem = async (req, res) => {
                 adminNotification: true,
                 hasLearnMore: hasLearnMore,
                 learnMoreUrl: learnMoreUrl,
-                targetGender: targetGender,
+                targetGender: (targetUserIds && targetUserIds.length > 0) ? 'specific' : targetGender,
                 isActive: true // New field to track if notification is still active
             };
 

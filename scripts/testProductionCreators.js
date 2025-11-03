@@ -10,7 +10,7 @@ const axios = require('axios');
 
 console.log('🔍 [PRODUCTION CREATORS TEST] Testing production creators response...\n');
 
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND;
+const BASE_URL = process.env.NEXT_PUBLIC_API;
 
 async function testProductionCreators() {
   try {

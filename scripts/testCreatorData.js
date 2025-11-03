@@ -9,7 +9,7 @@ const axios = require('axios');
 
 console.log('🔍 [CREATOR DATA TEST] Testing creator data response...\n');
 
-const BASE_URL = process.env.NEXT_PUBLIC_BACKEND;
+const BASE_URL = process.env.NEXT_PUBLIC_API;
 
 async function testCreatorData() {
   

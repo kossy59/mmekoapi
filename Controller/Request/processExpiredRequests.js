@@ -57,18 +57,26 @@ const processExpiredRequests = async (req, res) => {
             let userPending = parseFloat(user.pending) || 0;
             let refundAmount = parseFloat(request.price);
 
-            // Only refund if there's pending money to refund
-            if (userPending >= refundAmount) {
-              user.balance = String(userBalance + refundAmount);
-              user.pending = String(userPending - refundAmount);
+            // Refund logic: Try to refund the full amount, but if pending is less, refund what's available
+            // This handles edge cases where pending might have been partially refunded or there's a discrepancy
+            if (userPending > 0 && refundAmount > 0) {
+              const actualRefundAmount = Math.min(userPending, refundAmount);
+              
+              user.balance = String(userBalance + actualRefundAmount);
+              user.pending = String(Math.max(0, userPending - actualRefundAmount));
               await user.save();
+
+              // Log warning if refund amount doesn't match expected
+              if (actualRefundAmount < refundAmount) {
+                console.warn(`⚠️  Partial refund for request ${request._id}: Expected ${refundAmount}, refunded ${actualRefundAmount}. User pending: ${userPending}`);
+              }
 
               // Create refund history with dynamic host type
               const refundHistory = {
                 userid: request.userid,
                 details: `${hostType} request expired - automatic refund processed`,
                 spent: "0",
-                income: `${refundAmount}`,
+                income: `${actualRefundAmount}`,
                 date: `${Date.now().toString()}`
               };
               await historydb.create(refundHistory);
@@ -83,6 +91,10 @@ const processExpiredRequests = async (req, res) => {
                 await sendEmail(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`);
                 await pushActivityNotification(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`, "request_expired");
               }
+              
+              console.log(`✅ Refunded ${actualRefundAmount} to user ${request.userid} for ${hostType} request (Request ID: ${request._id})`);
+            } else {
+              console.warn(`⚠️  Cannot refund request ${request._id}: userPending=${userPending}, refundAmount=${refundAmount}`);
             }
           }
         } else {
