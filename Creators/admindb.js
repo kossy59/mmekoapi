@@ -53,7 +53,7 @@ const markertdata = new Scheme(
     targetGender: {
       type: String,
       required: false,
-      enum: ['all', 'male', 'female', 'creators'],
+      enum: ['all', 'male', 'female', 'creators', 'specific'],
     },
     isActive: {
       type: Boolean,

@@ -26,15 +26,47 @@ const getBackupStatus = async (req, res) => {
     }
     
     // Map backup history to match frontend expectations
-    const mappedHistory = backupHistory.map(backup => ({
-      name: backup.fileName,
-      size: backup.size,
-      lastModified: backup.lastModified,
-      date: backup.date,
-      status: backup.status,
-      location: backup.location,
-      error: backup.error || null
-    }));
+    // Also extract fileName from location if fileName is missing
+    let mappedHistory = backupHistory.map(backup => {
+      // Extract filename from location if fileName is missing
+      let fileName = backup.fileName;
+      if (!fileName && backup.location) {
+        // Extract filename from URL like: https://gateway.storjshare.io/database-backup/backup_2025-10-25.bson.gz
+        const urlParts = backup.location.split('/');
+        fileName = urlParts[urlParts.length - 1] || 'unknown';
+      }
+      if (!fileName) {
+        fileName = `backup_${backup.date || 'unknown'}.bson.gz`;
+      }
+      
+      return {
+        name: fileName,
+        size: backup.size || 0,
+        lastModified: backup.lastModified,
+        date: backup.date || (backup.lastModified ? backup.lastModified.split('T')[0] : 'unknown'),
+        status: backup.status || 'unknown',
+        location: backup.location,
+        error: backup.error || null
+      };
+    });
+    
+    // Deduplicate backups with the same filename (keep only the most recent one)
+    // This handles cases where old backups were overwritten
+    const uniqueBackups = new Map();
+    mappedHistory.forEach(backup => {
+      const existing = uniqueBackups.get(backup.name);
+      if (!existing || new Date(backup.lastModified) > new Date(existing.lastModified)) {
+        uniqueBackups.set(backup.name, backup);
+      }
+    });
+    mappedHistory = Array.from(uniqueBackups.values());
+    
+    // Sort by lastModified descending (most recent first)
+    mappedHistory.sort((a, b) => {
+      const dateA = new Date(a.lastModified);
+      const dateB = new Date(b.lastModified);
+      return dateB - dateA;
+    });
     
     const failedBackups = mappedHistory.filter(backup => backup.status === 'failed');
 
@@ -111,15 +143,16 @@ const triggerBackup = async (req, res) => {
 };
 
 /**
- * Clean up old backups manually
+ * Clean up old backups manually (from Storj and tracker)
  */
 const cleanupBackups = async (req, res) => {
   try {
     console.log('[Backup Admin] Triggering manual cleanup...');
     
-    const deletedCount = cleanupOldBackupRecords();
+    // Cleanup from Storj and tracker
+    const deletedCount = await cleanupOldBackups();
     
-    console.log(`[Backup Admin] Cleanup completed, deleted ${deletedCount} old backups`);
+    console.log(`[Backup Admin] Cleanup completed, deleted ${deletedCount} old backup(s) from Storj`);
     res.status(200).json({
       success: true,
       message: `Cleanup completed successfully`,

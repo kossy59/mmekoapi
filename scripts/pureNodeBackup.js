@@ -45,9 +45,12 @@ async function performPureNodeBackup() {
     const dbName = db.databaseName;
     const collections = await db.collections();
     
-    // Create backup name with timestamp
-    const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
-    backupName = `backup_${timestamp}.bson.gz`;
+    // Create backup name with full timestamp to prevent overwriting
+    // Format: backup_YYYY-MM-DD_HH-MM-SS.bson.gz
+    const now = new Date();
+    const isoString = now.toISOString(); // e.g., "2025-01-15T14:30:45.123Z"
+    const dateTimeStr = isoString.replace('T', '_').replace(/:/g, '-').split('.')[0]; // e.g., "2025-01-15_14-30-45"
+    backupName = `backup_${dateTimeStr}.bson.gz`;
     
     // Create a single compressed backup file containing all collections
     const backupData = {
@@ -110,6 +113,16 @@ async function performPureNodeBackup() {
     const endTime = new Date();
     const duration = Math.round((endTime - startTime) / 1000);
     
+    // Automatically cleanup old backups (older than 31 days) after successful backup
+    let deletedOldBackups = 0;
+    try {
+      deletedOldBackups = await cleanupOldBackups();
+      console.log(`[Backup] Cleaned up ${deletedOldBackups} old backup(s) older than 31 days`);
+    } catch (cleanupError) {
+      console.error('[Backup] Error during automatic cleanup:', cleanupError.message);
+      // Don't fail the backup if cleanup fails
+    }
+    
     return {
       success: true,
       backupName,
@@ -117,7 +130,8 @@ async function performPureNodeBackup() {
       collections: collectionsBackedUp,
       duration,
       location: uploadResult.Location,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      deletedOldBackups
     };
     
   } catch (error) {
@@ -152,6 +166,91 @@ async function performPureNodeBackup() {
   }
 }
 
+/**
+ * List all backups from Storj (handles pagination)
+ */
+async function listBackups() {
+  try {
+    const allBackups = [];
+    let continuationToken = null;
+    
+    do {
+      const params = {
+        Bucket: STORJ_BUCKET_BACKUP,
+        Prefix: 'backup_'
+      };
+      
+      if (continuationToken) {
+        params.ContinuationToken = continuationToken;
+      }
+      
+      const result = await s3Client.listObjectsV2(params).promise();
+      
+      if (result.Contents && result.Contents.length > 0) {
+        allBackups.push(...result.Contents);
+      }
+      
+      continuationToken = result.IsTruncated ? result.NextContinuationToken : null;
+    } while (continuationToken);
+    
+    return allBackups;
+  } catch (error) {
+    console.error('[Backup] Error listing backups:', error.message);
+    return [];
+  }
+}
+
+/**
+ * Delete old backups from Storj (older than 31 days)
+ */
+async function cleanupOldBackups() {
+  try {
+    const thirtyOneDaysAgo = new Date();
+    thirtyOneDaysAgo.setDate(thirtyOneDaysAgo.getDate() - 31);
+    
+    // List all backups
+    const backups = await listBackups();
+    
+    let deletedCount = 0;
+    const deletePromises = [];
+    
+    for (const backup of backups) {
+      const backupDate = new Date(backup.LastModified);
+      
+      // Delete if backup is older than 31 days
+      if (backupDate < thirtyOneDaysAgo) {
+        deletePromises.push(
+          s3Client.deleteObject({
+            Bucket: STORJ_BUCKET_BACKUP,
+            Key: backup.Key
+          }).promise().then(() => {
+            deletedCount++;
+            console.log(`[Backup Cleanup] Deleted old backup: ${backup.Key}`);
+          }).catch((error) => {
+            console.error(`[Backup Cleanup] Failed to delete ${backup.Key}:`, error.message);
+          })
+        );
+      }
+    }
+    
+    // Wait for all deletions to complete
+    await Promise.all(deletePromises);
+    
+    // Also cleanup old backup records from tracker
+    const { cleanupOldBackupRecords } = require('./backupTracker');
+    const trackerDeletedCount = cleanupOldBackupRecords();
+    
+    console.log(`[Backup Cleanup] Deleted ${deletedCount} backup(s) from Storj and ${trackerDeletedCount} record(s) from tracker`);
+    
+    return deletedCount;
+  } catch (error) {
+    console.error('[Backup Cleanup] Error cleaning up old backups:', error.message);
+    return 0;
+  }
+}
+
 module.exports = {
-  performPureNodeBackup
+  performPureNodeBackup,
+  listBackups,
+  cleanupOldBackups
 };

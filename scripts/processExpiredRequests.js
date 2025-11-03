@@ -1,9 +1,10 @@
 const mongoose = require('mongoose');
 const requestdb = require('../Creators/requsts');
 const userdb = require('../Creators/userdb');
+const creatordb = require('../Creators/creators');
 const historydb = require('../Creators/mainbalance');
 let sendEmail = require('../utiils/sendEmailnot');
-const { pushmessage } = require('../utiils/sendPushnot');
+const { pushActivityNotification } = require('../utiils/sendPushnot');
 
 // Connect to database
 const connectDB = async () => {
@@ -58,39 +59,73 @@ const processExpiredRequests = async () => {
         request.status = "expired";
         await request.save();
 
-        // Refund the user - move money from pending back to balance
-        const user = await userdb.findOne({ _id: request.userid }).exec();
-        if (user) {
-          let userBalance = parseFloat(user.balance) || 0;
-          let userPending = parseFloat(user.pending) || 0;
-          let refundAmount = parseFloat(request.price);
+        // Get host type and normalize for comparison
+        const hostType = request.type || "Fan meet";
+        const normalizedType = (hostType || "").toLowerCase().trim();
+        const isFanCall = normalizedType.includes("fan call");
 
-          // Only refund if there's pending money to refund
-          if (userPending >= refundAmount) {
-            user.balance = String(userBalance + refundAmount);
-            user.pending = String(userPending - refundAmount);
-            await user.save();
+        // Only refund for Fan meet and Fan date, not for Fan call
+        // Fan call requests don't deduct anything, so nothing to refund
+        if (!isFanCall) {
+          const user = await userdb.findOne({ _id: request.userid }).exec();
+          if (user) {
+            let userBalance = parseFloat(user.balance) || 0;
+            let userPending = parseFloat(user.pending) || 0;
+            let refundAmount = parseFloat(request.price);
 
-            // Create refund history with dynamic host type
-            const hostType = request.type || "Fan meet";
-            const refundHistory = {
-              userid: request.userid,
-              details: `${hostType} request expired - automatic refund processed`,
-              spent: "0",
-              income: `${refundAmount}`,
-              date: `${Date.now().toString()}`
-            };
-            await historydb.create(refundHistory);
+            // Refund logic: Try to refund the full amount, but if pending is less, refund what's available
+            // This handles edge cases where pending might have been partially refunded or there's a discrepancy
+            if (userPending > 0 && refundAmount > 0) {
+              const actualRefundAmount = Math.min(userPending, refundAmount);
+              
+              user.balance = String(userBalance + actualRefundAmount);
+              user.pending = String(Math.max(0, userPending - actualRefundAmount));
+              await user.save();
 
-            // Send notifications with dynamic host type
-            await sendEmail(request.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`);
-            await pushmessage(request.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`, "/icons/m-logo.png");
-            
-            await sendEmail(request.creator_portfolio_id, `A ${hostType.toLowerCase()} request has expired`);
-            await pushmessage(request.creator_portfolio_id, `A ${hostType.toLowerCase()} request has expired`, "/icons/m-logo.png");
-            
-            console.log(`Refunded ${refundAmount} to user ${request.userid} for ${hostType} request`);
+              // Log warning if refund amount doesn't match expected
+              if (actualRefundAmount < refundAmount) {
+                console.warn(`⚠️  Partial refund for request ${request._id}: Expected ${refundAmount}, refunded ${actualRefundAmount}. User pending: ${userPending}`);
+              }
+
+              // Create refund history with dynamic host type
+              const refundHistory = {
+                userid: request.userid,
+                details: `${hostType} request expired - automatic refund processed`,
+                spent: "0",
+                income: `${actualRefundAmount}`,
+                date: `${Date.now().toString()}`
+              };
+              await historydb.create(refundHistory);
+
+              // Send notifications with dynamic host type
+              await sendEmail(request.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`);
+              await pushActivityNotification(request.userid, `Your ${hostType.toLowerCase()} request has expired and been refunded`, "request_expired");
+              
+              // Find creator's actual user ID and send notification
+              const creatorRecord = await creatordb.findOne({ _id: request.creator_portfolio_id }).exec();
+              if (creatorRecord && creatorRecord.userid) {
+                await sendEmail(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`);
+                await pushActivityNotification(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`, "request_expired");
+              }
+              
+              console.log(`✅ Refunded ${actualRefundAmount} to user ${request.userid} for ${hostType} request (Request ID: ${request._id})`);
+            } else {
+              console.warn(`⚠️  Cannot refund request ${request._id}: userPending=${userPending}, refundAmount=${refundAmount}`);
+            }
           }
+        } else {
+          // For Fan call, just send notification without refund
+          await sendEmail(request.userid, `Your ${hostType.toLowerCase()} request has expired`);
+          await pushActivityNotification(request.userid, `Your ${hostType.toLowerCase()} request has expired`, "request_expired");
+          
+          // Find creator's actual user ID and send notification
+          const creatorRecord = await creatordb.findOne({ _id: request.creator_portfolio_id }).exec();
+          if (creatorRecord && creatorRecord.userid) {
+            await sendEmail(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`);
+            await pushActivityNotification(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`, "request_expired");
+          }
+          
+          console.log(`ℹ️  Fan Call request ${request._id} expired (no refund needed)`);
         }
       } catch (err) {
         console.error(`Error processing expired request ${request._id}:`, err);
