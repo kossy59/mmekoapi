@@ -304,6 +304,10 @@ if (req.file && posttype === "image") {
 
     await postdata.create(newPost);
 
+    // Track user activity (post creation)
+    const { trackUserAction } = require("../../utiils/trackUserActivity");
+    trackUserAction(userid, "post");
+
     const currentPost = await postdata.findOne({ posttime: newPost.posttime });
     const [userdb, comdb, likedb, commentdb] = await Promise.all([
       userdata.find().exec(),
