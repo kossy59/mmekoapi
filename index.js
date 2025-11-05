@@ -36,6 +36,9 @@ const PORT = process.env.PORT || 3100;
 const app = express();
 const server = http.createServer(app);
 
+// Enable trust proxy to get real client IP from reverse proxies
+app.set('trust proxy', true);
+
 // Define allowed origins for CORS
 const allowedOrigins = [
   process.env.NEXT_PUBLIC_URL,

@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { trackWebsiteVisitor, updateVisitorTimeSpent } = require('../../utiils/trackUserActivity');
+const { getIpAndLocation } = require('../../utiils/getIpAndLocation');
 
 // GET /api/track-visitor (test route to verify route is accessible)
 router.get('/track-visitor', (req, res) => {
@@ -16,8 +17,12 @@ router.post('/track-visitor', async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Visitor ID is required' });
     }
 
-    // Log tracking request
+    // Get IP and location from request
+    const { ipAddress, location } = await getIpAndLocation(req);
+
+    // Log tracking request with location details
     console.log(`📊 [API] Tracking visitor: ${visitorId}, userid: ${userid || 'anonymous'}, sessionId: ${sessionId || 'none'}`);
+    console.log(`📊 [API] IP: ${ipAddress}, Location: ${location.city}, ${location.country}`);
 
     await trackWebsiteVisitor({
       visitorId,
@@ -25,6 +30,8 @@ router.post('/track-visitor', async (req, res) => {
       sessionId: sessionId || null,
       device: device || {},
       visitTime: visitTime ? new Date(visitTime) : new Date(),
+      ipAddress,
+      location,
     });
 
     return res.status(200).json({ ok: true, message: 'Visitor tracked successfully' });
