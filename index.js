@@ -30,6 +30,7 @@ const { pushmessage, pushMessageNotification, pushSupportNotification, pushActiv
 const imageRoutes = require("./routes/imageRoutes");
 const { scheduleMessageCleanup } = require("./utiils/deleteOldMessages");
 const scheduledCleanup = require("./scripts/scheduledCleanup");
+const { trackUserConnection, trackUserDisconnection, trackUserAction, trackWebsiteVisitor } = require("./utiils/trackUserActivity");
 
 const PORT = process.env.PORT || 3100;
 const app = express();
@@ -215,6 +216,7 @@ app.use("/sendmessages", require("./routes/api/Admin/sendmessage"));
 app.use("/recivemessage", require("./routes/api/Admin/recivemessage"));
 app.use("/adminnotify", require("./routes/api/Admin/adminnotify"));
 app.use("/vipanalysis", require("./routes/api/Admin/vipAnalysis"));
+app.use("/websiteanalytics", require("./routes/api/Admin/websiteAnalytics"));
 app.use("/api/admin/transactions", require("./routes/api/Admin/transactions.routes"));
 app.use("/api/admin/notifications", require("./routes/api/Admin/notificationCleanupRoutes"));
 
@@ -264,6 +266,7 @@ app.use("/api/backup", require("./routes/api/backupRoutes"));
 app.use("/api/pending-balance", require("./routes/api/pendingBalanceRoutes"));
 app.use("/api/reports", require("./routes/api/reportRoutes"));
 app.use("/api/push", require("./routes/api/pushTest"));
+app.use("/api", require("./routes/api/trackVisitor"));
 
 // Track online users
 const onlineUsers = new Set();
@@ -342,8 +345,25 @@ io.on("connection", (socket) => {
       // Update user activity
       userActivity.set(userid, Date.now());
       
-      // Check if user was already online
+      // Track user connection for analytics
+      trackUserConnection(userid, new Date());
+      
+      // Track visitor when user connects (once per day per user)
+      // Only track if user wasn't already online (first connection today)
       const wasAlreadyOnline = onlineUsers.has(userid);
+      if (!wasAlreadyOnline) {
+        trackWebsiteVisitor({
+          visitorId: userid, // Use userid as visitorId for logged-in users
+          userid: userid,
+          sessionId: null,
+          device: {
+            userAgent: socket.handshake.headers['user-agent'] || 'Unknown',
+          },
+          visitTime: new Date(),
+        });
+      }
+      
+      // Check if user was already online (moved after visitor tracking)
       
       // Add user to online users set
       onlineUsers.add(userid);
@@ -671,14 +691,19 @@ io.on("connection", (socket) => {
     
     // Broadcast user offline status before disconnecting
     if (socket.id && IDS.userid) {
+      const disconnectTime = Date.now();
+      
+      // Track user disconnection for analytics
+      trackUserDisconnection(IDS.userid, new Date(disconnectTime));
+      
       // Always use grace period for better user experience
-      disconnectionTimes.set(IDS.userid, Date.now());
+      disconnectionTimes.set(IDS.userid, disconnectTime);
       
       // Set timeout to actually remove user after grace period
       setTimeout(() => {
         if (disconnectionTimes.has(IDS.userid)) {
-          const disconnectTime = disconnectionTimes.get(IDS.userid);
-          const timeSinceDisconnect = Date.now() - disconnectTime;
+          const storedDisconnectTime = disconnectionTimes.get(IDS.userid);
+          const timeSinceDisconnect = Date.now() - storedDisconnectTime;
           
           // Only remove if user hasn't reconnected within grace period
           if (timeSinceDisconnect >= DISCONNECTION_GRACE_PERIOD) {

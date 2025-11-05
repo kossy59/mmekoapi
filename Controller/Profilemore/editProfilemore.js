@@ -35,17 +35,27 @@ const updatePost = async (req, res) => {
         deletePhotoID: deletePhotoID || "none"
     });
 
-    const result = await updateSingleFileToCloudinary(deletePhotoID, req.file, `profile`);
+    // Only update photo if a new file is being uploaded
+    // This preserves the current photo if user only changes other fields
+    let photoLink = null;
+    let photoID = null;
+    
+    if (req.file) {
+        // New file is being uploaded - delete old one and upload new one
+        const result = await updateSingleFileToCloudinary(deletePhotoID, req.file, `profile`);
 
-    console.log("📤 [editProfilemore] Cloudinary upload result:", {
-        hasFileLink: !!result.file_link,
-        hasPublicId: !!result.public_id,
-        fileLink: result.file_link || "none",
-        publicId: result.public_id || "none"
-    });
+        console.log("📤 [editProfilemore] Cloudinary upload result:", {
+            hasFileLink: !!result.file_link,
+            hasPublicId: !!result.public_id,
+            fileLink: result.file_link || "none",
+            publicId: result.public_id || "none"
+        });
 
-    const photoLink = result.file_link
-    const photoID = result.public_id
+        photoLink = result.file_link;
+        photoID = result.public_id;
+    } else {
+        console.log("📤 [editProfilemore] No new file uploaded - preserving current profile photo");
+    }
 
 
     // let data = await connectdatabase()
