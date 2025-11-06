@@ -82,6 +82,9 @@ const readProfile = async (req, res) => {
       isVip: du.isVip || false,
       vipStartDate: du.vipStartDate || null,
       vipEndDate: du.vipEndDate || null,
+      // Balance fields
+      balance: du.balance || "0",
+      coinBalance: du.coinBalance || 0,
     };
 
     let exclusiveData = await exclusivedb
@@ -209,6 +212,11 @@ const readProfile = async (req, res) => {
       ok: true,
       message: `All Post`,
       profile: user,
+      user: {
+        ...user,
+        balance: du.balance || "0",
+        coinBalance: du.coinBalance || 0,
+      },
     });
   } catch (err) {
     console.log(err);

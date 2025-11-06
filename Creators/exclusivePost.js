@@ -1,8 +1,7 @@
 const mongoose = require("mongoose");
 const Scheme = mongoose.Schema;
 
-
-const markertdata = new Scheme(
+const exclusivePostSchema = new Scheme(
   {
     userid: {
       type: String,
@@ -28,18 +27,13 @@ const markertdata = new Scheme(
       type: String,
       required: false,
     },
-    isExclusive: {
-      type: Boolean,
-      required: false,
-      default: false,
-    },
     price: {
       type: Number,
-      required: false,
+      required: true,
     },
   },
   { timestamps: true }
 );
 
-// Virtuals for likeCount and likedBy can be handled in aggregation
-module.exports = mongoose.model("Post", markertdata);
+module.exports = mongoose.model("ExclusivePost", exclusivePostSchema);
+

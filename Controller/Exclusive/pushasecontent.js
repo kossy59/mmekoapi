@@ -70,7 +70,7 @@ const postexclusive = async (req, res) => {
       };
       let creatorhistory = {
         userid: creator_portfolio_id,
-        details: `received ${price} coins for exclusive sale successful`,
+        details: `received ${price} Golds for exclusive sale successful`,
         spent: "0",
         income: `${price}`,
         date: `${Date.now().toString()}`,

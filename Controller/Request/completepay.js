@@ -57,7 +57,7 @@ const createLike = async (req, res) => {
       };
       let userpaymenthistory = {
         userid: userid,
-        details: `Completed transaction history. ${price} coins was deducted`,
+        details: `Completed transaction history. ${price} Gold was deducted`,
         spent: `${price}`,
         income: "0",
         date: `${Date.now().toString()}`,
