@@ -63,6 +63,9 @@ const getTransactionHistory = async (req, res) => {
         details.includes("Fan call - payment received") ||
         // Video call payments (fan pays)
         details.includes("Fan call - payment for") ||
+        // Exclusive post earnings (creator receives)
+        details.includes("exclusive post sale") ||
+        details.includes("exclusive post") ||
         // Withdrawal from earnings
         detailsLower.includes("withdrawal") ||
         detailsLower.includes("withdraw") ||
@@ -125,7 +128,7 @@ const getTransactionHistory = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("🔍 [GET_TRANSACTION_HISTORY] Error:", err);
+    console.error("Error fetching transaction history:", err);
     return res.status(500).json({ ok: false, message: `${err.message}!` });
   }
 };
