@@ -255,6 +255,33 @@ const getWebsiteAnalytics = async (req, res) => {
         const user = await userdb.findById(userId).exec();
         const userComplete = await completedb.findOne({ useraccountId: userId }).exec();
         
+        // Get latest visitor record for this user to get IP and location
+        const latestVisitor = await websiteVisitor.findOne({
+          userid: userId,
+          date: { $gte: startDate, $lte: endDate },
+        }).sort({ date: -1 }).exec();
+        
+        const userLocation = latestVisitor?.location ? {
+          ipAddress: latestVisitor.location.ipAddress || "Unknown",
+          country: latestVisitor.location.country || "Unknown",
+          city: latestVisitor.location.city || "Unknown",
+          region: latestVisitor.location.region || "Unknown",
+          timezone: latestVisitor.location.timezone || "Unknown",
+        } : {
+          ipAddress: "Unknown",
+          country: "Unknown",
+          city: "Unknown",
+          region: "Unknown",
+          timezone: "Unknown",
+        };
+        
+        // Debug: Log location data for user ranking
+        if (latestVisitor?.location) {
+          console.log(`📍 [Analytics] User ${userId} location from visitor record:`, userLocation);
+        } else {
+          console.log(`⚠️ [Analytics] User ${userId} has no visitor record with location data`);
+        }
+        
         if (user) {
           userRanking.push({
             rank: 0, // Will be set after sorting
@@ -276,6 +303,7 @@ const getWebsiteAnalytics = async (req, res) => {
               totalActivities: activityData.totalActivities,
               activityBreakdown: activityData.activityBreakdown,
             },
+            location: userLocation,
           });
         }
       } catch (err) {
@@ -320,17 +348,48 @@ const getWebsiteAnalytics = async (req, res) => {
         }
       }
 
+      const locationData = visitor.location ? {
+        ipAddress: visitor.location.ipAddress || "Unknown",
+        country: visitor.location.country || "Unknown",
+        city: visitor.location.city || "Unknown",
+        region: visitor.location.region || "Unknown",
+        timezone: visitor.location.timezone || "Unknown",
+      } : {
+        ipAddress: "Unknown",
+        country: "Unknown",
+        city: "Unknown",
+        region: "Unknown",
+        timezone: "Unknown",
+      };
+      
+      // Debug: Log location data for visitors
+      if (visitor.location) {
+        console.log(`📍 [Analytics] Visitor ${visitor.visitorId} location:`, locationData);
+      } else {
+        console.log(`⚠️ [Analytics] Visitor ${visitor.visitorId} has no location data`);
+      }
+
       visitorsWithDetails.push({
         visitorId: visitor.visitorId,
         userid: visitor.userid || null,
         isAnonymous: visitor.isAnonymous || false,
         userDetails: userDetails,
-        visitDate: visitor.date,
+        visitDate: visitor.lastVisit || visitor.firstVisit || visitor.date, // Use lastVisit for most recent visit time, fallback to firstVisit or date
         totalTimeSpent: visitor.totalTimeSpent || 0,
         totalTimeSpentHours: parseFloat(((visitor.totalTimeSpent || 0) / (1000 * 60 * 60)).toFixed(2)),
         pageViews: visitor.pageViews || 1,
+        location: locationData,
+        // Store raw lastVisit for sorting
+        _lastVisit: visitor.lastVisit || visitor.firstVisit || visitor.date,
       });
     }
+
+    // Sort visitors by most recent visit time (descending - newest first)
+    visitorsWithDetails.sort((a, b) => {
+      const dateA = new Date(a._lastVisit || a.visitDate).getTime();
+      const dateB = new Date(b._lastVisit || b.visitDate).getTime();
+      return dateB - dateA; // Descending order (newest first)
+    });
 
     // Paginate visitors
     const visitorsTotal = visitorsWithDetails.length;

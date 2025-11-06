@@ -169,6 +169,8 @@ const trackWebsiteVisitor = async (visitorData) => {
       sessionId = null,
       device = {},
       visitTime = new Date(),
+      ipAddress = null,
+      location = null,
     } = visitorData;
 
     if (!visitorId) return;
@@ -230,6 +232,23 @@ const trackWebsiteVisitor = async (visitorData) => {
         }
       }
 
+      // Prepare location data
+      const locationData = location ? {
+        country: location.country || 'Unknown',
+        city: location.city || 'Unknown',
+        region: location.region || 'Unknown',
+        timezone: location.timezone || 'Unknown',
+        ipAddress: ipAddress || location.ipAddress || 'Unknown',
+      } : {
+        country: 'Unknown',
+        city: 'Unknown',
+        region: 'Unknown',
+        timezone: 'Unknown',
+        ipAddress: ipAddress || 'Unknown',
+      };
+      
+      console.log(`📍 [Tracking] Saving location data for visitor ${effectiveVisitorId}:`, locationData);
+
       // Create new visitor record - mark as anonymous if no user ID
       visitor = await websiteVisitor.create({
         visitorId: effectiveVisitorId, // Use effective visitor ID
@@ -237,18 +256,35 @@ const trackWebsiteVisitor = async (visitorData) => {
         sessionId: sessionId || null,
         date: today,
         device,
+        location: locationData,
         firstVisit: visitTime,
         lastVisit: visitTime,
-        totalTimeSpent: 0,
+        totalTimeSpent: 0, // Initialize to 0, will be updated by time tracking
         pageViews: 1,
         signedUp: userData.signedUp || false,
         gender: userData.gender || null,
         isAnonymous: isAnonymous && !userid, // Mark as anonymous if no user ID
       });
+      
+      console.log(`✅ [Tracking] Created new visitor record: ${effectiveVisitorId}, totalTimeSpent initialized to 0`);
     } else {
       // Update existing visitor (same user visiting again today - just update page views and last visit)
       visitor.lastVisit = visitTime;
       visitor.pageViews += 1;
+      
+      // Update IP and location if provided and not already set
+      if (location && (!visitor.location || !visitor.location.ipAddress || visitor.location.ipAddress === 'Unknown')) {
+        const updatedLocation = {
+          country: location.country || visitor.location?.country || 'Unknown',
+          city: location.city || visitor.location?.city || 'Unknown',
+          region: location.region || visitor.location?.region || 'Unknown',
+          timezone: location.timezone || visitor.location?.timezone || 'Unknown',
+          ipAddress: ipAddress || location.ipAddress || visitor.location?.ipAddress || 'Unknown',
+        };
+        visitor.location = updatedLocation;
+        console.log(`📍 [Tracking] Updating location data for existing visitor ${effectiveVisitorId}:`, updatedLocation);
+      }
+      
       if (userid && !visitor.userid) {
         visitor.userid = userid;
         visitor.isAnonymous = false; // No longer anonymous
@@ -280,7 +316,10 @@ const trackWebsiteVisitor = async (visitorData) => {
  */
 const updateVisitorTimeSpent = async (visitorId, timeSpent) => {
   try {
-    if (!visitorId || !timeSpent) return;
+    if (!visitorId || !timeSpent || timeSpent <= 0) {
+      console.log(`⚠️ [Tracking] Invalid time update request: visitorId=${visitorId}, timeSpent=${timeSpent}`);
+      return;
+    }
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -308,14 +347,25 @@ const updateVisitorTimeSpent = async (visitorId, timeSpent) => {
     }
 
     if (visitor) {
-      visitor.totalTimeSpent += timeSpent;
+      const previousTime = visitor.totalTimeSpent || 0;
+      visitor.totalTimeSpent = (visitor.totalTimeSpent || 0) + timeSpent;
+      visitor.lastVisit = new Date(); // Update last visit time
+      
       await visitor.save();
-      console.log(`✅ [Tracking] Updated visitor time: ${visitorId}, added ${Math.round(timeSpent / 1000 / 60)} minutes`);
+      
+      const timeInMinutes = Math.round(timeSpent / 1000 / 60);
+      const totalTimeInHours = (visitor.totalTimeSpent / 1000 / 60 / 60).toFixed(2);
+      console.log(`✅ [Tracking] Updated visitor time: ${visitorId}`);
+      console.log(`   Added: ${timeInMinutes} minutes (${(timeSpent / 1000).toFixed(0)}s)`);
+      console.log(`   Previous total: ${(previousTime / 1000 / 60 / 60).toFixed(2)}h`);
+      console.log(`   New total: ${totalTimeInHours}h`);
     } else {
       console.log(`⚠️ [Tracking] Visitor not found for time update: ${visitorId}`);
+      console.log(`   Searched by visitorId, userid, and sessionId for date: ${today.toISOString()}`);
     }
   } catch (error) {
     console.error("❌ [Tracking] Error updating visitor time spent:", error);
+    console.error("   visitorId:", visitorId, "timeSpent:", timeSpent);
   }
 };
 
