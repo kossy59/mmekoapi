@@ -8,7 +8,6 @@ const comdbs = require("../../Creators/usercomplete");
 const commentdbs = require("../../Creators/comment");
 const likedbs = require("../../Creators/like");
 const alldelete = require("../../utiils/Deletes/deleteAcceptsBook");
-const followdb = require("../../Creators/followers");
 const { filterBlockedComments } = require("../../utiils/blockFilter");
 const { filterBlockedPosts } = require("../../utiils/blockingUtils");
 
@@ -31,18 +30,6 @@ const readPost = async (req, res) => {
     //let  commentdb = await data.databar.listDocuments(data.dataid,data.commentCol)
 
     // let  likedb = await data.databar.listDocuments(data.dataid,data.likeCol)
-
-    // Get user's following list for post prioritization
-    let followingList = [];
-    if (userid) {
-      try {
-        const followingFromDB = await followdb.find({ followerid: userid }).exec();
-        followingList = followingFromDB.map(f => f.userid);
-      } catch (err) {
-        console.error(`❌ [BACKEND] Error fetching following list for user ${userid}:`, err);
-        followingList = [];
-      }
-    }
 
     // Get all posts without pagination
     const posts = await postdbs.aggregate([
@@ -149,58 +136,17 @@ const readPost = async (req, res) => {
       { $skip: skip },
       { $limit: limit }
     ]);
-    
-    
-    // Custom sort: prioritize followed users only if they have recent posts, otherwise sort by date globally
+    // Ensure posts are sorted by recency (newest first)
     const sortedPosts = posts.sort((a, b) => {
-      const aIsFollowing = followingList.includes(a.userid);
-      const bIsFollowing = followingList.includes(b.userid);
-      
       const aDate = new Date(a.createdAt || a.posttime || 0);
       const bDate = new Date(b.createdAt || b.posttime || 0);
-      
-      // If both posts are from followed users, sort by date (newest first)
-      if (aIsFollowing && bIsFollowing) {
-        return bDate.getTime() - aDate.getTime();
-      }
-      
-      // If both posts are from non-followed users, sort by date (newest first)
-      if (!aIsFollowing && !bIsFollowing) {
-        return bDate.getTime() - aDate.getTime();
-      }
-      
-      // If one is followed and one isn't, prioritize followed only if it's recent (within last 7 days)
-      const now = new Date();
-      const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
-      
-      if (aIsFollowing && !bIsFollowing) {
-        // If followed user's post is recent, prioritize it
-        if (aDate > sevenDaysAgo) {
-          return -1;
-        }
-        // If followed user's post is old, sort by date normally
-        return bDate.getTime() - aDate.getTime();
-      }
-      
-      if (!aIsFollowing && bIsFollowing) {
-        // If followed user's post is recent, prioritize it
-        if (bDate > sevenDaysAgo) {
-          return 1;
-        }
-        // If followed user's post is old, sort by date normally
-        return bDate.getTime() - aDate.getTime();
-      }
-      
-      // Fallback: sort by date
       return bDate.getTime() - aDate.getTime();
     });
-    
-    
+
     // let userdb = await userdbs.find().exec();
     // let comdb = await comdbs.find().exec();
     // let commentdb = await commentdbs.find().exec();
     // let likedb = await likedbs.find().exec();
-    // let following = await followdb.find({}).exec();
 
     alldelete();
     

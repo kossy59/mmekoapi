@@ -83,7 +83,7 @@ const purchaseExclusivePost = async (req, res) => {
     // Create transaction history for buyer
     const buyerHistory = {
       userid: userid,
-      details: `Purchased exclusive post for ${postPrice} Gold`,
+      details: `Purchased exclusive content for ${postPrice} Gold`,
       spent: `${postPrice}`,
       income: "0",
       date: `${Date.now().toString()}`
@@ -94,7 +94,7 @@ const purchaseExclusivePost = async (req, res) => {
     if (creator) {
       const creatorHistory = {
         userid: post.userid, // Use post.userid for transaction history (like completeFanRequests uses creator_portfolio_id)
-        details: `Received ${postPrice} Golds from exclusive post sale`,
+        details: `Received ${postPrice} Golds from exclusive content sale`,
         spent: "0",
         income: `${postPrice}`,
         date: `${Date.now().toString()}`
@@ -105,7 +105,7 @@ const purchaseExclusivePost = async (req, res) => {
       if (creator._id) {
         const creatorNotification = {
           userid: creator._id, // Use the actual creator's user ID for notifications (like completeFanRequests)
-          message: `Someone purchased your exclusive post for ${postPrice} Golds`,
+          message: `Someone purchased your exclusive content for ${postPrice} Golds`,
           seen: false,
         };
         await admindb.create(creatorNotification);
@@ -114,7 +114,7 @@ const purchaseExclusivePost = async (req, res) => {
         try {
           await pushActivityNotification(
             creator._id, // Use the actual creator's user ID for push notifications
-            `Someone purchased your exclusive post for ${postPrice} Golds`,
+            `Someone purchased your exclusive content for ${postPrice} Golds`,
             "exclusive_post_purchased"
           );
         } catch (pushError) {
@@ -125,7 +125,7 @@ const purchaseExclusivePost = async (req, res) => {
 
     return res.status(200).json({
       ok: true,
-      message: "Post purchased successfully",
+      message: "Content purchased successfully",
       purchase: purchase,
       newBalance: newBalance,
     });

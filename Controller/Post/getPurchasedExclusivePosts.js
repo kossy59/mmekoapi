@@ -38,7 +38,7 @@ const getPurchasedExclusivePosts = async (req, res) => {
 
     return res.status(200).json({
       ok: true,
-      message: "Purchased exclusive posts retrieved successfully",
+      message: "Purchased exclusive content retrieved successfully",
       posts: postsWithUser,
     });
   } catch (err) {
