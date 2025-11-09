@@ -37,6 +37,11 @@ const markertdata = new Scheme(
       type: Number,
       required: false,
     },
+    hashtags: {
+      type: [String],
+      required: false,
+      default: [],
+    },
   },
   { timestamps: true }
 );

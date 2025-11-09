@@ -162,6 +162,7 @@ app.use("/searchuser", require("./routes/api/profile/getallUser"));
 app.use("/post", require("./routes/api/post/Post"));
 app.use("/creator/all", require("./routes/api/creator/mycreators"));
 app.use("/creator/public", require("./routes/api/creator/getAllCreators"));
+app.use("/api/discover", require("./routes/api/discover/discover"));
 app.use("/addpayment", require("./routes/api/payment/payment.routes"));
 app.use("/payment", require("./routes/api/payment/transaction.routes"));
 app.use("/web3", require("./routes/api/payment/web3.routes"));
