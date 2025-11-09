@@ -1,4 +1,5 @@
 const PaymentTransaction = require("../../Creators/PaymentTransaction");
+const userdb = require("../../Creators/userdb");
 const mongoose = require("mongoose");
 
 /**
@@ -44,6 +45,39 @@ exports.getTransactions = async (req, res) => {
       .skip(skip)
       .limit(parseInt(limit))
       .lean();
+    
+    // Get unique user IDs from transactions (as strings for deduplication)
+    const userIdStrings = [...new Set(transactions.map(t => {
+      if (!t.userId) return null;
+      return t.userId.toString();
+    }).filter(Boolean))];
+    
+    // Convert to ObjectIds for the query
+    const userIds = userIdStrings
+      .filter(id => mongoose.Types.ObjectId.isValid(id))
+      .map(id => new mongoose.Types.ObjectId(id));
+    
+    // Fetch all users to get usernames
+    const users = userIds.length > 0 
+      ? await userdb.find({ _id: { $in: userIds } }).select('_id username').lean()
+      : [];
+    
+    // Create a map of userId to username
+    const usernameMap = {};
+    users.forEach(user => {
+      usernameMap[user._id.toString()] = user.username || 'N/A';
+    });
+    
+    // Map transactions to include username
+    const transactionsWithUsername = transactions.map(transaction => {
+      const userIdStr = transaction.userId?.toString() || transaction.userId;
+      const username = usernameMap[userIdStr] || 'N/A';
+      return {
+        ...transaction,
+        username: username,
+        userId: userIdStr
+      };
+    });
 
     // Get total count for pagination
     const totalCount = await PaymentTransaction.countDocuments(query);
@@ -78,7 +112,7 @@ exports.getTransactions = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      transactions,
+      transactions: transactionsWithUsername,
       pagination: {
         currentPage: parseInt(page),
         totalPages,
@@ -295,6 +329,127 @@ exports.getTransactionStats = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch transaction statistics",
+      error: error.message
+    });
+  }
+};
+
+/**
+ * @desc Get revenue by gold pack with month filter
+ * @route GET /api/admin/transactions/revenue
+ */
+exports.getRevenueByGoldPack = async (req, res) => {
+  try {
+    const { month, year } = req.query;
+    
+    // Build date filter
+    const dateFilter = {};
+    if (month && year) {
+      const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+      // new Date(year, month, 0) gives the last day of the previous month (month-1)
+      const endDate = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59, 999);
+      dateFilter.createdAt = { $gte: startDate, $lte: endDate };
+    }
+
+    // Gold pack prices mapping (from golds array)
+    const goldPackPrices = {
+      1.00: { gold: 250, bonus: "Test" },
+      6.99: { gold: 50, bonus: "" },
+      10.99: { gold: 100, bonus: "" },
+      20.99: { gold: 200, bonus: "5%" },
+      39.99: { gold: 400, bonus: "10%" },
+      49.99: { gold: 550, bonus: "21%" },
+      62.99: { gold: 750, bonus: "32%" },
+      79.99: { gold: 1000, bonus: "37%" }
+    };
+
+    // Get all confirmed/finished transactions
+    const transactions = await PaymentTransaction.find({
+      status: { $in: ['confirmed', 'finished'] },
+      ...dateFilter
+    }).lean();
+
+    // Group transactions by amount and calculate stats
+    const revenueByPack = {};
+    let totalRevenue = 0;
+
+    transactions.forEach(transaction => {
+      const amount = transaction.amount;
+      totalRevenue += amount;
+
+      // Round amount to match gold pack prices (handle small floating point differences)
+      const roundedAmount = Math.round(amount * 100) / 100;
+      
+      // Find matching gold pack
+      let packKey = null;
+      for (const [price, pack] of Object.entries(goldPackPrices)) {
+        if (Math.abs(roundedAmount - parseFloat(price)) < 0.01) {
+          packKey = price;
+          break;
+        }
+      }
+
+      // If no exact match, use the rounded amount as key
+      if (!packKey) {
+        packKey = roundedAmount.toString();
+      }
+
+      if (!revenueByPack[packKey]) {
+        revenueByPack[packKey] = {
+          amount: parseFloat(packKey),
+          gold: goldPackPrices[packKey]?.gold || null,
+          bonus: goldPackPrices[packKey]?.bonus || "",
+          purchaseCount: 0,
+          totalRevenue: 0
+        };
+      }
+
+      revenueByPack[packKey].purchaseCount += 1;
+      revenueByPack[packKey].totalRevenue += amount;
+    });
+
+    // Convert to array and calculate percentages
+    const revenueData = Object.values(revenueByPack)
+      .map(pack => {
+        const percentage = totalRevenue > 0 
+          ? ((pack.totalRevenue / totalRevenue) * 100).toFixed(2)
+          : "0.00";
+        
+        // Calculate gold amount with bonus
+        let goldAmount = pack.gold || 0;
+        if (pack.bonus && pack.bonus !== "" && pack.bonus !== "Test") {
+          const bonusPercent = parseFloat(pack.bonus.replace('%', ''));
+          const bonusGold = Math.round(goldAmount * (bonusPercent / 100));
+          goldAmount = goldAmount + bonusGold;
+        }
+
+        return {
+          goldAmount: pack.gold ? `${pack.gold}${pack.bonus ? ` + (${pack.bonus} BONUS) = ${goldAmount}` : ''}` : pack.amount.toString(),
+          purchase: pack.purchaseCount,
+          revenue: pack.totalRevenue,
+          percentage: parseFloat(percentage)
+        };
+      })
+      .sort((a, b) => {
+        // Sort by gold amount (extract number from string)
+        const aGold = parseInt(a.goldAmount) || 0;
+        const bGold = parseInt(b.goldAmount) || 0;
+        return bGold - aGold; // Descending order
+      });
+
+    res.status(200).json({
+      success: true,
+      month: month || null,
+      year: year || null,
+      totalRevenue,
+      revenueData
+    });
+
+  } catch (error) {
+    console.error("Get revenue by gold pack error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch revenue data",
       error: error.message
     });
   }

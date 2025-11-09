@@ -19,8 +19,6 @@ const connectDB = async () => {
 
 const processExpiredRequests = async () => {
   try {
-    console.log('Starting expired requests processing...');
-    
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
     const fortyEightHoursAgo = new Date(now.getTime() - (48 * 60 * 60 * 1000));
@@ -49,12 +47,9 @@ const processExpiredRequests = async () => {
     }).exec();
 
     const allExpiredRequests = [...expiredAcceptedRequests, ...expiredPendingRequests];
-    console.log(`Found ${allExpiredRequests.length} expired requests (${expiredFanCallRequests.length} Fan Call 48h, ${expiredOtherRequests.length} other 7d, ${expiredPendingRequests.length} pending)`);
 
     for (const request of allExpiredRequests) {
       try {
-        console.log(`Processing expired request ${request._id}`);
-        
         // Update request status to expired
         request.status = "expired";
         await request.save();
@@ -107,8 +102,6 @@ const processExpiredRequests = async () => {
                 await sendEmail(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`);
                 await pushActivityNotification(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`, "request_expired");
               }
-              
-              console.log(`✅ Refunded ${actualRefundAmount} to user ${request.userid} for ${hostType} request (Request ID: ${request._id})`);
             } else {
               console.warn(`⚠️  Cannot refund request ${request._id}: userPending=${userPending}, refundAmount=${refundAmount}`);
             }
@@ -124,15 +117,11 @@ const processExpiredRequests = async () => {
             await sendEmail(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`);
             await pushActivityNotification(creatorRecord.userid, `A ${hostType.toLowerCase()} request has expired`, "request_expired");
           }
-          
-          console.log(`ℹ️  Fan Call request ${request._id} expired (no refund needed)`);
         }
       } catch (err) {
         console.error(`Error processing expired request ${request._id}:`, err);
       }
     }
-
-    console.log(`Completed processing ${allExpiredRequests.length} expired requests`);
   } catch (err) {
     console.error("Error processing expired requests:", err);
   }

@@ -1,6 +1,7 @@
 const userdb = require("../../Creators/userdb")
 let userphoto = require("../../Creators/usercomplete")
 const { filterBlockedUsers } = require("../../utiils/blockFilter")
+const websiteVisitor = require("../../Creators/websiteVisitor")
 
 const updatePost = async (req,res)=>{
   const userid = req.body.userid;
@@ -22,6 +23,25 @@ const updatePost = async (req,res)=>{
         }
       })
     })
+
+    // Add IP addresses from websiteVisitor collection
+    // Get latest visitor record for each user to get their IP address
+    for (let i = 0; i < alluser.length; i++) {
+      try {
+        const latestVisitor = await websiteVisitor.findOne({
+          userid: alluser[i]._id.toString(),
+        }).sort({ date: -1 }).exec();
+        
+        if (latestVisitor && latestVisitor.location && latestVisitor.location.ipAddress) {
+          alluser[i].ipAddress = latestVisitor.location.ipAddress;
+        } else {
+          alluser[i].ipAddress = "Unknown";
+        }
+      } catch (err) {
+        console.error(`Error fetching IP for user ${alluser[i]._id}:`, err);
+        alluser[i].ipAddress = "Unknown";
+      }
+    }
 
     // Filter out blocked users from the alluser list
     const filteredUsers = await filterBlockedUsers(alluser, userid);

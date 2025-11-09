@@ -16,8 +16,6 @@ class ScheduledCleanup {
    * Start the scheduled cleanup process
    */
   start() {
-    console.log("Starting scheduled cleanup for orphaned pending balances...");
-    
     // Run cleanup every 6 hours (0 */6 * * *)
     this.cleanupTask = cron.schedule('0 */6 * * *', async () => {
       await this.runCleanup();
@@ -30,8 +28,6 @@ class ScheduledCleanup {
     setTimeout(() => {
       this.runCleanup();
     }, 5000); // Wait 5 seconds after startup
-
-    console.log("Scheduled cleanup started - will run every 6 hours");
   }
 
   /**
@@ -40,7 +36,6 @@ class ScheduledCleanup {
   stop() {
     if (this.cleanupTask) {
       this.cleanupTask.destroy();
-      console.log("Scheduled cleanup stopped");
     }
   }
 
@@ -49,7 +44,6 @@ class ScheduledCleanup {
    */
   async runCleanup() {
     if (this.isRunning) {
-      console.log("Cleanup already running, skipping this cycle");
       return;
     }
 
@@ -57,11 +51,8 @@ class ScheduledCleanup {
     this.lastRun = new Date();
 
     try {
-      console.log(`Starting cleanup at ${this.lastRun.toISOString()}`);
-      
       // Get stats before cleanup
       const beforeStats = await getPendingBalanceStats();
-      console.log("Before cleanup stats:", beforeStats);
 
       // Run the cleanup
       const result = await cleanupOrphanedPendingBalances();
@@ -74,9 +65,6 @@ class ScheduledCleanup {
         result: result,
         timestamp: this.lastRun
       };
-
-      console.log("Cleanup completed:", result);
-      console.log("After cleanup stats:", afterStats);
 
     } catch (error) {
       console.error("Error during scheduled cleanup:", error);
@@ -101,7 +89,6 @@ class ScheduledCleanup {
    * Manually trigger cleanup
    */
   async manualCleanup() {
-    console.log("Manual cleanup triggered");
     await this.runCleanup();
   }
 }

@@ -8,15 +8,11 @@ const historydb = require("../Creators/mainbalance");
  * This script checks all pending requests and refunds users if the creator portfolio no longer exists
  */
 const cleanupOrphanedPendingBalances = async () => {
-  console.log("Starting cleanup of orphaned pending balances...");
-  
   try {
     // Find all pending requests
     const pendingRequests = await requestdb.find({
       status: { $in: ["request", "pending"] }
     }).exec();
-
-    console.log(`Found ${pendingRequests.length} pending requests to check`);
 
     let refundedCount = 0;
     let totalRefundAmount = 0;
@@ -30,8 +26,6 @@ const cleanupOrphanedPendingBalances = async () => {
         }).exec();
 
         if (!creatorExists) {
-          console.log(`Portfolio ${request.creator_portfolio_id} not found for request ${request._id}`);
-          
           // Get the user who made the request
           const user = await userdb.findOne({ _id: request.userid }).exec();
           
@@ -62,22 +56,12 @@ const cleanupOrphanedPendingBalances = async () => {
             refundedCount++;
             totalRefundAmount += refundAmount;
             refundedUsers.add(request.userid);
-
-            console.log(`Refunded ${refundAmount} to user ${request.userid} for deleted portfolio ${request.creator_portfolio_id}`);
-          } else {
-            console.log(`User ${request.userid} not found for request ${request._id}`);
           }
         }
       } catch (error) {
         console.error(`Error processing request ${request._id}:`, error);
       }
     }
-
-    console.log(`Cleanup completed:`);
-    console.log(`- Requests processed: ${pendingRequests.length}`);
-    console.log(`- Users refunded: ${refundedUsers.size}`);
-    console.log(`- Total refund amount: ${totalRefundAmount}`);
-    console.log(`- Requests cancelled: ${refundedCount}`);
 
     return {
       success: true,
@@ -115,16 +99,12 @@ const validatePortfolioExists = async (creatorPortfolioId) => {
  * This can be called when a portfolio is deleted
  */
 const processPortfolioDeletionRefund = async (creatorPortfolioId) => {
-  console.log(`Processing refunds for deleted portfolio: ${creatorPortfolioId}`);
-  
   try {
     // Find all pending requests for this portfolio
     const pendingRequests = await requestdb.find({
       creator_portfolio_id: creatorPortfolioId,
       status: { $in: ["request", "pending"] }
     }).exec();
-
-    console.log(`Found ${pendingRequests.length} pending requests for deleted portfolio`);
 
     let refundedCount = 0;
     let totalRefundAmount = 0;
@@ -159,17 +139,11 @@ const processPortfolioDeletionRefund = async (creatorPortfolioId) => {
 
           refundedCount++;
           totalRefundAmount += refundAmount;
-
-          console.log(`Refunded ${refundAmount} to user ${request.userid}`);
         }
       } catch (error) {
         console.error(`Error processing refund for request ${request._id}:`, error);
       }
     }
-
-    console.log(`Portfolio deletion refunds completed:`);
-    console.log(`- Requests processed: ${pendingRequests.length}`);
-    console.log(`- Total refund amount: ${totalRefundAmount}`);
 
     return {
       success: true,
