@@ -363,7 +363,19 @@ exports.getRevenueByGoldPack = async (req, res) => {
       79.99: { gold: 1000, bonus: "37%" }
     };
 
-    // Get all confirmed/finished transactions
+    // Profit percentage mapping by base gold amount (from the revenue analysis table)
+    const profitPercentages = {
+      50: 71.39,
+      100: 63.69,
+      200: 60.93,  // 200 + 5% bonus = 205
+      400: 58.99,  // 400 + 10% bonus = 410
+      550: 54.31,  // 550 + 21% bonus = 571
+      750: 50.33,  // 750 + 32% bonus = 782
+      1000: 48.14  // 1000 + 37% bonus = 1037
+    };
+
+    // Get only successful transactions (confirmed and finished statuses)
+    // This ensures purchase count only includes successful transactions
     const transactions = await PaymentTransaction.find({
       status: { $in: ['confirmed', 'finished'] },
       ...dateFilter
@@ -411,23 +423,31 @@ exports.getRevenueByGoldPack = async (req, res) => {
     // Convert to array and calculate percentages
     const revenueData = Object.values(revenueByPack)
       .map(pack => {
-        const percentage = totalRevenue > 0 
-          ? ((pack.totalRevenue / totalRevenue) * 100).toFixed(2)
-          : "0.00";
-        
         // Calculate gold amount with bonus
         let goldAmount = pack.gold || 0;
+        let totalGoldWithBonus = goldAmount;
         if (pack.bonus && pack.bonus !== "" && pack.bonus !== "Test") {
           const bonusPercent = parseFloat(pack.bonus.replace('%', ''));
           const bonusGold = Math.round(goldAmount * (bonusPercent / 100));
-          goldAmount = goldAmount + bonusGold;
+          totalGoldWithBonus = goldAmount + bonusGold;
         }
 
+        // Calculate total gold (purchase count * gold amount with bonus)
+        const totalGold = pack.purchaseCount * totalGoldWithBonus;
+
+        // Get profit percentage for this gold pack
+        const profitPercentage = profitPercentages[pack.gold] || 0;
+
+        // Calculate profit: revenue * profit percentage / 100 (same calculation method as revenue)
+        const profit = pack.totalRevenue * (profitPercentage / 100);
+
         return {
-          goldAmount: pack.gold ? `${pack.gold}${pack.bonus ? ` + (${pack.bonus} BONUS) = ${goldAmount}` : ''}` : pack.amount.toString(),
+          goldAmount: pack.gold ? `${pack.gold}${pack.bonus ? ` + (${pack.bonus} BONUS) = ${totalGoldWithBonus}` : ''}` : pack.amount.toString(),
           purchase: pack.purchaseCount,
+          total: totalGold,
+          profit: profit,
           revenue: pack.totalRevenue,
-          percentage: parseFloat(percentage)
+          percentage: profitPercentage
         };
       })
       .sort((a, b) => {

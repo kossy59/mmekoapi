@@ -60,12 +60,26 @@ const createCreator = async (req, res) => {
         return photolink?.creatorfilelink;
       })
       .filter((link) => link && link.trim() !== ""); // Filter out null/undefined/empty links
+    
+    console.log('🖼️ [CREATOR PORTFOLIO API] Creator images:', {
+      creatorId: currentuser._id,
+      creatorName: currentuser.name,
+      creatorfilesLength: currentuser.creatorfiles?.length || 0,
+      creatorfiles: currentuser.creatorfiles,
+      photolinkArray: photolink,
+      photolinkLength: photolink.length,
+      firstImage: photolink[0] || null,
+      legacyPhotolink: currentuser.photolink,
+      legacyPhotolinkType: typeof currentuser.photolink
+    });
+    
     const isFollowingUser = modState.followers.includes(userid);
 
     let host = {
       hostid: currentuser._id,
       // photolink: currentuser.creatorfiles[0].creatorfilelink,
       photolink,
+      creatorfiles: currentuser.creatorfiles, // Include full creatorfiles array
       verify: modState.creator_verified,
       name: currentuser.name,
       username: modState.username, // Include username from user data
@@ -96,6 +110,15 @@ const createCreator = async (req, res) => {
       vipEndDate: modState.vipEndDate || null,
     };
 
+    console.log('🖼️ [CREATOR PORTFOLIO API] Final host response:', {
+      creatorId: host.hostid,
+      creatorName: host.name,
+      photolink: host.photolink,
+      photolinkLength: host.photolink?.length || 0,
+      firstImage: host.photolink?.[0] || null,
+      hasCreatorfiles: !!host.creatorfiles,
+      creatorfilesLength: host.creatorfiles?.length || 0
+    });
 
     res.status(200).json({
       ok: true,

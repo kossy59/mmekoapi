@@ -184,6 +184,18 @@ const createPost = async (req, res) => {
   const userid = data.userid;
   let content = data.content || "";
   const posttype = data.posttype;
+  
+  // Extract hashtags from content (words starting with #)
+  const extractHashtags = (text) => {
+    if (!text) return [];
+    const hashtagRegex = /#(\w+)/g;
+    const matches = text.match(hashtagRegex);
+    if (!matches) return [];
+    // Remove # and return unique hashtags (lowercase)
+    return [...new Set(matches.map(tag => tag.substring(1).toLowerCase()))];
+  };
+  
+  const hashtags = extractHashtags(content);
 
    // ------------------------------
   // ✅ DAILY UPLOAD LIMIT CHECK
@@ -300,6 +312,7 @@ if (req.file && posttype === "image") {
       posttime: `${Date.now()}`,
       content,
       posttype,
+      hashtags,
     };
 
     await postdata.create(newPost);
