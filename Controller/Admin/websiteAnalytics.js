@@ -275,12 +275,6 @@ const getWebsiteAnalytics = async (req, res) => {
           timezone: "Unknown",
         };
         
-        // Debug: Log location data for user ranking
-        if (latestVisitor?.location) {
-          console.log(`📍 [Analytics] User ${userId} location from visitor record:`, userLocation);
-        } else {
-          console.log(`⚠️ [Analytics] User ${userId} has no visitor record with location data`);
-        }
         
         if (user) {
           userRanking.push({
@@ -362,12 +356,6 @@ const getWebsiteAnalytics = async (req, res) => {
         timezone: "Unknown",
       };
       
-      // Debug: Log location data for visitors
-      if (visitor.location) {
-        console.log(`📍 [Analytics] Visitor ${visitor.visitorId} location:`, locationData);
-      } else {
-        console.log(`⚠️ [Analytics] Visitor ${visitor.visitorId} has no location data`);
-      }
 
       visitorsWithDetails.push({
         visitorId: visitor.visitorId,

@@ -18,8 +18,6 @@ class ScheduledExpiredRequests {
    * Start the scheduled expired requests processing
    */
   start() {
-    console.log("Starting scheduled processing for expired requests...");
-    
     // Run processing every 5 minutes (*/5 * * * *)
     this.processingTask = cron.schedule('*/5 * * * *', async () => {
       await this.runProcessing();
@@ -32,8 +30,6 @@ class ScheduledExpiredRequests {
     setTimeout(() => {
       this.runProcessing();
     }, 10000); // Wait 10 seconds after startup
-
-    console.log("Scheduled expired requests processing started - will run every 5 minutes");
   }
 
   /**
@@ -42,7 +38,6 @@ class ScheduledExpiredRequests {
   stop() {
     if (this.processingTask) {
       this.processingTask.destroy();
-      console.log("Scheduled expired requests processing stopped");
     }
   }
 
@@ -51,7 +46,6 @@ class ScheduledExpiredRequests {
    */
   async runProcessing() {
     if (this.isRunning) {
-      console.log("Expired requests processing already running, skipping this cycle");
       return;
     }
 
@@ -59,8 +53,6 @@ class ScheduledExpiredRequests {
     this.lastRun = new Date();
 
     try {
-      console.log(`Starting expired requests processing at ${this.lastRun.toISOString()}`);
-      
       // Call the processing function (script version, not controller version)
       await processExpiredRequests();
       
@@ -68,8 +60,6 @@ class ScheduledExpiredRequests {
         timestamp: this.lastRun,
         status: 'completed'
       };
-
-      console.log("Expired requests processing completed");
 
     } catch (error) {
       console.error("Error during expired requests processing:", error);
@@ -99,7 +89,6 @@ class ScheduledExpiredRequests {
    * Manually trigger processing
    */
   async manualProcessing() {
-    console.log("Manual expired requests processing triggered");
     await this.runProcessing();
   }
 }

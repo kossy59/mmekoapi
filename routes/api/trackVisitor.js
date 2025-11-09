@@ -20,10 +20,6 @@ router.post('/track-visitor', async (req, res) => {
     // Get IP and location from request
     const { ipAddress, location } = await getIpAndLocation(req);
 
-    // Log tracking request with location details
-    console.log(`📊 [API] Tracking visitor: ${visitorId}, userid: ${userid || 'anonymous'}, sessionId: ${sessionId || 'none'}`);
-    console.log(`📊 [API] IP: ${ipAddress}, Location: ${location.city}, ${location.country}`);
-
     await trackWebsiteVisitor({
       visitorId,
       userid: userid || null,

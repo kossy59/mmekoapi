@@ -81,6 +81,14 @@ const readHistory = async (req, res) => {
       earningsVal = Number(currentCreator[0].earnings) || 0;
     }
 
+    // Get current date for month verification
+    const now = new Date();
+    const currentMonth = now.getMonth(); // 0-11
+    const currentYear = now.getFullYear();
+    
+    // Create a date at the start of current month in UTC to avoid timezone issues
+    const monthStartDate = new Date(Date.UTC(currentYear, currentMonth, 1, 0, 0, 0, 0));
+
     let history = {
       gift: gift_count,
       request: request_count,
@@ -89,6 +97,9 @@ const readHistory = async (req, res) => {
       coin: String(earningsVal),
       usd: String(earningsVal * 0.05),
       followers: String(monthly_followers),
+      createdAt: monthStartDate.toISOString(), // Add createdAt to verify current month
+      month: currentMonth + 1, // 1-12 for easier frontend use
+      year: currentYear,
     };
 
 

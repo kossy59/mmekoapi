@@ -35,7 +35,6 @@ const trackUserConnection = async (userid, connectionTime = new Date()) => {
     });
 
     await activity.save();
-    console.log(`✅ [Tracking] User ${userid} connection tracked`);
   } catch (error) {
     console.error("❌ [Tracking] Error tracking user connection:", error);
   }
@@ -78,7 +77,6 @@ const trackUserDisconnection = async (userid, disconnectionTime = new Date()) =>
       );
 
       await activity.save();
-      console.log(`✅ [Tracking] User ${userid} disconnection tracked, session duration: ${Math.round(openSession.duration / 1000 / 60)} minutes`);
     }
   } catch (error) {
     console.error("❌ [Tracking] Error tracking user disconnection:", error);
@@ -152,7 +150,6 @@ const trackUserAction = async (userid, actionType = "other") => {
 
     activity.activitiesCount += 1;
     await activity.save();
-    console.log(`✅ [Tracking] User ${userid} action tracked: ${actionType}`);
   } catch (error) {
     console.error("❌ [Tracking] Error tracking user action:", error);
   }
@@ -247,8 +244,6 @@ const trackWebsiteVisitor = async (visitorData) => {
         ipAddress: ipAddress || 'Unknown',
       };
       
-      console.log(`📍 [Tracking] Saving location data for visitor ${effectiveVisitorId}:`, locationData);
-
       // Create new visitor record - mark as anonymous if no user ID
       visitor = await websiteVisitor.create({
         visitorId: effectiveVisitorId, // Use effective visitor ID
@@ -265,8 +260,6 @@ const trackWebsiteVisitor = async (visitorData) => {
         gender: userData.gender || null,
         isAnonymous: isAnonymous && !userid, // Mark as anonymous if no user ID
       });
-      
-      console.log(`✅ [Tracking] Created new visitor record: ${effectiveVisitorId}, totalTimeSpent initialized to 0`);
     } else {
       // Update existing visitor (same user visiting again today - just update page views and last visit)
       visitor.lastVisit = visitTime;
@@ -282,7 +275,6 @@ const trackWebsiteVisitor = async (visitorData) => {
           ipAddress: ipAddress || location.ipAddress || visitor.location?.ipAddress || 'Unknown',
         };
         visitor.location = updatedLocation;
-        console.log(`📍 [Tracking] Updating location data for existing visitor ${effectiveVisitorId}:`, updatedLocation);
       }
       
       if (userid && !visitor.userid) {
@@ -299,13 +291,6 @@ const trackWebsiteVisitor = async (visitorData) => {
       await visitor.save();
     }
 
-    // Log tracking result
-    if (!visitor) {
-      console.log(`⚠️ [Tracking] Visitor record was not created or found for: ${effectiveVisitorId}`);
-    } else {
-      const visitorType = userid ? 'logged-in' : 'anonymous';
-      console.log(`✅ [Tracking] Website visitor tracked: ${effectiveVisitorId} (${visitorType}, isNew: ${visitor.pageViews === 1}, pageViews: ${visitor.pageViews})`);
-    }
   } catch (error) {
     console.error("❌ [Tracking] Error tracking website visitor:", error);
   }
@@ -352,16 +337,6 @@ const updateVisitorTimeSpent = async (visitorId, timeSpent) => {
       visitor.lastVisit = new Date(); // Update last visit time
       
       await visitor.save();
-      
-      const timeInMinutes = Math.round(timeSpent / 1000 / 60);
-      const totalTimeInHours = (visitor.totalTimeSpent / 1000 / 60 / 60).toFixed(2);
-      console.log(`✅ [Tracking] Updated visitor time: ${visitorId}`);
-      console.log(`   Added: ${timeInMinutes} minutes (${(timeSpent / 1000).toFixed(0)}s)`);
-      console.log(`   Previous total: ${(previousTime / 1000 / 60 / 60).toFixed(2)}h`);
-      console.log(`   New total: ${totalTimeInHours}h`);
-    } else {
-      console.log(`⚠️ [Tracking] Visitor not found for time update: ${visitorId}`);
-      console.log(`   Searched by visitorId, userid, and sessionId for date: ${today.toISOString()}`);
     }
   } catch (error) {
     console.error("❌ [Tracking] Error updating visitor time spent:", error);

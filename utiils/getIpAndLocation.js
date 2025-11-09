@@ -8,7 +8,6 @@ const getClientIp = (req) => {
   // In development, allow using a test IP from environment variable
   // Set TEST_IP in .env to test with a real IP (e.g., TEST_IP=8.8.8.8)
   if (process.env.NODE_ENV === 'development' && process.env.TEST_IP) {
-    console.log(`🧪 [IP Location] Using test IP from environment: ${process.env.TEST_IP}`);
     return process.env.TEST_IP;
   }
 
@@ -85,8 +84,6 @@ const getLocationFromIp = async (ipAddress) => {
       ipAddress.startsWith('::ffff:172.');
     
     if (isLocalhost && !(process.env.NODE_ENV === 'development' && process.env.TEST_IP)) {
-      console.log(`⚠️ [IP Location] Skipping localhost/internal IP: ${ipAddress}`);
-      console.log(`💡 [IP Location] Tip: Set TEST_IP=8.8.8.8 in .env to test with a real IP in development`);
       return {
         country: 'Unknown',
         city: 'Unknown',
@@ -95,8 +92,6 @@ const getLocationFromIp = async (ipAddress) => {
         ipAddress: ipAddress,
       };
     }
-
-    console.log(`🌍 [IP Location] Fetching location for IP: ${ipAddress}`);
 
     // Use ipinfo.io API (free tier available)
     // You can also use other services like ip-api.com, ipgeolocation.io, etc.
@@ -118,11 +113,9 @@ const getLocationFromIp = async (ipAddress) => {
           timezone: response.data.timezone || 'Unknown',
           ipAddress: ipAddress,
         };
-        console.log(`✅ [IP Location] Successfully fetched location for ${ipAddress}:`, locationData);
         return locationData;
       }
 
-      console.log(`⚠️ [IP Location] No location data in response for ${ipAddress}`);
       return {
         country: 'Unknown',
         city: 'Unknown',
@@ -131,10 +124,7 @@ const getLocationFromIp = async (ipAddress) => {
         ipAddress: ipAddress,
       };
     } catch (ipinfoError) {
-      console.error(`❌ [IP Location] ipinfo.io failed for ${ipAddress}:`, ipinfoError.message);
-      
       // Fallback to ip-api.com (free tier: 45 requests/minute)
-      console.log(`🔄 [IP Location] Trying fallback service (ip-api.com) for ${ipAddress}`);
       try {
         const fallbackUrl = `http://ip-api.com/json/${ipAddress}?fields=status,country,regionName,city,timezone,query`;
         const fallbackResponse = await axios.get(fallbackUrl, {
@@ -149,11 +139,9 @@ const getLocationFromIp = async (ipAddress) => {
             timezone: fallbackResponse.data.timezone || 'Unknown',
             ipAddress: ipAddress,
           };
-          console.log(`✅ [IP Location] Fallback service succeeded for ${ipAddress}:`, locationData);
           return locationData;
         }
       } catch (fallbackError) {
-        console.error(`❌ [IP Location] Fallback service also failed for ${ipAddress}:`, fallbackError.message);
       }
 
       // Return default values on error
@@ -166,7 +154,6 @@ const getLocationFromIp = async (ipAddress) => {
       };
     }
   } catch (error) {
-    console.error('❌ [IP Location] Unexpected error:', error.message);
     // Return default values on error
     return {
       country: 'Unknown',
@@ -184,19 +171,6 @@ const getLocationFromIp = async (ipAddress) => {
  */
 const getIpAndLocation = async (req) => {
   const ipAddress = getClientIp(req);
-  console.log(`📡 [IP Location] Extracted IP from request: ${ipAddress}`);
-  
-  // Only log headers in development to avoid cluttering logs
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`📡 [IP Location] Request headers:`, {
-      'x-forwarded-for': req.headers['x-forwarded-for'],
-      'x-real-ip': req.headers['x-real-ip'],
-      'cf-connecting-ip': req.headers['cf-connecting-ip'],
-      'true-client-ip': req.headers['true-client-ip'],
-      'req.ip': req.ip,
-      'remoteAddress': req.socket?.remoteAddress,
-    });
-  }
   
   const location = await getLocationFromIp(ipAddress);
   
