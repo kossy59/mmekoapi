@@ -37,6 +37,7 @@ async function performPureNodeBackup() {
   let collectionsBackedUp = 0;
   
   try {
+    console.log(`[Backup] Starting MongoDB backup at ${startTime.toISOString()}`);
     // Connect to MongoDB
     client = new MongoClient(MONGODB_URI);
     await client.connect();
@@ -195,6 +196,10 @@ async function listBackups() {
     
     return allBackups;
   } catch (error) {
+    if (error?.code === 'AccessDenied') {
+      console.warn('[Backup] Storj credentials lack permission to list backups (Access Denied). Skipping list.');
+      return [];
+    }
     console.error('[Backup] Error listing backups:', error.message);
     return [];
   }
@@ -244,6 +249,10 @@ async function cleanupOldBackups() {
     
     return deletedCount;
   } catch (error) {
+    if (error?.code === 'AccessDenied') {
+      console.warn('[Backup Cleanup] Skipping cleanup — Storj credentials do not allow deleting objects.');
+      return 0;
+    }
     console.error('[Backup Cleanup] Error cleaning up old backups:', error.message);
     return 0;
   }

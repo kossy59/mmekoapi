@@ -278,6 +278,10 @@ async function cleanupOldBackups() {
     return objectsToDelete.length;
     
   } catch (error) {
+    if (error?.code === 'AccessDenied') {
+      log.warn('Cleanup skipped: Storj credentials do not have permission to list/delete objects.');
+      return 0;
+    }
     log.error(`Error during cleanup: ${error.message}`);
     return 0;
   }

@@ -16,7 +16,8 @@ const updatePost = async (req, res) => {
     const firstname = data.firstname
     const lastname = data.lastname
     const country = data.country
-    const aboutme = data.bio  
+    const aboutme = data.bio
+    const username = data.username  // Extract username from request data  
 
     if (!userid) {
         return res.status(400).json({ "ok": false, 'message': 'User Id invalid!!' })
@@ -26,14 +27,7 @@ const updatePost = async (req, res) => {
      * This implementation allows for in memory file upload manipulation
      * This prevents accessing the filesystem of the hosted server
      */
-    console.log("📤 [editProfilemore] Starting profile update for user:", userid);
-    console.log("📤 [editProfilemore] Request details:", {
-        hasFile: !!req.file,
-        fileName: req.file?.originalname || "no file",
-        fileSize: req.file?.size || 0,
-        deletePhotolink: deletePhotolink || "none",
-        deletePhotoID: deletePhotoID || "none"
-    });
+ 
 
     // Only update photo if a new file is being uploaded
     // This preserves the current photo if user only changes other fields
@@ -44,17 +38,11 @@ const updatePost = async (req, res) => {
         // New file is being uploaded - delete old one and upload new one
         const result = await updateSingleFileToCloudinary(deletePhotoID, req.file, `profile`);
 
-        console.log("📤 [editProfilemore] Cloudinary upload result:", {
-            hasFileLink: !!result.file_link,
-            hasPublicId: !!result.public_id,
-            fileLink: result.file_link || "none",
-            publicId: result.public_id || "none"
-        });
-
+    
         photoLink = result.file_link;
         photoID = result.public_id;
     } else {
-        console.log("📤 [editProfilemore] No new file uploaded - preserving current profile photo");
+       
     }
 
 
@@ -83,18 +71,13 @@ const updatePost = async (req, res) => {
         if (photoLink && photoID) {
             du.photoLink = photoLink
             du.photoID = photoID
-            console.log("✅ [editProfilemore] Updated completedb with profile image:", {
-                photoLink: photoLink,
-                photoID: photoID,
-                userid: userid
-            });
+         
         }
         if (aboutme) {
             du.details = aboutme
         }
                
         await du.save()
-        console.log("✅ [editProfilemore] Saved completedb for user:", userid);
 
 
         if (firstname) {
@@ -106,21 +89,21 @@ const updatePost = async (req, res) => {
         if (country) {
             usersedit.country = country
         }
+        if (username) {
+            // Remove @ prefix if it exists (frontend sends it with @)
+            const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
+            usersedit.username = `@${cleanUsername}`;  // Store with @ prefix in database
+      
+        }
         
         // Update photolink and photoID in userdb collection so it's accessible everywhere
         if (photoLink && photoID) {
             usersedit.photolink = photoLink
             usersedit.photoID = photoID
-            console.log("✅ [editProfilemore] Updated userdb with new profile image:", {
-                photolink: photoLink,
-                photoID: photoID,
-                userid: userid
-            });
+          
         }
 
         await usersedit.save()
-        console.log("✅ [editProfilemore] Saved userdb for user:", userid);
-
 
 
            
@@ -133,6 +116,7 @@ const updatePost = async (req, res) => {
                 photoID: usersedit.photoID,
                 firstname: usersedit.firstname,
                 lastname: usersedit.lastname,
+                username: usersedit.username,
                 bio: du.details,
                 country: usersedit.country
             }
