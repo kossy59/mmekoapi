@@ -1,27 +1,41 @@
 const cron = require('node-cron');
 const { performPureNodeBackup } = require('./pureNodeBackup');
 
+// Hardcoded backup schedule: Daily at 2:00 AM (Africa/Lagos time)
+const BACKUP_CRON_SCHEDULE = '0 2 * * *'; // 2:00 AM daily
+const BACKUP_TIMEZONE = 'Africa/Lagos';
+
 /**
  * Setup MongoDB backup cron job
- * Runs every day at 12:30 PM Nigeria time
+ * Runs daily at 2:00 AM (Africa/Lagos time)
  */
 function setupBackupCron() {
-  // Schedule backup to run every day at 12:30 PM Nigeria time
-  const backupTask = cron.schedule('30 12 * * *', async () => {
+  console.log(`🕐 [BACKUP] Scheduling cron job -> "${BACKUP_CRON_SCHEDULE}" (${BACKUP_TIMEZONE})`);
+
+  const backupTask = cron.schedule(BACKUP_CRON_SCHEDULE, async () => {
+    const startedAt = new Date();
+    console.log(`🗄️ [BACKUP] Cron triggered at ${startedAt.toISOString()}`);
+
     try {
-      await performPureNodeBackup();
+      const result = await performPureNodeBackup();
+
+      if (result?.success) {
+        console.log(`✅ [BACKUP] Completed ${result.backupName} in ${result.duration ?? 'unknown'}s`);
+      } else {
+        const errorMessage = result?.error || 'Unknown error';
+        console.error(`❌ [BACKUP] Backup reported failure: ${errorMessage}`);
+      }
     } catch (error) {
-      console.error('Backup error:', error.message);
+      console.error('❌ [BACKUP] Backup error:', error.message);
     }
-    
   }, {
-    scheduled: true, // Start automatically
-    timezone: "Africa/Lagos" // Use Nigeria timezone
+    scheduled: true,
+    timezone: BACKUP_TIMEZONE
   });
-  
-  // Start the cron job
+
   backupTask.start();
-  
+  console.log('✅ [BACKUP] Cron job started');
+
   return backupTask;
 }
 

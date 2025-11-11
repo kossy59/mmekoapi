@@ -37,10 +37,10 @@ const log = {
 function checkEnvironmentVariables() {
   log.section('Environment Variables Check');
   
-  const required = [
-    'STORJ_ACCESS_KEY_ID',
-    'STORJ_SECRET_ACCESS_KEY',
-    'MONGODB_URI'
+  const requiredGroups = [
+    { keys: ['STORJ_ACCESS_KEY_ID'], label: 'STORJ_ACCESS_KEY_ID' },
+    { keys: ['STORJ_SECRET_ACCESS_KEY'], label: 'STORJ_SECRET_ACCESS_KEY' },
+    { keys: ['MONGODB_URI', 'DB', 'MONGO_URI'], label: 'MONGODB_URI / DB / MONGO_URI' }
   ];
   
   const optional = [
@@ -52,11 +52,16 @@ function checkEnvironmentVariables() {
   let allGood = true;
   
   // Check required variables
-  required.forEach(varName => {
-    if (process.env[varName]) {
-      log.success(`${varName} is set`);
+  requiredGroups.forEach(group => {
+    const foundKey = group.keys.find(key => {
+      const value = process.env[key];
+      return typeof value === 'string' && value.trim() !== '';
+    });
+
+    if (foundKey) {
+      log.success(`${group.label} is set (via ${foundKey})`);
     } else {
-      log.error(`${varName} is missing`);
+      log.error(`${group.label} is missing`);
       allGood = false;
     }
   });

@@ -456,8 +456,7 @@ exports.getAllUserRatings = async (req, res) => {
       
       if (needsUpdate) {
         await reviewdb.updateOne({ _id: rating._id }, { $set: updateData });
-        console.log(`🔄 [getAllUserRatings] Updated rating ${rating._id} with VIP data:`, updateData);
-        const updatedRating = { ...rating.toObject(), ...updateData };
+       const updatedRating = { ...rating.toObject(), ...updateData };
         updatedRatings.push(updatedRating);
       } else {
         updatedRatings.push(rating);
@@ -466,17 +465,7 @@ exports.getAllUserRatings = async (req, res) => {
     
     ratings = updatedRatings;
 
-    // Debug log to see VIP data in ratings
-    console.log('🔍 [getAllUserRatings] Found ratings with VIP data:', ratings.map(r => ({
-      id: r._id,
-      ratingType: r.ratingType,
-      fanIsVip: r.fanIsVip,
-      fanVipEndDate: r.fanVipEndDate,
-      creatorIsVip: r.creatorIsVip,
-      creatorVipEndDate: r.creatorVipEndDate,
-      fanName: r.fanName,
-      creatorName: r.creatorName
-    })));
+   
 
     // Calculate average rating
     const totalRatings = ratings.length;
