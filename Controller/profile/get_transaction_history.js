@@ -66,6 +66,10 @@ const getTransactionHistory = async (req, res) => {
         // Exclusive post earnings (creator receives)
         details.includes("exclusive post sale") ||
         details.includes("exclusive post") ||
+        // Exclusive content earnings (creator receives) - updated from post to content
+        details.includes("exclusive content sale") ||
+        details.includes("exclusive content") ||
+        details.includes("exclusive sale") ||
         // Withdrawal from earnings
         detailsLower.includes("withdrawal") ||
         detailsLower.includes("withdraw") ||

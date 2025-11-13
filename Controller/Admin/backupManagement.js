@@ -50,17 +50,6 @@ const getBackupStatus = async (req, res) => {
       };
     });
     
-    // Deduplicate backups with the same filename (keep only the most recent one)
-    // This handles cases where old backups were overwritten
-    const uniqueBackups = new Map();
-    mappedHistory.forEach(backup => {
-      const existing = uniqueBackups.get(backup.name);
-      if (!existing || new Date(backup.lastModified) > new Date(existing.lastModified)) {
-        uniqueBackups.set(backup.name, backup);
-      }
-    });
-    mappedHistory = Array.from(uniqueBackups.values());
-    
     // Sort by lastModified descending (most recent first)
     mappedHistory.sort((a, b) => {
       const dateA = new Date(a.lastModified);

@@ -8,7 +8,48 @@ let monthly_earning = async (userid)=>{
  //let earning = []
  let list_month = month_list()
 
+ // Helper function to check if transaction is an earnings transaction (not balance transaction)
+ const isEarningsTransaction = (details) => {
+   if (!details) return false;
+   const detailsLower = details.toLowerCase();
+   
+   // Include earnings-related transactions
+   const isEarnings = 
+     details.includes("completed - payment received") ||
+     details.includes("completed - payment transferred") ||
+     details.includes("Fan call - payment received") ||
+     details.includes("Fan call - payment for") ||
+     details.includes("exclusive post sale") ||
+     details.includes("exclusive post") ||
+     details.includes("exclusive content sale") ||
+     details.includes("exclusive content") ||
+     details.includes("exclusive sale") ||
+     detailsLower.includes("withdrawal") ||
+     detailsLower.includes("withdraw") ||
+     detailsLower.includes("earnings") ||
+     details.includes("hosting service completed");
+   
+   // Exclude balance-related transactions
+   const isBalance = 
+     details.includes("refund") ||
+     details.includes("expired") ||
+     details.includes("cancelled") ||
+     details.includes("declined") ||
+     details.includes("balance") ||
+     details.includes("purchase") ||
+     details.includes("top up") ||
+     details.includes("top-up") ||
+     details.includes("deposit");
+   
+   return isEarnings && !isBalance;
+ };
+
  for(let i = 0; i < earning.length; i++){
+    // Skip balance transactions - only include earnings transactions
+    if (!isEarningsTransaction(earning[i].details)) {
+      continue;
+    }
+    
     let earning_date = new Date(earning[i]._id.getTimestamp())
 
     let month = earning_date.getMonth()
@@ -31,7 +72,8 @@ let monthly_earning = async (userid)=>{
                 let income = parseFloat(earning[i].income)
                 let spend = parseFloat(earning[i].spent)
 
-                let total = income - spend
+                // Only count income as earnings (money received), not spent
+                let total = income
 
                 list_month[values].earning.push(prices)
                 list_month[values].total = total;
@@ -52,7 +94,8 @@ let monthly_earning = async (userid)=>{
                 let income = parseFloat(earning[i].income)
                 let spend = parseFloat(earning[i].spent)
 
-                let total = income - spend
+                // Only count income as earnings (money received), not spent
+                let total = income
 
                
 

@@ -108,6 +108,10 @@ const markertdata = new Schema(
       type: [String],
       default: [],
     },
+    lastNotificationView: {
+      type: Number,
+      default: 0,
+    },
     followers: {
       type: [String],
       default: [],

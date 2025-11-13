@@ -68,23 +68,42 @@ const postexclusive = async (req, res) => {
         income: "0",
         date: `${Date.now().toString()}`,
       };
+      // Get the actual creator user ID from content_price
+      const creatorUserId = content_price.userid;
+      
+      // Find creator profile - try by _id first (if creator_portfolio_id is the profile ID), then by userid
+      let creator = await creatordb.findOne({ _id: creator_portfolio_id }).exec();
+      if (!creator) {
+        creator = await creatordb.findOne({ userid: creatorUserId }).exec();
+      }
+      
+      // Also update userdb earnings for consistency with other controllers
+      const creatorUser = await userdb.findOne({ _id: creatorUserId }).exec();
+      
       let creatorhistory = {
-        userid: creator_portfolio_id,
-        details: `received ${price} Golds for exclusive sale successful`,
+        userid: creatorUserId, // Use actual user ID for transaction history
+        details: `received ${price} Golds for exclusive content sale successful`,
         spent: "0",
         income: `${price}`,
         date: `${Date.now().toString()}`,
       };
-      let creator = await creatordb.find({
-        userid: creator_portfolio_id,
-      });
+      
+      if (creator) {
+        const earnings = Number(creator.earnings || 0) + Number(price);
+        console.log("Creator Earnings: ", earnings);
 
-      const earnings = Number(creator[0].earnings) + Number(price);
-      console.log("Creator Earnings: ", earnings);
-
-      creator[0].earnings = earnings;
-      await creator[0].save();
-      console.log("New earnings", creator[0].earnings);
+        creator.earnings = earnings;
+        await creator.save();
+        console.log("New creator earnings", creator.earnings);
+      }
+      
+      // Also update userdb earnings for consistency
+      if (creatorUser) {
+        const userEarnings = Number(creatorUser.earnings || 0) + Number(price);
+        creatorUser.earnings = userEarnings;
+        await creatorUser.save();
+        console.log("New user earnings", creatorUser.earnings);
+      }
 
       await historydb.create(clienthistory);
       await historydb.create(creatorhistory);
