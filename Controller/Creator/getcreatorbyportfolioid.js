@@ -4,6 +4,8 @@
 const creators = require("../../Creators/creators");
 let crushdb = require("../../Creators/crushdb");
 let userdb = require("../../Creators/userdb");
+const admindb = require("../../Creators/admindb");
+const { pushmessage } = require("../../utiils/sendPushnot");
 const createCreator = async (req, res) => {
   const hostid = req.body.hostid;
   const userid = req.body.userid;
@@ -61,17 +63,7 @@ const createCreator = async (req, res) => {
       })
       .filter((link) => link && link.trim() !== ""); // Filter out null/undefined/empty links
     
-    console.log('🖼️ [CREATOR PORTFOLIO API] Creator images:', {
-      creatorId: currentuser._id,
-      creatorName: currentuser.name,
-      creatorfilesLength: currentuser.creatorfiles?.length || 0,
-      creatorfiles: currentuser.creatorfiles,
-      photolinkArray: photolink,
-      photolinkLength: photolink.length,
-      firstImage: photolink[0] || null,
-      legacyPhotolink: currentuser.photolink,
-      legacyPhotolinkType: typeof currentuser.photolink
-    });
+
     
     const isFollowingUser = modState.followers.includes(userid);
 
@@ -110,24 +102,89 @@ const createCreator = async (req, res) => {
       vipEndDate: modState.vipEndDate || null,
     };
 
-    console.log('🖼️ [CREATOR PORTFOLIO API] Final host response:', {
-      creatorId: host.hostid,
-      creatorName: host.name,
-      photolink: host.photolink,
-      photolinkLength: host.photolink?.length || 0,
-      firstImage: host.photolink?.[0] || null,
-      hasCreatorfiles: !!host.creatorfiles,
-      creatorfilesLength: host.creatorfiles?.length || 0
-    });
+ 
 
     res.status(200).json({
       ok: true,
       message: `Creator Fetched successfully`,
       host,
     });
-    if (!currentuser.views.includes(userid)) {
+    
+    // Track view and send notification if needed
+    if (userid && !currentuser.views.includes(userid)) {
       currentuser.views.push(userid);
       await currentuser.save();
+      
+      // Check if notification should be sent
+      const totalViews = currentuser.views.length;
+      const lastNotificationView = currentuser.lastNotificationView || 0;
+      
+      let shouldNotify = false;
+      let notificationTitle = "";
+      let notificationMessage = "";
+      let notificationEmoji = "";
+
+      // Determine notification interval based on view count
+      // Only send notifications at milestone views (not at 0)
+      if (totalViews > 0) {
+        if (totalViews < 100) {
+          // Below 100 views: every 10 views (10, 20, 30, 40, 50, 60, 70, 80, 90)
+          if (totalViews % 10 === 0 && totalViews > lastNotificationView) {
+            shouldNotify = true;
+            notificationTitle = "You're getting noticed!";
+            notificationEmoji = "🎉";
+            notificationMessage = `Your profile just hit ${totalViews} views - fans are starting to discover you 👀`;
+          }
+        } else if (totalViews >= 100 && totalViews < 1000) {
+          // Between 100-999 views: every 20 views (100, 120, 140, 160, 180, 200, ...)
+          if (totalViews % 20 === 0 && totalViews > lastNotificationView) {
+            shouldNotify = true;
+            notificationTitle = "Still growing!";
+            notificationEmoji = "🔥";
+            notificationMessage = `You've reached ${totalViews} total views - your visibility keeps climbing 🚀`;
+          }
+        } else if (totalViews >= 1000) {
+          // 1000+ views: every 100 views (1000, 1100, 1200, 1300, ...)
+          if (totalViews % 100 === 0 && totalViews > lastNotificationView) {
+            shouldNotify = true;
+            notificationTitle = "Creator on the rise!";
+            notificationEmoji = "🌟";
+            notificationMessage = `You just crossed ${totalViews} views. You're building real momentum - keep it up 💪`;
+          }
+        }
+      }
+
+      // Send notification if needed
+      if (shouldNotify) {
+        try {
+          // Send push notification
+          await pushmessage(
+            currentuser.userid,
+            `${notificationEmoji} ${notificationMessage}`,
+            "/icons/m-logo.png",
+            {
+              title: notificationTitle,
+              type: "view_milestone",
+              url: `/creators/${currentuser._id}`
+            }
+          );
+
+          // Save notification to database
+          await admindb.create({
+            userid: currentuser.userid,
+            message: `${notificationEmoji} ${notificationMessage}`,
+            title: notificationTitle,
+            seen: false
+          });
+
+          // Update last notification view count
+          currentuser.lastNotificationView = totalViews;
+          await currentuser.save();
+        } catch (notifError) {
+          // Log error but don't fail the request
+          console.error("Error sending view notification:", notifError);
+        }
+      }
     }
   } catch (err) {
     return res.status(500).json({
