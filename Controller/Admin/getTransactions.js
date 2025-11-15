@@ -351,27 +351,23 @@ exports.getRevenueByGoldPack = async (req, res) => {
       dateFilter.createdAt = { $gte: startDate, $lte: endDate };
     }
 
-    // Gold pack prices mapping (from golds array)
+    // Gold pack prices mapping (from golds array - updated prices)
     const goldPackPrices = {
       1.00: { gold: 250, bonus: "Test" },
-      6.99: { gold: 50, bonus: "" },
-      10.99: { gold: 100, bonus: "" },
-      20.99: { gold: 200, bonus: "5%" },
-      39.99: { gold: 400, bonus: "10%" },
-      49.99: { gold: 550, bonus: "21%" },
-      62.99: { gold: 750, bonus: "32%" },
-      79.99: { gold: 1000, bonus: "37%" }
+      5.99: { gold: 50, bonus: "" },
+      9.99: { gold: 100, bonus: "" },
+      19.99: { gold: 200, bonus: "" },
+      35.99: { gold: 400, bonus: "" },
+      65.99: { gold: 1000, bonus: "" }
     };
 
-    // Profit percentage mapping by base gold amount (from the revenue analysis table)
+    // Profit percentage mapping by base gold amount (from the revenue analysis table - updated percentages)
     const profitPercentages = {
-      50: 71.39,
-      100: 63.69,
-      200: 60.93,  // 200 + 5% bonus = 205
-      400: 58.99,  // 400 + 10% bonus = 410
-      550: 54.31,  // 550 + 21% bonus = 571
-      750: 50.33,  // 750 + 32% bonus = 782
-      1000: 48.14  // 1000 + 37% bonus = 1037
+      50: 66.61,
+      100: 59.96,
+      200: 59.98,
+      400: 55.55,
+      1000: 39.39
     };
 
     // Get only successful transactions (confirmed and finished statuses)
@@ -423,26 +419,20 @@ exports.getRevenueByGoldPack = async (req, res) => {
     // Convert to array and calculate percentages
     const revenueData = Object.values(revenueByPack)
       .map(pack => {
-        // Calculate gold amount with bonus
-        let goldAmount = pack.gold || 0;
-        let totalGoldWithBonus = goldAmount;
-        if (pack.bonus && pack.bonus !== "" && pack.bonus !== "Test") {
-          const bonusPercent = parseFloat(pack.bonus.replace('%', ''));
-          const bonusGold = Math.round(goldAmount * (bonusPercent / 100));
-          totalGoldWithBonus = goldAmount + bonusGold;
-        }
+        // Gold amount (no bonus)
+        const goldAmount = pack.gold || 0;
 
-        // Calculate total gold (purchase count * gold amount with bonus)
-        const totalGold = pack.purchaseCount * totalGoldWithBonus;
+        // Calculate total gold (purchase count * gold amount)
+        const totalGold = pack.purchaseCount * goldAmount;
 
         // Get profit percentage for this gold pack
         const profitPercentage = profitPercentages[pack.gold] || 0;
 
-        // Calculate profit: revenue * profit percentage / 100 (same calculation method as revenue)
+        // Calculate profit: revenue * profit percentage / 100
         const profit = pack.totalRevenue * (profitPercentage / 100);
 
         return {
-          goldAmount: pack.gold ? `${pack.gold}${pack.bonus ? ` + (${pack.bonus} BONUS) = ${totalGoldWithBonus}` : ''}` : pack.amount.toString(),
+          goldAmount: pack.gold ? pack.gold.toString() : pack.amount.toString(),
           purchase: pack.purchaseCount,
           total: totalGold,
           profit: profit,
