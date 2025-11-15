@@ -123,26 +123,14 @@ const handleNewUser = async (req, res) => {
       userid: user._id.toString(),
     });
 
-    // Set cookies
-    res.cookie("auth_token", accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-
-    res.cookie("refresh_token", refreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "Lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    // Do NOT set cookies or tokens - user must log in manually after registration
+    // Registration only saves user details, login will handle authentication
 
     return res.status(201).json({
       ok: true,
-      message: "User registered successfully",
+      message: "User registered successfully. Please log in to continue.",
       userId: user._id,
-      accessToken,
+      // Do not return accessToken - user must log in to get tokens
     });
   } catch (err) {
     console.error("❌ Registration error:", err);
