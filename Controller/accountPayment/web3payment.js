@@ -38,16 +38,19 @@ const initializeWeb3 = () => {
 initializeWeb3();
 
 /**
- * Verify transaction hash using Etherscan API V2
+ * Verify transaction hash using BscScan API (Previously Etherscan)
  */
 const verifyTransactionHash = async (txHash, expectedAmount = null) => {
   try {
-    const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
-    const ETHERSCAN_API_URL = "https://api.etherscan.io/v2/api";
+    // NOTE: Ensure this key is from BscScan, not Etherscan
+    const API_KEY = process.env.ETHERSCAN_API_KEY; 
     
-    if (!ETHERSCAN_API_KEY) {
-      console.error("ETHERSCAN_API_KEY not configured in environment variables");
-      return { valid: false, error: "Etherscan API key not configured" };
+    // UPDATED: Pointing to Binance Smart Chain API instead of Ethereum
+    const BSCSCAN_API_URL = "https://api.bscscan.com/api";
+    
+    if (!API_KEY) {
+      console.error("ETHERSCAN_API_KEY (BscScan Key) not configured in environment variables");
+      return { valid: false, error: "API key not configured" };
     }
 
     // Validate transaction hash format
@@ -55,33 +58,33 @@ const verifyTransactionHash = async (txHash, expectedAmount = null) => {
       return { valid: false, error: "Transaction hash is required" };
     }
 
-    // Check if it's a valid Ethereum transaction hash format
+    // Check if it's a valid Ethereum/BSC transaction hash format
     if (!/^0x[a-fA-F0-9]{64}$/.test(txHash)) {
       return { valid: false, error: "Invalid transaction hash format. Must be 66 characters starting with 0x" };
     }
 
-    console.log(`🔍 [ETHERSCAN] Verifying transaction: ${txHash}`);
+    console.log(`🔍 [BSCSCAN] Verifying transaction: ${txHash}`);
     if (expectedAmount) {
-      console.log(`🔍 [ETHERSCAN] Expected amount: ${expectedAmount} USDT`);
+      console.log(`🔍 [BSCSCAN] Expected amount: ${expectedAmount} USDT`);
     }
 
-    // Get transaction details from Etherscan API V2
+    // Get transaction details from BscScan API
     const txResponse = await fetch(
-      `${ETHERSCAN_API_URL}?module=proxy&action=eth_getTransactionByHash&txhash=${txHash}&apikey=${ETHERSCAN_API_KEY}`
+      `${BSCSCAN_API_URL}?module=proxy&action=eth_getTransactionByHash&txhash=${txHash}&apikey=${API_KEY}`
     );
     
     if (!txResponse.ok) {
-      return { valid: false, error: "Failed to fetch transaction from Etherscan" };
+      return { valid: false, error: "Failed to fetch transaction from BscScan" };
     }
 
     const txData = await txResponse.json();
     
     if (txData.error) {
-      return { valid: false, error: `Etherscan error: ${txData.error.message}` };
+      return { valid: false, error: `BscScan error: ${txData.error.message}` };
     }
 
     if (!txData.result) {
-      return { valid: false, error: "Transaction not found. Please check the transaction hash and try again." };
+      return { valid: false, error: "Transaction not found on BSC. Please check the hash and try again." };
     }
 
     const tx = txData.result;
@@ -93,17 +96,17 @@ const verifyTransactionHash = async (txHash, expectedAmount = null) => {
 
     // Get transaction receipt to check if it was successful
     const receiptResponse = await fetch(
-      `${ETHERSCAN_API_URL}?module=proxy&action=eth_getTransactionReceipt&txhash=${txHash}&apikey=${ETHERSCAN_API_KEY}`
+      `${BSCSCAN_API_URL}?module=proxy&action=eth_getTransactionReceipt&txhash=${txHash}&apikey=${API_KEY}`
     );
 
     if (!receiptResponse.ok) {
-      return { valid: false, error: "Failed to fetch transaction receipt from Etherscan" };
+      return { valid: false, error: "Failed to fetch transaction receipt from BscScan" };
     }
 
     const receiptData = await receiptResponse.json();
     
     if (receiptData.error) {
-      return { valid: false, error: `Etherscan receipt error: ${receiptData.error.message}` };
+      return { valid: false, error: `BscScan receipt error: ${receiptData.error.message}` };
     }
 
     if (!receiptData.result) {
@@ -165,21 +168,32 @@ const verifyTransactionHash = async (txHash, expectedAmount = null) => {
 
     // Amount verification - check if the transaction amount matches expected amount
     if (expectedAmount !== null) {
-      const tolerance = 0.01; // Allow 0.01 USDT tolerance for rounding differences
+      // UPDATED: Increased tolerance to 0.2 to allow for small overpayments (e.g., sending 1.06 for a 1.00 order)
+      const tolerance = 0.2; 
+      
+      // Calculate difference
       const amountDifference = Math.abs(usdtAmount - expectedAmount);
       
+      // Logic: Only fail if difference is big AND they paid LESS than expected
+      // Or if they paid significantly more/less than the tolerance
       if (amountDifference > tolerance) {
-        console.log(`❌ [ETHERSCAN] Amount mismatch: Expected ${expectedAmount} USDT, got ${usdtAmount} USDT`);
-        return { 
-          valid: false, 
-          error: `Amount mismatch. Expected ${expectedAmount} USDT, but transaction shows ${usdtAmount} USDT. Please send the correct amount.` 
-        };
+        console.log(`❌ [BSCSCAN] Amount mismatch: Expected ${expectedAmount} USDT, got ${usdtAmount} USDT`);
+        
+        // If they paid LESS than required (outside tolerance), fail them
+        if (usdtAmount < expectedAmount) {
+             return { 
+                valid: false, 
+                error: `Amount mismatch. Expected ${expectedAmount} USDT, but transaction shows ${usdtAmount} USDT. Please send the correct amount.` 
+             };
+        }
+        // If they paid MORE (overpayment), we usually accept it, so we log it but don't return false
+        console.log(`⚠️ [BSCSCAN] User overpaid. Expected ${expectedAmount}, got ${usdtAmount}. Accepting transaction.`);
       }
       
-      console.log(`✅ [ETHERSCAN] Amount verified: ${usdtAmount} USDT matches expected ${expectedAmount} USDT`);
+      console.log(`✅ [BSCSCAN] Amount verified: ${usdtAmount} USDT (Expected: ${expectedAmount})`);
     }
 
-    console.log(`✅ [ETHERSCAN] Transaction verified: ${usdtAmount} USDT from ${fromAddress}`);
+    console.log(`✅ [BSCSCAN] Transaction verified: ${usdtAmount} USDT from ${fromAddress}`);
 
     return {
       valid: true,
@@ -189,11 +203,11 @@ const verifyTransactionHash = async (txHash, expectedAmount = null) => {
       txHash: txHash,
       blockNumber: parseInt(receipt.blockNumber, 16),
       gasUsed: receipt.gasUsed,
-      timestamp: parseInt(tx.timeStamp, 16) * 1000 // Convert to milliseconds
+      timestamp: parseInt(tx.timeStamp || (Date.now()/1000), 16) * 1000 // Convert to milliseconds
     };
 
   } catch (error) {
-    console.error('Error verifying transaction hash with Etherscan:', error);
+    console.error('Error verifying transaction hash with BscScan:', error);
     return { valid: false, error: error.message };
   }
 };
@@ -321,22 +335,9 @@ exports.checkWeb3PaymentStatus = async (req, res) => {
     console.log(`📊 [STATUS CHECK] - Order ID: ${transaction.orderId}`);
     console.log(`📊 [STATUS CHECK] - User ID: ${transaction.userId}`);
     console.log(`📊 [STATUS CHECK] - Status: ${transaction.status}`);
-    console.log(`📊 [STATUS CHECK] - Amount: ${transaction.amount}`);
-    console.log(`📊 [STATUS CHECK] - Currency: ${transaction.payCurrency}`);
-    console.log(`📊 [STATUS CHECK] - Created: ${transaction.createdAt}`);
-    console.log(`📊 [STATUS CHECK] - Updated: ${transaction.updatedAt}`);
-    console.log(`📊 [STATUS CHECK] - Expires At: ${transaction.expiresAt}`);
-    console.log(`📊 [STATUS CHECK] - Description: ${transaction.description}`);
     
     if (transaction.txData) {
-      console.log(`📊 [STATUS CHECK] - TX Data:`);
-      console.log(`📊 [STATUS CHECK]   - Payment Method: ${transaction.txData.paymentMethod || 'N/A'}`);
-      console.log(`📊 [STATUS CHECK]   - From Address: ${transaction.txData.fromAddress || 'N/A'}`);
-      console.log(`📊 [STATUS CHECK]   - To Address: ${transaction.txData.toAddress || 'N/A'}`);
-      console.log(`📊 [STATUS CHECK]   - Confirmed At: ${transaction.txData.confirmedAt || 'N/A'}`);
       console.log(`📊 [STATUS CHECK]   - TX Hash: ${transaction.txData.txHash || 'N/A'}`);
-      console.log(`📊 [STATUS CHECK]   - Network: ${transaction.txData.network || 'N/A'}`);
-      console.log(`📊 [STATUS CHECK]   - Contract Address: ${transaction.txData.contractAddress || 'N/A'}`);
     }
 
     const responseData = {
@@ -349,21 +350,10 @@ exports.checkWeb3PaymentStatus = async (req, res) => {
       txData: transaction.txData
     };
 
-    console.log(`📤 [STATUS CHECK] Sending response:`);
-    console.log(`📤 [STATUS CHECK] - Status: ${responseData.status}`);
-    console.log(`📤 [STATUS CHECK] - Amount: ${responseData.amount}`);
-    console.log(`📤 [STATUS CHECK] - Has TX Data: ${responseData.txData ? 'Yes' : 'No'}`);
-
     res.status(200).json(responseData);
 
   } catch (error) {
     console.error(`❌ [STATUS CHECK] Error checking payment status for order ${orderId}:`, error);
-    console.error(`❌ [STATUS CHECK] Error details:`, {
-      message: error.message,
-      stack: error.stack,
-      name: error.name
-    });
-    
     res.status(500).json({
       message: "Failed to check payment status",
       error: error.message
@@ -428,7 +418,7 @@ exports.verifyTransactionHash = async (req, res) => {
       let statusCode = 400;
       
       if (verification.error.includes("not found") || verification.error.includes("Invalid transaction hash")) {
-        userMessage = "Transaction not found. Please check the transaction hash and try again.";
+        userMessage = "Transaction not found on BSC. Please check the hash (ensure it is a BSC/BEP20 transaction) and try again.";
         statusCode = 404;
       } else if (verification.error.includes("failed") || verification.error.includes("reverted")) {
         userMessage = "Transaction failed or was reverted on the blockchain.";
@@ -440,7 +430,7 @@ exports.verifyTransactionHash = async (req, res) => {
         userMessage = "No USDT transfer found in this transaction.";
         statusCode = 400;
       } else if (verification.error.includes("Amount mismatch")) {
-        userMessage = verification.error; // Use the specific amount mismatch message
+        userMessage = verification.error; 
         statusCode = 400;
       }
       
@@ -452,7 +442,7 @@ exports.verifyTransactionHash = async (req, res) => {
     }
 
     // Transaction verified successfully with amount check
-    console.log(`✅ [TX VERIFY] Transaction verified via Etherscan: ${verification.amount} USDT`);
+    console.log(`✅ [TX VERIFY] Transaction verified via BscScan: ${verification.amount} USDT`);
 
     // Update transaction with verification details
     transaction.status = "confirmed";
@@ -466,7 +456,7 @@ exports.verifyTransactionHash = async (req, res) => {
       gasUsed: verification.gasUsed,
       timestamp: verification.timestamp,
       confirmedAt: new Date(),
-      verifiedVia: "ETHERSCAN_API_V2"
+      verifiedVia: "BSCSCAN_API"
     };
     await transaction.save();
 
@@ -527,7 +517,6 @@ exports.getWalletBalance = async (req, res) => {
 
 /**
  * @desc Process expired payments (cron job function)
- * This function should be called every minute to check for expired payments
  */
 exports.processExpiredPayments = async () => {
   try {
