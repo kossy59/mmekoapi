@@ -149,17 +149,30 @@ const readPost = async (req, res) => {
     // let likedb = await likedbs.find().exec();
 
     alldelete();
-    
+
     // Filter out posts from blocked users
     const filteredPosts = await filterBlockedPosts(sortedPosts, userid);
-    
-    // Filter comments from blocked users and enrich with user information
+
+    // Enrich posts with creator hosttype and filter comments
     const postsWithFilteredComments = await Promise.all(
       filteredPosts.map(async (post) => {
+        // Fetch creator hosttype if user has a creator portfolio
+        if (post.user?.creator_portfolio && post.user?.creator_portfolio_id) {
+          try {
+            const creator = await creatorDB.findById(post.user.creator_portfolio_id).exec();
+            if (creator) {
+              post.user.hosttype = creator.hosttype;
+            }
+          } catch (err) {
+            console.error('Error fetching creator hosttype:', err);
+          }
+        }
+
+        // Filter and enrich comments
         if (post.comments && post.comments.length > 0) {
-          
+
           const filteredComments = await filterBlockedComments(post.comments, userid);
-          
+
           // Enrich comments with user information
           const enrichedComments = await Promise.all(
             filteredComments.map(async (comment) => {
@@ -167,7 +180,7 @@ const readPost = async (req, res) => {
                 // Get user information for this comment
                 const user = await userdbs.findById(comment.userid).exec();
                 const userComplete = await comdbs.findOne({ useraccountId: comment.userid }).exec();
-                
+
                 if (user) {
                   const enrichedComment = {
                     ...comment,
@@ -176,16 +189,17 @@ const readPost = async (req, res) => {
                     commentusername: user.username || "",
                     commentuserid: user._id,
                     isVip: user.isVip || false,
+                    isVerified:user.creator_verified,
                     vipStartDate: user.vipStartDate,
                     vipEndDate: user.vipEndDate,
                     firstname: user.firstname || "",
                     lastname: user.lastname || ""
                   };
-                  
-                  
+
+
                   return enrichedComment;
                 }
-                
+
                 return comment;
               } catch (err) {
                 console.error('Error enriching comment:', err);
@@ -193,15 +207,15 @@ const readPost = async (req, res) => {
               }
             })
           );
-          
-          
+
+
           return { ...post, comments: enrichedComments };
         }
         return post;
       })
     );
-    
-    
+
+
     // Get total count for pagination metadata
     const totalPosts = await postdbs.countDocuments();
     const totalPages = Math.ceil(totalPosts / limit);
@@ -212,9 +226,9 @@ const readPost = async (req, res) => {
 
     return res
       .status(200)
-      .json({ 
-        ok: true, 
-        message: `Posts fetched successfully`, 
+      .json({
+        ok: true,
+        message: `Posts fetched successfully`,
         post: postsWithFilteredComments,
         pagination: {
           currentPage: page,

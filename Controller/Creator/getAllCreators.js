@@ -2,10 +2,9 @@ const creators = require("../../Creators/creators");
 
 const getAllCreators = async (req, res) => {
   try {
-    // Get all creators, sorted by creation date (newest first)
+    // Get all creators (no sorting at database level for flexibility)
     const allCreators = await creators
       .find({})
-      .sort({ createdAt: -1 }) // Sort by creation date, newest first
       .exec();
 
     if (!allCreators || allCreators.length === 0) {
@@ -40,16 +39,39 @@ const getAllCreators = async (req, res) => {
         document: creator.document,
         createdAt: creator.createdAt,
         userid: creator.userid,
-        // Add VIP and online status for consistency
         isVip: creator.isVip || false,
         vipEndDate: creator.vipEndDate || null,
         isOnline: creator.isOnline || false,
         views: creator.views || 0,
-        isFollowing: false, // Default to false for non-authenticated users
+        isFollowing: false,
       };
     });
 
-    return res.status(200).json({ ok: true, message: "All creators fetched successfully", host });
+    // YOUR CUSTOM SORTING LOGIC HERE
+    host.sort((a, b) => {
+      // Priority 1: VIP creators first
+      if (a.isVip && !b.isVip) return -1;
+      if (!a.isVip && b.isVip) return 1;
+      
+      // Priority 2: Online creators next
+      if (a.isOnline && !b.isOnline) return -1;
+      if (!a.isOnline && b.isOnline) return 1;
+      
+      // Priority 3: Most views
+      const viewDiff = (b.views || 0) - (a.views || 0);
+      if (viewDiff !== 0) return viewDiff;
+      
+      // Priority 4: Newest creators (tie-breaker)
+      const dateA = new Date(a.createdAt || 0).getTime();
+      const dateB = new Date(b.createdAt || 0).getTime();
+      return dateB - dateA;
+    });
+
+    return res.status(200).json({ 
+      ok: true, 
+      message: "All creators fetched successfully", 
+      host 
+    });
   } catch (err) {
     return res.status(500).json({ ok: false, message: `${err.message}!` });
   }

@@ -15,7 +15,7 @@ const getAllFanRequests = async (req, res) => {
   try {
     // Get all requests where user is either the fan or creator
     // Filter out requests with missing required fields
-    const fanRequests = await requestdb.find({ 
+    const fanRequests = await requestdb.find({
       userid: userid,
       creator_portfolio_id: { $exists: true, $ne: null, $ne: "" }
     })
@@ -24,11 +24,11 @@ const getAllFanRequests = async (req, res) => {
 
     // For creator requests, we need to find the creator's hostid first
     const creator = await creatordb.findOne({ userid: userid }).exec();
-    
+
     let creatorRequests = [];
-    
+
     if (creator) {
-      creatorRequests = await requestdb.find({ 
+      creatorRequests = await requestdb.find({
         creator_portfolio_id: creator._id,
         userid: { $exists: true, $ne: null, $ne: "" }
       })
@@ -43,8 +43,8 @@ const getAllFanRequests = async (req, res) => {
 
     // Combine and deduplicate requests
     const allRequests = [...fanRequestsWithRole, ...creatorRequestsWithRole];
-    
-    const uniqueRequests = allRequests.filter((request, index, self) => 
+
+    const uniqueRequests = allRequests.filter((request, index, self) =>
       index === self.findIndex(r => r._id.toString() === request._id.toString())
     );
 
@@ -55,7 +55,7 @@ const getAllFanRequests = async (req, res) => {
     const creatorPortfolioIds = uniqueRequests
       .filter(req => req._userRole === 'fan')
       .map(req => req.creator_portfolio_id);
-    
+
     const creatorDataMap = new Map();
     if (creatorPortfolioIds.length > 0) {
       const creatorDataList = await creatordb.find({ _id: { $in: creatorPortfolioIds } }).exec();
@@ -69,61 +69,61 @@ const getAllFanRequests = async (req, res) => {
       uniqueRequests.map(async (request) => {
         // Use the pre-determined role from the query
         const userRole = request._userRole;
-        
-        
+
+
         const isCreator = userRole === 'creator';
         const isFan = userRole === 'fan';
-        
+
         let otherUser;
         let userType;
-        
-                if (isCreator) {
-                  // Current user is creator, get fan details
-                  otherUser = await userdb.findOne({ _id: request.userid }).exec();
-                  userType = 'creator';
-                } else if (isFan) {
-                  // Current user is fan, get creator details
-                  const creatorData = creatorDataMap.get(request.creator_portfolio_id.toString());
-                  // Also get the creator's user data for VIP status and profile photo
-                  const creatorUserData = await userdb.findOne({ _id: creatorData?.userid }).exec();
-                  
-                  // Extract photolink from creator files (creators store photos in creatorfiles array)
-                  let creatorPhotolink = null;
-                  if (creatorData?.creatorfiles && Array.isArray(creatorData.creatorfiles) && creatorData.creatorfiles.length > 0) {
-                    // Get first photo from creatorfiles
-                    creatorPhotolink = creatorData.creatorfiles[0]?.creatorfilelink;
-                  }
-                  
-                  // Fallback to user's profile photo if creator files don't have photo
-                  if (!creatorPhotolink && creatorUserData?.photolink) {
-                    creatorPhotolink = creatorUserData.photolink;
-                  }
-                  
-                  // Combine creator data with user VIP data
-                  otherUser = {
-                    ...creatorData?.toObject(),
-                    photolink: creatorPhotolink || null, // Set photolink from creator files or user profile
-                    isVip: creatorUserData?.isVip || false,
-                    vipEndDate: creatorUserData?.vipEndDate,
-                    username: creatorUserData?.username, // Include username from user data
-                    firstname: creatorUserData?.firstname, // Include first name
-                    lastname: creatorUserData?.lastname // Include last name
-                  };
-                  userType = 'fan';
-                } else {
-                  // Fallback - shouldn't happen
-                  userType = 'fan';
-                }
+
+        if (isCreator) {
+          // Current user is creator, get fan details
+          otherUser = await userdb.findOne({ _id: request.userid }).exec();
+          userType = 'creator';
+        } else if (isFan) {
+          // Current user is fan, get creator details
+          const creatorData = creatorDataMap.get(request.creator_portfolio_id.toString());
+          // Also get the creator's user data for VIP status and profile photo
+          const creatorUserData = await userdb.findOne({ _id: creatorData?.userid }).exec();
+
+          // Extract photolink from creator files (creators store photos in creatorfiles array)
+          let creatorPhotolink = null;
+          if (creatorData?.creatorfiles && Array.isArray(creatorData.creatorfiles) && creatorData.creatorfiles.length > 0) {
+            // Get first photo from creatorfiles
+            creatorPhotolink = creatorData.creatorfiles[0]?.creatorfilelink;
+          }
+
+          // Fallback to user's profile photo if creator files don't have photo
+          if (!creatorPhotolink && creatorUserData?.photolink) {
+            creatorPhotolink = creatorUserData.photolink;
+          }
+
+          // Combine creator data with user VIP data
+          otherUser = {
+            ...creatorData?.toObject(),
+            photolink: creatorPhotolink || null, // Set photolink from creator files or user profile
+            isVip: creatorUserData?.isVip || false,
+            vipEndDate: creatorUserData?.vipEndDate,
+            username: creatorUserData?.username, // Include username from user data
+            firstname: creatorUserData?.firstname, // Include first name
+            lastname: creatorUserData?.lastname // Include last name
+          };
+          userType = 'fan';
+        } else {
+          // Fallback - shouldn't happen
+          userType = 'fan';
+        }
 
         // Calculate time remaining for pending and accepted requests
         let timeRemaining = null;
         const now = new Date();
-        
+
         if (request.status === 'request' && request.expiresAt) {
           // Handle pending requests with expiresAt
           const expiresAt = new Date(request.expiresAt);
           const diffMs = expiresAt.getTime() - now.getTime();
-          
+
           if (diffMs > 0) {
             const hours = Math.floor(diffMs / (1000 * 60 * 60));
             const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -150,9 +150,9 @@ const getAllFanRequests = async (req, res) => {
             // Other types expire after 7 days
             expirationTime = new Date(request.createdAt.getTime() + (7 * 24 * 60 * 60 * 1000));
           }
-          
+
           const diffMs = expirationTime.getTime() - now.getTime();
-          
+
           if (diffMs > 0) {
             const hours = Math.floor(diffMs / (1000 * 60 * 60));
             const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
@@ -199,7 +199,7 @@ const getAllFanRequests = async (req, res) => {
             }
           }
         }
-        
+
         const finalOtherUser = otherUser ? {
           name: otherUser.name || `${otherUser.firstname || ''} ${otherUser.lastname || ''}`.trim() || 'Unknown User',
           username: otherUser.username || otherUser.firstname || otherUser.name, // Include username field with fallbacks
@@ -247,7 +247,7 @@ const getAllFanRequests = async (req, res) => {
     });
 
   } catch (err) {
-      console.error("Error getting fan requests:", err);
+    console.error("Error getting fan requests:", err);
     return res.status(500).json({
       ok: false,
       message: `${err.message}!`

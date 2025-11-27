@@ -47,7 +47,7 @@ const allowedOrigins = [
   "https://mmekowebsite-mu.vercel.app", // Vercel deployment
 
   "http://localhost:3000", // Add localhost for development
-  "http://10.245.95.157:3000", // Add network URL for device access
+  "http://10.216.161.157:3000", // Add network URL for device access
 ].filter(Boolean); // Remove falsy values (e.g., undefined NEXT_PUBLIC_URL)
 
 // Configure CORS
@@ -330,34 +330,34 @@ const HEARTBEAT_INTERVAL = 30000; // 30 seconds
 io.on("connection", (socket) => {
   socket.on("online", async (userid) => {
     if (userid) {
-      
+
       // Check if this user already has a connected socket
       const existingSocket = connectedSockets.get(userid);
       if (existingSocket && existingSocket.connected) {
         return;
       }
-      
+
       await checkuser(userid);
       await deletecallOffline(userid);
       socket.id = userid;
       socket.userId = userid; // Store user ID in socket for WebRTC signaling
       IDS.userid = userid;
       socket.join("LiveChat");
-      
+
       // Track this socket for this user
       connectedSockets.set(userid, socket);
-      
+
       // If user was in grace period, cancel the removal
       if (disconnectionTimes.has(userid)) {
         disconnectionTimes.delete(userid);
       }
-      
+
       // Update user activity
       userActivity.set(userid, Date.now());
-      
+
       // Track user connection for analytics
       trackUserConnection(userid, new Date());
-      
+
       // Track visitor when user connects (once per day per user)
       // Only track if user wasn't already online (first connection today)
       const wasAlreadyOnline = onlineUsers.has(userid);
@@ -372,19 +372,19 @@ io.on("connection", (socket) => {
           visitTime: new Date(),
         });
       }
-      
+
       // Check if user was already online (moved after visitor tracking)
-      
+
       // Add user to online users set
       onlineUsers.add(userid);
-      
+
       // ----------------------------------------------------
       // **Part A: Send the FULL list ONLY to the NEW user**
       // ----------------------------------------------------
       // Get the list of users *excluding* the one who just connected
       const currentOnlineUsers = Array.from(onlineUsers).filter(id => id !== userid);
       socket.emit('ONLINE_USERS_LIST', currentOnlineUsers);
-      
+
       // ----------------------------------------------------
       // **Part B: Notify ALL *other* users about the NEW user**
       // ----------------------------------------------------
@@ -396,7 +396,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("message", async (newdata) => {
-    
+
     try {
       // Validate incoming message data
       if (!newdata || !newdata.fromid || !newdata.toid) {
@@ -404,14 +404,14 @@ io.on("connection", (socket) => {
         return;
       }
 
-      if (newdata.fromid === 'undefined' || newdata.toid === 'undefined' || 
-          newdata.fromid === 'null' || newdata.toid === 'null') {
+      if (newdata.fromid === 'undefined' || newdata.toid === 'undefined' ||
+        newdata.fromid === 'null' || newdata.toid === 'null') {
         console.log("❌ [SOCKET] Message contains undefined/null IDs:", newdata);
         return;
       }
 
       let info = await MYID(newdata.fromid);
-      
+
       const data = { ...newdata, ...info };
       await Livechats({ ...data });
       if (info && data.toid && data.toid !== 'undefined' && data.toid !== 'null' && typeof data.toid === 'string' && data.toid.length === 24) {
@@ -424,13 +424,13 @@ io.on("connection", (socket) => {
       } else {
         console.log("⚠️ [SOCKET] Invalid toid for email notification:", data.toid);
       }
-      
+
       socket.broadcast.emit("LiveChat", {
         name: info?.name,
         photolink: info?.photolink || "",
         data: data,
       });
-      
+
     } catch (error) {
       console.error("❌ [BACKEND] Error processing message:", error);
     }
@@ -641,13 +641,13 @@ io.on("connection", (socket) => {
     if (userid) {
       // Remove user from online users set
       onlineUsers.delete(userid);
-      
+
       // Remove from connected sockets
       connectedSockets.delete(userid);
-      
+
       // Broadcast user offline status
       socket.broadcast.emit('user_offline', userid);
-      
+
       // Clean up user data
       await userdisconnect(userid);
       await deletecallOffline(userid);
@@ -668,7 +668,7 @@ io.on("connection", (socket) => {
       // Broadcast message to admin and user
       io.to(`support_chat_${data.userid}`).emit("support_message_received", data);
       io.to("admin_support").emit("new_support_message", data);
-      
+
       // Send push notifications
       if (data.isAdmin) {
         // Admin message to user
@@ -698,23 +698,23 @@ io.on("connection", (socket) => {
         break;
       }
     }
-    
+
     // Broadcast user offline status before disconnecting
     if (socket.id && IDS.userid) {
       const disconnectTime = Date.now();
-      
+
       // Track user disconnection for analytics
       trackUserDisconnection(IDS.userid, new Date(disconnectTime));
-      
+
       // Always use grace period for better user experience
       disconnectionTimes.set(IDS.userid, disconnectTime);
-      
+
       // Set timeout to actually remove user after grace period
       setTimeout(() => {
         if (disconnectionTimes.has(IDS.userid)) {
           const storedDisconnectTime = disconnectionTimes.get(IDS.userid);
           const timeSinceDisconnect = Date.now() - storedDisconnectTime;
-          
+
           // Only remove if user hasn't reconnected within grace period
           if (timeSinceDisconnect >= DISCONNECTION_GRACE_PERIOD) {
             onlineUsers.delete(IDS.userid);
@@ -724,26 +724,26 @@ io.on("connection", (socket) => {
           }
         }
       }, DISCONNECTION_GRACE_PERIOD);
-      
+
       // Remove from connected sockets
       connectedSockets.delete(IDS.userid);
     }
-    
+
     await userdisconnect(socket.id);
     await deletecallOffline(socket.id);
     socket.disconnect();
   });
-  
+
   // Handle heartbeat to keep users online
   socket.on('heartbeat', (userid) => {
     if (userid) {
       userActivity.set(userid, Date.now());
-      
+
       // Ensure user stays in onlineUsers set
       if (!onlineUsers.has(userid)) {
         onlineUsers.add(userid);
       }
-      
+
       // Cancel any pending disconnection
       if (disconnectionTimes.has(userid)) {
         disconnectionTimes.delete(userid);
@@ -794,11 +794,11 @@ io.on("connection", (socket) => {
   socket.on('fan_call_start', async (data) => {
     try {
       const { callerId, callerName, answererId, answererName } = data;
-      
-      
-      
+
+
+
       // Starting video call
-      
+
       // Check if answererId is a creator ID (host ID) and find the actual user ID
       let actualAnswererId = answererId;
       let answererVipStatus = false;
@@ -811,27 +811,27 @@ io.on("connection", (socket) => {
       let answererFirstName = '';
       let answererLastName = '';
       let answererUsername = '';
-      
+
       // Try to find the creator's user ID from their creator ID (which is the creator's _id)
       try {
         const creatordb = require('./Creators/creators');
         const userdb = require('./Creators/userdb');
-        
+
         const creator = await creatordb.findOne({ _id: answererId }).exec();
-        
+
         if (creator && creator.userid) {
           actualAnswererId = creator.userid;
           // Found creator user ID
         } else {
           // Creator not found, using original ID
         }
-        
+
         // Fetch VIP status and name details for both caller and answerer
         const [caller, answerer] = await Promise.all([
           userdb.findOne({ _id: callerId }).exec(),
           userdb.findOne({ _id: actualAnswererId }).exec()
         ]);
-        
+
         if (caller) {
           callerVipStatus = caller.isVip || false;
           callerVipEndDate = caller.vipEndDate || null;
@@ -839,7 +839,7 @@ io.on("connection", (socket) => {
           callerLastName = caller.lastname || '';
           callerUsername = caller.username || '';
         }
-        
+
         if (answerer) {
           answererVipStatus = answerer.isVip || false;
           answererVipEndDate = answerer.vipEndDate || null;
@@ -847,25 +847,25 @@ io.on("connection", (socket) => {
           answererLastName = answerer.lastname || '';
           answererUsername = answerer.username || '';
         }
-        
-        
+
+
       } catch (error) {
         console.error('Error fetching VIP status:', error);
         // Error looking up creator, using original ID
       }
-      
+
       // Checking online status
-      
+
       // Check if answerer is online - try multiple ID formats
-      const isOnline = onlineUsers.has(actualAnswererId) || 
-                      onlineUsers.has(actualAnswererId.toString()) ||
-                      Array.from(onlineUsers).some(id => id.toString() === actualAnswererId.toString());
-      
+      const isOnline = onlineUsers.has(actualAnswererId) ||
+        onlineUsers.has(actualAnswererId.toString()) ||
+        Array.from(onlineUsers).some(id => id.toString() === actualAnswererId.toString());
+
       // Additional check: see if user has a connected socket
-      const hasConnectedSocket = connectedSockets.has(actualAnswererId) || 
-                                connectedSockets.has(actualAnswererId.toString()) ||
-                                Array.from(connectedSockets.keys()).some(id => id.toString() === actualAnswererId.toString());
-      
+      const hasConnectedSocket = connectedSockets.has(actualAnswererId) ||
+        connectedSockets.has(actualAnswererId.toString()) ||
+        Array.from(connectedSockets.keys()).some(id => id.toString() === actualAnswererId.toString());
+
       if (!isOnline && !hasConnectedSocket) {
         // User not online, but allowing call
         // socket.emit('fan_call_error', {
@@ -873,7 +873,7 @@ io.on("connection", (socket) => {
         // });
         // return;
       }
-      
+
       // If user has connected socket but not in onlineUsers, add them
       if (!isOnline && hasConnectedSocket) {
         // User has socket but not in onlineUsers, adding
@@ -894,8 +894,8 @@ io.on("connection", (socket) => {
 
       const call = await videocalldb.create(callData);
 
-      
-      
+
+
       socket.to(`user_${actualAnswererId}`).emit('fan_call_incoming', {
         callId: call._id,
         callerId: callerId,
@@ -912,7 +912,7 @@ io.on("connection", (socket) => {
         answererVipEndDate: answererVipEndDate,
         isIncoming: true
       });
-      
+
       // Call notification sent
 
     } catch (error) {
@@ -926,22 +926,22 @@ io.on("connection", (socket) => {
   socket.on('fan_call_accept', async (data) => {
     try {
       const { callId, callerId, answererId, answererName } = data;
-      
+
       const videocalldb = require('./Creators/videoalldb');
       const userdb = require('./Creators/userdb');
       const call = await videocalldb.findOne({ _id: callId }).exec();
-      
+
       if (call) {
         call.connected = true;
         call.waiting = "connected";
         await call.save();
-        
+
         // Fetch VIP status and name details for both users
         const [caller, answerer] = await Promise.all([
           userdb.findOne({ _id: callerId }).exec(),
           userdb.findOne({ _id: answererId }).exec()
         ]);
-        
+
         const callerVipStatus = caller?.isVip || false;
         const callerVipEndDate = caller?.vipEndDate || null;
         const callerFirstName = caller?.firstname || '';
@@ -970,7 +970,7 @@ io.on("connection", (socket) => {
           answererIsVip: answererVipStatus,
           answererVipEndDate: answererVipEndDate
         });
-        
+
         // Call accepted, notification sent to caller
       }
     } catch (error) {
@@ -981,7 +981,7 @@ io.on("connection", (socket) => {
   socket.on('fan_call_decline', async (data) => {
     try {
       const { callId, callerId, answererId } = data;
-      
+
       const videocalldb = require('./Creators/videoalldb');
       await videocalldb.deleteOne({ _id: callId }).exec();
 
@@ -991,7 +991,7 @@ io.on("connection", (socket) => {
         callerId: callerId,
         answererId: answererId
       });
-      
+
       // Call declined, notification sent to caller
     } catch (error) {
       console.error('Error in fan_call_decline:', error);
@@ -1001,7 +1001,7 @@ io.on("connection", (socket) => {
   socket.on('fan_call_end', async (data) => {
     try {
       const { callId, userId, callerId, answererId } = data;
-      
+
       // Skip database operations for temporary call IDs
       if (callId && callId.startsWith('temp_')) {
         // Ending temporary call - emit to both caller and answerer if provided
@@ -1009,7 +1009,7 @@ io.on("connection", (socket) => {
           callId: callId,
           endedBy: userId
         };
-        
+
         // Emit to both parties using io.to() to ensure both receive it
         if (callerId) {
           io.to(`user_${callerId}`).emit('fan_call_ended', endEvent);
@@ -1017,18 +1017,18 @@ io.on("connection", (socket) => {
         if (answererId) {
           io.to(`user_${answererId}`).emit('fan_call_ended', endEvent);
         }
-        
+
         // Also emit to all sockets as fallback (for temp calls without user IDs)
         io.emit('fan_call_ended', endEvent);
         return;
       }
-      
+
       const videocalldb = require('./Creators/videoalldb');
       const call = await videocalldb.findOne({ _id: callId }).exec();
-      
+
       if (call) {
         const otherUserId = call.callerid === userId ? call.clientid : call.callerid;
-        
+
         // Delete call record
         await videocalldb.deleteOne({ _id: callId }).exec();
 
@@ -1037,11 +1037,11 @@ io.on("connection", (socket) => {
           callId: callId,
           endedBy: userId
         };
-        
+
         // Emit to both users immediately
         io.to(`user_${userId}`).emit('fan_call_ended', endEvent);
         io.to(`user_${otherUserId}`).emit('fan_call_ended', endEvent);
-        
+
         // Call ended, notifications sent to both users
       }
     } catch (error) {
@@ -1052,11 +1052,11 @@ io.on("connection", (socket) => {
   socket.on('fan_call_timeout', async (data) => {
     try {
       const { callId } = data;
-      
+
       // Handle temporary call IDs - still create missed call notification
       if (callId && callId.startsWith('temp_')) {
         const { callerId, callerName, answererId, answererName } = data;
-        
+
         // Create missed call notification for the answerer (creator)
         if (answererId) {
           // Find the actual creator user ID from their creator ID
@@ -1070,7 +1070,7 @@ io.on("connection", (socket) => {
           } catch (error) {
             // Error looking up creator, using original ID
           }
-          
+
           const admindb = require('./Creators/admindb');
           await admindb.create({
             userid: actualCreatorUserId,
@@ -1081,11 +1081,11 @@ io.on("connection", (socket) => {
             callerName: callerName,
             callerPhoto: null
           });
-          
+
           // Send push notification for missed call
           const userdb = require('./Creators/userdb');
           const answerer = await userdb.findOne({ _id: actualCreatorUserId }).exec();
-          
+
           if (answerer) {
             await pushmessage(
               actualCreatorUserId,
@@ -1100,7 +1100,7 @@ io.on("connection", (socket) => {
               }
             );
           }
-          
+
           // Emit missed call notification to the answerer (creator)
           io.to(`user_${actualCreatorUserId}`).emit('fan_call_missed', {
             callId: callId,
@@ -1109,35 +1109,35 @@ io.on("connection", (socket) => {
             callerPhoto: null
           });
         }
-        
+
         // Emit timeout event to both participants
         socket.broadcast.emit('fan_call_timeout', {
           callId: callId
         });
-        
+
         return;
       }
-      
+
       const videocalldb = require('./Creators/videoalldb');
       const call = await videocalldb.findOne({ _id: callId }).exec();
-      
+
       if (call) {
         const callerId = call.callerid;
         const clientId = call.clientid;
-        
+
         // Get user information for missed call notification
         const userdb = require('./Creators/userdb');
         const caller = await userdb.findOne({ _id: callerId }).exec();
         const answerer = await userdb.findOne({ _id: clientId }).exec();
-        
+
         // Create missed call notification for the answerer (creator)
         const admindb = require('./Creators/admindb');
         if (answerer) {
           // Construct full caller name
-          const fullCallerName = caller?.firstname && caller?.lastname 
-            ? `${caller.firstname} ${caller.lastname}` 
+          const fullCallerName = caller?.firstname && caller?.lastname
+            ? `${caller.firstname} ${caller.lastname}`
             : caller?.firstname || caller?.username || 'Unknown User';
-          
+
           await admindb.create({
             userid: clientId,
             message: `You missed a fan call from ${fullCallerName}`,
@@ -1147,7 +1147,7 @@ io.on("connection", (socket) => {
             callerName: fullCallerName,
             callerPhoto: caller?.photolink || caller?.photo || null
           });
-          
+
           // Send push notification for missed call
           if (answerer) {
             await pushmessage(
@@ -1164,7 +1164,7 @@ io.on("connection", (socket) => {
             );
           }
         }
-        
+
         // Delete call record
         await videocalldb.deleteOne({ _id: callId }).exec();
 
@@ -1172,11 +1172,11 @@ io.on("connection", (socket) => {
         io.to(`user_${callerId}`).emit('fan_call_timeout', {
           callId: callId
         });
-        
+
         io.to(`user_${clientId}`).emit('fan_call_timeout', {
           callId: callId
         });
-        
+
         // Emit missed call notification to the answerer (creator)
         if (answerer) {
           io.to(`user_${clientId}`).emit('fan_call_missed', {
@@ -1186,7 +1186,7 @@ io.on("connection", (socket) => {
             callerPhoto: caller?.photolink || caller?.photo || null
           });
         }
-        
+
         // Call timeout, notifications sent to both users
       }
     } catch (error) {
@@ -1198,7 +1198,7 @@ io.on("connection", (socket) => {
   socket.on('fan_call_offer', async (data) => {
     const { callId, offer } = data;
     // Received offer for call
-    
+
     try {
       // If it's a temporary call ID, broadcast to all users (fallback)
       if (callId.startsWith('temp_')) {
@@ -1209,17 +1209,17 @@ io.on("connection", (socket) => {
         });
         return;
       }
-      
+
       // Find the call to get the other participant
       const videocalldb = require('./Creators/videoalldb');
       const call = await videocalldb.findOne({ _id: callId }).exec();
-      
+
       if (call) {
         // Get the current user ID from the socket
         const currentUserId = socket.userId || socket.id;
         const otherUserId = call.callerid === currentUserId ? call.clientid : call.callerid;
         // Forwarding offer to user
-        
+
         // Forward offer to the other participant
         socket.to(`user_${otherUserId}`).emit('fan_call_offer', {
           callId: callId,
@@ -1234,7 +1234,7 @@ io.on("connection", (socket) => {
   socket.on('fan_call_answer', async (data) => {
     const { callId, answer } = data;
     // Received answer for call
-    
+
     try {
       // If it's a temporary call ID, broadcast to all users (fallback)
       if (callId.startsWith('temp_')) {
@@ -1245,17 +1245,17 @@ io.on("connection", (socket) => {
         });
         return;
       }
-      
+
       // Find the call to get the other participant
       const videocalldb = require('./Creators/videoalldb');
       const call = await videocalldb.findOne({ _id: callId }).exec();
-      
+
       if (call) {
         // Get the current user ID from the socket
         const currentUserId = socket.userId || socket.id;
         const otherUserId = call.callerid === currentUserId ? call.clientid : call.callerid;
         // Forwarding answer to user
-        
+
         // Forward answer to the other participant
         socket.to(`user_${otherUserId}`).emit('fan_call_answer', {
           callId: callId,
@@ -1263,35 +1263,35 @@ io.on("connection", (socket) => {
         });
       }
     } catch (error) {
-        console.error('❌ [WebRTC] Error forwarding answer:', error);
+      console.error('❌ [WebRTC] Error forwarding answer:', error);
     }
   });
 
   socket.on('fan_call_ice_candidate', async (data) => {
     const { callId, candidate } = data;
     // Received ICE candidate for call
-    
+
     try {
       // If it's a temporary call ID, broadcast to all users (fallback)
       if (callId.startsWith('temp_')) {
         // Temporary call ID, broadcasting ICE candidate
-          socket.broadcast.emit('fan_call_ice_candidate', {
+        socket.broadcast.emit('fan_call_ice_candidate', {
           callId: callId,
           candidate: candidate
         });
         return;
       }
-      
+
       // Find the call to get the other participant
       const videocalldb = require('./Creators/videoalldb');
       const call = await videocalldb.findOne({ _id: callId }).exec();
-      
+
       if (call) {
         // Get the current user ID from the socket
         const currentUserId = socket.userId || socket.id;
         const otherUserId = call.callerid === currentUserId ? call.clientid : call.callerid;
         // Forwarding ICE candidate to user
-        
+
         // Forward ICE candidate to the other participant
         socket.to(`user_${otherUserId}`).emit('fan_call_ice_candidate', {
           callId: callId,
@@ -1306,29 +1306,29 @@ io.on("connection", (socket) => {
 
 mongoose.connection.once("open", () => {
   console.log("✅ Database connected successfully");
-  
+
   // Start message cleanup scheduler
   scheduleMessageCleanup();
-  
+
   // Start MongoDB backup cron job
   const { setupBackupCron } = require('./scripts/setupBackupCron');
   setupBackupCron();
-  
+
   // Start orphaned pending balances cleanup scheduler
   scheduledCleanup.start();
-  
+
   // Start notification cleanup cron job
   const { setupNotificationCleanup } = require('./scripts/setupNotificationCleanup');
   setupNotificationCleanup();
-  
+
   // Start expired requests processing cron job
   const scheduledExpiredRequests = require('./scripts/scheduledExpiredRequests');
   scheduledExpiredRequests.start();
-  
+
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`🌐 Server accessible on network at http://10.245.95.157:${PORT}`);
-    
+    console.log(`🌐 Server accessible on network at http://10.216.161.157:${PORT}`);
+
     // Initialize Web3 payment listener
     const { initializeWeb3Listener } = require('./Controller/accountPayment/web3payment');
     initializeWeb3Listener().catch(err => {
@@ -1342,82 +1342,82 @@ mongoose.connection.once("open", () => {
       try {
         const { callId, callerId, currentUserId, amount, minute } = data;
         console.log('💰 [Billing] Received fan call billing event:', { callId, callerId, currentUserId, amount, minute });
-        
+
         const userdb = require('./Creators/userdb');
         const mainbalance = require('./Creators/mainbalance');
         const videocalldb = require('./Creators/videoalldb');
-        
+
         // Find the fan (caller) and creator (answerer)
         const call = await videocalldb.findOne({ _id: callId }).exec();
         if (!call) {
           console.log('❌ [Billing] Call not found for billing:', callId);
           return;
         }
-        
+
         console.log('✅ [Billing] Call found:', { callId, callerId: call.callerid, clientId: call.clientid });
-        
+
         // Check if this minute has already been billed to prevent duplicate billing
         const existingBilling = await mainbalance.findOne({
           userid: currentUserId,
           details: `Fan call - payment for minute ${minute}`,
           date: { $gte: (Date.now() - 60000).toString() } // Within the last minute
         }).exec();
-        
+
         if (existingBilling) {
           console.log('⚠️ [Billing] Minute already billed, skipping duplicate:', { minute, callId, currentUserId });
           return;
         }
-        
+
         // Also check if the call document has a billing state to prevent race conditions
         if (call.billedMinutes && call.billedMinutes.includes(minute)) {
           console.log('⚠️ [Billing] Minute already marked as billed in call document:', { minute, callId });
           return;
         }
-        
+
         // The fan is the one sending the billing event (currentUserId), not necessarily the caller
         const fanId = currentUserId; // Fan is the one paying
         const creator_portfolio_id = currentUserId === call.callerid ? call.clientid : call.callerid;
-        
-        console.log('💰 [Billing] Corrected user roles:', { 
-          fanId, 
-          creator_portfolio_id, 
+
+        console.log('💰 [Billing] Corrected user roles:', {
+          fanId,
+          creator_portfolio_id,
           originalCallerId: call.callerid,
           originalClientId: call.clientid,
-          currentUserId 
+          currentUserId
         });
-        
+
         // Deduct from fan's balance (balance is String in database)
         const fan = await userdb.findOne({ _id: fanId }).exec();
         const fanBalance = parseInt(fan.balance) || 0;
-        
+
         console.log('💰 [Billing] Fan balance check:', { fanId, fanBalance, amount, hasEnoughFunds: fanBalance >= amount });
-        
+
         if (fan && fanBalance >= amount) {
           // Update fan's balance
           fan.balance = (fanBalance - amount).toString();
           await fan.save();
-          
+
           // Mark this minute as billed in the call document to prevent duplicate billing
           if (!call.billedMinutes) {
             call.billedMinutes = [];
           }
           call.billedMinutes.push(minute);
           await call.save();
-          
+
           // Add to creator's earnings
           const creator = await userdb.findOne({ _id: creator_portfolio_id }).exec();
           if (creator) {
             creator.earnings = (creator.earnings || 0) + amount;
             await creator.save();
-            
+
             // Update main balance record
             const balanceRecord = await mainbalance.findOne({ userid: creator_portfolio_id }).exec();
             if (balanceRecord) {
               balanceRecord.earnings = (balanceRecord.earnings || 0) + amount;
               await balanceRecord.save();
             }
-            
-          
+
+
             const userHistory = {
               userid: fanId,
               details: `Fan call - payment for minute ${minute}`,
@@ -1437,23 +1437,23 @@ mongoose.connection.once("open", () => {
             };
             await mainbalance.create(creatorHistory);
             console.log('📝 [Billing] Created creator transaction history:', creatorHistory);
-            console.log('📝 [Billing] Creator IDs:', { 
-              portfolioId: creator_portfolio_id, 
+            console.log('📝 [Billing] Creator IDs:', {
+              portfolioId: creator_portfolio_id,
               actualCreatorId: creator._id,
-              creatorUsername: creator.username 
+              creatorUsername: creator.username
             });
-            
+
             // Billing successful
-            console.log('✅ [Billing] Billing successful:', { 
-              fanId, 
-              creator_portfolio_id, 
-              amount, 
+            console.log('✅ [Billing] Billing successful:', {
+              fanId,
+              creator_portfolio_id,
+              amount,
               minute,
               newFanBalance: fan.balance,
               newCreatorEarnings: creator.earnings,
               billedMinutes: call.billedMinutes
             });
-            
+
             // Emit balance updates to both users
             io.to(`user_${fanId}`).emit('balance_updated', {
               balance: fan.balance,
@@ -1461,7 +1461,7 @@ mongoose.connection.once("open", () => {
               amount: amount,
               minute: minute
             });
-            
+
             io.to(`user_${creator_portfolio_id}`).emit('balance_updated', {
               earnings: creator.earnings,
               type: 'earn',

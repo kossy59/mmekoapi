@@ -33,23 +33,23 @@ const MsgNotify = async (req, res) => {
         { toid: userid }
       ]
     })
-    .sort({ date: -1 }) // Sort by date descending (newest first)
-    .exec();
+      .sort({ date: -1 }) // Sort by date descending (newest first)
+      .exec();
 
     // Filter out messages from blocked users
     allMessages = await filterBlockedMessages(allMessages, userid);
 
     // OPTIMIZED: Group messages by conversation (other user ID)
     let conversationMap = new Map();
-    
+
     allMessages.forEach(msg => {
       const otherUserId = msg.fromid === userid ? msg.toid : msg.fromid;
-      
+
       // Skip messages with invalid user IDs
       if (!otherUserId || otherUserId === 'undefined' || otherUserId === 'null' || typeof otherUserId !== 'string' || otherUserId.length !== 24) {
         return;
       }
-      
+
       if (!conversationMap.has(otherUserId)) {
         conversationMap.set(otherUserId, {
           latestMessage: null,
@@ -57,15 +57,15 @@ const MsgNotify = async (req, res) => {
           lastActivity: null
         });
       }
-      
+
       const conversation = conversationMap.get(otherUserId);
-      
+
       // Update latest message if this is newer
       if (!conversation.latestMessage || new Date(msg.date) > new Date(conversation.latestMessage.date)) {
         conversation.latestMessage = msg;
         conversation.lastActivity = new Date(msg.date);
       }
-      
+
       // Count unread messages (messages sent to this user that are unread)
       if (msg.toid === userid && msg.notify === true) {
         conversation.unreadCount++;
@@ -74,32 +74,32 @@ const MsgNotify = async (req, res) => {
 
     // OPTIMIZED: Get all unique user IDs for batch fetching
     let allUserIds = Array.from(conversationMap.keys());
-    
+
     // Filter out invalid user IDs (undefined, null, empty strings)
-    allUserIds = allUserIds.filter(id => 
-      id && 
-      id !== 'undefined' && 
-      id !== 'null' && 
-      typeof id === 'string' && 
+    allUserIds = allUserIds.filter(id =>
+      id &&
+      id !== 'undefined' &&
+      id !== 'null' &&
+      typeof id === 'string' &&
       id.length === 24
     );
-    
+
 
     // OPTIMIZED: Batch fetch all user info and photos
     let [allUsers, allPhotos] = await Promise.all([
       userdb.find({ _id: { $in: allUserIds } }).exec(),
       completedb.find({ useraccountId: { $in: allUserIds } }).exec()
     ]);
-    
+
 
     // Create lookup maps for O(1) access
     let userMap = {};
     let photoMap = {};
-    
+
     allUsers.forEach(user => {
       userMap[user._id] = user;
     });
-    
+
     allPhotos.forEach(photo => {
       photoMap[photo.useraccountId] = photo;
     });
@@ -113,8 +113,8 @@ const MsgNotify = async (req, res) => {
     conversationMap.forEach((conversation, otherUserId) => {
       const userInfo = userMap[otherUserId];
       const userPhoto = photoMap[otherUserId];
-      
-      
+
+
       if (userInfo && conversation.latestMessage) {
         const messageData = {
           id: conversation.latestMessage._id,
@@ -134,7 +134,8 @@ const MsgNotify = async (req, res) => {
           lastActivity: conversation.lastActivity,
           isVip: userInfo.isVip || false,
           vipStartDate: userInfo.vipStartDate,
-          vipEndDate: userInfo.vipEndDate
+          vipEndDate: userInfo.vipEndDate,
+          isVerified:userInfo.creator_verified
         };
 
         // Add to appropriate arrays based on message direction
@@ -145,7 +146,7 @@ const MsgNotify = async (req, res) => {
           // Message received by this user
           recentmsg.push(messageData);
         }
-        
+
         // Add to all messages
         Allmsg.push(messageData);
       }
@@ -166,10 +167,10 @@ const MsgNotify = async (req, res) => {
     });
 
   } catch (err) {
-    return res.status(500).json({ 
-      ok: false, 
+    return res.status(500).json({
+      ok: false,
       message: "Failed to fetch messages",
-      error: err.message 
+      error: err.message
     });
   }
 };

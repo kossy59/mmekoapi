@@ -86,7 +86,7 @@ const readProfile = async (req, res) => {
       dues.creator_portfolio_id = creatorava._id
       // dues.creatorphotolink = images[0]
       dues.creatorname = creatorava.name
-      dues.hosttype = creatorava.hosttype || "Fan meet" // Include host type from creator data
+      dues.hosttype = creatorava.hosttype || "" // Include host type from creator data
       // Ensure creator_portfolio is true if creator exists
       dues.creator_portfolio = true;
     } else {
