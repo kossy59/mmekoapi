@@ -16,11 +16,11 @@ const createCreator = async (req, res) => {
       followers: [],
       following: [],
     };
-    
+
     // Get followers from the followers collection (source of truth)
     let followersFromDB = await followerdb.find({ userid: userid }).exec();
     let followers = followersFromDB.map(f => f.followerid);
-    
+
     if (followers?.length) {
       // console.log("got the follower")
       for (let i = 0; i < followers.length; i++) {
@@ -46,7 +46,7 @@ const createCreator = async (req, res) => {
           const isVip = username.isVip || false;
           const vipEndDate = username.vipEndDate;
           const isVipActive = isVip && vipEndDate && new Date(vipEndDate) > new Date();
-          
+
 
           let user = {
             name: `${username.firstname} ${username.lastname}`,
@@ -58,6 +58,7 @@ const createCreator = async (req, res) => {
             isVip: username.isVip || false,
             vipStartDate: username.vipStartDate,
             vipEndDate: username.vipEndDate,
+            isVerified: username.creator_verified || false,
           };
 
           follows.followers.push(user);
@@ -68,7 +69,7 @@ const createCreator = async (req, res) => {
     // Get following from the followers collection (source of truth)
     let followingFromDB = await followerdb.find({ followerid: userid }).exec();
     let followings = followingFromDB.map(f => f.userid);
-    
+
     if (followings?.length) {
       //console.log("got the followings")
 
@@ -99,7 +100,7 @@ const createCreator = async (req, res) => {
           const isVip = username.isVip || false;
           const vipEndDate = username.vipEndDate;
           const isVipActive = isVip && vipEndDate && new Date(vipEndDate) > new Date();
-          
+
 
           let user = {
             name: `${username.firstname} ${username.lastname}`,
@@ -111,6 +112,7 @@ const createCreator = async (req, res) => {
             isVip: username.isVip || false,
             vipStartDate: username.vipStartDate,
             vipEndDate: username.vipEndDate,
+            isVerified: username.creator_verified || false,
           };
 
           follows.following.push(user);
@@ -121,7 +123,7 @@ const createCreator = async (req, res) => {
     // Filter out blocked users from both followers and following lists
     const filteredFollowers = await filterBlockedUsers(follows.followers, userid);
     const filteredFollowing = await filterBlockedUsers(follows.following, userid);
-    
+
     const filteredFollows = {
       followers: filteredFollowers,
       following: filteredFollowing,
