@@ -277,6 +277,8 @@ app.use("/api/pending-balance", require("./routes/api/pendingBalanceRoutes"));
 app.use("/api/reports", require("./routes/api/reportRoutes"));
 app.use("/api/push", require("./routes/api/pushTest"));
 app.use("/api", require("./routes/api/trackVisitor"));
+app.use("/api/referral", require("./routes/api/referral/getReferralInfo"));
+
 
 // Track online users
 const onlineUsers = new Set();
