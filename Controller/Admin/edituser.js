@@ -28,7 +28,7 @@ const editUser = async (req, res) => {
         const allowedFields = [
             'firstname', 'lastname', 'email', 'gender', 'country', 'age', 'dob',
             'username', 'bio', 'balance', 'withdrawbalance', 'coinBalance',
-            'pending', 'earnings', 'active', 'creator_verified', 'creator_portfolio',
+            'pending', 'earnings', 'active', 'admin', 'creator_verified', 'creator_portfolio',
             'Creator_Application_status', 'creator_portfolio_id', 'isVip',
             'vipStartDate', 'vipEndDate', 'vipAutoRenewal',
             'rewardBalance', 'referralCount', 'referralCode', 'referredBy'

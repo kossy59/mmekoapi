@@ -2,6 +2,8 @@ const userdb = require("../../Creators/userdb");
 const referraldb = require("../../Creators/referraldb");
 const { generateReferralCode } = require("../../helpers/referralHelpers");
 
+const { calculateReferralProgress } = require("../../utiils/referralProgressHelper");
+
 /**
  * Get referral information for a user
  * Returns the user's referral code, count, and list of referrals
@@ -42,10 +44,14 @@ const getReferralInfo = async (req, res) => {
             .sort({ createdAt: -1 })
             .limit(50);
 
-        // Get referee details
+        // Get referee details and calculate progress
         const referralDetails = await Promise.all(
             referrals.map(async (ref) => {
                 const referee = await userdb.findById(ref.refereeId).select('username createdAt');
+
+                // Calculate progress automatically
+                const progress = await calculateReferralProgress(ref);
+
                 return {
                     id: ref._id,
                     username: referee?.username || 'Unknown',
@@ -53,6 +59,10 @@ const getReferralInfo = async (req, res) => {
                     status: ref.status,
                     rewardAmount: ref.rewardAmount,
                     rewardType: ref.rewardType,
+                    milestoneCompleted: ref.milestoneCompleted,
+                    milestoneFailed: ref.milestoneFailed,
+                    milestoneReward: ref.milestoneReward,
+                    progress: progress // Include the detailed progress data
                 };
             })
         );

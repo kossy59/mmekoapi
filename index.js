@@ -31,6 +31,7 @@ const imageRoutes = require("./routes/imageRoutes");
 const { scheduleMessageCleanup } = require("./utiils/deleteOldMessages");
 const scheduledCleanup = require("./scripts/scheduledCleanup");
 const { trackUserConnection, trackUserDisconnection, trackUserAction, trackWebsiteVisitor } = require("./utiils/trackUserActivity");
+const { checkReferralMilestones } = require("./utiils/referralMilestoneChecker");
 
 const PORT = process.env.PORT || 3100;
 const app = express();
@@ -278,6 +279,7 @@ app.use("/api/reports", require("./routes/api/reportRoutes"));
 app.use("/api/push", require("./routes/api/pushTest"));
 app.use("/api", require("./routes/api/trackVisitor"));
 app.use("/api/referral", require("./routes/api/referral/getReferralInfo"));
+app.use("/api/referral/admin/analytics", require("./routes/api/referral/getAdminReferralAnalytics"));
 
 
 // Track online users
@@ -1490,3 +1492,24 @@ mongoose.connection.once("open", () => {
 mongoose.connection.on("error", (err) => {
   console.error("❌ Database connection error:", err);
 });
+
+// Run referral milestone checker every 2 hours
+// Check if referred users completed the 7-day challenge (120 min/day)
+setInterval(async () => {
+  console.log("⏰ [Cron] Running referral milestone check...");
+  try {
+    await checkReferralMilestones();
+  } catch (error) {
+    console.error("❌ [Cron] Error in referral milestone check:", error);
+  }
+}, 2 * 60 * 60 * 1000); // Every 2 hours
+
+// Run once on server start
+setTimeout(async () => {
+  console.log("🚀 [Startup] Running initial referral milestone check...");
+  try {
+    await checkReferralMilestones();
+  } catch (error) {
+    console.error("❌ [Startup] Error in initial referral milestone check:", error);
+  }
+}, 10000); // Run 10 seconds after startup
