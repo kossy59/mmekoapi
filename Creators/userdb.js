@@ -195,6 +195,39 @@ const markertdata = new Scheme(
       type: Date,
       required: false,
     },
+    referralCode: {
+      type: String,
+      unique: true,
+      required: false,
+    },
+    referredBy: {
+      type: String, // User ID of the referring user
+      required: false,
+    },
+    referralCount: {
+      type: Number,
+      required: false,
+      default: 0,
+    },
+    rewardBalance: {
+      type: Number,
+      required: false,
+      default: 0,
+    },
+    deviceId: {
+      type: String,
+      required: false,
+      index: true, // Indexed for faster lookups
+    },
+    normalizedEmail: {
+      type: String,
+      required: false,
+      index: true,
+    },
+    lastLoginIP: {
+      type: String,
+      required: false,
+    },
   },
   { timestamps: true }
 );

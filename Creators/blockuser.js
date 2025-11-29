@@ -4,14 +4,12 @@ const blockUserSchema = new mongoose.Schema({
   blockerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "UserDB",
-    required: true,
-    index: true
+    required: true
   },
   blockedUserId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "UserDB", 
-    required: true,
-    index: true
+    ref: "UserDB",
+    required: true
   },
   reason: {
     type: String,
