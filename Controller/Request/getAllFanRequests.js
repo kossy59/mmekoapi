@@ -144,8 +144,8 @@ const getAllFanRequests = async (req, res) => {
           // Handle accepted requests - different expiration times based on type
           let expirationTime;
           if (request.type === 'Fan Call') {
-            // Fan Call expires after 48 hours
-            expirationTime = new Date(request.createdAt.getTime() + (48 * 60 * 60 * 1000));
+            // Fan Call expires after 96 hours (4 days)
+            expirationTime = new Date(request.createdAt.getTime() + (96 * 60 * 60 * 1000));
           } else {
             // Other types expire after 7 days
             expirationTime = new Date(request.createdAt.getTime() + (7 * 24 * 60 * 60 * 1000));
