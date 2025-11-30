@@ -16,7 +16,7 @@ const userdb = require("../../Creators/userdb");
 const usercompletedb = require("../../Creators/usercomplete");
 const pushdb = require("../../Creators/settingsdb");
 const referraldb = require("../../Creators/referraldb");
-const { generateReferralCode, rewardReferrer, checkFuzzyDeviceMatch, grantSignUpBonus } = require("../../helpers/referralHelpers");
+const { generateReferralCode, rewardReferrer, checkHybridDeviceMatch } = require("../../helpers/referralHelpers");
 
 
 const handleNewUser = async (req, res) => {
@@ -74,13 +74,23 @@ const handleNewUser = async (req, res) => {
     const currentIP = req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const normalizedEmail = email ? email.toLowerCase().trim() : undefined;
 
-    // Gate 1: Fuzzy Device ID Check
+    // Gate 1: Hybrid Device ID Check (Persistent + Browser Fingerprint)
+    // This is the STRONGEST anti-fraud check - combines file-based ID with browser fingerprint
     if (deviceId) {
-      const isFuzzyMatch = await checkFuzzyDeviceMatch(deviceId);
-      if (isFuzzyMatch) {
+      const matchResult = await checkHybridDeviceMatch(deviceId);
+      if (matchResult.isMatch) {
         allowBonus = false;
-        console.warn(`[Anti-Abuse] Device ID ${deviceId} is similar to existing device. Bonus blocked.`);
+        console.warn(`[Anti-Fraud] ⛔ Device match detected!`);
+        console.warn(`  - Match Type: ${matchResult.matchType}`);
+        console.warn(`  - Confidence: ${(matchResult.confidence * 100).toFixed(1)}%`);
+        console.warn(`  - Matched User: ${matchResult.matchedUser}`);
+        console.warn(`  - Device ID: ${deviceId.substring(0, 50)}...`);
+      } else {
+        console.log(`[Anti-Fraud] ✅ Device ID verified as new - Bonus allowed`);
       }
+    } else {
+      console.warn(`[Anti-Fraud] ⚠️ No device ID provided - Suspicious`);
+      allowBonus = false; // Block bonus if no device ID is provided
     }
 
     // Gate 2: Email Similarity Check
@@ -221,12 +231,9 @@ const handleNewUser = async (req, res) => {
         }
       }
 
-      // Pay New User
-      await grantSignUpBonus(user._id.toString());
     }
 
-    // Do NOT set cookies or tokens - user must log in manually after registration
-    // Registration only saves user details, login will handle authentication
+
 
     return res.status(201).json({
       ok: true,

@@ -53,9 +53,36 @@ async function rewardReferrer(referrerId, rewardAmount = 1.7) {
 module.exports = {
     generateReferralCode,
     rewardReferrer,
-    checkFuzzyDeviceMatch,
+    checkHybridDeviceMatch,
+    extractDeviceComponents,
     grantSignUpBonus
 };
+
+/**
+ * Extract device ID components from hybrid ID
+ * Format: "persistentId::browserFingerprint" or just "browserFingerprint"
+ * @param {string} hybridId 
+ * @returns {{persistentId: string|null, browserFingerprint: string}}
+ */
+function extractDeviceComponents(hybridId) {
+    if (!hybridId) return { persistentId: null, browserFingerprint: null };
+
+    const parts = hybridId.split('::');
+
+    if (parts.length === 2) {
+        // Full hybrid ID
+        return {
+            persistentId: parts[0],
+            browserFingerprint: parts[1]
+        };
+    } else {
+        // Only browser fingerprint (fallback mode)
+        return {
+            persistentId: null,
+            browserFingerprint: hybridId
+        };
+    }
+}
 
 // Levenshtein distance implementation
 const getLevenshteinDistance = (a, b) => {
@@ -95,30 +122,126 @@ const getLevenshteinDistance = (a, b) => {
 };
 
 /**
- * Check if a device ID is fuzzy matched with any existing device ID
- * @param {string} deviceId 
- * @returns {Promise<boolean>}
+ * Calculate similarity percentage between two strings
+ * @param {string} str1 
+ * @param {string} str2 
+ * @returns {number} Similarity from 0 to 1
  */
-async function checkFuzzyDeviceMatch(deviceId) {
-    if (!deviceId) return false;
+function calculateSimilarity(str1, str2) {
+    if (!str1 || !str2) return 0;
 
-    // Fetch all users with a deviceId
-    // Optimization: limit fields to deviceId only
-    const users = await userdb.find({ deviceId: { $exists: true, $ne: null } }).select('deviceId').exec();
+    const distance = getLevenshteinDistance(str1, str2);
+    const maxLength = Math.max(str1.length, str2.length);
+    return (maxLength - distance) / maxLength;
+}
+
+/**
+ * Enhanced hybrid device matching with multi-layer detection
+ * This is the CORE anti-fraud function - similar to TikTok/Binance/PayPal
+ * @param {string} deviceId - The hybrid device ID from the client
+ * @returns {Promise<{isMatch: boolean, matchType: string, confidence: number}>}
+ */
+async function checkHybridDeviceMatch(deviceId) {
+    if (!deviceId) {
+        return { isMatch: false, matchType: 'none', confidence: 0 };
+    }
+
+    // Extract components from the new device ID
+    const newDevice = extractDeviceComponents(deviceId);
+
+    console.log('[Anti-Fraud] 🔍 Checking device:', {
+        persistentId: newDevice.persistentId ? 'present' : 'missing',
+        browserFingerprint: newDevice.browserFingerprint ? 'present' : 'missing'
+    });
+
+    // Fetch all users with device IDs
+    const users = await userdb
+        .find({ deviceId: { $exists: true, $ne: null } })
+        .select('deviceId username createdAt')
+        .lean()
+        .exec();
+
+    console.log(`[Anti-Fraud] 📊 Checking against ${users.length} existing devices`);
 
     for (const user of users) {
-        if (user.deviceId === deviceId) return true; // Exact match
+        const existingDevice = extractDeviceComponents(user.deviceId);
 
-        const distance = getLevenshteinDistance(deviceId, user.deviceId);
-        const maxLength = Math.max(deviceId.length, user.deviceId.length);
-        const similarity = (maxLength - distance) / maxLength;
+        // LEVEL 1: Persistent ID Match (HIGHEST PRIORITY - Cross-browser detection)
+        // This is the most reliable as it's stored in a file on the OS
+        if (newDevice.persistentId && existingDevice.persistentId) {
+            if (newDevice.persistentId === existingDevice.persistentId) {
+                console.warn(`[Anti-Fraud] 🚨 EXACT PERSISTENT ID MATCH - User: ${user.username}`);
+                return {
+                    isMatch: true,
+                    matchType: 'persistent_exact',
+                    confidence: 1.0,
+                    matchedUser: user.username
+                };
+            }
 
-        if (similarity >= 0.7) {
-            return true;
+            // Fuzzy match on persistent ID (in case of minor corruption)
+            const similarity = calculateSimilarity(newDevice.persistentId, existingDevice.persistentId);
+            if (similarity >= 0.95) {
+                console.warn(`[Anti-Fraud] ⚠️ FUZZY PERSISTENT ID MATCH (${(similarity * 100).toFixed(1)}%) - User: ${user.username}`);
+                return {
+                    isMatch: true,
+                    matchType: 'persistent_fuzzy',
+                    confidence: similarity,
+                    matchedUser: user.username
+                };
+            }
+        }
+
+        // LEVEL 2: Browser Fingerprint Match (Same browser detection)
+        if (newDevice.browserFingerprint && existingDevice.browserFingerprint) {
+            // Exact match
+            if (newDevice.browserFingerprint === existingDevice.browserFingerprint) {
+                console.warn(`[Anti-Fraud] 🚨 EXACT BROWSER FINGERPRINT MATCH - User: ${user.username}`);
+                return {
+                    isMatch: true,
+                    matchType: 'browser_exact',
+                    confidence: 0.95,
+                    matchedUser: user.username
+                };
+            }
+
+            // Fuzzy match (allows for small variations in fingerprint)
+            const similarity = calculateSimilarity(newDevice.browserFingerprint, existingDevice.browserFingerprint);
+
+            // Log similarity for debugging
+            if (similarity > 0.4) {
+                console.log(`[Anti-Fraud] 🔍 Similarity check: ${(similarity * 100).toFixed(1)}% with ${user.username}`);
+            }
+
+            if (similarity >= 0.60) {
+                console.warn(`[Anti-Fraud] ⚠️ FUZZY BROWSER FINGERPRINT MATCH (${(similarity * 100).toFixed(1)}%) - User: ${user.username}`);
+                return {
+                    isMatch: true,
+                    matchType: 'browser_fuzzy',
+                    confidence: similarity,
+                    matchedUser: user.username
+                };
+            }
+        }
+
+        // LEVEL 3: Cross-component matching (persistent ID vs browser FP)
+        // This catches attempts to use different browsers with cleared data
+        if (newDevice.persistentId && existingDevice.browserFingerprint) {
+            const similarity = calculateSimilarity(newDevice.persistentId, existingDevice.browserFingerprint);
+            if (similarity >= 0.60) {
+                console.warn(`[Anti-Fraud] ⚠️ CROSS-COMPONENT MATCH (${(similarity * 100).toFixed(1)}%) - User: ${user.username}`);
+                return {
+                    isMatch: true,
+                    matchType: 'cross_component',
+                    confidence: similarity * 0.8,
+                    matchedUser: user.username
+                };
+            }
         }
     }
 
-    return false;
+    console.log('[Anti-Fraud] ✅ No device match found - device appears to be new');
+    return { isMatch: false, matchType: 'none', confidence: 0 };
 }
 
 /**
