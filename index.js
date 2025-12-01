@@ -1434,7 +1434,7 @@ mongoose.connection.once("open", () => {
 
             const creatorHistory = {
               userid: creator._id, // Use the actual creator's user ID, not the portfolio ID
-              details: `Fan call - payment received for minute ${minute}`,
+              details: `Fan call - payment received for 1 minute`,
               spent: "0",
               income: `${amount}`,
               date: `${Date.now().toString()}`

@@ -46,11 +46,11 @@ exports.handleWithdrawRequest = async (req, res) => {
 
     // Calculate earnings to deduct (1 USD = 25 earnings)
     const earningsToDeduct = amount * 25;
-    
+
     // Check if user has enough earnings
     if (userExists.earnings < earningsToDeduct) {
-      return res.status(400).json({ 
-        message: `Insufficient earnings. You have ${userExists.earnings} earnings but need ${earningsToDeduct} for $${amount} withdrawal.` 
+      return res.status(400).json({
+        message: `Insufficient earnings. You have ${userExists.earnings} earnings but need ${earningsToDeduct} for $${amount} withdrawal.`
       });
     }
 
@@ -92,7 +92,7 @@ exports.getAllWithdrawRequests = async (req, res) => {
   try {
     // You already have req.userId from the token
     const user = await User.findById(req.userId);
-    
+
 
     if (!user) {
       return res.status(404).json({ message: "User not found." });
@@ -100,9 +100,9 @@ exports.getAllWithdrawRequests = async (req, res) => {
 
     // Check admin status - handle both boolean and string values
     const isAdmin = user.admin === true || user.admin === "true" || user.admin === 1;
-    
+
     if (!isAdmin) {
-      return res.status(403).json({ 
+      return res.status(403).json({
         message: "Forbidden. Admins only.",
         userAdmin: user.admin,
         userAdminType: typeof user.admin
@@ -139,12 +139,12 @@ exports.getWithdrawRequestById = async (req, res) => {
 exports.checkAdminStatus = async (req, res) => {
   try {
     const user = await User.findById(req.userId);
-    
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json({ 
+    res.status(200).json({
       userId: req.userId,
       admin: user.admin,
       adminType: typeof user.admin,
@@ -256,6 +256,31 @@ exports.markAsPaid = async (req, res) => {
     });
 
     await creatorHistory.save();
+
+    // 6. Send notifications (DB and Push)
+    const admindb = require("../../Creators/admindb");
+    const { pushActivityNotification } = require("../../utiils/sendPushnot");
+    const sendEmail = require("../../utiils/sendEmailnot");
+
+    // Create database notification
+    await admindb.create({
+      userid: request.userId,
+      message: `Your withdrawal of $${request.amount} USD has been processed and paid successfully! 💰`,
+      seen: false
+    });
+
+    // Send push notification
+    await pushActivityNotification(
+      request.userId,
+      `Your withdrawal of $${request.amount} USD has been processed and paid successfully! 💰`,
+      "withdrawal_paid"
+    );
+
+    // Send email notification
+    await sendEmail(
+      request.userId,
+      `Withdrawal Payment Confirmed - $${request.amount} USD`
+    );
 
     res.status(200).json({
       message: "Withdrawal marked as paid and transaction history created",

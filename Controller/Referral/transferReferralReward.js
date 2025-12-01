@@ -49,7 +49,7 @@ const transferReferralReward = async (req, res) => {
         // 3. Record transaction history
         const newTransaction = new balancehistory({
             userid: userId,
-            details: "Referral reward transfer to earnings",
+            details: "Referral reward transfered to earnings",
             income: transferAmount.toString(),
             spent: "0",
             date: Date.now().toString()
