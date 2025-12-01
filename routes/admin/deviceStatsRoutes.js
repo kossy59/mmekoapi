@@ -5,7 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const { getDeviceStats, getSuspiciousDevices } = require('../../Controller/Admin/deviceStats');
-const verifyJWT = require('../../middleware/verify');
+const verifyJWT = require('../../Middleware/verify');
 
 // All routes require authentication and admin privileges
 router.use(verifyJWT);
