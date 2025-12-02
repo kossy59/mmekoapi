@@ -16,6 +16,7 @@ const userdb = require("../../Creators/userdb");
 const usercompletedb = require("../../Creators/usercomplete");
 const pushdb = require("../../Creators/settingsdb");
 const referraldb = require("../../Creators/referraldb");
+const deviceIddb = require("../../Creators/deviceIddb");
 const { generateReferralCode, rewardReferrer, checkHybridDeviceMatch } = require("../../helpers/referralHelpers");
 
 
@@ -80,16 +81,8 @@ const handleNewUser = async (req, res) => {
       const matchResult = await checkHybridDeviceMatch(deviceId);
       if (matchResult.isMatch) {
         allowBonus = false;
-        console.warn(`[Anti-Fraud] ⛔ Device match detected!`);
-        console.warn(`  - Match Type: ${matchResult.matchType}`);
-        console.warn(`  - Confidence: ${(matchResult.confidence * 100).toFixed(1)}%`);
-        console.warn(`  - Matched User: ${matchResult.matchedUser}`);
-        console.warn(`  - Device ID: ${deviceId.substring(0, 50)}...`);
-      } else {
-        console.log(`[Anti-Fraud] ✅ Device ID verified as new - Bonus allowed`);
       }
     } else {
-      console.warn(`[Anti-Fraud] ⚠️ No device ID provided - Suspicious`);
       allowBonus = false; // Block bonus if no device ID is provided
     }
 
@@ -193,6 +186,22 @@ const handleNewUser = async (req, res) => {
     );
     user.accessToken = accessToken;
     await user.save();
+
+    // 💾 Save device ID to deviceIddb (for anti-fraud checking)
+    // This is saved separately to allow checking without loading full user records
+    if (deviceId) {
+      try {
+        await deviceIddb.create({
+          deviceId: deviceId,
+        });
+        console.log(`✅ Device ID saved to deviceIddb for user ${user._id}`);
+      } catch (deviceError) {
+        // If duplicate key error (device already exists), that's fine - it means it was already saved
+        if (deviceError.code !== 11000) {
+          console.error(`⚠️ Error saving device ID:`, deviceError);
+        }
+      }
+    }
 
     // Create user profile + settings
     await usercompletedb.create({

@@ -1,4 +1,5 @@
 const userdb = require("../Creators/userdb");
+const deviceIddb = require("../Creators/deviceIddb");
 
 /**
  * Generate a unique 6-character referral code
@@ -149,45 +150,39 @@ async function checkHybridDeviceMatch(deviceId) {
     // Extract components from the new device ID
     const newDevice = extractDeviceComponents(deviceId);
 
-    console.log('[Anti-Fraud] 🔍 Checking device:', {
-        persistentId: newDevice.persistentId ? 'present' : 'missing',
-        browserFingerprint: newDevice.browserFingerprint ? 'present' : 'missing'
-    });
+  
 
-    // Fetch all users with device IDs
-    const users = await userdb
-        .find({ deviceId: { $exists: true, $ne: null } })
-        .select('deviceId username createdAt')
+    // Fetch all device IDs from the dedicated deviceIddb collection
+    const deviceRecords = await deviceIddb
+        .find({})
+        .select('deviceId createdAt')
         .lean()
         .exec();
 
-    console.log(`[Anti-Fraud] 📊 Checking against ${users.length} existing devices`);
-
-    for (const user of users) {
-        const existingDevice = extractDeviceComponents(user.deviceId);
+  
+    for (const record of deviceRecords) {
+        const existingDevice = extractDeviceComponents(record.deviceId);
 
         // LEVEL 1: Persistent ID Match (HIGHEST PRIORITY - Cross-browser detection)
         // This is the most reliable as it's stored in a file on the OS
         if (newDevice.persistentId && existingDevice.persistentId) {
             if (newDevice.persistentId === existingDevice.persistentId) {
-                console.warn(`[Anti-Fraud] 🚨 EXACT PERSISTENT ID MATCH - User: ${user.username}`);
-                return {
+                 return {
                     isMatch: true,
                     matchType: 'persistent_exact',
                     confidence: 1.0,
-                    matchedUser: user.username
+                    matchedDevice: record.deviceId
                 };
             }
 
             // Fuzzy match on persistent ID (in case of minor corruption)
             const similarity = calculateSimilarity(newDevice.persistentId, existingDevice.persistentId);
             if (similarity >= 0.95) {
-                console.warn(`[Anti-Fraud] ⚠️ FUZZY PERSISTENT ID MATCH (${(similarity * 100).toFixed(1)}%) - User: ${user.username}`);
-                return {
+               return {
                     isMatch: true,
                     matchType: 'persistent_fuzzy',
                     confidence: similarity,
-                    matchedUser: user.username
+                    matchedDevice: record.deviceId
                 };
             }
         }
@@ -196,12 +191,12 @@ async function checkHybridDeviceMatch(deviceId) {
         if (newDevice.browserFingerprint && existingDevice.browserFingerprint) {
             // Exact match
             if (newDevice.browserFingerprint === existingDevice.browserFingerprint) {
-                console.warn(`[Anti-Fraud] 🚨 EXACT BROWSER FINGERPRINT MATCH - User: ${user.username}`);
+                console.warn(`[Anti-Fraud] 🚨 EXACT BROWSER FINGERPRINT MATCH`);
                 return {
                     isMatch: true,
                     matchType: 'browser_exact',
                     confidence: 0.95,
-                    matchedUser: user.username
+                    matchedDevice: record.deviceId
                 };
             }
 
@@ -210,16 +205,16 @@ async function checkHybridDeviceMatch(deviceId) {
 
             // Log similarity for debugging
             if (similarity > 0.4) {
-                console.log(`[Anti-Fraud] 🔍 Similarity check: ${(similarity * 100).toFixed(1)}% with ${user.username}`);
+                console.log(`[Anti-Fraud] 🔍 Similarity check: ${(similarity * 100).toFixed(1)}%`);
             }
 
             if (similarity >= 0.60) {
-                console.warn(`[Anti-Fraud] ⚠️ FUZZY BROWSER FINGERPRINT MATCH (${(similarity * 100).toFixed(1)}%) - User: ${user.username}`);
+                console.warn(`[Anti-Fraud] ⚠️ FUZZY BROWSER FINGERPRINT MATCH (${(similarity * 100).toFixed(1)}%)`);
                 return {
                     isMatch: true,
                     matchType: 'browser_fuzzy',
                     confidence: similarity,
-                    matchedUser: user.username
+                    matchedDevice: record.deviceId
                 };
             }
         }
@@ -229,18 +224,17 @@ async function checkHybridDeviceMatch(deviceId) {
         if (newDevice.persistentId && existingDevice.browserFingerprint) {
             const similarity = calculateSimilarity(newDevice.persistentId, existingDevice.browserFingerprint);
             if (similarity >= 0.60) {
-                console.warn(`[Anti-Fraud] ⚠️ CROSS-COMPONENT MATCH (${(similarity * 100).toFixed(1)}%) - User: ${user.username}`);
+                console.warn(`[Anti-Fraud] ⚠️ CROSS-COMPONENT MATCH (${(similarity * 100).toFixed(1)}%)`);
                 return {
                     isMatch: true,
                     matchType: 'cross_component',
                     confidence: similarity * 0.8,
-                    matchedUser: user.username
+                    matchedDevice: record.deviceId
                 };
             }
         }
     }
 
-    console.log('[Anti-Fraud] ✅ No device match found - device appears to be new');
     return { isMatch: false, matchType: 'none', confidence: 0 };
 }
 
