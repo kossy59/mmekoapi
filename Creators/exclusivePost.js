@@ -35,5 +35,7 @@ const exclusivePostSchema = new Scheme(
   { timestamps: true }
 );
 
+exclusivePostSchema.index({ userid: 1 });
+
 module.exports = mongoose.model("ExclusivePost", exclusivePostSchema);
 

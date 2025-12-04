@@ -1,20 +1,37 @@
 const exclusivePostdb = require("../../Creators/exclusivePost");
 const userdb = require("../../Creators/userdb");
+const mongoose = require("mongoose");
 
 const getAllExclusivePosts = async (req, res) => {
   const userid = req.body.userid || req.query.userid;
 
+  console.log('[getAllExclusivePosts] Request received for userid:', userid);
+
   if (!userid) {
-    return res
-      .status(400)
-      .json({ ok: false, message: "Missing required parameter: userid" });
+    return res.status(400).json({ ok: false, message: "Missing required parameter: userid" });
   }
 
   try {
-    // Use aggregation to join exclusive posts with user information
+    // DEBUG: Check count first
+    const simpleCount = await exclusivePostdb.countDocuments({ userid: userid });
+    console.log(`[getAllExclusivePosts] Simple count for userid ${userid}: ${simpleCount}`);
+
+    // If simple count is 0, maybe try ObjectId?
+    if (simpleCount === 0) {
+      console.log('[getAllExclusivePosts] No posts found with string userid. Checking if stored as ObjectId...');
+      // Only try if it's a valid ObjectId string
+      if (mongoose.Types.ObjectId.isValid(userid)) {
+        // Note: Schema says String, but let's debug just in case
+        // We can't easily query a String field with an ObjectId, but if the data was saved as ObjectId 
+        // in a mixed schema or before schema change, this might be relevant. 
+        // For now, let's stick to the schema definition which is String.
+      }
+    }
+
+    console.log('[getAllExclusivePosts] Running aggregation...');
     const posts = await exclusivePostdb.aggregate([
       { $match: { userid: userid } },
-      { $sort: { posttime: -1 } }, // Sort by posttime descending (newest first)
+      { $sort: { posttime: -1 } },
       {
         $lookup: {
           from: "userdbs",
@@ -58,19 +75,21 @@ const getAllExclusivePosts = async (req, res) => {
       },
     ]);
 
-    // If posts is null or undefined, return an empty array instead of error
     const result = posts || [];
-    
-    return res.status(200).json({ 
-      ok: true, 
-      message: `Exclusive posts for user ${userid}`, 
-      posts: result 
+    console.log('[getAllExclusivePosts] Aggregation completed. Found', result.length, 'posts');
+
+    res.status(200).json({
+      ok: true,
+      message: `Exclusive posts for user ${userid}`,
+      posts: result
     });
+
   } catch (err) {
-    console.error("Error fetching exclusive posts:", err);
-    return res.status(500).json({ ok: false, message: `${err.message}!` });
+    console.error("[getAllExclusivePosts] Error:", err);
+    if (!res.headersSent) {
+      res.status(500).json({ ok: false, message: err.message });
+    }
   }
 };
 
 module.exports = getAllExclusivePosts;
-
