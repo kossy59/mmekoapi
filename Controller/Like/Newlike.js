@@ -12,11 +12,11 @@ const createLike = async (req, res) => {
   console.log("📊 [BACKEND] Request headers:", req.headers);
   console.log("📊 [BACKEND] Request method:", req.method);
   console.log("📊 [BACKEND] Request URL:", req.url);
-  
+
   const userid = req.body.userid;
   let sharedid = req.body.sharedid;
   const postid = req.body.postid;
-  
+
   console.log("🔍 [BACKEND] Extracted data:", { userid, sharedid, postid });
   console.log("🔍 [BACKEND] Data validation:", {
     hasUserid: !!userid,
@@ -34,7 +34,7 @@ const createLike = async (req, res) => {
 
   try {
     console.log("🚀 [BACKEND] Starting database operations...");
-    
+
     // Check for existing like
     console.log("🔍 [BACKEND] Checking for existing like...");
     let du = likedata.find({ userid: userid }).exec();
@@ -44,7 +44,7 @@ const createLike = async (req, res) => {
       existingLikeId: du1?._id,
       existingLikeData: du1
     });
-    
+
     // Get post user
     console.log("🔍 [BACKEND] Fetching post user...");
     let postuser = await postdbs.findOne({ _id: postid }).exec();
@@ -54,13 +54,13 @@ const createLike = async (req, res) => {
       fullPostData: postuser
     });
 
-  
+
     if (du1) {
       console.log("🔄 [BACKEND] UNLIKE OPERATION - Removing existing like...");
       await likedata.deleteOne({ _id: du1._id });
       console.log("✅ [BACKEND] Like removed from database");
-      
-      if (postuser && postuser.userid) {
+
+      if (postuser && postuser.userid && String(postuser.userid) !== String(userid)) {
         console.log("📧 [BACKEND] Sending unlike notifications...");
         await sendEmail(postuser.userid, "user unlike your Post");
         await pushmessage(
@@ -68,7 +68,7 @@ const createLike = async (req, res) => {
           "user unlike your Post",
           "creatoricon"
         );
-        
+
         // Create database notification for unlike
         const liker = await userdb.findOne({ _id: userid }).exec();
         if (liker) {
@@ -82,20 +82,20 @@ const createLike = async (req, res) => {
       } else {
         console.log("⚠️ [BACKEND] Skipping unlike notifications - no post user ID found");
       }
-      
+
       // After unlike, return updated likeCount and likedBy
       console.log("🔍 [BACKEND] Fetching updated like count...");
       const likes = await likedata.find({ postid });
       const likeCount = likes.length;
       const likedBy = likes.map(like => like.userid);
-      
+
       console.log("✅ [BACKEND] UNLIKE SUCCESS:", {
         postid,
         likeCount,
         likedBy,
         message: "Unlike successful"
       });
-    
+
       return res
         .status(200)
         .json({ ok: true, message: "ulike post success!!", likeCount, likedBy });
@@ -111,18 +111,18 @@ const createLike = async (req, res) => {
       sharedid,
       postid,
     };
-    
+
     console.log("📝 [BACKEND] Like data to create:", like);
 
     //data.databar.createDocument(data.dataid,data.likeCol,sdk.ID.unique(),like)
     await likedata.create(like);
     console.log("✅ [BACKEND] Like created in database");
-    
-    if (postuser && postuser.userid) {
+
+    if (postuser && postuser.userid && String(postuser.userid) !== String(userid)) {
       console.log("📧 [BACKEND] Sending like notifications...");
       await sendEmail(postuser.userid, "user like your Post");
       await pushmessage(postuser.userid, "user like your Post", "/icons/m-logo.png");
-      
+
       // Create database notification for like
       const liker = await userdb.findOne({ _id: userid }).exec();
       if (liker) {
@@ -136,20 +136,20 @@ const createLike = async (req, res) => {
     } else {
       console.log("⚠️ [BACKEND] Skipping notifications - no post user ID found");
     }
-    
+
     // After like, return updated likeCount and likedBy
     console.log("🔍 [BACKEND] Fetching updated like count...");
     const likes = await likedata.find({ postid });
     const likeCount = likes.length;
     const likedBy = likes.map(like => like.userid);
-    
+
     console.log("✅ [BACKEND] LIKE SUCCESS:", {
       postid,
       likeCount,
       likedBy,
       message: "Like successful"
     });
-    
+
     return res.status(200).json({ ok: true, message: `like post Success`, likeCount, likedBy });
   } catch (err) {
     console.error("❌ [BACKEND] LIKE CONTROLLER ERROR:", err);

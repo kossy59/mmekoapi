@@ -14,9 +14,14 @@ const readPost = async (req, res) => {
   }
 
   try {
+    // Determine sort order
+    const sort = req.body.sort || 'newest';
+    const sortStage = sort === 'oldest' ? { createdAt: 1 } : { createdAt: -1 };
+
     // Use aggregation to join posts with user information
     const posts = await postdb.aggregate([
       { $match: { userid: userid } },
+      { $sort: sortStage },
       {
         $lookup: {
           from: "userdbs",
@@ -63,11 +68,11 @@ const readPost = async (req, res) => {
     if (!posts) {
       posts = [];
     }
-    
-    return res.status(200).json({ 
-      ok: true, 
-      message: `Posts for user ${userid}`, 
-      post: posts 
+
+    return res.status(200).json({
+      ok: true,
+      message: `Posts for user ${userid}`,
+      post: posts
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: `${err.message}!` });
