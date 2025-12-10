@@ -24,6 +24,16 @@ class ScheduledCleanup {
       timezone: "UTC"
     });
 
+    // Run inactive user cleanup once a day at 03:00 UTC (0 3 * * *)
+    this.inactiveUserCleanupTask = cron.schedule('0 3 * * *', async () => {
+      console.log('⏰ [Cron] Starting scheduled inactive user cleanup...');
+      const { cleanupInactiveUsers } = require('./deleteInactiveUsers');
+      await cleanupInactiveUsers();
+    }, {
+      scheduled: true,
+      timezone: "UTC"
+    });
+
     // Run initial cleanup on startup
     setTimeout(() => {
       this.runCleanup();
@@ -36,6 +46,9 @@ class ScheduledCleanup {
   stop() {
     if (this.cleanupTask) {
       this.cleanupTask.destroy();
+    }
+    if (this.inactiveUserCleanupTask) {
+      this.inactiveUserCleanupTask.destroy();
     }
   }
 
@@ -56,7 +69,7 @@ class ScheduledCleanup {
 
       // Run the cleanup
       const result = await cleanupOrphanedPendingBalances();
-      
+
       // Get stats after cleanup
       const afterStats = await getPendingBalanceStats();
       this.lastStats = {

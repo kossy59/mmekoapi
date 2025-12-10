@@ -228,6 +228,11 @@ const markertdata = new Scheme(
       type: String,
       required: false,
     },
+    lastActive: {
+      type: Date,
+      required: false,
+      index: true,
+    },
   },
   { timestamps: true }
 );

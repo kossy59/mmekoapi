@@ -45,7 +45,7 @@ const handleLogin = async (req, res) => {
       // Create tokens
       const refreshTokenSecret = process.env.REFRESH_TOKEN_SECRET || "NEXT_PUBLIC_SECERET";
       const accessTokenSecret = process.env.ACCESS_TOKEN_SECRET || "NEXT_PUBLIC_SECERET";
-      
+
       const refreshToken = jwt.sign(
         { UserInfo: { username: user.username, userId: user._id.toString(), isAdmin: user.admin } },
         process.env.REFRESH_TOKEN_SECRET,
@@ -57,8 +57,9 @@ const handleLogin = async (req, res) => {
         process.env.ACCESS_TOKEN_SECRET,
         { expiresIn: "30d" }
       );
-      // Update user's refresh token
+      // Update user's refresh token and lastActive
       user.refreshtoken = refreshToken;
+      user.lastActive = new Date();
       await user.save();
       // await fixUserFields();
 

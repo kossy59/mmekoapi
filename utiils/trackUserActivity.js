@@ -35,6 +35,9 @@ const trackUserConnection = async (userid, connectionTime = new Date()) => {
     });
 
     await activity.save();
+
+    // Update user's lastActive timestamp
+    await userdb.findByIdAndUpdate(userid, { lastActive: connectionTime });
   } catch (error) {
     console.error("❌ [Tracking] Error tracking user connection:", error);
   }
@@ -150,6 +153,9 @@ const trackUserAction = async (userid, actionType = "other") => {
 
     activity.activitiesCount += 1;
     await activity.save();
+
+    // Update user's lastActive timestamp
+    await userdb.findByIdAndUpdate(userid, { lastActive: new Date() });
   } catch (error) {
     console.error("❌ [Tracking] Error tracking user action:", error);
   }
@@ -178,7 +184,7 @@ const trackWebsiteVisitor = async (visitorData) => {
     // For logged-in users, use userid as visitorId to ensure one record per user per day
     // For anonymous users, use the visitorId (which is the temporary ID from localStorage)
     const effectiveVisitorId = userid || visitorId || sessionId;
-    
+
     // Try to find existing visitor record for today
     // Check both by visitorId and userid to ensure one record per user per day
     let visitor = null;
@@ -189,7 +195,7 @@ const trackWebsiteVisitor = async (visitorData) => {
         date: today,
       });
     }
-    
+
     // If not found and we have a visitorId, check by visitorId (for anonymous users with temp_xxx IDs)
     if (!visitor && effectiveVisitorId) {
       visitor = await websiteVisitor.findOne({
@@ -197,7 +203,7 @@ const trackWebsiteVisitor = async (visitorData) => {
         date: today,
       });
     }
-    
+
     // Also check by sessionId as fallback for anonymous users
     if (!visitor && sessionId && !userid) {
       visitor = await websiteVisitor.findOne({
@@ -210,7 +216,7 @@ const trackWebsiteVisitor = async (visitorData) => {
       // Get user data if logged in
       let userData = {};
       let isAnonymous = true;
-      
+
       if (userid) {
         try {
           const user = await userdb.findById(userid).exec();
@@ -243,7 +249,7 @@ const trackWebsiteVisitor = async (visitorData) => {
         timezone: 'Unknown',
         ipAddress: ipAddress || 'Unknown',
       };
-      
+
       // Create new visitor record - mark as anonymous if no user ID
       visitor = await websiteVisitor.create({
         visitorId: effectiveVisitorId, // Use effective visitor ID
@@ -264,7 +270,7 @@ const trackWebsiteVisitor = async (visitorData) => {
       // Update existing visitor (same user visiting again today - just update page views and last visit)
       visitor.lastVisit = visitTime;
       visitor.pageViews += 1;
-      
+
       // Update IP and location if provided and not already set
       if (location && (!visitor.location || !visitor.location.ipAddress || visitor.location.ipAddress === 'Unknown')) {
         const updatedLocation = {
@@ -276,7 +282,7 @@ const trackWebsiteVisitor = async (visitorData) => {
         };
         visitor.location = updatedLocation;
       }
-      
+
       if (userid && !visitor.userid) {
         visitor.userid = userid;
         visitor.isAnonymous = false; // No longer anonymous
@@ -335,7 +341,7 @@ const updateVisitorTimeSpent = async (visitorId, timeSpent) => {
       const previousTime = visitor.totalTimeSpent || 0;
       visitor.totalTimeSpent = (visitor.totalTimeSpent || 0) + timeSpent;
       visitor.lastVisit = new Date(); // Update last visit time
-      
+
       await visitor.save();
     }
   } catch (error) {
