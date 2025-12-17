@@ -48,29 +48,27 @@ const getAllCreators = async (req, res) => {
     });
 
     // YOUR CUSTOM SORTING LOGIC HERE
+    // YOUR CUSTOM SORTING LOGIC HERE
     host.sort((a, b) => {
-      // Priority 1: VIP creators first
-      if (a.isVip && !b.isVip) return -1;
-      if (!a.isVip && b.isVip) return 1;
-      
-      // Priority 2: Online creators next
+      // Priority 1: Online creators first
       if (a.isOnline && !b.isOnline) return -1;
       if (!a.isOnline && b.isOnline) return 1;
-      
-      // Priority 3: Most views
-      const viewDiff = (b.views || 0) - (a.views || 0);
-      if (viewDiff !== 0) return viewDiff;
-      
-      // Priority 4: Newest creators (tie-breaker)
-      const dateA = new Date(a.createdAt || 0).getTime();
-      const dateB = new Date(b.createdAt || 0).getTime();
-      return dateB - dateA;
+
+      // Priority 2: Most views (highest first)
+      const viewsA = a.views || 0;
+      const viewsB = b.views || 0;
+      return viewsB - viewsA;
+
+      // Priority 3: Newest creators (tie-breaker) - Optional but good for stability
+      // const dateA = new Date(a.createdAt || 0).getTime();
+      // const dateB = new Date(b.createdAt || 0).getTime();
+      // return dateB - dateA;
     });
 
-    return res.status(200).json({ 
-      ok: true, 
-      message: "All creators fetched successfully", 
-      host 
+    return res.status(200).json({
+      ok: true,
+      message: "All creators fetched successfully",
+      host
     });
   } catch (err) {
     return res.status(500).json({ ok: false, message: `${err.message}!` });

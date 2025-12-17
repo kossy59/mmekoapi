@@ -39,7 +39,7 @@ const getMyCreator = async (req, res) => {
       let vipStatus = { isVip: false, vipEndDate: null };
       let isOnline = false;
       let isFollowing = false;
-      
+
       // Try different possible userid field names
       const possibleUserIds = [
         creator.userid,
@@ -50,7 +50,7 @@ const getMyCreator = async (req, res) => {
         creator.hostid,
         creator.host_id
       ].filter(Boolean);
-      
+
       for (const userId of possibleUserIds) {
         try {
           const user = await userdb.findOne({ _id: userId }).exec();
@@ -60,7 +60,7 @@ const getMyCreator = async (req, res) => {
               vipEndDate: user.vipEndDate || null
             };
             isOnline = user.active || false;
-            
+
             // Check if current user is following this creator
             if (userid && user.followers && user.followers.includes(userid)) {
               isFollowing = true;
@@ -109,7 +109,19 @@ const getMyCreator = async (req, res) => {
       };
     }));
 
-    
+
+    // Sort creators: Online > Offline, then Views Descending
+    host.sort((a, b) => {
+      // Priority 1: Online creators first
+      if (a.isOnline && !b.isOnline) return -1;
+      if (!a.isOnline && b.isOnline) return 1;
+
+      // Priority 2: Most views (highest first)
+      const viewsA = a.views || 0;
+      const viewsB = b.views || 0;
+      return viewsB - viewsA;
+    });
+
     return res
       .status(200)
       .json({ ok: true, message: `Creator fetched successfully`, host });
