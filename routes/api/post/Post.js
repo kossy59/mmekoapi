@@ -4,6 +4,7 @@ const cors = require("cors");
 const createPost = require("../../../Controller/Post/userpost");
 const editPost = require("../../../Controller/Post/Editpost");
 const deletePost = require("../../../Controller/Post/Removepost");
+const updatePlaybackId = require("../../../Controller/Post/updatePlaybackId");
 const multer = require("multer");
 const handleRefresh = require("../../../Middleware/refresh");
 
@@ -71,6 +72,8 @@ router
   .post(upload.single("postFile"), createPost)
   .put(editPost)
   .delete(deletePost);
+
+router.post("/updatePlaybackId", updatePlaybackId);
 
 module.exports = router;
 

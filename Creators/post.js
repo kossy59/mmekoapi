@@ -42,6 +42,14 @@ const markertdata = new Scheme(
       required: false,
       default: [],
     },
+    playbackId: {
+      type: String,
+      required: false,
+    },
+    assetId: {
+      type: String,
+      required: false,
+    },
   },
   { timestamps: true }
 );
