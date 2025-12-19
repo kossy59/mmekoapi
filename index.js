@@ -281,6 +281,7 @@ app.use("/api", require("./routes/api/trackVisitor"));
 app.use("/api/referral", require("./routes/api/referral/getReferralInfo"));
 app.use("/api/referral/admin/analytics", require("./routes/api/referral/getAdminReferralAnalytics"));
 app.use("/api/admin", require("./routes/admin/deviceStatsRoutes"));
+app.use("/api/maintenance", require("./routes/api/maintenance"));
 
 
 
