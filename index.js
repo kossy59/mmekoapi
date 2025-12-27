@@ -48,7 +48,7 @@ const allowedOrigins = [
   "https://mmekowebsite-mu.vercel.app", // Vercel deployment
 
   "http://localhost:3000", // Add localhost for development
-  "http://10.216.161.157:3000", // Add network URL for device access
+  "http://192.168.0.105:3000", // Add network URL for device access
 ].filter(Boolean); // Remove falsy values (e.g., undefined NEXT_PUBLIC_URL)
 
 // Configure CORS
@@ -282,6 +282,7 @@ app.use("/api/referral", require("./routes/api/referral/getReferralInfo"));
 app.use("/api/referral/admin/analytics", require("./routes/api/referral/getAdminReferralAnalytics"));
 app.use("/api/admin", require("./routes/admin/deviceStatsRoutes"));
 app.use("/api/maintenance", require("./routes/api/maintenance"));
+app.use("/api/ai-story", require("./routes/aiStoryRoutes"));
 
 
 
@@ -1331,6 +1332,11 @@ mongoose.connection.once("open", () => {
   // Start expired requests processing cron job
   const scheduledExpiredRequests = require('./scripts/scheduledExpiredRequests');
   scheduledExpiredRequests.start();
+
+  // Start story generation and lifecycle management cron jobs
+  const { initializeScheduledTasks } = require('./jobs/storyScheduler');
+  initializeScheduledTasks();
+
 
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
