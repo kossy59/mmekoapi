@@ -82,14 +82,14 @@ exports.getCreatorsWithMostViews = async (req, res) => {
     const creators = await creatordb
       .find({})
       .lean();
-    
+
     // Sort by views array length (most views first)
     creators.sort((a, b) => {
       const aViews = Array.isArray(a.views) ? a.views.length : 0;
       const bViews = Array.isArray(b.views) ? b.views.length : 0;
       return bViews - aViews;
     });
-    
+
     // Limit after sorting
     const limitedCreators = creators.slice(0, limit);
 
@@ -100,7 +100,7 @@ exports.getCreatorsWithMostViews = async (req, res) => {
         if (!user) return null;
 
         const photo = await photodb.findOne({ useraccountId: creator.userid }).lean();
-        
+
         // Get first image from creatorfiles or photolink
         let displayImage = '';
         if (creator.creatorfiles && creator.creatorfiles.length > 0) {
@@ -162,7 +162,7 @@ exports.searchUsers = async (req, res) => {
     }
 
     const searchQuery = query.trim();
-    
+
     // Search users by username or full name (case-insensitive)
     const users = await userdb
       .find({
@@ -210,7 +210,7 @@ exports.searchUsers = async (req, res) => {
         if (!user) return null;
 
         const photo = await photodb.findOne({ useraccountId: creator.userid }).lean();
-        
+
         // Get creator display image
         let displayImage = '';
         if (creator.creatorfiles && creator.creatorfiles.length > 0) {
@@ -379,6 +379,9 @@ exports.searchPostsByHashtags = async (req, res) => {
           likedBy: 1,
           commentCount: { $size: "$comments" },
           comments: 1,
+          playbackId: 1,
+          assetId: 1,
+          thumblink: 1,
           user: {
             name: {
               $concat: [
@@ -402,7 +405,7 @@ exports.searchPostsByHashtags = async (req, res) => {
     const postsWithPhotos = await Promise.all(
       posts.map(async (post) => {
         const photo = await photodb.findOne({ useraccountId: post.userid }).lean();
-        
+
         // Update user photoLink
         if (photo?.photoLink) {
           post.user.photoLink = photo.photoLink;
@@ -420,7 +423,7 @@ exports.searchPostsByHashtags = async (req, res) => {
                 // Get user information for this comment
                 const commentUser = await userdb.findById(comment.userid).lean();
                 const commentUserPhoto = await photodb.findOne({ useraccountId: comment.userid }).lean();
-                
+
                 if (commentUser) {
                   return {
                     ...comment,
@@ -435,7 +438,7 @@ exports.searchPostsByHashtags = async (req, res) => {
                     username: commentUser.username || ""
                   };
                 }
-                
+
                 return comment;
               } catch (err) {
                 console.error('Error enriching comment:', err);
@@ -443,7 +446,7 @@ exports.searchPostsByHashtags = async (req, res) => {
               }
             })
           );
-          
+
           post.comments = enrichedComments;
         }
 

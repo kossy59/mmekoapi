@@ -109,6 +109,9 @@ const readPost = async (req, res) => {
           likedBy: 1,
           comments: 1,
           isFollowingAuthor: 1,
+          playbackId: 1,
+          assetId: 1,
+          thumblink: 1,
           user: {
             _id: 1,
             firstname: 1,
@@ -189,7 +192,7 @@ const readPost = async (req, res) => {
                     commentusername: user.username || "",
                     commentuserid: user._id,
                     isVip: user.isVip || false,
-                    isVerified:user.creator_verified,
+                    isVerified: user.creator_verified,
                     vipStartDate: user.vipStartDate,
                     vipEndDate: user.vipEndDate,
                     firstname: user.firstname || "",

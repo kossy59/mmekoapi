@@ -11,7 +11,7 @@ router.route('/')
 router.route('/:pid')
     .get(async (req, res) => {
         try {
-   
+
 
             if (!mongoose.Types.ObjectId.isValid(req.params.pid)) {
                 return res.status(400).send("Invalid post id");
@@ -61,6 +61,9 @@ router.route('/:pid')
                         updatedAt: 1,
                         likes: 1,
                         comments: 1,
+                        playbackId: 1,
+                        assetId: 1,
+                        thumblink: 1,
                         user: {
                             _id: 1,
                             firstname: 1,
@@ -84,7 +87,7 @@ router.route('/:pid')
                 }
             ]);
 
-          
+
             const postWithJoins = thePost[0] || null;
 
             if (!postWithJoins?._id) {
