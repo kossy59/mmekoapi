@@ -5,6 +5,8 @@ const createPost = require("../../../Controller/Post/userpost");
 const editPost = require("../../../Controller/Post/Editpost");
 const deletePost = require("../../../Controller/Post/Removepost");
 const updatePlaybackId = require("../../../Controller/Post/updatePlaybackId");
+const createMuxAsset = require("../../../Controller/Post/create-mux-asset");
+const muxWebhook = require("../../../Controller/Post/mux-webhook");
 const multer = require("multer");
 const handleRefresh = require("../../../Middleware/refresh");
 
@@ -74,6 +76,10 @@ router
   .delete(deletePost);
 
 router.post("/updatePlaybackId", updatePlaybackId);
+
+// Mux video optimization endpoints
+router.post("/create-mux-asset", createMuxAsset);
+router.post("/mux-webhook", muxWebhook);
 
 module.exports = router;
 

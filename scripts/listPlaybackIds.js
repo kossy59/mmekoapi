@@ -1,34 +1,41 @@
 /**
- * Script to check and list posts with playbackIds
+ * Simple script to list all posts that have playbackId or assetId
  */
+
 require('dotenv').config();
 const mongoose = require('mongoose');
-const Post = require('../Creators/post');
 
-async function main() {
+async function listPlaybackIds() {
     try {
-        console.log('Connecting to MongoDB...');
-        await mongoose.connect(process.env.DB || process.env.MONGODB_URI || 'mongodb://localhost:27017/mmeko');
-        console.log('Connected!');
+        console.log('📡 Connecting to MongoDB...');
+        await mongoose.connect(process.env.MONGODB_URI);
+        console.log('✅ Connected\n');
+
+        const Post = mongoose.model('Post', new mongoose.Schema({}, { strict: false }), 'posts');
 
         const posts = await Post.find({
-            playbackId: { $exists: true, $ne: null, $ne: '' }
-        }).select('_id playbackId postfilelink');
+            $or: [
+                { playbackId: { $exists: true } },
+                { assetId: { $exists: true } }
+            ]
+        }).select('_id playbackId assetId postfilelink').limit(20);
 
-        console.log('\nPosts with playbackId:', posts.length);
+        console.log(`Found ${posts.length} posts with Mux data:\n`);
 
-        for (const post of posts) {
-            console.log(`\nPost: ${post._id}`);
-            console.log(`  playbackId: ${post.playbackId}`);
-            console.log(`  postfilelink: ${post.postfilelink ? 'yes' : 'no'}`);
-        }
+        posts.forEach((post, i) => {
+            console.log(`${i + 1}. Post ID: ${post._id}`);
+            console.log(`   PlaybackID: ${post.playbackId || 'none'}`);
+            console.log(`   AssetID: ${post.assetId || 'none'}`);
+            console.log(`   Video: ${post.postfilelink || 'none'}\n`);
+        });
+
+        await mongoose.disconnect();
+        console.log('Disconnected');
 
     } catch (error) {
-        console.error('Error:', error.message);
-    } finally {
-        await mongoose.disconnect();
-        console.log('\nDisconnected');
+        console.error('❌ Error:', error.message);
+        process.exit(1);
     }
 }
 
-main();
+listPlaybackIds();

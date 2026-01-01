@@ -144,7 +144,7 @@
 // module.exports = createPost;
 
 
-const {connectdatabase} = require('../../config/connectDB');
+const { connectdatabase } = require('../../config/connectDB');
 const sdk = require("node-appwrite");
 const postdata = require("../../Creators/post");
 const commentdata = require("../../Creators/comment");
@@ -184,7 +184,7 @@ const createPost = async (req, res) => {
   const userid = data.userid;
   let content = data.content || "";
   const posttype = data.posttype;
-  
+
   // Extract hashtags from content (words starting with #)
   const extractHashtags = (text) => {
     if (!text) return [];
@@ -194,10 +194,10 @@ const createPost = async (req, res) => {
     // Remove # and return unique hashtags (lowercase)
     return [...new Set(matches.map(tag => tag.substring(1).toLowerCase()))];
   };
-  
+
   const hashtags = extractHashtags(content);
 
-   // ------------------------------
+  // ------------------------------
   // ✅ DAILY UPLOAD LIMIT CHECK
   // ------------------------------
   const startOfDay = new Date();
@@ -219,9 +219,9 @@ const createPost = async (req, res) => {
     return res.status(400).json({ ok: false, message: "You can only upload 5 videos per day." });
   }
 
-  let postfilelink = req.body?.file_link||"";
-  let postfilepublicid = req.body?.public_id||"";
-  
+  let postfilelink = req.body?.file_link || "";
+  let postfilepublicid = req.body?.public_id || "";
+
 
   try {
     // --- Video Upload & Trimming ---
@@ -269,7 +269,7 @@ const createPost = async (req, res) => {
 
       // Upload to Cloudinary
       // const result = await uploadSingleFileToCloudinary(trimmedFile, `post`);
-      const result = {...(req.body||{})};
+      const result = { ...(req.body || {}) };
 
       // Clean up
       // fs.unlinkSync(inputPath);
@@ -281,23 +281,38 @@ const createPost = async (req, res) => {
 
       postfilelink = result.file_link;
       postfilepublicid = result.public_id;
+
+      // 🎬 Trigger Mux asset creation asynchronously (don't wait for it)
+      // This will optimize the video in the background
+      if (postfilelink) {
+        try {
+          const axios = require('axios');
+          const API_URL = process.env.API_URL || 'http://localhost:3100';
+
+          // We'll trigger this after the post is created, so we store the filelink for now
+          // The actual Mux processing will happen after post creation (see below)
+        } catch (err) {
+          console.error('Error preparing Mux processing:', err.message);
+          // Continue with post creation even if Mux prep fails
+        }
+      }
     }
 
     // --- Image Upload ---
-if (req.file && posttype === "image") {
-  // if (!req.file.mimetype.startsWith("image/")) {
-  //   return res.status(400).json({ ok: false, message: "Invalid image file" });
-  // }
+    if (req.file && posttype === "image") {
+      // if (!req.file.mimetype.startsWith("image/")) {
+      //   return res.status(400).json({ ok: false, message: "Invalid image file" });
+      // }
 
-  const result = { ...(req.body || {}) };;
+      const result = { ...(req.body || {}) };;
 
-  if (!result.file_link || !result.public_id) {
-    return res.status(500).json({ ok: false, message: "Image upload failed" });
-  }
+      if (!result.file_link || !result.public_id) {
+        return res.status(500).json({ ok: false, message: "Image upload failed" });
+      }
 
-  postfilelink = result.file_link;
-  postfilepublicid = result.public_id;
-}
+      postfilelink = result.file_link;
+      postfilepublicid = result.public_id;
+    }
 
 
     if (!userid) {
@@ -366,11 +381,50 @@ if (req.file && posttype === "image") {
       }
     }
 
+    // 🎬 Trigger Mux processing in background for video posts
+    if (posttype === "video" && postfilelink) {
+      // Fire and forget - don't wait for response
+      setImmediate(() => {
+        triggerMuxProcessing(newPost.posttime, postfilelink);
+      });
+    }
+
     return res.status(200).json({ ok: true, message: "Posted successfully", post });
 
   } catch (err) {
     console.error("Server error:", err);
     return res.status(500).json({ ok: false, message: err.message || "Internal error" });
+  }
+};
+
+// Helper function to trigger Mux processing after post creation
+const triggerMuxProcessing = async (postTime, postfilelink) => {
+  if (!postfilelink) return;
+
+  try {
+    const axios = require('axios');
+    const API_URL = process.env.API_URL || 'http://localhost:3100';
+
+    // Find the newly created post to get its ID
+    const newPost = await postdata.findOne({ posttime: postTime });
+
+    if (newPost && newPost._id) {
+      console.log(`🎬 Triggering Mux processing for post ${newPost._id}`);
+
+      // Trigger Mux asset creation (don't await - fire and forget)
+      axios.post(`${API_URL}/post/create-mux-asset`, {
+        postId: newPost._id,
+        videoUrl: postfilelink
+      }).then(() => {
+        console.log(`✅ Mux processing initiated for post ${newPost._id}`);
+      }).catch(err => {
+        console.error(`⚠️ Mux processing failed for post ${newPost._id}:`, err.message);
+        // This is OK - video will use original source as fallback
+      });
+    }
+  } catch (err) {
+    console.error('Error triggering Mux processing:', err.message);
+    // Non-critical error - post was created successfully
   }
 };
 

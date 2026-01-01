@@ -1338,6 +1338,19 @@ mongoose.connection.once("open", () => {
   const { initializeScheduledTasks } = require('./jobs/storyScheduler');
   initializeScheduledTasks();
 
+  // Start Mux asset polling to update playbackIds when assets are ready
+  const checkAndUpdateMuxAssets = require('./Controller/Post/poll-mux-assets');
+  // Check every 30 seconds for processing assets
+  setInterval(async () => {
+    try {
+      await checkAndUpdateMuxAssets();
+    } catch (error) {
+      console.error('❌ Error in Mux polling:', error.message);
+    }
+  }, 30000); // Check every 30 seconds
+  console.log('✅ Mux asset polling started (checks every 30 seconds)');
+
+
 
   server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);

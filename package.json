@@ -14,6 +14,7 @@
     "@fal-ai/client": "^1.8.1",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@google/generative-ai": "^0.24.1",
+    "@mux/mux-node": "^8.8.0",
     "appwrite": "^18.2.0",
     "aws-sdk": "^2.1692.0",
     "axios": "^1.12.0",
