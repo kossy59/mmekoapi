@@ -1,4 +1,5 @@
 const userdb = require("../../Creators/userdb");
+const historydb = require("../../Creators/mainbalance");
 
 const upgradeToVip = async (req, res) => {
   const { userid, duration = 2 } = req.body; // duration in minutes for testing, default 2 minutes
@@ -13,7 +14,7 @@ const upgradeToVip = async (req, res) => {
   try {
     // Find the user
     const user = await userdb.findOne({ _id: userid }).exec();
-    
+
     if (!user) {
       return res.status(404).json({
         ok: false,
@@ -24,7 +25,7 @@ const upgradeToVip = async (req, res) => {
     // Check if user has enough gold (hardcoded requirement: 100 gold)
     const requiredGold = 100;
     const userGold = user.balance || 0;
-    
+
     if (userGold < requiredGold) {
       return res.status(400).json({
         ok: false,
@@ -47,6 +48,17 @@ const upgradeToVip = async (req, res) => {
     user.vipAutoRenewal = true; // Enable auto-renewal by default
 
     await user.save();
+
+    // Create transaction record for VIP purchase
+    const transactionRecord = new historydb({
+      userid: userid,
+      details: `VIP upgrade purchase - 30 days subscription`,
+      spent: requiredGold.toString(),
+      income: "",
+      date: Date.now().toString()
+    });
+
+    await transactionRecord.save();
 
     return res.status(200).json({
       ok: true,
@@ -72,7 +84,7 @@ const upgradeToVip = async (req, res) => {
 
 const checkVipStatus = async (req, res) => {
   const { userid } = req.body;
-  
+
   if (!userid) {
     return res.status(400).json({
       ok: false,
@@ -82,7 +94,7 @@ const checkVipStatus = async (req, res) => {
 
   try {
     const user = await userdb.findOne({ _id: userid }).exec();
-    
+
     if (!user) {
       return res.status(404).json({
         ok: false,
@@ -101,7 +113,7 @@ const checkVipStatus = async (req, res) => {
     }
 
     const daysRemaining = isVipActive ? Math.ceil((user.vipEndDate - now) / (1000 * 60 * 60 * 24)) : 0;
-    
+
     const vipStatus = {
       isVip: isVipActive,
       vipStartDate: user.vipStartDate,
@@ -137,7 +149,7 @@ const cancelVip = async (req, res) => {
 
   try {
     const user = await userdb.findOne({ _id: userid }).exec();
-    
+
     if (!user) {
       return res.status(404).json({
         ok: false,

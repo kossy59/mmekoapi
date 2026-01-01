@@ -1,0 +1,22 @@
+﻿[dotenv@17.2.1] injecting env (31) from .env -- tip: ­ƒôí auto-backup env with Radar: https://dotenvx.com/radar
+Connecting to MongoDB...
+node : Error: The `uri` parameter to 
+`openUri()` must be a string, got 
+"undefined". Make sure the first 
+parameter to `mongoose.connect()` or 
+`mongoose.createConnection()` is a 
+string.
+At line:1 char:1
++ node scripts/listPlaybackIds.js 
+2>&1 | Out-File -Encoding utf8 -FileP 
+...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpec 
+   ified: (Error: The `uri...)` is a  
+   string.:String) [], RemoteExcept   
+ ion
+    + FullyQualifiedErrorId : NativeC 
+   ommandError
+ 
+
+Disconnected

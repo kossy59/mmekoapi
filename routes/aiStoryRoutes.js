@@ -9,7 +9,7 @@ const {
     addComment
 } = require('../Controller/AiStoryController');
 const { getAnyaAnalytics } = require('../Controller/AnyaAnalyticsController');
-const { trackPageVisit, getPageVisitAnalytics } = require('../Controller/AnyaPageVisitController');
+const { trackPageVisit, getPageVisitAnalytics, startSession, updateSessionActivity, endSession, getUserSessionAnalytics } = require('../Controller/AnyaPageVisitController');
 
 // Generate and save 5 stories
 router.post('/generate', generateAndSaveStories);
@@ -34,6 +34,12 @@ router.post('/track-visit', trackPageVisit);
 
 // Get page visit analytics (admin)
 router.get('/visit-analytics', getPageVisitAnalytics);
+
+// Session tracking endpoints
+router.post('/session/start', startSession);
+router.post('/session/heartbeat', updateSessionActivity);
+router.post('/session/end', endSession);
+router.get('/session/analytics', getUserSessionAnalytics);
 
 // Delete all stories (for testing)
 router.delete('/stories', deleteAllStories);

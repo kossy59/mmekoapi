@@ -13,18 +13,18 @@ const getTransactionHistory = async (req, res) => {
     const creatordb = require("../../Creators/creators");
     const creatorRecord = await creatordb.findOne({ userid: userid }).exec();
     const creator_portfolio_id = creatorRecord ? creatorRecord._id : null;
-    
+
     // Get all transaction history for this user (both as user and as creator)
     let allTransactions = await historydb.find({ userid: userid })
       .sort({ date: -1 })
       .exec();
-    
+
     // Also try querying with ObjectId format in case there's a mismatch
     const mongoose = require('mongoose');
     let allTransactionsObjectId = await historydb.find({ userid: new mongoose.Types.ObjectId(userid) })
       .sort({ date: -1 })
       .exec();
-    
+
     // If user is a creator, also get transactions for their creator ID
     let creatorTransactions = [];
     if (creator_portfolio_id) {
@@ -32,29 +32,29 @@ const getTransactionHistory = async (req, res) => {
         .sort({ date: -1 })
         .exec();
     }
-    
-    
+
+
     // Test transaction creation removed - no longer needed
-    
+
     // Combine all transactions (user + creator)
     let combinedTransactions = [...allTransactions, ...allTransactionsObjectId, ...creatorTransactions];
-    
+
     // Remove duplicates based on _id
-    const uniqueTransactions = combinedTransactions.filter((transaction, index, self) => 
+    const uniqueTransactions = combinedTransactions.filter((transaction, index, self) =>
       index === self.findIndex(t => t._id.toString() === transaction._id.toString())
     );
-    
+
     // Sort by date (newest first)
     uniqueTransactions.sort((a, b) => new Date(parseInt(b.date)) - new Date(parseInt(a.date)));
-    
+
     allTransactions = uniqueTransactions;
-    
+
 
     // Filter only earnings-related transactions (not balance transactions)
     let earningsTransactions = allTransactions.filter(transaction => {
       const details = transaction.details || "";
       const detailsLower = details.toLowerCase();
-      const isEarningsTransaction = 
+      const isEarningsTransaction =
         // Any host type earnings (creator receives) - Fan meet, Fan date, Fan call, etc.
         details.includes("completed - payment received") ||
         // Any host type payments (fan pays) - Fan meet, Fan date, Fan call, etc.
@@ -63,6 +63,8 @@ const getTransactionHistory = async (req, res) => {
         details.includes("Fan call - payment received") ||
         // Video call payments (fan pays)
         details.includes("Fan call - payment for") ||
+        // VIP upgrade purchase (user pays)
+        details.includes("VIP upgrade purchase") ||
         // Exclusive post earnings (creator receives)
         details.includes("exclusive post sale") ||
         details.includes("exclusive post") ||
@@ -77,17 +79,17 @@ const getTransactionHistory = async (req, res) => {
         // Refunds that affect earnings (these are balance transactions, not earnings)
         // We exclude refunds as they affect balance, not earnings
         false;
-      
+
       // Exclude balance-related transactions
-      const isBalanceTransaction = 
+      const isBalanceTransaction =
         details.includes("refund") ||
         details.includes("expired") ||
         details.includes("cancelled") ||
         details.includes("declined") ||
         details.includes("balance");
-      
+
       const shouldInclude = isEarningsTransaction && !isBalanceTransaction;
-      
+
       return shouldInclude;
     });
 
@@ -97,7 +99,7 @@ const getTransactionHistory = async (req, res) => {
       let amount = "0";
       let description = transaction.details || "Transaction";
       let status = "completed";
-      
+
       if (transaction.income && parseFloat(transaction.income) > 0) {
         // This is an earning addition
         amount = `+${transaction.income}`;
@@ -125,10 +127,10 @@ const getTransactionHistory = async (req, res) => {
     });
 
 
-    return res.status(200).json({ 
-      ok: true, 
-      message: "Transaction history fetched successfully", 
-      transactions: formattedTransactions 
+    return res.status(200).json({
+      ok: true,
+      message: "Transaction history fetched successfully",
+      transactions: formattedTransactions
     });
 
   } catch (err) {

@@ -41,6 +41,9 @@ const readPost = async (req, res) => {
           posttype: 1,
           createdAt: 1,
           updatedAt: 1,
+          playbackId: 1,
+          assetId: 1,
+          thumblink: 1,
           user: {
             _id: 1,
             firstname: 1,

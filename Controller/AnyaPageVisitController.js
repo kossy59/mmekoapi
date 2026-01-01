@@ -237,7 +237,372 @@ const getPageVisitAnalytics = async (req, res) => {
     }
 };
 
+/**
+ * Start a new session for tracking user time spent
+ */
+const startSession = async (req, res) => {
+    try {
+        const AnyaPageSession = require('../models/AnyaPageSession');
+        const { pageType, storyId, userId, visitorId } = req.body;
+
+        // Validate required fields
+        if (!pageType || !visitorId) {
+            return res.status(400).json({
+                ok: false,
+                message: 'pageType and visitorId are required'
+            });
+        }
+
+        // Check if there's already an active session for this visitor
+        const existingSession = await AnyaPageSession.findOne({
+            visitorId,
+            isActive: true,
+            pageType,
+            storyId: storyId || null
+        });
+
+        if (existingSession) {
+            // Update last activity and return existing session
+            existingSession.lastActivity = new Date();
+            await existingSession.save();
+
+            return res.json({
+                ok: true,
+                message: 'Session already active',
+                sessionId: existingSession._id
+            });
+        }
+
+        // Get IP address and user agent
+        const ipAddress = req.headers['x-forwarded-for']?.split(',')[0] ||
+            req.headers['x-real-ip'] ||
+            req.connection.remoteAddress;
+        const userAgent = req.headers['user-agent'];
+
+        // Create new session
+        const session = new AnyaPageSession({
+            pageType,
+            storyId: storyId || null,
+            userId: userId || null,
+            visitorId,
+            ipAddress,
+            userAgent,
+            sessionStart: new Date(),
+            lastActivity: new Date(),
+            isActive: true
+        });
+
+        await session.save();
+
+        res.json({
+            ok: true,
+            message: 'Session started',
+            sessionId: session._id
+        });
+
+    } catch (error) {
+        console.error('Error starting session:', error);
+        res.status(500).json({
+            ok: false,
+            message: 'Failed to start session',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Update session activity (heartbeat)
+ */
+const updateSessionActivity = async (req, res) => {
+    try {
+        const AnyaPageSession = require('../models/AnyaPageSession');
+        const { sessionId, visitorId } = req.body;
+
+        if (!sessionId && !visitorId) {
+            return res.status(400).json({
+                ok: false,
+                message: 'sessionId or visitorId is required'
+            });
+        }
+
+        let session;
+        if (sessionId) {
+            session = await AnyaPageSession.findById(sessionId);
+        } else {
+            // Find most recent active session for visitor
+            session = await AnyaPageSession.findOne({
+                visitorId,
+                isActive: true
+            }).sort({ sessionStart: -1 });
+        }
+
+        if (!session) {
+            return res.status(404).json({
+                ok: false,
+                message: 'Session not found'
+            });
+        }
+
+        // Update last activity
+        session.lastActivity = new Date();
+        await session.save();
+
+        res.json({
+            ok: true,
+            message: 'Activity updated',
+            sessionId: session._id
+        });
+
+    } catch (error) {
+        console.error('Error updating session activity:', error);
+        res.status(500).json({
+            ok: false,
+            message: 'Failed to update session activity',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * End a session and calculate duration
+ */
+const endSession = async (req, res) => {
+    try {
+        const AnyaPageSession = require('../models/AnyaPageSession');
+        const { sessionId, visitorId } = req.body;
+
+        if (!sessionId && !visitorId) {
+            return res.status(400).json({
+                ok: false,
+                message: 'sessionId or visitorId is required'
+            });
+        }
+
+        let session;
+        if (sessionId) {
+            session = await AnyaPageSession.findById(sessionId);
+        } else {
+            // Find most recent active session for visitor
+            session = await AnyaPageSession.findOne({
+                visitorId,
+                isActive: true
+            }).sort({ sessionStart: -1 });
+        }
+
+        if (!session) {
+            return res.status(404).json({
+                ok: false,
+                message: 'Session not found'
+            });
+        }
+
+        // Calculate duration
+        const endTime = new Date();
+        const duration = Math.floor((endTime - session.sessionStart) / 1000); // in seconds
+
+        session.sessionEnd = endTime;
+        session.duration = duration;
+        session.isActive = false;
+        await session.save();
+
+        res.json({
+            ok: true,
+            message: 'Session ended',
+            sessionId: session._id,
+            duration
+        });
+
+    } catch (error) {
+        console.error('Error ending session:', error);
+        res.status(500).json({
+            ok: false,
+            message: 'Failed to end session',
+            error: error.message
+        });
+    }
+};
+
+/**
+ * Get user session analytics
+ */
+const getUserSessionAnalytics = async (req, res) => {
+    try {
+        const AnyaPageSession = require('../models/AnyaPageSession');
+        const UserDB = require('../Creators/userdb');
+        const { period = '7days' } = req.query;
+
+        // Calculate date range
+        const now = new Date();
+        let startDate;
+
+        switch (period) {
+            case 'today':
+                startDate = new Date(now.setHours(0, 0, 0, 0));
+                break;
+            case '7days':
+                startDate = new Date(now.setDate(now.getDate() - 7));
+                break;
+            case 'month':
+                startDate = new Date(now.setMonth(now.getMonth() - 1));
+                break;
+            case '3months':
+                startDate = new Date(now.setMonth(now.getMonth() - 3));
+                break;
+            case '6months':
+                startDate = new Date(now.setMonth(now.getMonth() - 6));
+                break;
+            case 'year':
+                startDate = new Date(now.setFullYear(now.getFullYear() - 1));
+                break;
+            case 'all':
+                startDate = new Date(0);
+                break;
+            default:
+                startDate = new Date(now.setDate(now.getDate() - 7));
+        }
+
+        // Fetch all sessions in the period
+        const sessions = await AnyaPageSession.find({
+            sessionStart: { $gte: startDate }
+        }).sort({ sessionStart: -1 });
+
+        // Close any stale sessions (inactive for more than 5 minutes)
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+        const staleSessions = sessions.filter(s =>
+            s.isActive && s.lastActivity < fiveMinutesAgo
+        );
+
+        for (const session of staleSessions) {
+            const duration = Math.floor((session.lastActivity - session.sessionStart) / 1000);
+            session.sessionEnd = session.lastActivity;
+            session.duration = duration;
+            session.isActive = false;
+            await session.save();
+        }
+
+        // Group sessions by user/visitor
+        const userSessionMap = new Map();
+
+        sessions.forEach(session => {
+            const key = session.userId || session.visitorId;
+            const duration = session.isActive
+                ? Math.floor((new Date() - session.sessionStart) / 1000)
+                : session.duration;
+
+            if (!userSessionMap.has(key)) {
+                userSessionMap.set(key, {
+                    userId: session.userId,
+                    visitorId: session.visitorId,
+                    totalDuration: 0,
+                    sessionCount: 0,
+                    sessions: []
+                });
+            }
+
+            const userData = userSessionMap.get(key);
+            userData.totalDuration += duration;
+            userData.sessionCount += 1;
+            userData.sessions.push({
+                id: session._id,
+                pageType: session.pageType,
+                storyId: session.storyId,
+                start: session.sessionStart,
+                end: session.sessionEnd,
+                duration,
+                isActive: session.isActive
+            });
+        });
+
+        // Fetch user details for all unique user IDs
+        const userIds = Array.from(userSessionMap.values())
+            .map(u => u.userId)
+            .filter(id => id); // Remove nulls
+
+        const users = await UserDB.find({ _id: { $in: userIds } })
+            .select('_id firstname lastname username');
+
+        // Create a map of userId to user details
+        const userDetailsMap = new Map();
+        users.forEach(user => {
+            userDetailsMap.set(user._id.toString(), {
+                firstname: user.firstname,
+                lastname: user.lastname,
+                username: user.username
+            });
+        });
+
+        // Convert to array and calculate averages, including user details
+        const userSessions = Array.from(userSessionMap.values())
+            .map(user => {
+                const userDetails = user.userId ? userDetailsMap.get(user.userId) : null;
+                return {
+                    ...user,
+                    firstname: userDetails?.firstname || null,
+                    lastname: userDetails?.lastname || null,
+                    username: userDetails?.username || null,
+                    avgDuration: Math.floor(user.totalDuration / user.sessionCount),
+                    formattedTotalDuration: formatDuration(user.totalDuration),
+                    formattedAvgDuration: formatDuration(Math.floor(user.totalDuration / user.sessionCount))
+                };
+            })
+            .sort((a, b) => b.totalDuration - a.totalDuration)
+            .slice(0, 50); // Top 50 users
+
+        // Calculate summary stats
+        const totalSessions = sessions.length;
+        const totalDuration = sessions.reduce((sum, s) => {
+            const duration = s.isActive
+                ? Math.floor((new Date() - s.sessionStart) / 1000)
+                : s.duration;
+            return sum + duration;
+        }, 0);
+        const avgDuration = totalSessions > 0 ? Math.floor(totalDuration / totalSessions) : 0;
+
+        res.json({
+            ok: true,
+            data: {
+                summary: {
+                    totalSessions,
+                    totalDuration,
+                    avgDuration,
+                    formattedTotalDuration: formatDuration(totalDuration),
+                    formattedAvgDuration: formatDuration(avgDuration),
+                    uniqueUsers: userSessionMap.size
+                },
+                userSessions
+            }
+        });
+
+    } catch (error) {
+        console.error('Error fetching user session analytics:', error);
+        res.status(500).json({
+            ok: false,
+            message: 'Failed to fetch user session analytics',
+            error: error.message
+        });
+    }
+};
+
+// Helper function to format duration
+function formatDuration(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hours > 0) {
+        return `${hours}h ${minutes}m ${secs}s`;
+    } else if (minutes > 0) {
+        return `${minutes}m ${secs}s`;
+    } else {
+        return `${secs}s`;
+    }
+}
+
 module.exports = {
     trackPageVisit,
-    getPageVisitAnalytics
+    getPageVisitAnalytics,
+    startSession,
+    updateSessionActivity,
+    endSession,
+    getUserSessionAnalytics
 };
