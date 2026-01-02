@@ -4,6 +4,7 @@ const {
     generateAndSaveStories,
     getAllStories,
     getStoryById,
+    deleteStory,
     deleteAllStories,
     likeStory,
     addComment
@@ -40,6 +41,9 @@ router.post('/session/start', startSession);
 router.post('/session/heartbeat', updateSessionActivity);
 router.post('/session/end', endSession);
 router.get('/session/analytics', getUserSessionAnalytics);
+
+// Delete a single story by ID (admin)
+router.delete('/stories/:id', deleteStory);
 
 // Delete all stories (for testing)
 router.delete('/stories', deleteAllStories);

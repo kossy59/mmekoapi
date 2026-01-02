@@ -379,8 +379,6 @@ exports.searchPostsByHashtags = async (req, res) => {
           likedBy: 1,
           commentCount: { $size: "$comments" },
           comments: 1,
-          playbackId: 1,
-          assetId: 1,
           thumblink: 1,
           user: {
             name: {
