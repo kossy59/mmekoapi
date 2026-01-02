@@ -89,6 +89,16 @@ const generateDailyStory = async () => {
         - Perspective: ${config.perspective}
         - Story type: ${config.type}
 
+        LANGUAGE CONSTRAINTS (MANDATORY):
+        - Use simple, everyday English
+        - Write as if speaking to someone tired and emotional
+        - Avoid advanced vocabulary, poetic abstraction, or intellectual language
+        - No metaphors that require interpretation
+        - Prefer short, direct sentences
+        - If a word sounds "smart," replace it with a simpler one
+        - Writing should be understandable by a 12-year-old
+        - Emotional clarity over elegance
+
         GLOBAL RULES:
         - No reused characters, plots, or endings across days
         - No repeated phrases
@@ -491,6 +501,44 @@ const getStoryById = async (req, res) => {
     }
 };
 
+// Delete a single story by ID
+const deleteStory = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const story = await Story.findById(id);
+
+        if (!story) {
+            return res.status(404).json({ error: "Story not found" });
+        }
+
+        // Import AnyaPageVisit model for deleting related visits
+        const AnyaPageVisit = require('../models/AnyaPageVisit');
+
+        // Delete all page visit records related to this story
+        await AnyaPageVisit.deleteMany({ storyId: id });
+        console.log(`✅ Deleted page visit records for story ${id}`);
+
+        // TODO: Delete associated images from Storj here
+        // You may want to add logic to remove images based on story ID
+
+        // Delete the story document (this automatically deletes embedded likes, comments, and views)
+        await Story.findByIdAndDelete(id);
+        console.log(`✅ Deleted story ${id}: ${story.title}`);
+
+        res.status(200).json({
+            ok: true,
+            message: "Story and all related data deleted successfully"
+        });
+    } catch (error) {
+        console.error("Error deleting story:", error);
+        res.status(500).json({
+            ok: false,
+            error: "Failed to delete story"
+        });
+    }
+};
+
 // Delete all stories (for testing)
 const deleteAllStories = async (req, res) => {
     try {
@@ -605,6 +653,7 @@ module.exports = {
     deleteOldStories,
     getAllStories,
     getStoryById,
+    deleteStory,
     deleteAllStories,
     likeStory,
     addComment

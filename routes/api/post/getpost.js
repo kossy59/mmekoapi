@@ -61,8 +61,6 @@ router.route('/:pid')
                         updatedAt: 1,
                         likes: 1,
                         comments: 1,
-                        playbackId: 1,
-                        assetId: 1,
                         thumblink: 1,
                         user: {
                             _id: 1,
