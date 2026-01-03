@@ -144,7 +144,7 @@
 // module.exports = createPost;
 
 
-const {connectdatabase} = require('../../config/connectDB');
+const { connectdatabase } = require('../../config/connectDB');
 const sdk = require("node-appwrite");
 const postdata = require("../../Creators/post");
 const commentdata = require("../../Creators/comment");
@@ -184,7 +184,7 @@ const createPost = async (req, res) => {
   const userid = data.userid;
   let content = data.content || "";
   const posttype = data.posttype;
-  
+
   // Extract hashtags from content (words starting with #)
   const extractHashtags = (text) => {
     if (!text) return [];
@@ -194,10 +194,10 @@ const createPost = async (req, res) => {
     // Remove # and return unique hashtags (lowercase)
     return [...new Set(matches.map(tag => tag.substring(1).toLowerCase()))];
   };
-  
+
   const hashtags = extractHashtags(content);
 
-   // ------------------------------
+  // ------------------------------
   // ✅ DAILY UPLOAD LIMIT CHECK
   // ------------------------------
   const startOfDay = new Date();
@@ -219,9 +219,9 @@ const createPost = async (req, res) => {
     return res.status(400).json({ ok: false, message: "You can only upload 5 videos per day." });
   }
 
-  let postfilelink = req.body?.file_link||"";
-  let postfilepublicid = req.body?.public_id||"";
-  
+  let postfilelink = req.body?.file_link || "";
+  let postfilepublicid = req.body?.public_id || "";
+
 
   try {
     // --- Video Upload & Trimming ---
@@ -269,7 +269,7 @@ const createPost = async (req, res) => {
 
       // Upload to Cloudinary
       // const result = await uploadSingleFileToCloudinary(trimmedFile, `post`);
-      const result = {...(req.body||{})};
+      const result = { ...(req.body || {}) };
 
       // Clean up
       // fs.unlinkSync(inputPath);
@@ -284,20 +284,20 @@ const createPost = async (req, res) => {
     }
 
     // --- Image Upload ---
-if (req.file && posttype === "image") {
-  // if (!req.file.mimetype.startsWith("image/")) {
-  //   return res.status(400).json({ ok: false, message: "Invalid image file" });
-  // }
+    if (req.file && posttype === "image") {
+      // if (!req.file.mimetype.startsWith("image/")) {
+      //   return res.status(400).json({ ok: false, message: "Invalid image file" });
+      // }
 
-  const result = { ...(req.body || {}) };;
+      const result = { ...(req.body || {}) };;
 
-  if (!result.file_link || !result.public_id) {
-    return res.status(500).json({ ok: false, message: "Image upload failed" });
-  }
+      if (!result.file_link || !result.public_id) {
+        return res.status(500).json({ ok: false, message: "Image upload failed" });
+      }
 
-  postfilelink = result.file_link;
-  postfilepublicid = result.public_id;
-}
+      postfilelink = result.file_link;
+      postfilepublicid = result.public_id;
+    }
 
 
     if (!userid) {

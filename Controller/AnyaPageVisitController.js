@@ -390,9 +390,10 @@ const endSession = async (req, res) => {
         }
 
         if (!session) {
-            return res.status(404).json({
-                ok: false,
-                message: 'Session not found'
+            // Gracefully handle missing session - user may have left before session started
+            return res.json({
+                ok: true,
+                message: 'No active session found, nothing to end'
             });
         }
 

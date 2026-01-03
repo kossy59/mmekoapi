@@ -284,6 +284,8 @@ app.use("/api/referral/admin/analytics", require("./routes/api/referral/getAdmin
 app.use("/api/admin", require("./routes/admin/deviceStatsRoutes"));
 app.use("/api/maintenance", require("./routes/api/maintenance"));
 app.use("/api/ai-story", require("./routes/aiStoryRoutes"));
+console.log("✅ Registering /api/video route");
+app.use("/api/video", require("./routes/api/video/Stream"));
 
 
 
