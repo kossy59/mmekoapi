@@ -42,7 +42,7 @@ if (!STORJ_ACCESS_KEY_ID || !STORJ_SECRET_ACCESS_KEY || !STORJ_ENDPOINT) {
   console.error('STORJ_ENDPOINT:', STORJ_ENDPOINT ? 'SET' : 'NOT SET');
   console.error('Current working directory:', process.cwd());
   console.error('Node environment:', process.env.NODE_ENV);
-  
+
   throw new Error(
     "[Storj Config] Missing one of STORJ_ACCESS_KEY_ID / STORJ_SECRET_ACCESS_KEY / STORJ_ENDPOINT env vars. " +
     "Please check your .env file or system environment variables."
@@ -147,13 +147,13 @@ async function saveFile(file, filePath, folder = STORJ_BUCKET_DEFAULT) {
   try {
     const fs = require('fs');
     const path = require('path');
-    
+
     // Read file into memory
     const buffer = fs.readFileSync(filePath);
     const processedBuffer = await processBufferByMime(buffer, originalname, mimetype);
-    
+
     const key = generateUniqueFileName(originalname);
-    
+
     const params = {
       Bucket: bucket,
       Key: key,
@@ -167,11 +167,11 @@ async function saveFile(file, filePath, folder = STORJ_BUCKET_DEFAULT) {
     // Clean up local file after upload
     try {
       fs.unlinkSync(filePath);
-    } catch (_) {}
+    } catch (_) { }
 
     let fileUrl = await createLinkshareUrl(bucket, key);
     if (!fileUrl) fileUrl = getFileUrl(bucket, key);
-    
+
     return {
       public_id: key,
       file_link: fileUrl,
@@ -197,7 +197,7 @@ async function uploadSingleFileToCloudinary(file, folder = STORJ_BUCKET_DEFAULT)
     );
 
     const key = generateUniqueFileName(file.originalname);
-    
+
     const params = {
       Bucket: bucket,
       Key: key,
@@ -208,8 +208,8 @@ async function uploadSingleFileToCloudinary(file, folder = STORJ_BUCKET_DEFAULT)
 
     await s3Client.putObject(params).promise();
 
-        let fileUrl = await createLinkshareUrl(bucket, key);
-        if (!fileUrl) fileUrl = getFileUrl(bucket, key);
+    let fileUrl = await createLinkshareUrl(bucket, key);
+    if (!fileUrl) fileUrl = getFileUrl(bucket, key);
 
     return {
       public_id: key,
@@ -225,7 +225,7 @@ async function uploadSingleFileToCloudinary(file, folder = STORJ_BUCKET_DEFAULT)
 // -----------------------------
 async function uploadManyFilesToCloudinary(files, folder = STORJ_BUCKET_DEFAULT) {
   const bucket = getBucketName(folder);
-  
+
   if (!files || files.length === 0) return [];
 
   const results = await Promise.all(
@@ -238,7 +238,7 @@ async function uploadManyFilesToCloudinary(files, folder = STORJ_BUCKET_DEFAULT)
         );
 
         const key = generateUniqueFileName(file.originalname);
-        
+
         const params = {
           Bucket: bucket,
           Key: key,
@@ -251,7 +251,7 @@ async function uploadManyFilesToCloudinary(files, folder = STORJ_BUCKET_DEFAULT)
 
         let fileUrl = await createLinkshareUrl(bucket, key);
         if (!fileUrl) fileUrl = getFileUrl(bucket, key);
-        
+
         return {
           public_id: key,
           file_link: fileUrl,
@@ -275,7 +275,7 @@ async function uploadManyFilesToCloudinary(files, folder = STORJ_BUCKET_DEFAULT)
 // -----------------------------
 async function deleteFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
   const bucket = getBucketName(folder);
-  
+
   if (!publicId) {
     console.warn("[deleteFile] No public_id provided");
     return false;
@@ -301,7 +301,7 @@ async function deleteFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
 // -----------------------------
 async function updateSingleFileToCloudinary(oldPublicId, newFile, folder = STORJ_BUCKET_DEFAULT) {
   const bucket = getBucketName(folder);
-  
+
   try {
     // Delete old file
     if (oldPublicId) {
@@ -350,7 +350,7 @@ async function updateManyFileToCloudinary(oldPublicIds = [], newFiles = [], fold
 // -----------------------------
 async function previewFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
   const bucket = getBucketName(folder);
-  
+
   if (!publicId) {
     return null;
   }
@@ -377,27 +377,40 @@ async function previewFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
 // -----------------------------
 // streamFile (read via SDK and return stream + headers)
 // -----------------------------
-async function streamFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
+async function streamFile(publicId, folder = STORJ_BUCKET_DEFAULT, start, end) {
   const bucket = getBucketName(folder);
   if (!publicId) return null;
   try {
-    const params = { Bucket: bucket, Key: publicId };
+    const params = {
+      Bucket: bucket,
+      Key: publicId
+    };
+
+    // Add Range parameter if start/end are provided
+    if (typeof start === 'number') {
+      const rangeString = `bytes=${start}-${typeof end === 'number' ? end : ''}`;
+      params.Range = rangeString;
+    }
+
     const response = await s3Client.getObject(params).promise();
-    
+
     // AWS SDK v2 returns Body as Buffer, we need to create a readable stream
     const { Readable } = require('stream');
     const stream = new Readable();
     stream.push(response.Body);
     stream.push(null); // End the stream
-    
+
     return {
       body: stream, // Readable stream
       contentType: response.ContentType || 'application/octet-stream',
       contentLength: response.ContentLength,
       lastModified: response.LastModified,
       etag: response.ETag,
+      contentRange: response.ContentRange, // Important for 206 responses
+      acceptRanges: response.AcceptRanges,
     };
   } catch (error) {
+    console.error('[streamFile] Error:', error.message);
     return null;
   }
 }
