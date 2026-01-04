@@ -48,7 +48,7 @@ const allowedOrigins = [
   "https://mmekowebsite-mu.vercel.app", // Vercel deployment
 
   "http://localhost:3000", // Add localhost for development
-  "http://192.168.0.105:3000", // Add network URL for device access
+  "http://10.70.105.157:3000", // Add network URL for device access
 ].filter(Boolean); // Remove falsy values (e.g., undefined NEXT_PUBLIC_URL)
 
 // Configure CORS
@@ -284,6 +284,7 @@ app.use("/api/referral/admin/analytics", require("./routes/api/referral/getAdmin
 app.use("/api/admin", require("./routes/admin/deviceStatsRoutes"));
 app.use("/api/maintenance", require("./routes/api/maintenance"));
 app.use("/api/ai-story", require("./routes/aiStoryRoutes"));
+app.use("/api", require("./routes/version")); // Version management
 console.log("✅ Registering /api/video route");
 app.use("/api/video", require("./routes/api/video/Stream"));
 

@@ -159,7 +159,10 @@ const generateDailyStory = async () => {
             launchDate: now,
             expiresAt: expiresAt,
             deletesAt: deletesAt,
-            isExpired: false
+            isExpired: false,
+            isDraft: true,
+            isPublished: false,
+            imageGenerationStatus: 'pending'
         });
 
         const savedStory = await story.save();
@@ -207,6 +210,13 @@ async function generateImagesForStories(stories) {
     for (const story of stories) {
         console.log(`🎨 Generating images for story: ${story.title} (${story.panels.length} panels)`);
 
+        // Update status to in_progress
+        story.imageGenerationStatus = 'in_progress';
+        await story.save();
+
+        let allImagesGenerated = true;
+        let lastError = null;
+
         try {
             // Generate cover image (first panel)
             const coverPanel = story.panels[0];
@@ -223,6 +233,9 @@ async function generateImagesForStories(stories) {
                 console.log(`  ✅ Cover image generated`);
                 console.log(`  ⏳ Cooling down for 10 seconds before next panel...`);
                 await new Promise(resolve => setTimeout(resolve, 10000));
+            } else {
+                allImagesGenerated = false;
+                lastError = 'Failed to generate cover image';
             }
 
             // Generate images for remaining panels
@@ -239,6 +252,10 @@ async function generateImagesForStories(stories) {
                 if (imageUrl) {
                     story.panels[i].imageUrl = imageUrl;
                     console.log(`  ✅ Panel ${panel.panel_number} image generated`);
+                } else {
+                    allImagesGenerated = false;
+                    lastError = `Failed to generate image for panel ${panel.panel_number}`;
+                    console.log(`  ❌ Panel ${panel.panel_number} image generation failed`);
                 }
 
                 // Delay between panel generations
@@ -246,11 +263,31 @@ async function generateImagesForStories(stories) {
                 await new Promise(resolve => setTimeout(resolve, 10000));
             }
 
+            // Update story status based on results
+            if (allImagesGenerated) {
+                story.imageGenerationStatus = 'completed';
+                story.isDraft = false;
+                story.isPublished = true;
+                story.imageGenerationError = null;
+                console.log(`✅ All images generated successfully! Story published.`);
+            } else {
+                story.imageGenerationStatus = 'failed';
+                story.isDraft = true;
+                story.isPublished = false;
+                story.imageGenerationError = lastError;
+                console.log(`❌ Image generation incomplete. Story saved as draft.`);
+            }
+
             await story.save();
-            console.log(`✅ Completed all images for story: ${story.title}`);
+            console.log(`💾 Story status updated: ${story.imageGenerationStatus}`);
 
         } catch (error) {
             console.error(`❌ Error generating images for story ${story.title}:`, error.message);
+            story.imageGenerationStatus = 'failed';
+            story.isDraft = true;
+            story.isPublished = false;
+            story.imageGenerationError = error.message || 'Unknown error during image generation';
+            await story.save();
         }
     }
 
@@ -420,7 +457,7 @@ const deleteOldStories = async () => {
 // Get all stories (with lifecycle status)
 const getAllStories = async (req, res) => {
     try {
-        const stories = await Story.find({ isPublished: true })
+        const stories = await Story.find({ isPublished: true, isDraft: false })
             .sort({ createdAt: -1 })
             .select('_id story_number title emotional_core panels coverImage views likes createdAt expiresAt isExpired');
 
@@ -646,6 +683,118 @@ const addComment = async (req, res) => {
     }
 };
 
+// Get all draft stories (admin only)
+const getDraftStories = async (req, res) => {
+    try {
+        const drafts = await Story.find({ isDraft: true })
+            .sort({ createdAt: -1 })
+            .select('_id story_number title emotional_core coverImage imageGenerationStatus imageGenerationError lastImageRetryAt createdAt panels');
+
+        // Add progress info for each draft
+        const draftsWithProgress = drafts.map(draft => {
+            const draftObj = draft.toObject();
+            const totalPanels = draftObj.panels.length;
+            const panelsWithImages = draftObj.panels.filter(p => p.imageUrl).length;
+
+            return {
+                ...draftObj,
+                imageProgress: {
+                    total: totalPanels,
+                    completed: panelsWithImages,
+                    percentage: Math.round((panelsWithImages / totalPanels) * 100)
+                }
+            };
+        });
+
+        res.status(200).json({
+            success: true,
+            count: draftsWithProgress.length,
+            drafts: draftsWithProgress
+        });
+    } catch (error) {
+        console.error("Error fetching draft stories:", error);
+        res.status(500).json({ error: "Failed to fetch draft stories" });
+    }
+};
+
+// Retry image generation for a draft story (admin only)
+const retryImageGeneration = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const story = await Story.findById(id);
+
+        if (!story) {
+            return res.status(404).json({ error: "Story not found" });
+        }
+
+        if (!story.isDraft) {
+            return res.status(400).json({ error: "Story is not a draft" });
+        }
+
+        console.log(`🔄 Retrying image generation for story: ${story.title}`);
+
+        // Update retry timestamp
+        story.lastImageRetryAt = new Date();
+        story.imageGenerationStatus = 'in_progress';
+        story.imageGenerationError = null;
+        await story.save();
+
+        // Regenerate images in background
+        generateImagesForStories([story]).catch(err => {
+            console.error("Error retrying image generation:", err);
+        });
+
+        res.status(200).json({
+            success: true,
+            message: "Image generation retry started in background",
+            story: {
+                _id: story._id,
+                title: story.title,
+                imageGenerationStatus: story.imageGenerationStatus
+            }
+        });
+
+    } catch (error) {
+        console.error("Error retrying image generation:", error);
+        res.status(500).json({ error: "Failed to retry image generation" });
+    }
+};
+
+// Manually publish a draft story (admin only, even if images incomplete)
+const publishDraft = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const story = await Story.findById(id);
+
+        if (!story) {
+            return res.status(404).json({ error: "Story not found" });
+        }
+
+        if (!story.isDraft) {
+            return res.status(400).json({ error: "Story is not a draft" });
+        }
+
+        // Manually publish
+        story.isDraft = false;
+        story.isPublished = true;
+        await story.save();
+
+        console.log(`✅ Manually published draft story: ${story.title}`);
+
+        res.status(200).json({
+            success: true,
+            message: "Draft story published successfully",
+            story
+        });
+
+    } catch (error) {
+        console.error("Error publishing draft:", error);
+        res.status(500).json({ error: "Failed to publish draft" });
+    }
+};
+
 module.exports = {
     generateAndSaveStories,
     generateDailyStory,
@@ -656,5 +805,8 @@ module.exports = {
     deleteStory,
     deleteAllStories,
     likeStory,
-    addComment
+    addComment,
+    getDraftStories,
+    retryImageGeneration,
+    publishDraft
 };

@@ -7,7 +7,10 @@ const {
     deleteStory,
     deleteAllStories,
     likeStory,
-    addComment
+    addComment,
+    getDraftStories,
+    retryImageGeneration,
+    publishDraft
 } = require('../Controller/AiStoryController');
 const { getAnyaAnalytics } = require('../Controller/AnyaAnalyticsController');
 const { trackPageVisit, getPageVisitAnalytics, startSession, updateSessionActivity, endSession, getUserSessionAnalytics } = require('../Controller/AnyaPageVisitController');
@@ -47,5 +50,10 @@ router.delete('/stories/:id', deleteStory);
 
 // Delete all stories (for testing)
 router.delete('/stories', deleteAllStories);
+
+// Draft management endpoints (admin only)
+router.get('/drafts', getDraftStories);
+router.post('/drafts/:id/retry', retryImageGeneration);
+router.post('/drafts/:id/publish', publishDraft);
 
 module.exports = router;
