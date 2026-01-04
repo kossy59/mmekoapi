@@ -457,7 +457,16 @@ const deleteOldStories = async () => {
 // Get all stories (with lifecycle status)
 const getAllStories = async (req, res) => {
     try {
-        const stories = await Story.find({ isPublished: true, isDraft: false })
+        // Include stories where:
+        // 1. isPublished is true AND isDraft is false (new stories)
+        // 2. OR these fields don't exist (old stories created before draft system)
+        const stories = await Story.find({
+            $or: [
+                { isPublished: true, isDraft: false },
+                { isPublished: { $exists: false } },
+                { isDraft: { $exists: false } }
+            ]
+        })
             .sort({ createdAt: -1 })
             .select('_id story_number title emotional_core panels coverImage views likes createdAt expiresAt isExpired');
 
