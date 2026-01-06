@@ -146,8 +146,8 @@ const generateDailyStory = async () => {
         const deletesAt = new Date(now);
         deletesAt.setDate(deletesAt.getDate() + 60); // Deletes in 60 days
 
-        // Save story to database
-        const story = new Story({
+        // Create temporary story object (NOT saved to database yet)
+        const tempStory = {
             story_number: storyData.story_number,
             title: storyData.title,
             emotional_core: storyData.emotional_core,
@@ -159,19 +159,21 @@ const generateDailyStory = async () => {
             launchDate: now,
             expiresAt: expiresAt,
             deletesAt: deletesAt,
-            isExpired: false,
-            isDraft: true,
-            isPublished: false,
-            imageGenerationStatus: 'pending'
-        });
+            isExpired: false
+        };
 
+        console.log(`🎨 Starting image generation for all ${tempStory.panels.length} panels (synchronous)...`);
+        console.log(`⚠️  This will take approximately 2-3 minutes. Story will NOT be saved if any image fails.`);
+
+        // Generate ALL images synchronously BEFORE saving to database
+        // If ANY image fails, this will throw an error and story won't be saved
+        const storyWithImages = await generateImagesForStory(tempStory);
+
+        // Only save to database if ALL images were generated successfully
+        console.log(`💾 All images generated successfully! Saving story to database...`);
+        const story = new Story(storyWithImages);
         const savedStory = await story.save();
-        console.log(`💾 Saved story ${storyData.story_number}: ${storyData.title}`);
-
-        // Generate images in background
-        generateImagesForStories([savedStory]).catch(err => {
-            console.error("Error generating images:", err);
-        });
+        console.log(`✅ Story saved with all images: ${storyData.story_number}: ${storyData.title}`);
 
         return savedStory;
 
@@ -190,7 +192,7 @@ const generateAndSaveStories = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: "Story generated and saved. Images are being generated in background.",
+            message: "Story and all images generated successfully!",
             story
         });
 
@@ -203,95 +205,58 @@ const generateAndSaveStories = async (req, res) => {
     }
 };
 
-// Background function to generate images
-async function generateImagesForStories(stories) {
-    console.log(`🎨 Starting image generation for ${stories.length} stories...`);
+// Synchronous function to generate ALL images for a single story
+// Throws error if ANY image generation fails
+async function generateImagesForStory(storyData) {
+    console.log(`🎨 Generating images for story: ${storyData.title} (${storyData.panels.length} panels)`);
 
-    for (const story of stories) {
-        console.log(`🎨 Generating images for story: ${story.title} (${story.panels.length} panels)`);
+    try {
+        // Generate temporary ID for filename (since story not saved yet)
+        const tempId = `temp-${Date.now()}`;
 
-        // Update status to in_progress
-        story.imageGenerationStatus = 'in_progress';
-        await story.save();
+        // Generate cover image (first panel) - MUST succeed
+        const coverPanel = storyData.panels[0];
+        console.log(`  📸 Generating cover image for panel 1...`);
+        const coverImageUrl = await generateAndUploadImage(
+            coverPanel.text,
+            storyData.emotional_core,
+            `story-${tempId}-cover`
+        );
 
-        let allImagesGenerated = true;
-        let lastError = null;
+        storyData.coverImage = coverImageUrl;
+        storyData.panels[0].imageUrl = coverImageUrl;
+        console.log(`  ✅ Cover image generated`);
+        console.log(`  ⏳ Cooling down for 10 seconds before next panel...`);
+        await new Promise(resolve => setTimeout(resolve, 10000));
 
-        try {
-            // Generate cover image (first panel)
-            const coverPanel = story.panels[0];
-            console.log(`  📸 Generating cover image for panel 1...`);
-            const coverImageUrl = await generateAndUploadImage(
-                coverPanel.text,
-                story.emotional_core,
-                `story-${story._id}-cover`
+        // Generate images for remaining panels - ALL must succeed
+        for (let i = 1; i < storyData.panels.length; i++) {
+            const panel = storyData.panels[i];
+            console.log(`  📸 Generating image for panel ${panel.panel_number}...`);
+
+            const imageUrl = await generateAndUploadImage(
+                panel.text,
+                storyData.emotional_core,
+                `story-${tempId}-panel-${panel.panel_number}`
             );
 
-            if (coverImageUrl) {
-                story.coverImage = coverImageUrl;
-                story.panels[0].imageUrl = coverImageUrl;
-                console.log(`  ✅ Cover image generated`);
-                console.log(`  ⏳ Cooling down for 10 seconds before next panel...`);
-                await new Promise(resolve => setTimeout(resolve, 10000));
-            } else {
-                allImagesGenerated = false;
-                lastError = 'Failed to generate cover image';
-            }
+            storyData.panels[i].imageUrl = imageUrl;
+            console.log(`  ✅ Panel ${panel.panel_number} image generated`);
 
-            // Generate images for remaining panels
-            for (let i = 1; i < story.panels.length; i++) {
-                const panel = story.panels[i];
-                console.log(`  📸 Generating image for panel ${panel.panel_number}...`);
-
-                const imageUrl = await generateAndUploadImage(
-                    panel.text,
-                    story.emotional_core,
-                    `story-${story._id}-panel-${panel.panel_number}`
-                );
-
-                if (imageUrl) {
-                    story.panels[i].imageUrl = imageUrl;
-                    console.log(`  ✅ Panel ${panel.panel_number} image generated`);
-                } else {
-                    allImagesGenerated = false;
-                    lastError = `Failed to generate image for panel ${panel.panel_number}`;
-                    console.log(`  ❌ Panel ${panel.panel_number} image generation failed`);
-                }
-
-                // Delay between panel generations
+            // Delay between panel generations (skip delay for last panel)
+            if (i < storyData.panels.length - 1) {
                 console.log(`  ⏳ Cooling down for 10 seconds before next panel...`);
                 await new Promise(resolve => setTimeout(resolve, 10000));
             }
-
-            // Update story status based on results
-            if (allImagesGenerated) {
-                story.imageGenerationStatus = 'completed';
-                story.isDraft = false;
-                story.isPublished = true;
-                story.imageGenerationError = null;
-                console.log(`✅ All images generated successfully! Story published.`);
-            } else {
-                story.imageGenerationStatus = 'failed';
-                story.isDraft = true;
-                story.isPublished = false;
-                story.imageGenerationError = lastError;
-                console.log(`❌ Image generation incomplete. Story saved as draft.`);
-            }
-
-            await story.save();
-            console.log(`💾 Story status updated: ${story.imageGenerationStatus}`);
-
-        } catch (error) {
-            console.error(`❌ Error generating images for story ${story.title}:`, error.message);
-            story.imageGenerationStatus = 'failed';
-            story.isDraft = true;
-            story.isPublished = false;
-            story.imageGenerationError = error.message || 'Unknown error during image generation';
-            await story.save();
         }
-    }
 
-    console.log(`🎉 Image generation complete for all stories!`);
+        console.log(`🎉 All ${storyData.panels.length} images generated successfully!`);
+        return storyData;
+
+    } catch (error) {
+        console.error(`❌ CRITICAL: Image generation failed for story ${storyData.title}:`, error.message);
+        throw new Error(`Image generation failed: ${error.message}`);
+    }
 }
 
 // Helper function to generate image with Kandinsky-2.2 (Replicate) and upload to Storj
@@ -400,7 +365,8 @@ Realistic and grounded, masterpiece quality, 8k, highly detailed, no text, no lo
     } catch (error) {
         console.error(`  ❌ Error generating image for ${filename}:`, error.message);
         console.error(`  ❌ Full error:`, error);
-        return null;
+        // Throw error instead of returning null to fail fast
+        throw new Error(`Failed to generate image for ${filename}: ${error.message}`);
     }
 }
 
@@ -457,7 +423,7 @@ const deleteOldStories = async () => {
 // Get all stories (with lifecycle status)
 const getAllStories = async (req, res) => {
     try {
-        const stories = await Story.find({ isPublished: true, isDraft: false })
+        const stories = await Story.find({})
             .sort({ createdAt: -1 })
             .select('_id story_number title emotional_core panels coverImage views likes createdAt expiresAt isExpired');
 
@@ -475,10 +441,13 @@ const getAllStories = async (req, res) => {
                 };
             }
 
+            const isExpired = story.isExpired;
+            const daysRemaining = isExpired ? 0 : Math.ceil((story.expiresAt - now) / (1000 * 60 * 60 * 24));
+
             return {
                 ...storyObj,
-                status: story.isExpired ? 'expired' : 'active',
-                daysRemaining: story.isExpired ? 0 : Math.ceil((story.expiresAt - now) / (1000 * 60 * 60 * 24))
+                status: isExpired ? 'expired' : 'active',
+                daysRemaining
             };
         });
 
@@ -683,117 +652,6 @@ const addComment = async (req, res) => {
     }
 };
 
-// Get all draft stories (admin only)
-const getDraftStories = async (req, res) => {
-    try {
-        const drafts = await Story.find({ isDraft: true })
-            .sort({ createdAt: -1 })
-            .select('_id story_number title emotional_core coverImage imageGenerationStatus imageGenerationError lastImageRetryAt createdAt panels');
-
-        // Add progress info for each draft
-        const draftsWithProgress = drafts.map(draft => {
-            const draftObj = draft.toObject();
-            const totalPanels = draftObj.panels.length;
-            const panelsWithImages = draftObj.panels.filter(p => p.imageUrl).length;
-
-            return {
-                ...draftObj,
-                imageProgress: {
-                    total: totalPanels,
-                    completed: panelsWithImages,
-                    percentage: Math.round((panelsWithImages / totalPanels) * 100)
-                }
-            };
-        });
-
-        res.status(200).json({
-            success: true,
-            count: draftsWithProgress.length,
-            drafts: draftsWithProgress
-        });
-    } catch (error) {
-        console.error("Error fetching draft stories:", error);
-        res.status(500).json({ error: "Failed to fetch draft stories" });
-    }
-};
-
-// Retry image generation for a draft story (admin only)
-const retryImageGeneration = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const story = await Story.findById(id);
-
-        if (!story) {
-            return res.status(404).json({ error: "Story not found" });
-        }
-
-        if (!story.isDraft) {
-            return res.status(400).json({ error: "Story is not a draft" });
-        }
-
-        console.log(`🔄 Retrying image generation for story: ${story.title}`);
-
-        // Update retry timestamp
-        story.lastImageRetryAt = new Date();
-        story.imageGenerationStatus = 'in_progress';
-        story.imageGenerationError = null;
-        await story.save();
-
-        // Regenerate images in background
-        generateImagesForStories([story]).catch(err => {
-            console.error("Error retrying image generation:", err);
-        });
-
-        res.status(200).json({
-            success: true,
-            message: "Image generation retry started in background",
-            story: {
-                _id: story._id,
-                title: story.title,
-                imageGenerationStatus: story.imageGenerationStatus
-            }
-        });
-
-    } catch (error) {
-        console.error("Error retrying image generation:", error);
-        res.status(500).json({ error: "Failed to retry image generation" });
-    }
-};
-
-// Manually publish a draft story (admin only, even if images incomplete)
-const publishDraft = async (req, res) => {
-    try {
-        const { id } = req.params;
-
-        const story = await Story.findById(id);
-
-        if (!story) {
-            return res.status(404).json({ error: "Story not found" });
-        }
-
-        if (!story.isDraft) {
-            return res.status(400).json({ error: "Story is not a draft" });
-        }
-
-        // Manually publish
-        story.isDraft = false;
-        story.isPublished = true;
-        await story.save();
-
-        console.log(`✅ Manually published draft story: ${story.title}`);
-
-        res.status(200).json({
-            success: true,
-            message: "Draft story published successfully",
-            story
-        });
-
-    } catch (error) {
-        console.error("Error publishing draft:", error);
-        res.status(500).json({ error: "Failed to publish draft" });
-    }
-};
 
 module.exports = {
     generateAndSaveStories,
@@ -805,8 +663,6 @@ module.exports = {
     deleteStory,
     deleteAllStories,
     likeStory,
-    addComment,
-    getDraftStories,
-    retryImageGeneration,
-    publishDraft
+    addComment
 };
+

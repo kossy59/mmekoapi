@@ -410,7 +410,6 @@ async function streamFile(publicId, folder = STORJ_BUCKET_DEFAULT, start, end) {
       acceptRanges: response.AcceptRanges,
     };
   } catch (error) {
-    console.error('[streamFile] Error:', error.message);
     return null;
   }
 }
