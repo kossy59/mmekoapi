@@ -146,8 +146,8 @@ const generateDailyStory = async () => {
         const deletesAt = new Date(now);
         deletesAt.setDate(deletesAt.getDate() + 60); // Deletes in 60 days
 
-        // Save story to database
-        const story = new Story({
+        // Create temporary story object (NOT saved to database yet)
+        const tempStory = {
             story_number: storyData.story_number,
             title: storyData.title,
             emotional_core: storyData.emotional_core,
@@ -160,15 +160,20 @@ const generateDailyStory = async () => {
             expiresAt: expiresAt,
             deletesAt: deletesAt,
             isExpired: false
-        });
+        };
 
+        console.log(`🎨 Starting image generation for all ${tempStory.panels.length} panels (synchronous)...`);
+        console.log(`⚠️  This will take approximately 2-3 minutes. Story will NOT be saved if any image fails.`);
+
+        // Generate ALL images synchronously BEFORE saving to database
+        // If ANY image fails, this will throw an error and story won't be saved
+        const storyWithImages = await generateImagesForStory(tempStory);
+
+        // Only save to database if ALL images were generated successfully
+        console.log(`💾 All images generated successfully! Saving story to database...`);
+        const story = new Story(storyWithImages);
         const savedStory = await story.save();
-        console.log(`💾 Saved story ${storyData.story_number}: ${storyData.title}`);
-
-        // Generate images in background
-        generateImagesForStories([savedStory]).catch(err => {
-            console.error("Error generating images:", err);
-        });
+        console.log(`✅ Story saved with all images: ${storyData.story_number}: ${storyData.title}`);
 
         return savedStory;
 
@@ -187,7 +192,7 @@ const generateAndSaveStories = async (req, res) => {
 
         res.status(200).json({
             success: true,
-            message: "Story generated and saved. Images are being generated in background.",
+            message: "Story and all images generated successfully!",
             story
         });
 
@@ -200,61 +205,58 @@ const generateAndSaveStories = async (req, res) => {
     }
 };
 
-// Background function to generate images
-async function generateImagesForStories(stories) {
-    console.log(`🎨 Starting image generation for ${stories.length} stories...`);
+// Synchronous function to generate ALL images for a single story
+// Throws error if ANY image generation fails
+async function generateImagesForStory(storyData) {
+    console.log(`🎨 Generating images for story: ${storyData.title} (${storyData.panels.length} panels)`);
 
-    for (const story of stories) {
-        console.log(`🎨 Generating images for story: ${story.title} (${story.panels.length} panels)`);
+    try {
+        // Generate temporary ID for filename (since story not saved yet)
+        const tempId = `temp-${Date.now()}`;
 
-        try {
-            // Generate cover image (first panel)
-            const coverPanel = story.panels[0];
-            console.log(`  📸 Generating cover image for panel 1...`);
-            const coverImageUrl = await generateAndUploadImage(
-                coverPanel.text,
-                story.emotional_core,
-                `story-${story._id}-cover`
+        // Generate cover image (first panel) - MUST succeed
+        const coverPanel = storyData.panels[0];
+        console.log(`  📸 Generating cover image for panel 1...`);
+        const coverImageUrl = await generateAndUploadImage(
+            coverPanel.text,
+            storyData.emotional_core,
+            `story-${tempId}-cover`
+        );
+
+        storyData.coverImage = coverImageUrl;
+        storyData.panels[0].imageUrl = coverImageUrl;
+        console.log(`  ✅ Cover image generated`);
+        console.log(`  ⏳ Cooling down for 10 seconds before next panel...`);
+        await new Promise(resolve => setTimeout(resolve, 10000));
+
+        // Generate images for remaining panels - ALL must succeed
+        for (let i = 1; i < storyData.panels.length; i++) {
+            const panel = storyData.panels[i];
+            console.log(`  📸 Generating image for panel ${panel.panel_number}...`);
+
+            const imageUrl = await generateAndUploadImage(
+                panel.text,
+                storyData.emotional_core,
+                `story-${tempId}-panel-${panel.panel_number}`
             );
 
-            if (coverImageUrl) {
-                story.coverImage = coverImageUrl;
-                story.panels[0].imageUrl = coverImageUrl;
-                console.log(`  ✅ Cover image generated`);
+            storyData.panels[i].imageUrl = imageUrl;
+            console.log(`  ✅ Panel ${panel.panel_number} image generated`);
+
+            // Delay between panel generations (skip delay for last panel)
+            if (i < storyData.panels.length - 1) {
                 console.log(`  ⏳ Cooling down for 10 seconds before next panel...`);
                 await new Promise(resolve => setTimeout(resolve, 10000));
             }
-
-            // Generate images for remaining panels
-            for (let i = 1; i < story.panels.length; i++) {
-                const panel = story.panels[i];
-                console.log(`  📸 Generating image for panel ${panel.panel_number}...`);
-
-                const imageUrl = await generateAndUploadImage(
-                    panel.text,
-                    story.emotional_core,
-                    `story-${story._id}-panel-${panel.panel_number}`
-                );
-
-                if (imageUrl) {
-                    story.panels[i].imageUrl = imageUrl;
-                    console.log(`  ✅ Panel ${panel.panel_number} image generated`);
-                }
-
-                // Delay between panel generations
-                console.log(`  ⏳ Cooling down for 10 seconds before next panel...`);
-                await new Promise(resolve => setTimeout(resolve, 10000));
-            }
-
-            await story.save();
-            console.log(`✅ Completed all images for story: ${story.title}`);
-
-        } catch (error) {
-            console.error(`❌ Error generating images for story ${story.title}:`, error.message);
         }
-    }
 
-    console.log(`🎉 Image generation complete for all stories!`);
+        console.log(`🎉 All ${storyData.panels.length} images generated successfully!`);
+        return storyData;
+
+    } catch (error) {
+        console.error(`❌ CRITICAL: Image generation failed for story ${storyData.title}:`, error.message);
+        throw new Error(`Image generation failed: ${error.message}`);
+    }
 }
 
 // Helper function to generate image with Kandinsky-2.2 (Replicate) and upload to Storj
@@ -363,7 +365,8 @@ Realistic and grounded, masterpiece quality, 8k, highly detailed, no text, no lo
     } catch (error) {
         console.error(`  ❌ Error generating image for ${filename}:`, error.message);
         console.error(`  ❌ Full error:`, error);
-        return null;
+        // Throw error instead of returning null to fail fast
+        throw new Error(`Failed to generate image for ${filename}: ${error.message}`);
     }
 }
 
@@ -420,7 +423,7 @@ const deleteOldStories = async () => {
 // Get all stories (with lifecycle status)
 const getAllStories = async (req, res) => {
     try {
-        const stories = await Story.find({ isPublished: true })
+        const stories = await Story.find({})
             .sort({ createdAt: -1 })
             .select('_id story_number title emotional_core panels coverImage views likes createdAt expiresAt isExpired');
 
@@ -438,10 +441,13 @@ const getAllStories = async (req, res) => {
                 };
             }
 
+            const isExpired = story.isExpired;
+            const daysRemaining = isExpired ? 0 : Math.ceil((story.expiresAt - now) / (1000 * 60 * 60 * 24));
+
             return {
                 ...storyObj,
-                status: story.isExpired ? 'expired' : 'active',
-                daysRemaining: story.isExpired ? 0 : Math.ceil((story.expiresAt - now) / (1000 * 60 * 60 * 24))
+                status: isExpired ? 'expired' : 'active',
+                daysRemaining
             };
         });
 
@@ -646,6 +652,7 @@ const addComment = async (req, res) => {
     }
 };
 
+
 module.exports = {
     generateAndSaveStories,
     generateDailyStory,
@@ -658,3 +665,4 @@ module.exports = {
     likeStory,
     addComment
 };
+

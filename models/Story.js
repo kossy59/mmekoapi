@@ -33,10 +33,6 @@ const storySchema = new mongoose.Schema({
         type: String,
         default: null
     },
-    isPublished: {
-        type: Boolean,
-        default: true
-    },
     views: {
         type: Number,
         default: 0

@@ -25,7 +25,6 @@ const streamVideo = async (req, res) => {
             foundFolder = cached.bucket;
             fileSize = cached.size;
             contentType = cached.contentType;
-            console.log(`⚡ [Video Stream] FULL CACHE HIT for ${fileId} | ${Date.now() - startTime}ms`);
         } else {
             // Cache miss or expired - discover file
             let fileInfo = null;
@@ -51,7 +50,6 @@ const streamVideo = async (req, res) => {
                             timestamp: Date.now()
                         });
 
-                        console.log(`🔍 [Video Stream] Discovered ${fileId} in ${foundFolder} | ${Date.now() - startTime}ms`);
                         break;
                     }
                 } catch (err) {
@@ -63,7 +61,6 @@ const streamVideo = async (req, res) => {
         const discoveryTime = Date.now() - startTime;
 
         if (!foundFolder || fileSize === null) {
-            console.error(`❌ [Video Stream] Not found: ${fileId} | ${discoveryTime}ms`);
             return res.status(404).json({ error: "Video not found" });
         }
 
@@ -92,7 +89,6 @@ const streamVideo = async (req, res) => {
             };
 
             res.writeHead(206, headers);
-            console.log(`✅ [Video Stream] Streaming ${fileId} | Total: ${Date.now() - startTime}ms | Discovery: ${discoveryTime}ms`);
             streamData.body.pipe(res);
         } else {
             const streamData = await streamFile(fileId, foundFolder);
@@ -109,11 +105,10 @@ const streamVideo = async (req, res) => {
             };
 
             res.writeHead(200, headers);
-            console.log(`✅ [Video Stream] Full ${fileId} | Total: ${Date.now() - startTime}ms`);
             streamData.body.pipe(res);
         }
     } catch (error) {
-        console.error("❌ [Video Stream] Error:", error);
+        console.error("Video stream error:", error);
         if (!res.headersSent) {
             res.status(500).json({ error: "Internal Server Error" });
         }
