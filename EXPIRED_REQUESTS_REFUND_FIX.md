@@ -14,12 +14,12 @@ This document explains the automatic expiration and refund system for fan meet/f
   - Marks request as expired
 
 ### ✅ 2. Accepted Requests (7-day expiration)
-- **Requirement**: If a fan doesn't mark as complete after 7 days, the request should be marked as expired and fan should receive pending_gold back
+- **Requirement**: If a fan doesn't mark as complete after 14 days, the request should be marked as expired and fan should receive pending_gold back
 - **Implementation**:
-  - `processExpiredRequests` finds all accepted requests older than 7 days (non-Fan Call)
+  - `processExpiredRequests` finds all accepted requests older than 14 days (non-Fan Call)
   - Automatically refunds pending_gold back to balance
   - Marks request as expired
-  - Note: Fan Call requests expire after 48 hours and don't require refund (no deduction on creation)
+  - Note: Fan Call requests expire after 7 days and don't require refund (no deduction on creation)
 
 ## Key Features
 
@@ -83,8 +83,8 @@ This document explains the automatic expiration and refund system for fan meet/f
       ├─> Status changed to "accepted"
       └─> expiresAt no longer relevant
 
-3. If accepted but not completed in 7 days
-   ├─> Cron job detects createdAt < (now - 7 days)
+3. If accepted but not completed in 14 days
+   ├─> Cron job detects createdAt < (now - 14 days)
    ├─> Status changed to "expired"
    ├─> pending_gold refunded to balance
    └─> Notifications sent
@@ -93,8 +93,8 @@ This document explains the automatic expiration and refund system for fan meet/f
 ## Verification Checklist
 
 - [x] Pending requests expire after 24 hours (expiresAt field set correctly)
-- [x] Accepted requests expire after 7 days (for Fan meet/Fan date)
-- [x] Accepted Fan Call requests expire after 48 hours (no refund)
+- [x] Accepted requests expire after 14 days (for Fan meet/Fan date)
+- [x] Accepted Fan Call requests expire after 7 days (no refund)
 - [x] Expired pending requests trigger refund automatically
 - [x] Expired accepted requests trigger refund automatically
 - [x] Fan Call requests don't get refunded (no deduction on creation)
