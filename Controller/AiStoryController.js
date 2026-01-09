@@ -12,20 +12,74 @@ const replicate = new Replicate({
 // Set your app's official launch date here (YYYY-MM-DD format)
 const LAUNCH_DATE = new Date('2025-01-01T00:00:00Z');
 
-// Story configuration mapping (5-day cycle)
+// Story configuration mapping (50-day cycle)
 const STORY_CONFIGS = {
     1: { type: "Underdog vs System", emotion: "Anger", perspective: "First person" },
-    2: { type: "Hidden Truth / Insider Revelation", emotion: "Hope", perspective: "Second person" },
-    3: { type: "Transformation (Before → After)", emotion: "Betrayal", perspective: "Third person" },
-    4: { type: "Moral Conflict / Choice", emotion: "Relief", perspective: "Observer" },
-    5: { type: "Builder's Journey / Sacrifice", emotion: "Quiet Confidence", perspective: "Confessional" }
+    2: { type: "Hidden Truth", emotion: "Hope", perspective: "Second person" },
+    3: { type: "Personal Loss", emotion: "Grief", perspective: "Third person" },
+    4: { type: "Moral Choice", emotion: "Relief", perspective: "Observer" },
+    5: { type: "Builder's Sacrifice", emotion: "Quiet Confidence", perspective: "Confessional" },
+
+    6: { type: "Public Humiliation", emotion: "Shame", perspective: "First person" },
+    7: { type: "Secret Kept Too Long", emotion: "Regret", perspective: "Second person" },
+    8: { type: "Sudden Responsibility", emotion: "Pressure", perspective: "Third person" },
+    9: { type: "Choosing Self Respect", emotion: "Resolve", perspective: "Observer" },
+    10: { type: "Walking Away", emotion: "Calm", perspective: "Confessional" },
+
+    11: { type: "Being Misjudged", emotion: "Frustration", perspective: "First person" },
+    12: { type: "Truth Finally Said", emotion: "Release", perspective: "Second person" },
+    13: { type: "Life Before vs After", emotion: "Sad Acceptance", perspective: "Third person" },
+    14: { type: "Loyalty Tested", emotion: "Inner Conflict", perspective: "Observer" },
+    15: { type: "Silent Persistence", emotion: "Steady Confidence", perspective: "Confessional" },
+
+    16: { type: "Missed Timing", emotion: "Bittersweet", perspective: "First person" },
+    17: { type: "Realizing the Lie", emotion: "Disbelief", perspective: "Second person" },
+    18: { type: "Letting Go Slowly", emotion: "Emotional Exhaustion", perspective: "Third person" },
+    19: { type: "Standing Alone", emotion: "Strength", perspective: "Observer" },
+    20: { type: "Building Without Applause", emotion: "Quiet Pride", perspective: "Confessional" },
+
+    21: { type: "Childhood Memory", emotion: "Nostalgia", perspective: "First person" },
+    22: { type: "Hidden Envy", emotion: "Jealousy", perspective: "Second person" },
+    23: { type: "Sudden Illness", emotion: "Fear", perspective: "Third person" },
+    24: { type: "Witnessing Injustice", emotion: "Anger", perspective: "Observer" },
+    25: { type: "Quiet Aging", emotion: "Acceptance", perspective: "Confessional" },
+
+    26: { type: "Public Rejection", emotion: "Hurt", perspective: "First person" },
+    27: { type: "Secret Crush", emotion: "Vulnerability", perspective: "Second person" },
+    28: { type: "Heavy Debt", emotion: "Anxiety", perspective: "Third person" },
+    29: { type: "Watching Collapse", emotion: "Helplessness", perspective: "Observer" },
+    30: { type: "Daily Survival", emotion: "Resilience", perspective: "Confessional" },
+
+    31: { type: "Misplaced Trust", emotion: "Betrayal", perspective: "First person" },
+    32: { type: "Confession Shared", emotion: "Relief", perspective: "Second person" },
+    33: { type: "Before War", emotion: "Dread", perspective: "Third person" },
+    34: { type: "Community Fracture", emotion: "Conflict", perspective: "Observer" },
+    35: { type: "Hidden Effort", emotion: "Determination", perspective: "Confessional" },
+
+    36: { type: "Missed Signal", emotion: "Confusion", perspective: "First person" },
+    37: { type: "Realizing Distance", emotion: "Isolation", perspective: "Second person" },
+    38: { type: "Slow Healing", emotion: "Weariness", perspective: "Third person" },
+    39: { type: "Witnessing Courage", emotion: "Admiration", perspective: "Observer" },
+    40: { type: "Work Forgotten", emotion: "Resentment", perspective: "Confessional" },
+
+    41: { type: "Sudden Fame", emotion: "Overwhelm", perspective: "First person" },
+    42: { type: "Hidden Addiction", emotion: "Shame", perspective: "Second person" },
+    43: { type: "Sudden Accident", emotion: "Shock", perspective: "Third person" },
+    44: { type: "Witnessing Forgiveness", emotion: "Relief", perspective: "Observer" },
+    45: { type: "Builder's Legacy", emotion: "Pride", perspective: "Confessional" },
+
+    46: { type: "Public Silence", emotion: "Alienation", perspective: "First person" },
+    47: { type: "Secret Burden", emotion: "Guilt", perspective: "Second person" },
+    48: { type: "Sudden Leadership", emotion: "Pressure", perspective: "Third person" },
+    49: { type: "Watching Betrayal", emotion: "Disbelief", perspective: "Observer" },
+    50: { type: "Quiet Ending", emotion: "Closure", perspective: "Confessional" }
 };
 
 // Helper: Calculate day index based on days since launch
 function getDayIndex() {
     const now = new Date();
     const daysSinceLaunch = Math.floor((now - LAUNCH_DATE) / (1000 * 60 * 60 * 24));
-    return (daysSinceLaunch % 5) + 1;
+    return (daysSinceLaunch % 50) + 1;
 }
 
 // Helper: Get story config for today
@@ -63,73 +117,140 @@ const generateDailyStory = async () => {
         // Generate story with Gemini
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
+        // Determine if today is a special ritual day
+        const dayOfWeek = new Date().getDay(); // 0 = Sunday, 5 = Friday
+        const isHeavyRitual = dayOfWeek === 0; // Sunday
+        const isNoTitleRitual = dayOfWeek === 5; // Friday
+        const maxPanelWords = (isHeavyRitual || isNoTitleRitual) ? 4 : 12;
+        const toneInstruction = (isHeavyRitual || isNoTitleRitual) ? '- Cold tone: Use detached, blunt sentences with no comfort words' : '';
+
         const prompt = `
-        You are a story engine creating short-form, addictive social rituals.
+You are a story engine creating short-form, addictive social rituals.
 
-        TODAY'S STORY SLOT:
-        Story Number: ${config.dayIndex}
+TODAY'S STORY SLOT:
+Story Number: ${config.dayIndex}
 
-        Use the following mapping strictly:
+STORY SLOT MAPPING (STRICT — DO NOT MIX):
 
-        1 → Underdog vs System | Anger | First person  
-        2 → Hidden Truth / Insider Revelation | Hope | Second person  
-        3 → Transformation (Before → After) | Betrayal | Third person  
-        4 → Moral Conflict / Choice | Relief | Observer  
-        5 → Builder's Journey / Sacrifice | Quiet Confidence | Confessional  
+1 → Underdog vs System | Anger | First person  
+2 → Hidden Truth | Hope | Second person  
+3 → Personal Loss | Grief | Third person  
+4 → Moral Choice | Relief | Observer  
+5 → Builder's Sacrifice | Quiet Confidence | Confessional  
 
-        TASK:
-        Generate ONE complete storyline for story slot ${config.dayIndex}.
+6 → Public Humiliation | Shame | First person  
+7 → Secret Kept Too Long | Regret | Second person  
+8 → Sudden Responsibility | Pressure | Third person  
+9 → Choosing Self Respect | Resolve | Observer  
+10 → Walking Away | Calm | Confessional  
 
-        REQUIREMENTS:
-        - Title: EXACTLY 4 words
-        - EXACTLY 15 panels
-        - Each panel is ONE short sentence (max 12 words)
-        - Panels must be sequential and cinematic
-        - Emotional core: ${config.emotion}
-        - Perspective: ${config.perspective}
-        - Story type: ${config.type}
+11 → Being Misjudged | Frustration | First person  
+12 → Truth Finally Said | Release | Second person  
+13 → Life Before vs After | Sad Acceptance | Third person  
+14 → Loyalty Tested | Inner Conflict | Observer  
+15 → Silent Persistence | Steady Confidence | Confessional  
 
-        LANGUAGE CONSTRAINTS (MANDATORY):
-        - Use simple, everyday English
-        - Write as if speaking to someone tired and emotional
-        - Avoid advanced vocabulary, poetic abstraction, or intellectual language
-        - No metaphors that require interpretation
-        - Prefer short, direct sentences
-        - If a word sounds "smart," replace it with a simpler one
-        - Writing should be understandable by a 12-year-old
-        - Emotional clarity over elegance
+16 → Missed Timing | Bittersweet | First person  
+17 → Realizing the Lie | Disbelief | Second person  
+18 → Letting Go Slowly | Emotional Exhaustion | Third person  
+19 → Standing Alone | Strength | Observer  
+20 → Building Without Applause | Quiet Pride | Confessional  
 
-        GLOBAL RULES:
-        - No reused characters, plots, or endings across days
-        - No repeated phrases
-        - No brand names
-        - No explicit sexual language
-        - No motivational clichés
-        - No calls to action
+21 → Childhood Memory | Nostalgia | First person  
+22 → Hidden Envy | Jealousy | Second person  
+23 → Sudden Illness | Fear | Third person  
+24 → Witnessing Injustice | Anger | Observer  
+25 → Quiet Aging | Acceptance | Confessional  
 
-        OUTPUT FORMAT (STRICT JSON):
-        {
-          "story_number": ${config.dayIndex},
-          "title": "",
-          "emotional_core": "${config.emotion}",
-          "panels": [
-            { "panel_number": 1, "text": "" },
-            { "panel_number": 2, "text": "" },
-            { "panel_number": 3, "text": "" },
-            { "panel_number": 4, "text": "" },
-            { "panel_number": 5, "text": "" },
-            { "panel_number": 6, "text": "" },
-            { "panel_number": 7, "text": "" },
-            { "panel_number": 8, "text": "" },
-            { "panel_number": 9, "text": "" },
-            { "panel_number": 10, "text": "" },
-            { "panel_number": 11, "text": "" },
-            { "panel_number": 12, "text": "" },
-            { "panel_number": 13, "text": "" },
-            { "panel_number": 14, "text": "" },
-            { "panel_number": 15, "text": "" }
-          ]
-        }
+26 → Public Rejection | Hurt | First person  
+27 → Secret Crush | Vulnerability | Second person  
+28 → Heavy Debt | Anxiety | Third person  
+29 → Watching Collapse | Helplessness | Observer  
+30 → Daily Survival | Resilience | Confessional  
+
+31 → Misplaced Trust | Betrayal | First person  
+32 → Confession Shared | Relief | Second person  
+33 → Before War | Dread | Third person  
+34 → Community Fracture | Conflict | Observer  
+35 → Hidden Effort | Determination | Confessional  
+
+36 → Missed Signal | Confusion | First person  
+37 → Realizing Distance | Isolation | Second person  
+38 → Slow Healing | Weariness | Third person  
+39 → Witnessing Courage | Admiration | Observer  
+40 → Work Forgotten | Resentment | Confessional  
+
+41 → Sudden Fame | Overwhelm | First person  
+42 → Hidden Addiction | Shame | Second person  
+43 → Sudden Accident | Shock | Third person  
+44 → Witnessing Forgiveness | Relief | Observer  
+45 → Builder's Legacy | Pride | Confessional  
+
+46 → Public Silence | Alienation | First person  
+47 → Secret Burden | Guilt | Second person  
+48 → Sudden Leadership | Pressure | Third person  
+49 → Watching Betrayal | Disbelief | Observer  
+50 → Quiet Ending | Closure | Confessional  
+
+${isHeavyRitual ? 'HEAVY RITUAL → Every Sunday | Emotionally Heavy | Cold tone | 15 panels | Each panel max 4 words | Title: 4 words' : ''}
+${isNoTitleRitual ? 'FRIDAY RITUAL → Every Friday | Emotionally Heavy | Cold tone | 15 panels | Each panel max 4 words | Title: 4 words' : ''}
+
+TASK:
+Generate ONE complete storyline for today's slot only.
+
+REQUIREMENTS:
+- Title: EXACTLY 4 words (REQUIRED FOR ALL DAYS)
+- EXACTLY 15 panels
+- Each panel is ONE short sentence
+- Normal slots: max 12 words per panel
+${(isHeavyRitual || isNoTitleRitual) ? '- Heavy/Friday Ritual: max 4 words per panel' : ''}
+- Panels must be sequential and cinematic
+- Emotional core must match today's slot
+- Perspective must match today's slot
+
+LANGUAGE CONSTRAINTS (MANDATORY):
+- Use simple, everyday English
+- Write like speaking to someone tired and emotional
+- No big words or poetic language
+- No metaphors that need thinking
+- Short, clear sentences
+- Understandable by a 12-year-old
+- Emotional clarity over beauty
+${toneInstruction}
+
+GLOBAL RULES:
+- Do NOT reuse characters, events, or endings from previous days
+- Do NOT echo earlier stories in structure or outcome
+- No repeated phrases
+- No brand names
+- No explicit sexual language
+- No motivational clichés
+- No calls to action
+
+OUTPUT FORMAT (STRICT JSON):
+
+{
+  "storynumber": ${config.dayIndex},
+  "title": "[EXACTLY 4 WORDS]",
+  "emotional_core": "${config.emotion}",
+  "panels": [
+    { "panel_number": 1, "text": "" },
+    { "panel_number": 2, "text": "" },
+    { "panel_number": 3, "text": "" },
+    { "panel_number": 4, "text": "" },
+    { "panel_number": 5, "text": "" },
+    { "panel_number": 6, "text": "" },
+    { "panel_number": 7, "text": "" },
+    { "panel_number": 8, "text": "" },
+    { "panel_number": 9, "text": "" },
+    { "panel_number": 10, "text": "" },
+    { "panel_number": 11, "text": "" },
+    { "panel_number": 12, "text": "" },
+    { "panel_number": 13, "text": "" },
+    { "panel_number": 14, "text": "" },
+    { "panel_number": 15, "text": "" }
+  ]
+}
         `;
 
         const result = await model.generateContent(prompt);
@@ -137,7 +258,31 @@ const generateDailyStory = async () => {
         const cleanText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         const storyData = JSON.parse(cleanText);
 
-        console.log(`✅ Generated story: ${storyData.title} (${storyData.panels.length} panels)`);
+        console.log(`✅ Generated story: ${storyData.title || 'No Title Ritual'} (${storyData.panels.length} panels)`);
+
+        // Handle No Title Rituals: use placeholder if title is empty
+        const finalTitle = storyData.title && storyData.title.trim() !== ''
+            ? storyData.title
+            : 'Untitled Ritual';
+
+        // CRITICAL: Generate cover image FIRST before saving to database
+        console.log(`📸 Generating cover image before saving story...`);
+        const coverPanel = storyData.panels[0];
+        const tempStoryId = `temp-${Date.now()}`; // Temporary ID for image filename
+
+        const coverImageUrl = await generateAndUploadImage(
+            coverPanel.text,
+            storyData.emotional_core,
+            `story-${tempStoryId}-cover`
+        );
+
+        if (!coverImageUrl) {
+            const error = new Error('❌ CRITICAL: Cover image generation failed. Story will NOT be saved to database.');
+            console.error(error.message);
+            throw error; // Stop everything - don't save the story
+        }
+
+        console.log(`✅ Cover image generated successfully! Proceeding to save story...`);
 
         // Calculate lifecycle dates
         const now = new Date();
@@ -151,11 +296,12 @@ const generateDailyStory = async () => {
             story_number: storyData.story_number,
             title: storyData.title,
             emotional_core: storyData.emotional_core,
-            panels: storyData.panels.map(p => ({
+            panels: storyData.panels.map((p, index) => ({
                 panel_number: p.panel_number,
                 text: p.text,
-                imageUrl: null
+                imageUrl: index === 0 ? coverImageUrl : null // First panel already has image
             })),
+            coverImage: coverImageUrl, // Set the cover image
             launchDate: now,
             expiresAt: expiresAt,
             deletesAt: deletesAt,

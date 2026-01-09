@@ -74,6 +74,10 @@ const createFanRequest = async (req, res) => {
     };
     await historydb.create(clientHistory);
 
+    // Calculate expiration based on type: 7 days for Fan Call, 14 days for others
+    const isFanCall = (type || "").toLowerCase().includes("fan call");
+    const expirationDays = isFanCall ? 7 : 14;
+
     // Create request record
     const requestData = {
       userid,
@@ -84,7 +88,7 @@ const createFanRequest = async (req, res) => {
       status: "request",
       date,
       price: creatorPrice,
-      expiresAt: new Date(Date.now() + 23 * 60 * 60 * 1000 + 14 * 60 * 1000) // 23h 14m from now
+      expiresAt: new Date(Date.now() + expirationDays * 24 * 60 * 60 * 1000)
     };
 
     const request = await requestdb.create(requestData);
@@ -95,17 +99,17 @@ const createFanRequest = async (req, res) => {
     // Send notifications
     await sendEmail(creator.userid, `New ${hostType.toLowerCase()} request received`);
     await pushActivityNotification(creator.userid, `New ${hostType.toLowerCase()} request received`, "request_request");
-    
+
     // Create database notification for creator
     await admindb.create({
       userid: creator.userid,
       message: `New ${hostType.toLowerCase()} request from ${user.firstname} ${user.lastname}`,
       seen: false
     });
-    
+
     await sendEmail(userid, `${hostType} request sent successfully`);
     await pushActivityNotification(userid, `${hostType} request sent successfully`, "request_request");
-    
+
     // Create database notification for fan
     await admindb.create({
       userid: userid,

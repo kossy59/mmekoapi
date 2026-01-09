@@ -169,7 +169,7 @@ const getPageVisitAnalytics = async (req, res) => {
             storyVisitCounts.set(visit.storyId, count + 1);
         });
 
-        // Fetch story data for likes and views
+        // Fetch ALL stories and sort by views (not just stories with visit records)
         const Story = require('../models/Story');
         const stories = await Story.find({}).sort({ createdAt: -1 }).limit(100);
 
@@ -210,12 +210,12 @@ const getPageVisitAnalytics = async (req, res) => {
         // Find most liked story
         const mostLikedStory = stories.reduce((max, story) =>
             (story.likes || 0) > (max.likes || 0) ? story : max
-            , stories[0] || null);
+            , allStories[0] || null);
 
-        // Find most viewed story
-        const mostViewedStory = stories.reduce((max, story) =>
+        // Find most viewed story from all stories
+        const mostViewedStory = allStories.reduce((max, story) =>
             (story.views || 0) > (max.views || 0) ? story : max
-            , stories[0] || null);
+            , allStories[0] || null);
 
         // Response data
         res.json({
