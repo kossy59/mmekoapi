@@ -20,7 +20,7 @@ const markertdata = new Scheme(
 
     place: {
       type: String,
-      required: true,
+      required: false,
     },
 
     userid: {
