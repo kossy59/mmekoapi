@@ -169,36 +169,30 @@ const getPageVisitAnalytics = async (req, res) => {
             storyVisitCounts.set(visit.storyId, count + 1);
         });
 
-        // Fetch story data for likes and views
+        // Fetch ALL stories and sort by views (not just stories with visit records)
         const Story = require('../models/Story');
-        const stories = await Story.find({}).sort({ createdAt: -1 }).limit(100);
+        const allStories = await Story.find({})
+            .sort({ views: -1 }) // Sort by views (highest first)
+            .select('_id title emotional_core views likes createdAt');
 
-        // Build top visited stories with details
-        const topVisitedStoriesWithDetails = await Promise.all(
-            Array.from(storyVisitCounts.entries())
-                .sort((a, b) => b[1] - a[1])
-                .slice(0, 10)
-                .map(async ([storyId, visits], index) => {
-                    const story = stories.find(s => s._id.toString() === storyId);
-                    return {
-                        rank: index + 1,
-                        storyId,
-                        title: story?.title || 'Unknown Story',
-                        emotional_core: story?.emotional_core || 'N/A',
-                        visits
-                    };
-                })
-        );
+        // Build list of ALL stories with their view counts and ranks
+        const topVisitedStoriesWithDetails = allStories.map((story, index) => ({
+            rank: index + 1,
+            storyId: story._id.toString(),
+            title: story.title || 'Unknown Story',
+            emotional_core: story.emotional_core || 'N/A',
+            visits: story.views || 0 // Use the views field from the Story model
+        }));
 
-        // Find most liked story
-        const mostLikedStory = stories.reduce((max, story) =>
+        // Find most liked story from all stories
+        const mostLikedStory = allStories.reduce((max, story) =>
             (story.likes || 0) > (max.likes || 0) ? story : max
-            , stories[0] || null);
+            , allStories[0] || null);
 
-        // Find most viewed story
-        const mostViewedStory = stories.reduce((max, story) =>
+        // Find most viewed story from all stories
+        const mostViewedStory = allStories.reduce((max, story) =>
             (story.views || 0) > (max.views || 0) ? story : max
-            , stories[0] || null);
+            , allStories[0] || null);
 
         // Response data
         res.json({

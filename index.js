@@ -48,7 +48,7 @@ const allowedOrigins = [
   "https://mmekowebsite-mu.vercel.app", // Vercel deployment
 
   "http://localhost:3000", // Add localhost for development
-  "http://10.70.105.157:3000", // Add network URL for device access
+  "http://192.168.0.102:3000", // Add network URL for device access
 ].filter(Boolean); // Remove falsy values (e.g., undefined NEXT_PUBLIC_URL)
 
 // Configure CORS
