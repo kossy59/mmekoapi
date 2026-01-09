@@ -85,11 +85,8 @@ const createLike = async (req, res) => {
         await sendEmail(creatoremail.userid, "Accept appointment")
         await pushActivityNotification(creatoremail.userid, "New request received", "request")
 
-        // Calculate expiration based on type: 7 days for Fan Call, 14 days for others
-        const normalizedRequestType = (type || "").toLowerCase().trim();
-        const isFanCall = normalizedRequestType.includes("fan call");
-        const expirationDays = isFanCall ? 7 : 14;
-
+        // IMPORTANT: Pending requests expire in 23 hours 14 minutes
+        // After acceptance, they get extended based on type (7 days for Fan Call, 14 days for others)
         let requests = {
             userid,
             creator_portfolio_id,
@@ -99,7 +96,7 @@ const createLike = async (req, res) => {
             status: "request",
             date,
             price: creatorprice,
-            expiresAt: new Date(Date.now() + expirationDays * 24 * 60 * 60 * 1000)
+            expiresAt: new Date(Date.now() + (23 * 60 * 60 * 1000) + (14 * 60 * 1000)) // 23h 14m for pending requests
         }
 
         const request = await requestdb.create(requests)

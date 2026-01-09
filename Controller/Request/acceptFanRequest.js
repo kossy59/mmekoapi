@@ -22,7 +22,7 @@ const acceptFanRequest = async (req, res) => {
 
   try {
     // Find the request
-    const request = await requestdb.findOne({ 
+    const request = await requestdb.findOne({
       _id: requestId,
       creator_portfolio_id: creator_portfolio_id,
       userid: userid,
@@ -70,8 +70,17 @@ const acceptFanRequest = async (req, res) => {
       });
     }
 
-    // Update request status to accepted
+    // Update request status to accepted and extend expiration time
     request.status = "accepted";
+
+    // Extend expiration based on request type:
+    // - Fan Call: 10 days from acceptance
+    // - Fan Meet/Date: 14 days from acceptance
+    const normalizedType = (request.type || "").toLowerCase().trim();
+    const isFanCall = normalizedType.includes("fan call");
+    const expirationDays = isFanCall ? 10 : 14;
+    request.expiresAt = new Date(Date.now() + expirationDays * 24 * 60 * 60 * 1000);
+
     await request.save();
 
     // Get host type for dynamic messages
@@ -80,7 +89,7 @@ const acceptFanRequest = async (req, res) => {
     // Send notification only to the fan (userid is the fan who made the request)
     await sendEmail(userid, `Your ${hostType.toLowerCase()} request has been accepted!`);
     await pushActivityNotification(userid, `Your ${hostType.toLowerCase()} request has been accepted!`, "request_accepted");
-    
+
     // Create database notification for fan
     await admindb.create({
       userid: userid,
