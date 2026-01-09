@@ -33,27 +33,6 @@ const storySchema = new mongoose.Schema({
         type: String,
         default: null
     },
-    isDraft: {
-        type: Boolean,
-        default: true  // Start as draft during image generation
-    },
-    isPublished: {
-        type: Boolean,
-        default: false  // Only true when images are complete
-    },
-    imageGenerationStatus: {
-        type: String,
-        enum: ['pending', 'in_progress', 'completed', 'failed'],
-        default: 'pending'
-    },
-    imageGenerationError: {
-        type: String,
-        default: null
-    },
-    lastImageRetryAt: {
-        type: Date,
-        default: null
-    },
     views: {
         type: Number,
         default: 0

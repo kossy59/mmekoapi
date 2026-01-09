@@ -171,21 +171,44 @@ const getPageVisitAnalytics = async (req, res) => {
 
         // Fetch ALL stories and sort by views (not just stories with visit records)
         const Story = require('../models/Story');
-        const allStories = await Story.find({})
-            .sort({ views: -1 }) // Sort by views (highest first)
-            .select('_id title emotional_core views likes createdAt');
+        const stories = await Story.find({}).sort({ createdAt: -1 }).limit(100);
 
-        // Build list of ALL stories with their view counts and ranks
-        const topVisitedStoriesWithDetails = allStories.map((story, index) => ({
-            rank: index + 1,
-            storyId: story._id.toString(),
-            title: story.title || 'Unknown Story',
-            emotional_core: story.emotional_core || 'N/A',
-            visits: story.views || 0 // Use the views field from the Story model
-        }));
+        // Build top visited stories with details - include ALL stories, not just visited ones
+        // This ensures newly generated stories appear in admin panel even with 0 visits
+        const allStoriesWithVisits = stories.map((story, index) => {
+            const storyId = story._id.toString();
+            const visits = storyVisitCounts.get(storyId) || 0; // 0 if never visited
 
-        // Find most liked story from all stories
-        const mostLikedStory = allStories.reduce((max, story) =>
+            return {
+                storyId,
+                title: story.title,
+                emotional_core: story.emotional_core || 'N/A',
+                visits,
+                createdAt: story.createdAt // For sorting
+            };
+        });
+
+        // Sort by visits (descending), then by creation date (newest first) for ties
+        const topVisitedStoriesWithDetails = allStoriesWithVisits
+            .sort((a, b) => {
+                // First sort by visits
+                if (b.visits !== a.visits) {
+                    return b.visits - a.visits;
+                }
+                // If visits are equal, sort by creation date (newest first)
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            })
+            .slice(0, 20) // Show top 20 stories
+            .map((story, index) => ({
+                rank: index + 1,
+                storyId: story.storyId,
+                title: story.title,
+                emotional_core: story.emotional_core,
+                visits: story.visits
+            }));
+
+        // Find most liked story
+        const mostLikedStory = stories.reduce((max, story) =>
             (story.likes || 0) > (max.likes || 0) ? story : max
             , allStories[0] || null);
 
