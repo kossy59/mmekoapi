@@ -210,12 +210,12 @@ const getPageVisitAnalytics = async (req, res) => {
         // Find most liked story
         const mostLikedStory = stories.reduce((max, story) =>
             (story.likes || 0) > (max.likes || 0) ? story : max
-            , allStories[0] || null);
+            , stories[0] || null);
 
         // Find most viewed story from all stories
-        const mostViewedStory = allStories.reduce((max, story) =>
+        const mostViewedStory = stories.reduce((max, story) =>
             (story.views || 0) > (max.views || 0) ? story : max
-            , allStories[0] || null);
+            , stories[0] || null);
 
         // Response data
         res.json({
