@@ -230,7 +230,7 @@ GLOBAL RULES:
 OUTPUT FORMAT (STRICT JSON):
 
 {
-  "storynumber": ${config.dayIndex},
+  "story_number": ${config.dayIndex},
   "title": "[EXACTLY 4 WORDS]",
   "emotional_core": "${config.emotion}",
   "panels": [
