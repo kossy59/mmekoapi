@@ -189,6 +189,7 @@ app.use("/deleteaccount", require("./routes/api/profile/deleteprofile"));
 app.use("/setting", require("./routes/api/profile/setting"));
 app.use("/transaction_history", require("./routes/api/profile/transaction_history"));
 app.use("/top_fans", require("./routes/api/profile/top_fans"));
+app.use("/top_creators", require("./routes/api/profile/top_creators"));
 app.use("/follow", require("./routes/api/follow/follower"));
 app.use("/getfollowers", require("./routes/api/follow/get_followers"));
 app.use("/getadminhost", require("./routes/api/creator/hostforadmin"));
