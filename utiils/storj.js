@@ -3,7 +3,8 @@
  * Replaces Appwrite functionality with Storj S3-compatible storage
  */
 
-const AWS = require('aws-sdk');
+const { S3Client, PutObjectCommand, DeleteObjectCommand, HeadObjectCommand, GetObjectCommand } = require("@aws-sdk/client-s3");
+const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const axios = require('axios');
 const { processVideo, compressImage } = require("./compress");
 
@@ -50,15 +51,16 @@ if (!STORJ_ACCESS_KEY_ID || !STORJ_SECRET_ACCESS_KEY || !STORJ_ENDPOINT) {
 }
 
 // -----------------------------
-// Storj S3 Client (AWS SDK v2)
+// Storj S3 Client (AWS SDK v3)
 // -----------------------------
-const s3Client = new AWS.S3({
+const s3Client = new S3Client({
   endpoint: STORJ_ENDPOINT,
   region: 'us-east-1', // Storj uses us-east-1 as default region
-  accessKeyId: STORJ_ACCESS_KEY_ID,
-  secretAccessKey: STORJ_SECRET_ACCESS_KEY,
-  s3ForcePathStyle: true, // Required for Storj
-  signatureVersion: 'v4',
+  credentials: {
+    accessKeyId: STORJ_ACCESS_KEY_ID,
+    secretAccessKey: STORJ_SECRET_ACCESS_KEY,
+  },
+  forcePathStyle: true, // Required for Storj (was s3ForcePathStyle in v2)
 });
 
 // -----------------------------
@@ -141,12 +143,12 @@ async function saveFile(file, filePath, folder = STORJ_BUCKET_DEFAULT) {
   }
 
   const bucket = getBucketName(folder);
+  const path = require('path');
   const originalname = path.basename(filePath);
   const mimetype = undefined;
 
   try {
     const fs = require('fs');
-    const path = require('path');
 
     // Read file into memory
     const buffer = fs.readFileSync(filePath);
@@ -162,7 +164,7 @@ async function saveFile(file, filePath, folder = STORJ_BUCKET_DEFAULT) {
       ACL: 'public-read',
     };
 
-    await s3Client.putObject(params).promise();
+    await s3Client.send(new PutObjectCommand(params));
 
     // Clean up local file after upload
     try {
@@ -206,7 +208,7 @@ async function uploadSingleFileToCloudinary(file, folder = STORJ_BUCKET_DEFAULT)
       ACL: 'public-read',
     };
 
-    await s3Client.putObject(params).promise();
+    await s3Client.send(new PutObjectCommand(params));
 
     let fileUrl = await createLinkshareUrl(bucket, key);
     if (!fileUrl) fileUrl = getFileUrl(bucket, key);
@@ -247,7 +249,7 @@ async function uploadManyFilesToCloudinary(files, folder = STORJ_BUCKET_DEFAULT)
           ACL: 'public-read',
         };
 
-        await s3Client.putObject(params).promise();
+        await s3Client.send(new PutObjectCommand(params));
 
         let fileUrl = await createLinkshareUrl(bucket, key);
         if (!fileUrl) fileUrl = getFileUrl(bucket, key);
@@ -287,7 +289,7 @@ async function deleteFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
       Key: publicId,
     };
 
-    await s3Client.deleteObject(params).promise();
+    await s3Client.send(new DeleteObjectCommand(params));
     console.log(`[deleteFile] Successfully deleted ${publicId} from ${bucket}`);
     return true;
   } catch (error) {
@@ -361,7 +363,7 @@ async function previewFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
       Key: publicId,
     };
 
-    const response = await s3Client.headObject(params).promise();
+    const response = await s3Client.send(new HeadObjectCommand(params));
     return {
       size: response.ContentLength,
       lastModified: response.LastModified,
@@ -392,16 +394,16 @@ async function streamFile(publicId, folder = STORJ_BUCKET_DEFAULT, start, end) {
       params.Range = rangeString;
     }
 
-    const response = await s3Client.getObject(params).promise();
+    const response = await s3Client.send(new GetObjectCommand(params));
 
-    // AWS SDK v2 returns Body as Buffer, we need to create a readable stream
-    const { Readable } = require('stream');
-    const stream = new Readable();
-    stream.push(response.Body);
-    stream.push(null); // End the stream
+    // In AWS SDK v3, Body is a stream (IncomingMessage in Node.js)
+    // We can pass it directly or wrap it if needed.
+    // However, the original code created a new Readable and pushed the Buffer.
+    // Here we can just return the stream directly if the consumer expects a stream.
+    // The previous implementation suggested the consumer expects a stream property 'body'.
 
     return {
-      body: stream, // Readable stream
+      body: response.Body, // This is already a readable stream in v3 Node.js
       contentType: response.ContentType || 'application/octet-stream',
       contentLength: response.ContentLength,
       lastModified: response.LastModified,
@@ -417,14 +419,18 @@ async function streamFile(publicId, folder = STORJ_BUCKET_DEFAULT, start, end) {
 // -----------------------------
 // getSignedViewUrl (temporary public URL)
 // -----------------------------
-function getSignedViewUrl(publicId, folder = STORJ_BUCKET_DEFAULT, expiresSeconds = 600) {
+async function getSignedViewUrl(publicId, folder = STORJ_BUCKET_DEFAULT, expiresSeconds = 600) {
   const bucket = getBucketName(folder);
   if (!publicId) return '';
   try {
-    const url = s3Client.getSignedUrl('getObject', {
+    const command = new GetObjectCommand({
       Bucket: bucket,
       Key: publicId,
-      Expires: Math.max(60, Math.min(7 * 24 * 3600, Number(expiresSeconds) || 600)),
+    });
+
+    // getSignedUrl is async in v3
+    const url = await getSignedUrl(s3Client, command, {
+      expiresIn: Math.max(60, Math.min(7 * 24 * 3600, Number(expiresSeconds) || 600)),
     });
     return url;
   } catch (error) {

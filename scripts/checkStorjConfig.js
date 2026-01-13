@@ -12,7 +12,7 @@ console.log('🔍 [STORJ DIAGNOSTIC] Checking Storj configuration...\n');
 // Check required environment variables
 const requiredVars = [
   'STORJ_ACCESS_KEY_ID',
-  'STORJ_SECRET_ACCESS_KEY', 
+  'STORJ_SECRET_ACCESS_KEY',
   'STORJ_ENDPOINT',
   'STORJ_BUCKET_POST',
   'STORJ_BUCKET_PROFILE',
@@ -28,9 +28,9 @@ requiredVars.forEach(varName => {
   const value = process.env[varName];
   const status = value ? '✅' : '❌';
   const displayValue = value ? (varName.includes('KEY') ? '***HIDDEN***' : value) : 'NOT SET';
-  
+
   console.log(`${status} ${varName}: ${displayValue}`);
-  
+
   if (!value) {
     allConfigured = false;
   }
@@ -54,27 +54,28 @@ console.log('\n🌐 Testing Storj Connection:');
 console.log('============================');
 
 try {
-  const AWS = require('aws-sdk');
-  
-  const s3Client = new AWS.S3({
+  const { S3Client, ListBucketsCommand } = require('@aws-sdk/client-s3');
+
+  const s3Client = new S3Client({
     endpoint: process.env.STORJ_ENDPOINT,
     region: 'us-east-1',
-    accessKeyId: process.env.STORJ_ACCESS_KEY_ID,
-    secretAccessKey: process.env.STORJ_SECRET_ACCESS_KEY,
-    s3ForcePathStyle: true,
-    signatureVersion: 'v4',
+    credentials: {
+      accessKeyId: process.env.STORJ_ACCESS_KEY_ID,
+      secretAccessKey: process.env.STORJ_SECRET_ACCESS_KEY,
+    },
+    forcePathStyle: true,
   });
 
   // Test connection by listing buckets
-  s3Client.listBuckets((err, data) => {
-    if (err) {
-      console.log('❌ Storj connection failed:', err.message);
-    } else {
+  s3Client.send(new ListBucketsCommand({}))
+    .then(data => {
       console.log('✅ Storj connection successful');
       console.log('📦 Available buckets:', data.Buckets.map(b => b.Name).join(', '));
-    }
-  });
-  
+    })
+    .catch(err => {
+      console.log('❌ Storj connection failed:', err.message);
+    });
+
 } catch (error) {
   console.log('❌ Failed to initialize Storj client:', error.message);
 }

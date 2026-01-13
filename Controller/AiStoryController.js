@@ -799,6 +799,64 @@ const addComment = async (req, res) => {
 };
 
 
+// Get the next story (previous chronological story for infinite scroll)
+const getNextStory = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const currentStory = await Story.findById(id);
+
+        if (!currentStory) {
+            return res.status(404).json({ error: "Current story not found" });
+        }
+
+        // 1. Try to find the next story (older than current)
+        let nextStory = await Story.findOne({
+            createdAt: { $lt: currentStory.createdAt }
+        })
+            .sort({ createdAt: -1 })
+            .select('_id story_number title emotional_core panels coverImage views likes createdAt expiresAt isExpired');
+
+        // 2. If no older story, Loop back to the Newest story (Circular Feed)
+        if (!nextStory) {
+             nextStory = await Story.findOne({
+                _id: { $ne: currentStory._id } // Don't just return the same one if it's the only one
+             })
+                .sort({ createdAt: -1 })
+                .select('_id story_number title emotional_core panels coverImage views likes createdAt expiresAt isExpired');
+        }
+        
+        // 3. If still no next story (maybe only 1 story exists total), current is the only one
+        if (!nextStory) {
+             return res.status(200).json({ nextStory: null });
+        }
+
+        const now = new Date();
+        const storyObj = nextStory.toObject();
+        let storyWithStatus;
+
+        if (!storyObj.expiresAt) {
+            storyWithStatus = {
+                ...storyObj,
+                status: 'active',
+                daysRemaining: null
+            };
+        } else {
+            storyWithStatus = {
+                ...storyObj,
+                status: nextStory.isExpired ? 'expired' : 'active',
+                daysRemaining: nextStory.isExpired ? 0 : Math.ceil((nextStory.expiresAt - now) / (1000 * 60 * 60 * 24))
+            };
+        }
+
+        res.status(200).json({ nextStory: storyWithStatus });
+
+    } catch (error) {
+        console.error("Error fetching next story:", error);
+        res.status(500).json({ error: "Failed to fetch next story" });
+    }
+};
+
 module.exports = {
     generateAndSaveStories,
     generateDailyStory,
@@ -806,6 +864,7 @@ module.exports = {
     deleteOldStories,
     getAllStories,
     getStoryById,
+    getNextStory,
     deleteStory,
     deleteAllStories,
     likeStory,
