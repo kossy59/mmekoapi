@@ -798,17 +798,69 @@ const addComment = async (req, res) => {
     }
 };
 
+// Get next story
+const getNextStory = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const currentStory = await Story.findById(id);
+
+        if (!currentStory) {
+            return res.status(404).json({ error: "Current story not found" });
+        }
+
+        // Find the next story by story_number (ascending)
+        // Ensure it's not the same story/ID
+        const nextStory = await Story.findOne({
+            story_number: { $gt: currentStory.story_number },
+            _id: { $ne: currentStory._id }
+        }).sort({ story_number: 1 }); // Get the immediate next one
+
+        // If no next story found by number (maybe end of cycle), try to find the very first story (loop back) 
+        // OR handle based on requirements. For now, we will return null if no newer story exists.
+        // Or we could check for created later date.
+
+        // Simpler approach: Just find the story created immediately after this one
+        /*
+        const nextStory = await Story.findOne({
+            createdAt: { $gt: currentStory.createdAt }
+        }).sort({ createdAt: 1 });
+        */
+
+        if (!nextStory) {
+            // Loop back to the very first story if no next story exists
+            const firstStory = await Story.findOne({}).sort({ story_number: 1 });
+            if (firstStory && firstStory._id.toString() !== currentStory._id.toString()) {
+                return res.status(200).json({ nextStory: firstStory });
+            }
+            return res.status(200).json({ nextStory: null, message: "No next story available" });
+        }
+
+        // Check if next story is expired? (Usually next story is newer, so less likely to be expired unless user is viewing very old story)
+        // But let's check standard logic
+        if (nextStory.isExpired && nextStory.expiresAt) {
+            // If expired, maybe we shouldn't recommend it? Or warn?
+            // For now, let's return it but maybe UI handles it.
+            // Or maybe we skip expired stories?
+            // Let's return it for now.
+        }
+
+        res.status(200).json({ nextStory });
+
+    } catch (error) {
+        console.error("Error getting next story:", error);
+        res.status(500).json({ error: "Failed to get next story" });
+    }
+};
+
 
 module.exports = {
     generateAndSaveStories,
-    generateDailyStory,
-    markExpiredStories,
-    deleteOldStories,
     getAllStories,
     getStoryById,
+    getNextStory,
     deleteStory,
     deleteAllStories,
     likeStory,
     addComment
 };
-
