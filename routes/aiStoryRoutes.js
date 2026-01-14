@@ -4,6 +4,7 @@ const {
     generateAndSaveStories,
     getAllStories,
     getStoryById,
+    getNextStory,
     deleteStory,
     deleteAllStories,
     likeStory,
@@ -17,6 +18,9 @@ router.post('/generate', generateAndSaveStories);
 
 // Get all stories
 router.get('/stories', getAllStories);
+
+// Get next story
+router.get('/stories/:id/next', getNextStory);
 
 // Get single story by ID
 router.get('/stories/:id', getStoryById);
