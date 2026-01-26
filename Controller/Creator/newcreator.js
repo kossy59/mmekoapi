@@ -43,6 +43,14 @@ const createCreator = async (req, res) => {
     });
   }
 
+  // Check if user already has a portfolio
+  if (currentuser.creator_portfolio === true) {
+    return res.status(400).json({
+      ok: false,
+      message: "Portfolio already exists",
+    });
+  }
+
   /**
    * Validate incoming files and upload using in-memory buffers
    */
@@ -71,7 +79,7 @@ const createCreator = async (req, res) => {
 
   // Only use photolinks from request if no files were uploaded
   let creatorfiles = uploadedFiles;
-  
+
   if (uploadedFiles.length === 0 && photolink.length > 0) {
     const photolinksFromReq = photolink.map((link) => ({
       creatorfilelink: link,

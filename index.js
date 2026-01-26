@@ -176,6 +176,7 @@ app.use(
   require("./routes/api/Profilemore/editprofilemore")
 );
 app.use("/creator", require("./routes/api/creator/creators"));
+app.use("/creator/check", require("./routes/api/creator/checkportfolio"));
 app.use("/editcreator", require("./routes/api/creator/editecreator"));
 app.use("/postdocument", require("./routes/api/creator/postdocument"));
 app.use("/getdocument", require("./routes/api/creator/getdocument"));

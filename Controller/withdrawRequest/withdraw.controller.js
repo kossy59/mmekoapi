@@ -47,6 +47,13 @@ exports.handleWithdrawRequest = async (req, res) => {
     // Calculate earnings to deduct (1 USD = 25 earnings)
     const earningsToDeduct = amount * 25;
 
+    // Validate minimum withdrawal amount
+    if (amount < 5) {
+      return res.status(400).json({
+        message: 'Minimum withdrawal amount is $5'
+      });
+    }
+
     // Check if user has enough earnings
     if (userExists.earnings < earningsToDeduct) {
       return res.status(400).json({
