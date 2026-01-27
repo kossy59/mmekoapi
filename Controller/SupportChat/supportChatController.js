@@ -279,12 +279,16 @@ const getAllSupportChats = async (req, res) => {
       .limit(parseInt(limit));
 
     // Manually populate user data since userid is a String, not ObjectId
-    const populatedChats = await Promise.all(
+    const populatedChats = (await Promise.all(
       supportChats.map(async (chat) => {
         const user = await User.findOne({ _id: chat.userid });
+
+        // Filter out chats where user no longer exists
+        if (!user) return null;
+
         return {
           ...chat.toObject(),
-          userid: user ? {
+          userid: {
             _id: user._id,
             firstname: user.firstname,
             lastname: user.lastname,
@@ -293,17 +297,17 @@ const getAllSupportChats = async (req, res) => {
             isVip: user.isVip || false,
             vipEndDate: user.vipEndDate,
             isVerified: user.creator_verified
-          } : null,
+          },
           // Add VIP info to messages as well
           messages: chat.messages.map(msg => ({
             ...msg.toObject(),
-            isVip: user ? (user.isVip || false) : false,
-            vipEndDate: user ? user.vipEndDate : null,
-            isVerified: user ? user.creator_verified : false
+            isVip: user.isVip || false,
+            vipEndDate: user.vipEndDate,
+            isVerified: user.creator_verified
           }))
         };
       })
-    );
+    )).filter(Boolean); // Remove null entries
 
     const total = await SupportChat.countDocuments(query);
 
