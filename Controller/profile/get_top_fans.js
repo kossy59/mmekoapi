@@ -4,10 +4,10 @@ const userdb = require("../../Creators/userdb");
 const getTopFans = async (req, res) => {
     try {
         // Get all transactions related to fan spending
-        // Ranked by: Fan call, Fan meet, Fan date, VIP upgrade purchase
+        // Ranked by: Fan call, Fan meet, Fan date, VIP upgrade purchase, Exclusive content purchase
         const spendingTransactions = await historydb.find({
             details: {
-                $regex: /(Fan call|Fan meet|Fan date|VIP upgrade purchase)/i,
+                $regex: /(Fan call|Fan meet|Fan date|VIP upgrade purchase|purchased exclusive content|purchase content|exclusive content)/i,
             },
             spent: { $exists: true, $ne: "" },
         }).exec();
