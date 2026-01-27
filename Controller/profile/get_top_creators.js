@@ -4,6 +4,7 @@ const userdb = require("../../Creators/userdb");
 const getTopCreators = async (req, res) => {
     try {
         // Get all transactions related to creator earnings
+        // NOTE: This includes ALL users with earnings, regardless of portfolio status
         // We look for transactions where income > 0 and details match earning types
         const earningTransactions = await historydb.find({
             income: { $exists: true, $ne: "" },
@@ -37,12 +38,18 @@ const getTopCreators = async (req, res) => {
             .slice(0, 15); // Get top 15
 
         // Fetch user details for top creators
+        // NOTE: Only users with creator_verified: true will appear in this list
         const topCreatorsWithDetails = await Promise.all(
             sortedCreators.map(async (creator) => {
                 try {
                     const user = await userdb.findById(creator.userId).exec();
 
                     if (!user) {
+                        return null;
+                    }
+
+                    // Filter: Only include verified creators
+                    if (!user.creator_verified) {
                         return null;
                     }
 
@@ -60,7 +67,7 @@ const getTopCreators = async (req, res) => {
             })
         );
 
-        // Filter out null values
+        // Filter out null values (users not found OR not verified)
         const validTopCreators = topCreatorsWithDetails.filter((creator) => creator !== null);
 
         return res.status(200).json({
