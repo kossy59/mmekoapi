@@ -785,7 +785,7 @@ exports.createWeb3Payment = async (req, res) => {
       network: "BSC",
       contractAddress: USDT_CONTRACT,
       expiresAt: expiresAt,
-      instructions: `Send exactly ${amount} USDT (BEP20) to the wallet address above. After sending, paste your transaction hash to confirm.`
+      instructions: `Send exactly ${amount}  USDT (BEP20 - Binance Smart Chain) to the wallet address above. After sending, paste your transaction hash to confirm.`
     });
 
   } catch (error) {
