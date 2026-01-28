@@ -78,4 +78,14 @@ const storySchema = new mongoose.Schema({
     }
 });
 
+// Add compound unique index to prevent duplicate stories for the same story number and date
+// This provides database-level protection against race conditions
+storySchema.index(
+    { story_number: 1, launchDate: 1 },
+    {
+        unique: true,
+        partialFilterExpression: { launchDate: { $exists: true } } // Only for stories with launchDate
+    }
+);
+
 module.exports = mongoose.model('Story', storySchema);
