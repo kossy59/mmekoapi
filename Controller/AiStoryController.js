@@ -12,6 +12,10 @@ const replicate = new Replicate({
 // Set your app's official launch date here (YYYY-MM-DD format)
 const LAUNCH_DATE = new Date('2025-01-01T00:00:00Z');
 
+// Mutex lock to prevent race conditions during story generation
+// Stores date strings (YYYY-MM-DD) of stories currently being generated
+const generationLocks = new Set();
+
 // Story configuration mapping (50-day cycle)
 const STORY_CONFIGS = {
     1: { type: "Underdog vs System", emotion: "Anger", perspective: "First person" },
@@ -93,14 +97,28 @@ function getTodayStoryConfig() {
 
 // Automatic daily story generation (called by cron job)
 const generateDailyStory = async () => {
+    // Create lock key based on today's date
+    const today = new Date();
+    const lockKey = today.toISOString().split('T')[0]; // YYYY-MM-DD format
+
     try {
         console.log("🌅 Starting automatic daily story generation...");
+        console.log(`🕒 Current time: ${new Date().toISOString()}`);
+
+        // Check if generation is already in progress for today
+        if (generationLocks.has(lockKey)) {
+            console.log("⚠️  Story generation already in progress for today. Skipping duplicate request.");
+            throw new Error("Story generation already in progress for today");
+        }
+
+        // Acquire lock
+        generationLocks.add(lockKey);
+        console.log(`🔒 Acquired generation lock for ${lockKey}`);
 
         const config = getTodayStoryConfig();
         console.log(`📅 Day Index: ${config.dayIndex} | Type: ${config.type} | Emotion: ${config.emotion}`);
 
         // Check if today's story already exists
-        const today = new Date();
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -111,6 +129,7 @@ const generateDailyStory = async () => {
 
         if (existingStory) {
             console.log("✅ Today's story already exists. Skipping generation.");
+            generationLocks.delete(lockKey); // Release lock
             return existingStory;
         }
 
@@ -321,10 +340,17 @@ OUTPUT FORMAT (STRICT JSON):
         const savedStory = await story.save();
         console.log(`✅ Story saved with all images: ${storyData.story_number}: ${storyData.title}`);
 
+        // Release lock after successful save
+        generationLocks.delete(lockKey);
+        console.log(`🔓 Released generation lock for ${lockKey}`);
+
         return savedStory;
 
     } catch (error) {
         console.error("❌ DETAILED ERROR in generateDailyStory:", error);
+        // Release lock on error
+        generationLocks.delete(lockKey);
+        console.log(`🔓 Released generation lock for ${lockKey} (error occurred)`);
         throw error;
     }
 };

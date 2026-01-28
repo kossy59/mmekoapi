@@ -1,156 +1,198 @@
 const userdb = require("../../Creators/userdb")
+const mongoose = require("mongoose")
 let userphoto = require("../../Creators/usercomplete")
 const { filterBlockedUsers } = require("../../utiils/blockFilter")
-const websiteVisitor = require("../../Creators/websiteVisitor")
-const requestdb = require("../../Creators/requsts")
-const creatordb = require("../../Creators/creators")
 
 const updatePost = async (req, res) => {
   const userid = req.body.userid;
+  const page = parseInt(req.body.page) || 1;
+  const id = req.body._id || req.body.id || "";
+  const limit = parseInt(req.body.limit) || 20;
+  const search = req.body.search || "";
+  const gender = req.body.gender || "";
+  const filter = req.body.filter || ""; // 'admin', 'creator', 'vip'
+  const includeStats = req.body.includeStats === true;
 
   try {
-    // Get all users with ban status included
-    let du = await userdb.find({}).exec()
-    let photos = await userphoto.find({}).exec()
+    // Build search query
+    const searchQuery = {};
 
-    let alluser = []
-
-    // Process users and add photo links
-    du.forEach(value1 => {
-      photos.forEach(value2 => {
-        if (String(value1._id) === String(value2.useraccountId)) {
-          let obj = value1.toObject()
-          obj.photolink = value2.photoLink
-          alluser.push(obj)
-        }
-      })
-    })
-
-    // Add IP addresses from websiteVisitor collection
-    // Get latest visitor record for each user to get their IP address
-    for (let i = 0; i < alluser.length; i++) {
-      try {
-        const latestVisitor = await websiteVisitor.findOne({
-          userid: alluser[i]._id.toString(),
-        }).sort({ date: -1 }).exec();
-
-        if (latestVisitor && latestVisitor.location && latestVisitor.location.ipAddress) {
-          alluser[i].ipAddress = latestVisitor.location.ipAddress;
-        } else {
-          alluser[i].ipAddress = "Unknown";
-        }
-      } catch (err) {
-        console.error(`Error fetching IP for user ${alluser[i]._id}:`, err);
-        alluser[i].ipAddress = "Unknown";
-      }
+    // Direct ID fetch
+    if (id) {
+      searchQuery._id = new mongoose.Types.ObjectId(id);
     }
 
-    // Add request statistics for each user
-    for (let i = 0; i < alluser.length; i++) {
-      const userIdStr = alluser[i]._id.toString();
 
-      try {
-        // Get requests made by this user (as a fan)
-        const requestsMade = await requestdb.find({
-          userid: userIdStr,
-          creator_portfolio_id: { $exists: true, $ne: null, $ne: "" }
-        }).exec();
+    // Text search
+    if (search) {
+      searchQuery.$or = [
+        { firstname: { $regex: search, $options: 'i' } },
+        { lastname: { $regex: search, $options: 'i' } },
+        { username: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } }
+      ];
+    }
 
-        // Get creator portfolio for this user
-        const creatorPortfolio = await creatordb.findOne({ userid: userIdStr }).exec();
+    // Gender filter
+    if (gender && gender !== 'all') {
+      searchQuery.gender = { $regex: new RegExp(`^${gender}$`, 'i') };
+    }
 
-        let requestsReceived = [];
-        let isCreator = false;
+    // Role/Status filter
+    if (filter === 'admin') {
+      searchQuery.admin = true;
+    } else if (filter === 'creator') {
+      searchQuery.creator_verified = true;
+    } else if (filter === 'vip') {
+      searchQuery.isVip = true;
+    }
 
-        if (creatorPortfolio) {
-          isCreator = true;
-          // Get requests received by this creator
-          requestsReceived = await requestdb.find({
-            creator_portfolio_id: creatorPortfolio._id.toString(),
-            userid: { $exists: true, $ne: null, $ne: "" }
-          }).exec();
+    // Get total count for pagination
+    const totalUsers = await userdb.countDocuments(searchQuery);
+    const totalPages = Math.ceil(totalUsers / limit);
+    const skip = (page - 1) * limit;
+
+    // Use aggregation pipeline for optimized querying
+    const pipeline = [
+      { $match: searchQuery },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: 'usercompletes', // Collection name for userphoto
+          localField: '_id',
+          foreignField: 'useraccountId',
+          as: 'photoData'
         }
-
-        // Process requests made - group by creator and type
-        const requestsMadeDetails = [];
-        const requestsMadeByType = {};
-
-        for (const request of requestsMade) {
-          try {
-            const creator = await creatordb.findOne({ _id: request.creator_portfolio_id }).exec();
-            const creatorUser = creator ? await userdb.findOne({ _id: creator.userid }).exec() : null;
-
-            requestsMadeDetails.push({
-              requestId: request._id,
-              creatorName: creator?.name || 'Unknown',
-              creatorUsername: creatorUser?.username || 'Unknown',
-              type: request.type || 'Unknown',
-              status: request.status,
-              date: request.date,
-              price: request.price,
-              createdAt: request.createdAt
-            });
-
-            // Count by type
-            const requestType = request.type || 'Unknown';
-            requestsMadeByType[requestType] = (requestsMadeByType[requestType] || 0) + 1;
-          } catch (err) {
-            console.error(`Error processing request ${request._id}:`, err);
+      },
+      {
+        $addFields: {
+          photolink: {
+            $cond: {
+              if: { $gt: [{ $size: '$photoData' }, 0] },
+              then: { $arrayElemAt: ['$photoData.photoLink', 0] },
+              else: null
+            }
           }
         }
-
-        // Process requests received - group by type
-        const requestsReceivedByType = {};
-        const requestsReceivedByStatus = {};
-
-        for (const request of requestsReceived) {
-          const requestType = request.type || 'Unknown';
-          const requestStatus = request.status || 'pending';
-
-          requestsReceivedByType[requestType] = (requestsReceivedByType[requestType] || 0) + 1;
-          requestsReceivedByStatus[requestStatus] = (requestsReceivedByStatus[requestStatus] || 0) + 1;
+      },
+      {
+        $project: {
+          photoData: 0, // Remove temporary field
+          password: 0,  // Don't send password
+          __v: 0        // Don't send version
         }
-
-        // Add request statistics to user object
-        alluser[i].isCreator = isCreator;
-        alluser[i].creatorPortfolioId = creatorPortfolio?._id || null;
-
-        // Requests made statistics
-        alluser[i].requestsMadeCount = requestsMade.length;
-        alluser[i].requestsMadeByType = requestsMadeByType;
-        alluser[i].requestsMadeDetails = requestsMadeDetails;
-
-        // Requests received statistics (only if creator)
-        if (isCreator) {
-          alluser[i].requestsReceivedCount = requestsReceived.length;
-          alluser[i].requestsReceivedByType = requestsReceivedByType;
-          alluser[i].requestsReceivedByStatus = requestsReceivedByStatus;
-        } else {
-          alluser[i].requestsReceivedCount = 0;
-          alluser[i].requestsReceivedByType = {};
-          alluser[i].requestsReceivedByStatus = {};
-        }
-
-      } catch (err) {
-        console.error(`Error fetching requests for user ${userIdStr}:`, err);
-        // Set default values if error occurs
-        alluser[i].isCreator = false;
-        alluser[i].requestsMadeCount = 0;
-        alluser[i].requestsReceivedCount = 0;
-        alluser[i].requestsMadeByType = {};
-        alluser[i].requestsReceivedByType = {};
-        alluser[i].requestsMadeDetails = [];
       }
+    ];
+
+    // Only add IP and request stats if explicitly requested (for detail view)
+    if (includeStats) {
+      // Add websiteVisitor lookup for IP addresses
+      pipeline.push({
+        $lookup: {
+          from: 'websitevisitors',
+          let: { userId: { $toString: '$_id' } },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$userid', '$$userId'] } } },
+            { $sort: { date: -1 } },
+            { $limit: 1 },
+            { $project: { 'location.ipAddress': 1 } }
+          ],
+          as: 'visitorData'
+        }
+      });
+
+      pipeline.push({
+        $addFields: {
+          ipAddress: {
+            $cond: {
+              if: { $gt: [{ $size: '$visitorData' }, 0] },
+              then: { $arrayElemAt: ['$visitorData.location.ipAddress', 0] },
+              else: 'Unknown'
+            }
+          }
+        }
+      });
+
+      // Add request statistics
+      pipeline.push({
+        $lookup: {
+          from: 'requests',
+          let: { userId: { $toString: '$_id' } },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$userid', '$$userId'] } } },
+            { $count: 'count' }
+          ],
+          as: 'requestsMadeData'
+        }
+      });
+
+      pipeline.push({
+        $lookup: {
+          from: 'creators',
+          let: { userId: { $toString: '$_id' } },
+          pipeline: [
+            { $match: { $expr: { $eq: ['$userid', '$$userId'] } } },
+            { $limit: 1 },
+            { $project: { _id: 1 } }
+          ],
+          as: 'creatorData'
+        }
+      });
+
+      pipeline.push({
+        $addFields: {
+          requestsMadeCount: {
+            $cond: {
+              if: { $gt: [{ $size: '$requestsMadeData' }, 0] },
+              then: { $arrayElemAt: ['$requestsMadeData.count', 0] },
+              else: 0
+            }
+          },
+          requestsReceivedCount: 0, // Can be populated later if needed
+          isCreator: { $gt: [{ $size: '$creatorData' }, 0] },
+          creator_portfolio_id: {
+            $cond: {
+              if: { $gt: [{ $size: '$creatorData' }, 0] },
+              then: { $arrayElemAt: ['$creatorData._id', 0] },
+              else: null
+            }
+          }
+        }
+      });
+
+      pipeline.push({
+        $project: {
+          visitorData: 0,
+          requestsMadeData: 0,
+          creatorData: 0
+        }
+      });
     }
+
+    // Execute aggregation
+    let alluser = await userdb.aggregate(pipeline).exec();
 
     // Filter out blocked users from the alluser list
     const filteredUsers = await filterBlockedUsers(alluser, userid);
 
-    return res.status(200).json({ "ok": true, "message": `Fetched all users Successfully`, users: filteredUsers })
-
+    return res.status(200).json({
+      ok: true,
+      message: `Fetched users successfully`,
+      users: filteredUsers,
+      pagination: {
+        page,
+        limit,
+        total: totalUsers,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1
+      }
+    });
 
   } catch (err) {
-    return res.status(500).json({ "ok": false, 'message': `${err.message}!` });
+    console.error('Error in getalluser:', err);
+    return res.status(500).json({ ok: false, message: `${err.message}!` });
   }
 }
 
