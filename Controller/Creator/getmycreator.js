@@ -110,17 +110,31 @@ const getMyCreator = async (req, res) => {
     }));
 
 
-    // Sort creators: Online > Offline, then Views Descending
-    host.sort((a, b) => {
-      // Priority 1: Online creators first
-      if (a.isOnline && !b.isOnline) return -1;
-      if (!a.isOnline && b.isOnline) return 1;
+    // Check global sorting preference
+    const GlobalSettings = require("../../Creators/GlobalSettings");
+    let settings = await GlobalSettings.findOne({ key: 'main_config' });
+    const isNewestFirst = settings ? settings.isNewestCreatorsFirst : false;
 
-      // Priority 2: Most views (highest first)
-      const viewsA = a.views || 0;
-      const viewsB = b.views || 0;
-      return viewsB - viewsA;
-    });
+    if (isNewestFirst) {
+      //Sort by createdAt descending (Newest first)
+      host.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0);
+        const dateB = new Date(b.createdAt || 0);
+        return dateB - dateA;
+      });
+    } else {
+      // Default sorting: Online > Views
+      host.sort((a, b) => {
+        // Priority 1: Online creators first
+        if (a.isOnline && !b.isOnline) return -1;
+        if (!a.isOnline && b.isOnline) return 1;
+
+        // Priority 2: Most views (highest first)
+        const viewsA = a.views || 0;
+        const viewsB = b.views || 0;
+        return viewsB - viewsA;
+      });
+    }
 
     return res
       .status(200)

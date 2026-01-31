@@ -882,6 +882,9 @@ const getNextStory = async (req, res) => {
 
 module.exports = {
     generateAndSaveStories,
+    generateDailyStory,
+    markExpiredStories,
+    deleteOldStories,
     getAllStories,
     getStoryById,
     getNextStory,

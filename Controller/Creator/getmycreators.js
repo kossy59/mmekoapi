@@ -40,8 +40,41 @@ const getMyCreators = async (req, res) => {
         daysava: creator.daysava,
         hosttype: creator.hosttype,
         document: creator.document,
+        createdAt: creator.createdAt,
+        views: creator.views || 0,
+        isOnline: creator.isOnline || false,
       };
     });
+
+    // Check global sorting preference
+    const GlobalSettings = require("../../Creators/GlobalSettings");
+    let settings = await GlobalSettings.findOne({ key: 'main_config' });
+    const isNewestFirst = settings ? settings.isNewestCreatorsFirst : false;
+
+    if (isNewestFirst) {
+      //Sort by createdAt descending (Newest first)
+      host.sort((a, b) => {
+        const dateA = new Date(a.createdAt || 0);
+        const dateB = new Date(b.createdAt || 0);
+        return dateB - dateA;
+      });
+    } else {
+      // Default sorting logic (if any specific to 'my creators' or generic)
+      // For consistency, we can apply the same Online > Views if desired, 
+      // or just leave it as DB order (which is effectively arbitrary or insertion order).
+      // Given the user wants a toggle, we'll apply the default sort here too if they want it "off".
+
+      host.sort((a, b) => {
+        // Priority 1: Online creators first
+        if (a.isOnline && !b.isOnline) return -1;
+        if (!a.isOnline && b.isOnline) return 1;
+
+        // Priority 2: Most views (highest first)
+        const viewsA = a.views || 0;
+        const viewsB = b.views || 0;
+        return viewsB - viewsA;
+      });
+    }
 
     return res.status(200).json({ ok: true, message: "Creators Fetched successfully", host });
   } catch (err) {
