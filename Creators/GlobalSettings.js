@@ -11,6 +11,10 @@ const globalSettingsSchema = new Schema({
     isMaintenance: {
         type: Boolean,
         default: false
+    },
+    isNewestCreatorsFirst: {
+        type: Boolean,
+        default: false
     }
 }, { timestamps: true });
 

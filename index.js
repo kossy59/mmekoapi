@@ -121,6 +121,10 @@ app.use('/uploads', express.static('uploads'));
 
 connect();
 
+// Initialize AI Story Generation Scheduler
+const { initializeScheduledTasks } = require('./jobs/storyScheduler');
+initializeScheduledTasks();
+
 const IDS = {};
 
 // Routes

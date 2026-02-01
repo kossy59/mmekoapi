@@ -33,7 +33,46 @@ const toggleMaintenanceStatus = async (req, res) => {
     }
 };
 
+const getCreatorSortStatus = async (req, res) => {
+    try {
+        let settings = await GlobalSettings.findOne({ key: 'main_config' });
+
+        if (!settings) {
+            settings = await GlobalSettings.create({ key: 'main_config', isMaintenance: false, isNewestCreatorsFirst: false });
+        }
+
+        return res.status(200).json({ ok: true, isNewestCreatorsFirst: settings.isNewestCreatorsFirst || false });
+    } catch (error) {
+        console.error("Error getting sort status:", error);
+        return res.status(500).json({ ok: false, message: "Internal server error" });
+    }
+};
+
+const toggleCreatorSortStatus = async (req, res) => {
+    try {
+        let settings = await GlobalSettings.findOne({ key: 'main_config' });
+
+        if (!settings) {
+            settings = await GlobalSettings.create({ key: 'main_config', isMaintenance: false, isNewestCreatorsFirst: true });
+        } else {
+            settings.isNewestCreatorsFirst = !settings.isNewestCreatorsFirst;
+            await settings.save();
+        }
+
+        return res.status(200).json({
+            ok: true,
+            isNewestCreatorsFirst: settings.isNewestCreatorsFirst,
+            message: `Sort by newest turned ${settings.isNewestCreatorsFirst ? 'ON' : 'OFF'}`
+        });
+    } catch (error) {
+        console.error("Error toggling sort status:", error);
+        return res.status(500).json({ ok: false, message: "Internal server error" });
+    }
+};
+
 module.exports = {
     getMaintenanceStatus,
-    toggleMaintenanceStatus
+    toggleMaintenanceStatus,
+    getCreatorSortStatus,
+    toggleCreatorSortStatus
 };

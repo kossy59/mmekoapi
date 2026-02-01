@@ -9,7 +9,7 @@ const getTopCreators = async (req, res) => {
         const earningTransactions = await historydb.find({
             income: { $exists: true, $ne: "" },
             details: {
-                $regex: /(Fan call|Fan meet|Fan date|VIP upgrade|Content purchase|Exclusive content)/i,
+                $regex: /(Fan call|Fan meet|Fan date|Content purchase|Exclusive content|Referral)/i,
             },
         }).exec();
 
@@ -48,10 +48,10 @@ const getTopCreators = async (req, res) => {
                         return null;
                     }
 
-                    // Filter: Only include verified creators
-                    if (!user.creator_verified) {
-                        return null;
-                    }
+                    // Filter removed: Include all users who have earnings
+                    // if (!user.creator_verified) {
+                    //    return null;
+                    // }
 
                     return {
                         userId: creator.userId,
