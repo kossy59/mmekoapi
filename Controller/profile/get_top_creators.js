@@ -3,14 +3,11 @@ const userdb = require("../../Creators/userdb");
 
 const getTopCreators = async (req, res) => {
     try {
-        // Get all transactions related to creator earnings
-        // NOTE: This includes ALL users with earnings, regardless of portfolio status
-        // We look for transactions where income > 0 and details match earning types
+        // Get ALL transactions with income for ALL users
+        // NOTE: This includes ALL users with ANY earnings (creators, fans, referral earners, etc.)
+        // No filtering by transaction type - captures everyone who earned money
         const earningTransactions = await historydb.find({
             income: { $exists: true, $ne: "" },
-            details: {
-                $regex: /(Fan call|Fan meet|Fan date|Content purchase|Exclusive content|Referral)/i,
-            },
         }).exec();
 
         // Group by user ID and calculate total earnings
@@ -67,16 +64,16 @@ const getTopCreators = async (req, res) => {
             })
         );
 
-        // Filter out null values (users not found OR not verified)
-        const validTopCreators = topCreatorsWithDetails.filter((creator) => creator !== null);
+        // Filter out null values (users not found)
+        const validTopEarners = topCreatorsWithDetails.filter((creator) => creator !== null);
 
         return res.status(200).json({
             ok: true,
-            message: "Top creators fetched successfully",
-            creators: validTopCreators,
+            message: "Top earners fetched successfully",
+            creators: validTopEarners, // Kept as 'creators' for backwards compatibility with frontend
         });
     } catch (err) {
-        console.error("Error fetching top creators:", err);
+        console.error("Error fetching top earners:", err);
         return res.status(500).json({ ok: false, message: `${err.message}!` });
     }
 };
