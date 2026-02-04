@@ -2,10 +2,10 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const verifyJwtBody = (req, res, next) => {
-  
+
   // Try to get token from request body first
   let token = req.body.token;
-  
+
   // If no token in body, try headers as fallback
   if (!token) {
     const authHeader = req.headers.authorization || req.headers.Authorization;
@@ -31,17 +31,17 @@ const verifyJwtBody = (req, res, next) => {
   let verified = false;
   let lastError = null;
 
-         for (const secret of possibleSecrets) {
-           try {
-             const decoded = jwt.verify(token, secret);
-             req.userId = decoded.UserInfo.userId;
-             req.isAdmin = decoded.UserInfo.isAdmin;
-             verified = true;
-             break;
-           } catch (err) {
-             lastError = err;
-           }
-         }
+  for (const secret of possibleSecrets) {
+    try {
+      const decoded = jwt.verify(token, secret);
+      req.userId = decoded.UserInfo.userId;
+      req.isAdmin = decoded.UserInfo.isAdmin;
+      verified = true;
+      break;
+    } catch (err) {
+      lastError = err;
+    }
+  }
 
   if (!verified) {
     // Fallback: Try to decode without signature verification (like verify.js does)

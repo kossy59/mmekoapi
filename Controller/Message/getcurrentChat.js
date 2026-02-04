@@ -24,12 +24,12 @@ const getcurrentChat = async (req, res) => {
     let chatInfo = {};
 
     let clientinfo = await userdb.findOne({ _id: userid }).exec();
-    
+
     if (clientinfo) {
       let photos = await completedb
         .findOne({ useraccountId: clientinfo._id })
         .exec();
-      
+
       let image = "";
       if (photos?.photoLink) {
         image = photos?.photoLink || "";
@@ -47,7 +47,7 @@ const getcurrentChat = async (req, res) => {
       chatInfo.value = "client";
       chatInfo.id = clientinfo._id;
       chatInfo.firstname = clientinfo.firstname;
-      
+
     } else {
       return res.status(404).json({ ok: false, message: "Target user not found" });
     }
@@ -58,18 +58,23 @@ const getcurrentChat = async (req, res) => {
     //     sdk.Query.or([sdk.Query.equal("fromid",[userid]), sdk.Query.equal("fromid",[clientid])])
     //    ])])
 
-    
+
+    // Calculate date for 60 days ago
+    // Note: dates are stored as string timestamps
+    const sixtyDaysAgo = Date.now() - (60 * 24 * 60 * 60 * 1000);
+    const dateLimit = sixtyDaysAgo.toString();
+
     // OPTIMIZED: Use MongoDB query to directly fetch messages between users
-    // This is much faster than fetching all messages and filtering
+    // Fetch messages from the last 60 days
     let Chats = await messagedb.find({
       $or: [
         { toid: userid, fromid: clientid },
         { fromid: userid, toid: clientid }
-      ]
+      ],
+      date: { $gte: dateLimit }
     })
-    .sort({ date: -1 }) // Sort by date descending (newest first)
-    .limit(30) // Limit to 30 messages directly in the query
-    .exec();
+      .sort({ date: -1 }) // Sort by date descending (newest first)
+      .exec();
 
 
     if (!Chats[0]) {
@@ -87,7 +92,7 @@ const getcurrentChat = async (req, res) => {
     if (unviewing.length > 0) {
       // OPTIMIZED: Batch update instead of individual saves
       await messagedb.updateMany(
-        { 
+        {
           _id: { $in: unviewing.map(msg => msg._id) },
           notify: true,
           toid: clientid
@@ -108,11 +113,11 @@ const getcurrentChat = async (req, res) => {
     // Create lookup maps for O(1) access
     let userMap = {};
     let photoMap = {};
-    
+
     allUsers.forEach(user => {
       userMap[user._id] = user;
     });
-    
+
     allPhotos.forEach(photo => {
       photoMap[photo.useraccountId] = photo;
     });
@@ -122,13 +127,13 @@ const getcurrentChat = async (req, res) => {
     let Listchat = Chats.map((message) => {
       let senderInfo = userMap[message.fromid];
       let senderPhoto = photoMap[message.fromid];
-      
+
       if (senderInfo) {
         const isVip = senderInfo.isVip || false;
         const vipEndDate = senderInfo.vipEndDate;
         const isVipActive = isVip && vipEndDate && new Date(vipEndDate) > new Date();
-        
-        
+
+
         return {
           id: message.fromid,
           content: message.content,
@@ -151,8 +156,8 @@ const getcurrentChat = async (req, res) => {
     let allchat = Listchat.sort((a, b) => {
       return Number(a.date) - Number(b.date);
     });
-    
-    
+
+
     return res.status(200).json({
       ok: true,
       message: `Chat fetched successfully`,
