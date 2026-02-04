@@ -1,5 +1,6 @@
 const BlockUser = require('../../Creators/blockuser');
 const UserDB = require('../../Creators/userdb');
+const mongoose = require('mongoose');
 
 // Block a user
 const blockUser = async (req, res) => {
@@ -55,9 +56,26 @@ const unblockUser = async (req, res) => {
   }
 
   try {
-    const result = await BlockUser.deleteOne({ blockerId, blockedUserId });
+    const bId = new mongoose.Types.ObjectId(blockerId);
+    const buId = new mongoose.Types.ObjectId(blockedUserId);
+
+    console.log(`[UnblockDebug] IDs: blocker=${bId}, blocked=${buId}`);
+
+    // Debug: Check if document exists before delete
+    const count = await BlockUser.countDocuments({ blockerId: bId, blockedUserId: buId });
+    console.log(`[UnblockDebug] Found ${count} matching documents before delete.`);
+
+    const result = await BlockUser.deleteMany({
+      blockerId: bId,
+      blockedUserId: buId
+    });
+    console.log(`[UnblockDebug] Delete result:`, result);
 
     if (result.deletedCount === 0) {
+      // If standard delete failed, try finding ANY block by these users regardless of direction (just in case)
+      const reverseCount = await BlockUser.countDocuments({ blockerId: buId, blockedUserId: bId });
+      console.log(`[UnblockDebug] Reverse check found: ${reverseCount}`);
+
       return res.status(404).json({ ok: false, message: 'Block relationship not found.' });
     }
 
