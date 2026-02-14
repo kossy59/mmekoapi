@@ -140,14 +140,15 @@ const generateDailyStory = async () => {
         const dayOfWeek = new Date().getDay(); // 0 = Sunday, 5 = Friday
         const isHeavyRitual = dayOfWeek === 0; // Sunday
         const isNoTitleRitual = dayOfWeek === 5; // Friday
-        const maxPanelWords = (isHeavyRitual || isNoTitleRitual) ? 4 : 12;
-        const toneInstruction = (isHeavyRitual || isNoTitleRitual) ? '- Cold tone: Use detached, blunt sentences with no comfort words' : '';
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        const currentDayName = days[dayOfWeek];
 
         const prompt = `
 You are a story engine creating short-form, addictive social rituals.
 
 TODAY'S STORY SLOT:
 Story Number: ${config.dayIndex}
+Current Day: ${currentDayName}
 
 STORY SLOT MAPPING (STRICT — DO NOT MIX):
 
@@ -155,7 +156,7 @@ STORY SLOT MAPPING (STRICT — DO NOT MIX):
 2 → Hidden Truth | Hope | Second person  
 3 → Personal Loss | Grief | Third person  
 4 → Moral Choice | Relief | Observer  
-5 → Builder's Sacrifice | Quiet Confidence | Confessional  
+5 → Builder’s Sacrifice | Quiet Confidence | Confessional  
 
 6 → Public Humiliation | Shame | First person  
 7 → Secret Kept Too Long | Regret | Second person  
@@ -203,7 +204,7 @@ STORY SLOT MAPPING (STRICT — DO NOT MIX):
 42 → Hidden Addiction | Shame | Second person  
 43 → Sudden Accident | Shock | Third person  
 44 → Witnessing Forgiveness | Relief | Observer  
-45 → Builder's Legacy | Pride | Confessional  
+45 → Builder’s Legacy | Pride | Confessional  
 
 46 → Public Silence | Alienation | First person  
 47 → Secret Burden | Guilt | Second person  
@@ -211,21 +212,22 @@ STORY SLOT MAPPING (STRICT — DO NOT MIX):
 49 → Watching Betrayal | Disbelief | Observer  
 50 → Quiet Ending | Closure | Confessional  
 
-${isHeavyRitual ? 'HEAVY RITUAL → Every Sunday | Emotionally Heavy | Cold tone | 15 panels | Each panel max 4 words | Title: 4 words' : ''}
-${isNoTitleRitual ? 'FRIDAY RITUAL → Every Friday | Emotionally Heavy | Cold tone | 15 panels | Each panel max 4 words | Title: 4 words' : ''}
+HEAVY RITUAL → Every Sunday | Emotionally Heavy | Cold tone | 15 panels | Each panel max 4 words  
+NO TITLE RITUAL → Every Friday | Emotionally Heavy | Cold tone | 15 panels | Each panel max 4 words | No title
 
 TASK:
-Generate ONE complete storyline for today's slot only.
+Generate ONE complete storyline for today’s slot only.
 
 REQUIREMENTS:
-- Title: EXACTLY 4 words (REQUIRED FOR ALL DAYS)
+- Title: EXACTLY 4 words (except NO TITLE RITUAL, which has no title)
 - EXACTLY 15 panels
 - Each panel is ONE short sentence
 - Normal slots: max 12 words per panel
-${(isHeavyRitual || isNoTitleRitual) ? '- Heavy/Friday Ritual: max 4 words per panel' : ''}
+- Heavy Ritual: max 4 words per panel
+- No Title Ritual: max 4 words per panel
 - Panels must be sequential and cinematic
-- Emotional core must match today's slot
-- Perspective must match today's slot
+- Emotional core must match today’s slot
+- Perspective must match today’s slot
 
 LANGUAGE CONSTRAINTS (MANDATORY):
 - Use simple, everyday English
@@ -235,7 +237,7 @@ LANGUAGE CONSTRAINTS (MANDATORY):
 - Short, clear sentences
 - Understandable by a 12-year-old
 - Emotional clarity over beauty
-${toneInstruction}
+- Cold tone = detached, blunt sentences, no comfort words
 
 GLOBAL RULES:
 - Do NOT reuse characters, events, or endings from previous days
@@ -249,8 +251,8 @@ GLOBAL RULES:
 OUTPUT FORMAT (STRICT JSON):
 
 {
-  "story_number": ${config.dayIndex},
-  "title": "[EXACTLY 4 WORDS]",
+  "storynumber": ${config.dayIndex},
+  "title": "",   // leave empty for NO TITLE RITUAL
   "emotional_core": "${config.emotion}",
   "panels": [
     { "panel_number": 1, "text": "" },
@@ -276,6 +278,11 @@ OUTPUT FORMAT (STRICT JSON):
         const responseText = result.response.text();
         const cleanText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
         const storyData = JSON.parse(cleanText);
+
+        // Normalize story_number key (handle both storynumber and story_number)
+        if (storyData.storynumber && !storyData.story_number) {
+            storyData.story_number = storyData.storynumber;
+        }
 
         console.log(`✅ Generated story: ${storyData.title || 'No Title Ritual'} (${storyData.panels.length} panels)`);
 
