@@ -69,11 +69,11 @@ const getTopCreators = async (req, res) => {
 
         return res.status(200).json({
             ok: true,
-            message: "Top earners fetched successfully",
+            message: "Top creators fetched successfully",
             creators: validTopEarners, // Kept as 'creators' for backwards compatibility with frontend
         });
     } catch (err) {
-        console.error("Error fetching top earners:", err);
+        console.error("Error fetching top creators:", err);
         return res.status(500).json({ ok: false, message: `${err.message}!` });
     }
 };
