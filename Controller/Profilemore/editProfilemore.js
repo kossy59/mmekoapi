@@ -6,7 +6,19 @@ const userdb = require("../../Creators/userdb")
 const { updateSingleFileToCloudinary } = require("../../utiils/storj")
 
 const updatePost = async (req, res) => {
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+    console.log("📝 [editProfilemore] Request received");
+    console.log("req.file:", req.file ? {
+        fieldname: req.file.fieldname,
+        originalname: req.file.originalname,
+        encoding: req.file.encoding,
+        mimetype: req.file.mimetype,
+        size: req.file.size,
+        hasBuffer: !!req.file.buffer
+    } : "NO FILE RECEIVED");
     console.log("req.body.data", req.body.data);
+    console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
     const data = JSON.parse(req.body.data);
     console.log("data", data);
 
@@ -27,22 +39,22 @@ const updatePost = async (req, res) => {
      * This implementation allows for in memory file upload manipulation
      * This prevents accessing the filesystem of the hosted server
      */
- 
+
 
     // Only update photo if a new file is being uploaded
     // This preserves the current photo if user only changes other fields
     let photoLink = null;
     let photoID = null;
-    
+
     if (req.file) {
         // New file is being uploaded - delete old one and upload new one
         const result = await updateSingleFileToCloudinary(deletePhotoID, req.file, `profile`);
 
-    
+
         photoLink = result.file_link;
         photoID = result.public_id;
     } else {
-       
+
     }
 
 
@@ -58,26 +70,32 @@ const updatePost = async (req, res) => {
 
         let du = await completedb.findOne({ useraccountId: userid }).exec()
         let usersedit = await userdb.findOne({ _id: userid }).exec()
-               
+
         if (!du && !usersedit) {
             return res.status(409).json({ "ok": false, 'message': 'Current user can not edit this profile!!' });
-        
+
         }
 
-              
 
-               
+
+
 
         if (photoLink && photoID) {
-            du.photoLink = photoLink
-            du.photoID = photoID
-         
+            if (du) {
+                du.photoLink = photoLink
+                du.photoID = photoID
+            }
         }
         if (aboutme) {
-            du.details = aboutme
+            if (du) {
+                du.details = aboutme
+            }
         }
-               
-        await du.save()
+
+        // Only save completedb if it exists
+        if (du) {
+            await du.save()
+        }
 
 
         if (firstname) {
@@ -89,27 +107,31 @@ const updatePost = async (req, res) => {
         if (country) {
             usersedit.country = country
         }
+        // Update bio in userdb as well so it's accessible everywhere
+        if (aboutme) {
+            usersedit.bio = aboutme
+        }
         if (username) {
             // Remove @ prefix if it exists (frontend sends it with @)
             const cleanUsername = username.startsWith('@') ? username.substring(1) : username;
             usersedit.username = `@${cleanUsername}`;  // Store with @ prefix in database
-      
+
         }
-        
+
         // Update photolink and photoID in userdb collection so it's accessible everywhere
         if (photoLink && photoID) {
             usersedit.photolink = photoLink
             usersedit.photoID = photoID
-          
+
         }
 
         await usersedit.save()
 
 
-           
 
-        return res.status(200).json({ 
-            "ok": true, 
+
+        return res.status(200).json({
+            "ok": true,
             "message": `Profile updated Successfully`,
             "profile": {
                 photolink: usersedit.photolink,
@@ -121,8 +143,8 @@ const updatePost = async (req, res) => {
                 country: usersedit.country
             }
         })
-      
-          
+
+
     } catch (err) {
         return res.status(500).json({ "ok": false, 'message': `${err.message}!` });
     }
