@@ -134,19 +134,43 @@ const getcurrentChat = async (req, res) => {
         const isVipActive = isVip && vipEndDate && new Date(vipEndDate) > new Date();
 
 
+
+        // SECURITY: Check if message is PPV and locked
+        let messageContent = message.content;
+        let messageFiles = message.files || [];
+        let isLocked = false;
+
+        if (message.isPPV) {
+          // Check if user is sender or has unlocked
+          // clientid is the current user requesting the chat
+          const isSender = String(message.fromid) === String(clientid);
+          const isUnlocked = message.unlockedBy && message.unlockedBy.includes(clientid);
+
+          if (!isSender && !isUnlocked) {
+            isLocked = true;
+            messageContent = "LOCKED_MESSAGE"; // Placeholder
+            messageFiles = []; // Hide files
+          }
+        }
+
         return {
           id: message.fromid,
-          content: message.content,
+          content: messageContent,
           date: message.date,
           name: senderInfo.firstname,
           photolink: senderPhoto?.photoLink || "",
           client: message.client,
           coin: message.coin || false,
-          files: message.files || [],
+          files: messageFiles,
           fileCount: message.fileCount || 0,
           isVip: senderInfo.isVip || false,
           vipStartDate: senderInfo.vipStartDate,
-          vipEndDate: senderInfo.vipEndDate
+          vipEndDate: senderInfo.vipEndDate,
+          // PPV Fields
+          isPPV: message.isPPV || false,
+          ppvPrice: message.ppvPrice || 0,
+          isLocked: isLocked,
+          _id: message._id
         };
       }
       return null;

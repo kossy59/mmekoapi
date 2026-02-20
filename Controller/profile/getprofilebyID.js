@@ -85,6 +85,10 @@ const readProfile = async (req, res) => {
       // Balance fields
       balance: du.balance || "0",
       coinBalance: du.coinBalance || 0,
+      // PPV settings
+      ppvStatus: du.ppvStatus || "none",
+      ppvPrice: du.ppvPrice || 0,
+      ppvEnabled: du.ppvEnabled || false,
     };
 
     let exclusiveData = await exclusivedb

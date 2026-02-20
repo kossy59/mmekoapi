@@ -117,7 +117,7 @@ const MsgNotify = async (req, res) => {
       if (userInfo && conversation.latestMessage) {
         const messageData = {
           id: conversation.latestMessage._id,
-          content: conversation.latestMessage.content,
+          content: (conversation.latestMessage.isPPV && !conversation.latestMessage.unlockedBy?.includes(userid) && conversation.latestMessage.fromid !== userid) ? "LOCKED_MESSAGE" : conversation.latestMessage.content,
           date: conversation.latestMessage.date,
           fromid: conversation.latestMessage.fromid,
           toid: conversation.latestMessage.toid,
@@ -125,6 +125,8 @@ const MsgNotify = async (req, res) => {
           coin: conversation.latestMessage.coin || false,
           files: conversation.latestMessage.files || [],
           fileCount: conversation.latestMessage.fileCount || 0,
+          isPPV: conversation.latestMessage.isPPV || false,
+          isLocked: conversation.latestMessage.isPPV && !conversation.latestMessage.unlockedBy?.includes(userid) && conversation.latestMessage.fromid !== userid,
           name: userInfo.firstname,
           username: userInfo.username, // Include username field
           photolink: userPhoto?.photoLink || "",

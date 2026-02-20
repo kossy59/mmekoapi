@@ -233,6 +233,20 @@ const markertdata = new Scheme(
       required: false,
       index: true,
     },
+    // Pay Per View Fields
+    ppvStatus: {
+      type: String,
+      enum: ["none", "pending", "approved", "declined"],
+      default: "none",
+    },
+    ppvPrice: {
+      type: Number,
+      default: 0,
+    },
+    ppvEnabled: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );
