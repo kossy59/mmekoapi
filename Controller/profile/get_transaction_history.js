@@ -72,6 +72,9 @@ const getTransactionHistory = async (req, res) => {
         details.includes("exclusive content sale") ||
         details.includes("exclusive content") ||
         details.includes("exclusive sale") ||
+        // PPV message transactions
+        details.includes("Purchased PPV message") ||
+        details.includes("Earning from PPV message sale") ||
         // Withdrawal from earnings
         detailsLower.includes("withdrawal") ||
         detailsLower.includes("withdraw") ||

@@ -40,6 +40,11 @@ const getTopFans = async (req, res) => {
         const topFansWithDetails = await Promise.all(
             sortedFans.map(async (fan) => {
                 try {
+                    // Validate fan.userId before querying
+                    if (!fan.userId || fan.userId.length < 10) {
+                        return null;
+                    }
+
                     const user = await userdb.findById(fan.userId).exec();
 
                     if (!user) {
@@ -54,7 +59,8 @@ const getTopFans = async (req, res) => {
                         totalSpentUSD: (fan.totalSpent * 0.04).toFixed(2), // Convert gold to USD
                     };
                 } catch (error) {
-                    console.error(`Error fetching user ${fan.userId}:`, error);
+                    // Log error but don't fail the entire request
+                    console.error(`Error fetching user details for ${fan.userId}:`, error.message);
                     return null;
                 }
             })

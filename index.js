@@ -284,7 +284,11 @@ app.use("/api/backup", require("./routes/api/backupRoutes"));
 app.use("/api/pending-balance", require("./routes/api/pendingBalanceRoutes"));
 app.use("/api/reports", require("./routes/api/reportRoutes"));
 app.use("/api/push", require("./routes/api/pushTest"));
+app.use("/api/push", require("./routes/api/pushTest"));
 app.use("/api", require("./routes/api/trackVisitor"));
+
+// Pay Per View Routes
+app.use("/api/ppv", require("./routes/api/ppv/ppvRoutes"));
 app.use("/api/referral", require("./routes/api/referral/getReferralInfo"));
 app.use("/api/referral/admin/analytics", require("./routes/api/referral/getAdminReferralAnalytics"));
 app.use("/api/admin", require("./routes/admin/deviceStatsRoutes"));
@@ -432,7 +436,14 @@ io.on("connection", (socket) => {
       let info = await MYID(newdata.fromid);
 
       const data = { ...newdata, ...info };
-      await Livechats({ ...data });
+      const savedMsg = await Livechats({ ...data });
+
+      // Include the database _id in the data being broadcasted
+      const broadcastData = {
+        ...data,
+        _id: savedMsg?._id || data._id
+      };
+
       if (info && data.toid && data.toid !== 'undefined' && data.toid !== 'null' && typeof data.toid === 'string' && data.toid.length === 24) {
         await sendEmail(data.toid, `New message from ${info?.name}`);
         await pushMessageNotification(
@@ -447,7 +458,7 @@ io.on("connection", (socket) => {
       socket.broadcast.emit("LiveChat", {
         name: info?.name,
         photolink: info?.photolink || "",
-        data: data,
+        data: broadcastData,
       });
 
     } catch (error) {
