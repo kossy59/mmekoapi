@@ -8,7 +8,9 @@ const {
     deleteStory,
     deleteAllStories,
     likeStory,
-    addComment
+    addComment,
+    getSeriesConfig,
+    updateSeriesConfig
 } = require('../Controller/AiStoryController');
 const { getAnyaAnalytics } = require('../Controller/AnyaAnalyticsController');
 const { trackPageVisit, getPageVisitAnalytics, startSession, updateSessionActivity, endSession, getUserSessionAnalytics } = require('../Controller/AnyaPageVisitController');
@@ -51,5 +53,9 @@ router.delete('/stories/:id', deleteStory);
 
 // Delete all stories (for testing)
 router.delete('/stories', deleteAllStories);
+
+// 30-day series config (admin): get current config, update config
+router.get('/series-config', getSeriesConfig);
+router.put('/series-config', updateSeriesConfig);
 
 module.exports = router;

@@ -2,6 +2,7 @@ const { GoogleGenerativeAI } = require("@google/generative-ai");
 const axios = require('axios');
 const Replicate = require("replicate");
 const Story = require('../models/Story');
+const SeriesConfig = require('../models/SeriesConfig');
 const { uploadToStorj } = require('../utiils/storjUpload');
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API);
@@ -95,6 +96,223 @@ function getTodayStoryConfig() {
     };
 }
 
+// Default 30-day series config (used when none exists in DB; admin can save from dashboard)
+const DEFAULT_SERIES_CONFIG = {
+    series_info: {
+        series_title: "Almost Lovers",
+        day_number: 1,
+        completed: false,
+        premise: "Two people stuck in an almost-relationship slowly drift apart while pretending everything is fine."
+    },
+    characters: {
+        main: {
+            name: "A",
+            role: "main",
+            traits: ["quiet", "overthinks", "cautious"],
+            fears: ["abandonment"],
+            desires: ["emotional certainty"],
+            secret: "reads old messages nightly"
+        },
+        counterpart: {
+            name: "B",
+            role: "counterpart",
+            traits: ["warm", "inconsistent", "busy"],
+            fears: ["being controlled"],
+            desires: ["freedom"],
+            secret: "already moved on"
+        }
+    },
+    relationship_state: {
+        closeness: 70,
+        tension: 20,
+        honesty: 40,
+        days_since_contact: 0
+    },
+    timeline: [],
+    hidden_future_events: [
+        { day: 21, event: "she_leaves_city" },
+        { day: 26, event: "he_discovers_truth" },
+        { day: 30, event: "emotional_resolution" }
+    ],
+    daily_slots: [
+        { day_number: 1, objective: "establish distance", emotion: "Regret", perspective: "First person", flexible: true },
+        { day_number: 2, objective: "attempt contact", emotion: "Hope", perspective: "First person", flexible: true },
+        { day_number: 3, objective: "small argument", emotion: "Anger", perspective: "First person", flexible: true },
+        { day_number: 4, objective: "apology avoided", emotion: "Shame", perspective: "First person", flexible: true },
+        { day_number: 5, objective: "rebuild trust", emotion: "Quiet Confidence", perspective: "First person", flexible: true },
+        { day_number: 6, objective: "misunderstanding", emotion: "Frustration", perspective: "First person", flexible: true },
+        { day_number: 7, objective: "distance grows", emotion: "Regret", perspective: "First person", flexible: true },
+        { day_number: 8, objective: "attempt connection", emotion: "Hope", perspective: "First person", flexible: true },
+        { day_number: 9, objective: "secret revealed", emotion: "Disbelief", perspective: "First person", flexible: true },
+        { day_number: 10, objective: "emotional withdrawal", emotion: "Calm", perspective: "First person", flexible: true },
+        { day_number: 11, objective: "misjudged actions", emotion: "Frustration", perspective: "First person", flexible: true },
+        { day_number: 12, objective: "truth told", emotion: "Release", perspective: "First person", flexible: true },
+        { day_number: 13, objective: "sad acceptance", emotion: "Sad Acceptance", perspective: "First person", flexible: true },
+        { day_number: 14, objective: "loyalty tested", emotion: "Inner Conflict", perspective: "First person", flexible: true },
+        { day_number: 15, objective: "silent persistence", emotion: "Steady Confidence", perspective: "First person", flexible: true },
+        { day_number: 16, objective: "missed timing", emotion: "Bittersweet", perspective: "First person", flexible: true },
+        { day_number: 17, objective: "realizing lie", emotion: "Disbelief", perspective: "First person", flexible: true },
+        { day_number: 18, objective: "letting go slowly", emotion: "Emotional Exhaustion", perspective: "First person", flexible: true },
+        { day_number: 19, objective: "standing alone", emotion: "Strength", perspective: "First person", flexible: true },
+        { day_number: 20, objective: "building silently", emotion: "Quiet Pride", perspective: "First person", flexible: true },
+        { day_number: 21, objective: "childhood memory", emotion: "Nostalgia", perspective: "First person", flexible: true },
+        { day_number: 22, objective: "hidden envy", emotion: "Jealousy", perspective: "First person", flexible: true },
+        { day_number: 23, objective: "sudden illness", emotion: "Fear", perspective: "First person", flexible: true },
+        { day_number: 24, objective: "witness injustice", emotion: "Anger", perspective: "First person", flexible: true },
+        { day_number: 25, objective: "quiet aging", emotion: "Acceptance", perspective: "First person", flexible: true },
+        { day_number: 26, objective: "public rejection", emotion: "Hurt", perspective: "First person", flexible: true },
+        { day_number: 27, objective: "secret crush", emotion: "Vulnerability", perspective: "First person", flexible: true },
+        { day_number: 28, objective: "heavy debt", emotion: "Anxiety", perspective: "First person", flexible: true },
+        { day_number: 29, objective: "watch collapse", emotion: "Helplessness", perspective: "First person", flexible: true },
+        { day_number: 30, objective: "daily survival", emotion: "Resilience", perspective: "First person", flexible: true }
+    ]
+};
+
+/** Get current series config for generation. Returns null if none or series completed. */
+async function getSeriesConfigForGeneration() {
+    const doc = await SeriesConfig.findById('current').lean();
+    if (!doc || !doc.series_info) return null;
+    if (doc.series_info.completed) return null;
+    const dayNum = doc.series_info.day_number || 1;
+    if (dayNum > 30) return null;
+    return doc;
+}
+
+/** Build character description line (traits, fears, desires; no secret in prompt). */
+function describeCharacter(char) {
+    if (!char) return 'Not specified';
+    const parts = [char.name || 'Main', (char.traits || []).join(', '), (char.fears || []).length ? `Fears: ${(char.fears || []).join(', ')}` : '', (char.desires || []).length ? `Desires: ${(char.desires || []).join(', ')}` : ''].filter(Boolean);
+    return parts.join('. ');
+}
+
+/** Build episodic prompt from series config and current day slot. */
+function buildEpisodicPrompt(config) {
+    const info = config.series_info || {};
+    const dayNumber = info.day_number || 1;
+    const slot = (config.daily_slots || []).find(s => s.day_number === dayNumber) || {};
+    const mainDesc = describeCharacter(config.characters?.main);
+    const counterpartDesc = describeCharacter(config.characters?.counterpart);
+    const rs = config.relationship_state || {};
+    const pastEvents = (config.timeline || []).map(e => (typeof e === 'string' ? e : `Day ${e.day}: ${e.summary || e.event || '—'}`)).join('\n') || 'None yet.';
+    const futureEvents = (config.hidden_future_events || []).map(e => `Day ${e.day}: ${e.event}`).join('\n') || 'None.';
+
+    return `You are a controlled episodic story engine. Write today's episode in an ongoing 30-day story. Everything about the characters, relationship, timeline, hidden future events, and SERIES PREMISE already exists.
+
+CRITICAL STORY RULE
+------------------------
+The SERIES PREMISE is the long-term narrative direction.
+Every episode MUST move emotionally toward the outcome implied in the premise.
+Do NOT contradict the premise.
+Do NOT resolve the central conflict early.
+
+SERIES CONTEXT
+------------------------
+SERIES TITLE (4 words max): ${(info.series_title || '').substring(0, 50)}
+DAY NUMBER: ${dayNumber} / 30
+SERIES PREMISE: ${info.premise || ''}
+TODAY EMOTIONAL SLOT: ${slot.emotion || 'Regret'} | Perspective: ${slot.perspective || 'First person'}
+TODAY OBJECTIVE: ${slot.objective || 'establish distance'}
+
+CURRENT RELATIONSHIP STATE:
+closeness: ${rs.closeness ?? 70}
+tension: ${rs.tension ?? 20}
+honesty: ${rs.honesty ?? 40}
+days_since_contact: ${rs.days_since_contact ?? 0}
+
+CHARACTERS:
+MAIN: ${mainDesc}
+COUNTERPART: ${counterpartDesc}
+
+PAST EVENTS (FACTUAL TIMELINE):
+${pastEvents}
+
+HIDDEN FUTURE EVENTS (DO NOT REVEAL EARLY):
+${futureEvents}
+
+WRITING RULES
+------------------------
+- Write ONLY today's episode.
+- Follow emotional continuity from past events.
+- Characters must behave consistently with traits and fears.
+- Reflect today's emotional core naturally.
+- Respect the long-term premise direction.
+- Use simple everyday English.
+- Short, direct, cold sentences.
+- Small realistic changes in numbers.
+- No sudden personality shifts.
+- No dramatic twists unless scheduled in hidden future events.
+
+FORMAT RULES
+------------------------
+- Exactly 15 panels.
+- Each panel ONE short sentence, max 12 words.
+- Sequential and cinematic.
+- Perspective must match slot.
+- No repeated lines.
+- No narration outside panels.
+
+TITLE RULE
+------------------------
+- JSON title field: "${(info.series_title || 'Almost Lovers').replace(/"/g, '\\"')}" (4 words max).
+- Episode numbering handled externally as: "Episode ${dayNumber}".
+
+ENDING RULES (DAY 30 ONLY)
+------------------------
+- Deliver quiet emotional closure aligned with the premise.
+- Never over-resolve.
+- Possible endings: quiet drift apart, secret revealed, fading attachment.
+- Mark story complete in backend.
+
+ANTI-REPETITION RULES
+------------------------
+- After Day 30, system resets.
+- New story requires new premise, new characters, new state.
+
+OUTPUT FORMAT (STRICT JSON ONLY)
+------------------------
+{
+  "storynumber": ${dayNumber},
+  "title": "${(info.series_title || 'Almost Lovers').replace(/"/g, '\\"')}",
+  "emotional_core": "${(slot.emotion || 'Regret').replace(/"/g, '\\"')}",
+  "panels": [
+    { "panel_number": 1, "text": "" },
+    { "panel_number": 2, "text": "" },
+    { "panel_number": 3, "text": "" },
+    { "panel_number": 4, "text": "" },
+    { "panel_number": 5, "text": "" },
+    { "panel_number": 6, "text": "" },
+    { "panel_number": 7, "text": "" },
+    { "panel_number": 8, "text": "" },
+    { "panel_number": 9, "text": "" },
+    { "panel_number": 10, "text": "" },
+    { "panel_number": 11, "text": "" },
+    { "panel_number": 12, "text": "" },
+    { "panel_number": 13, "text": "" },
+    { "panel_number": 14, "text": "" },
+    { "panel_number": 15, "text": "" }
+  ]
+}`;
+}
+
+/** Update series config after an episode is saved: increment day, append timeline, set completed if day 30. */
+async function updateSeriesConfigAfterEpisode(dayNumber, storyTitle) {
+    const doc = await SeriesConfig.findById('current');
+    if (!doc) return;
+    const info = doc.series_info || {};
+    const nextDay = (info.day_number || 1) + 1;
+    const timeline = Array.isArray(doc.timeline) ? [...doc.timeline] : [];
+    timeline.push({ day: dayNumber, summary: storyTitle || `Episode ${dayNumber}` });
+    const updates = {
+        'series_info.day_number': nextDay,
+        timeline
+    };
+    if (nextDay > 30) {
+        updates['series_info.completed'] = true;
+    }
+    await SeriesConfig.findByIdAndUpdate('current', { $set: updates });
+    console.log(`📅 Series config updated: day_number → ${nextDay}${nextDay > 30 ? ', series completed' : ''}`);
+}
+
 // Automatic daily story generation (called by cron job)
 const generateDailyStory = async () => {
     // Create lock key based on today's date
@@ -115,18 +333,32 @@ const generateDailyStory = async () => {
         generationLocks.add(lockKey);
         console.log(`🔒 Acquired generation lock for ${lockKey}`);
 
-        const config = getTodayStoryConfig();
-        console.log(`📅 Day Index: ${config.dayIndex} | Type: ${config.type} | Emotion: ${config.emotion}`);
+        // Prefer 30-day episodic series config if present and not completed
+        const seriesConfig = await getSeriesConfigForGeneration();
+        const useEpisodic = !!seriesConfig;
+        const config = useEpisodic
+            ? {
+                dayIndex: seriesConfig.series_info.day_number,
+                type: (seriesConfig.daily_slots || []).find(s => s.day_number === seriesConfig.series_info.day_number)?.objective || 'episode',
+                emotion: (seriesConfig.daily_slots || []).find(s => s.day_number === seriesConfig.series_info.day_number)?.emotion || 'Regret',
+                perspective: (seriesConfig.daily_slots || []).find(s => s.day_number === seriesConfig.series_info.day_number)?.perspective || 'First person'
+            }
+            : getTodayStoryConfig();
+        console.log(useEpisodic
+            ? `📅 Episodic series: Day ${config.dayIndex}/30 | ${config.emotion} | ${config.perspective}`
+            : `📅 Day Index: ${config.dayIndex} | Type: ${config.type} | Emotion: ${config.emotion}`);
 
-        // Check if today's story already exists
+        // Check if today's story already exists (by date) OR this episode number already exists (episodic)
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
 
-        const existingStory = await Story.findOne({
+        let existingStory = await Story.findOne({
             createdAt: { $gte: today, $lt: tomorrow }
         });
-
+        if (!existingStory && useEpisodic) {
+            existingStory = await Story.findOne({ story_number: config.dayIndex });
+        }
         if (existingStory) {
             console.log("✅ Today's story already exists. Skipping generation.");
             generationLocks.delete(lockKey); // Release lock
@@ -136,14 +368,14 @@ const generateDailyStory = async () => {
         // Generate story with Gemini
         const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-        // Determine if today is a special ritual day
-        const dayOfWeek = new Date().getDay(); // 0 = Sunday, 5 = Friday
-        const isHeavyRitual = dayOfWeek === 0; // Sunday
-        const isNoTitleRitual = dayOfWeek === 5; // Friday
-        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-        const currentDayName = days[dayOfWeek];
-
-        const prompt = `
+        let prompt;
+        if (useEpisodic) {
+            prompt = buildEpisodicPrompt(seriesConfig);
+        } else {
+            const dayOfWeek = new Date().getDay();
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const currentDayName = days[dayOfWeek];
+            prompt = `
 You are a story engine creating short-form, addictive social rituals.
 
 TODAY'S STORY SLOT:
@@ -273,6 +505,7 @@ OUTPUT FORMAT (STRICT JSON):
   ]
 }
         `;
+        }
 
         const result = await model.generateContent(prompt);
         const responseText = result.response.text();
@@ -346,6 +579,11 @@ OUTPUT FORMAT (STRICT JSON):
         const story = new Story(storyWithImages);
         const savedStory = await story.save();
         console.log(`✅ Story saved with all images: ${storyData.story_number}: ${storyData.title}`);
+
+        // Update 30-day series config after episode (increment day_number, timeline, set completed if day 30)
+        if (useEpisodic) {
+            await updateSeriesConfigAfterEpisode(storyData.story_number, storyData.title);
+        }
 
         // Release lock after successful save
         generationLocks.delete(lockKey);
@@ -886,6 +1124,47 @@ const getNextStory = async (req, res) => {
     }
 };
 
+// Get current 30-day series config (for admin dashboard). Returns default if none saved.
+const getSeriesConfig = async (req, res) => {
+    try {
+        const doc = await SeriesConfig.findById('current').lean();
+        if (!doc || !doc.series_info) {
+            return res.status(200).json({
+                config: DEFAULT_SERIES_CONFIG,
+                isDefault: true
+            });
+        }
+        res.status(200).json({ config: doc, isDefault: false });
+    } catch (error) {
+        console.error("Error fetching series config:", error);
+        res.status(500).json({ error: "Failed to fetch series config" });
+    }
+};
+
+// Update 30-day series config (admin). Creates document with _id 'current' if missing.
+const updateSeriesConfig = async (req, res) => {
+    try {
+        const body = req.body || {};
+        const doc = await SeriesConfig.findByIdAndUpdate(
+            'current',
+            {
+                $set: {
+                    series_info: body.series_info ?? {},
+                    characters: body.characters ?? {},
+                    relationship_state: body.relationship_state ?? {},
+                    timeline: body.timeline ?? [],
+                    hidden_future_events: body.hidden_future_events ?? [],
+                    daily_slots: body.daily_slots ?? []
+                }
+            },
+            { new: true, upsert: true }
+        );
+        res.status(200).json({ success: true, config: doc });
+    } catch (error) {
+        console.error("Error updating series config:", error);
+        res.status(500).json({ error: "Failed to update series config" });
+    }
+};
 
 module.exports = {
     generateAndSaveStories,
@@ -898,5 +1177,7 @@ module.exports = {
     deleteStory,
     deleteAllStories,
     likeStory,
-    addComment
+    addComment,
+    getSeriesConfig,
+    updateSeriesConfig
 };
