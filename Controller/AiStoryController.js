@@ -294,8 +294,37 @@ OUTPUT FORMAT (STRICT JSON ONLY)
 }`;
 }
 
-/** Update series config after an episode is saved: increment day, append timeline, set completed if day 30. */
-async function updateSeriesConfigAfterEpisode(dayNumber, storyTitle) {
+/** Ask Gemini for suggested relationship_state after an episode (closeness, tension, honesty, days_since_contact). */
+async function getSuggestedRelationshipState(panelTexts, currentState) {
+    if (!panelTexts || !Array.isArray(panelTexts) || panelTexts.length === 0) return null;
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const episodeSummary = panelTexts.map((p, i) => (typeof p === 'string' ? p : p.text || '')).join(' ');
+    const prompt = `Based on this episode only, suggest the relationship state AFTER it. Current state: closeness=${currentState?.closeness ?? 70}, tension=${currentState?.tension ?? 20}, honesty=${currentState?.honesty ?? 40}, days_since_contact=${currentState?.days_since_contact ?? 0}.
+
+Episode (15 panels): ${episodeSummary.substring(0, 1500)}
+
+Rules: closeness/tension/honesty are 0-100. days_since_contact is 0+ (0 if they met/spoke this episode, else increment). Small changes: +/-1 to +/-8 per value. If they bonded → closeness up, tension down. If they argued → tension up, maybe closeness down. If truth revealed → honesty up.
+
+Reply with ONLY valid JSON, no markdown: { "closeness": number, "tension": number, "honesty": number, "days_since_contact": number }`;
+    try {
+        const result = await model.generateContent(prompt);
+        const text = result.response.text().replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(text);
+        const clamp = (n) => Math.min(100, Math.max(0, Number(n) || 0));
+        return {
+            closeness: clamp(parsed.closeness),
+            tension: clamp(parsed.tension),
+            honesty: clamp(parsed.honesty),
+            days_since_contact: Math.max(0, Math.floor(Number(parsed.days_since_contact) || 0))
+        };
+    } catch (err) {
+        console.warn('⚠️ Could not get suggested relationship state:', err.message);
+        return null;
+    }
+}
+
+/** Update series config after an episode: timeline, day_number, relationship_state (AI-suggested), completed if day 30. */
+async function updateSeriesConfigAfterEpisode(dayNumber, storyTitle, panelTexts, currentRelationshipState) {
     const doc = await SeriesConfig.findById('current');
     if (!doc) return;
     const info = doc.series_info || {};
@@ -306,6 +335,15 @@ async function updateSeriesConfigAfterEpisode(dayNumber, storyTitle) {
         'series_info.day_number': nextDay,
         timeline
     };
+    // Update relationship_state from AI suggestion based on this episode (so next episode has correct "memory")
+    const suggested = await getSuggestedRelationshipState(panelTexts, currentRelationshipState);
+    if (suggested) {
+        updates['relationship_state.closeness'] = suggested.closeness;
+        updates['relationship_state.tension'] = suggested.tension;
+        updates['relationship_state.honesty'] = suggested.honesty;
+        updates['relationship_state.days_since_contact'] = suggested.days_since_contact;
+        console.log(`📊 Relationship state updated: closeness=${suggested.closeness} tension=${suggested.tension} honesty=${suggested.honesty} days_since_contact=${suggested.days_since_contact}`);
+    }
     if (nextDay > 30) {
         updates['series_info.completed'] = true;
     }
@@ -580,9 +618,15 @@ OUTPUT FORMAT (STRICT JSON):
         const savedStory = await story.save();
         console.log(`✅ Story saved with all images: ${storyData.story_number}: ${storyData.title}`);
 
-        // Update 30-day series config after episode (increment day_number, timeline, set completed if day 30)
+        // Update 30-day series config after episode: timeline, day_number, relationship_state (AI-suggested), completed if day 30
         if (useEpisodic) {
-            await updateSeriesConfigAfterEpisode(storyData.story_number, storyData.title);
+            const panelTexts = (storyData.panels || []).map(p => (typeof p === 'string' ? p : p.text));
+            await updateSeriesConfigAfterEpisode(
+                storyData.story_number,
+                storyData.title,
+                panelTexts,
+                seriesConfig.relationship_state
+            );
         }
 
         // Release lock after successful save
@@ -824,8 +868,6 @@ const deleteOldStories = async () => {
 
         console.log(`🗑️  Deleting ${storiesToDelete.length} old stories...`);
 
-        // TODO: Delete associated images from Storj here
-        // You may want to add a function to delete images based on story IDs
 
         await Story.deleteMany({
             deletesAt: { $lt: now }
@@ -1141,22 +1183,23 @@ const getSeriesConfig = async (req, res) => {
     }
 };
 
-// Update 30-day series config (admin). Creates document with _id 'current' if missing.
+// Update 30-day series config (admin). Partial updates: only fields present in body are updated; others stay unchanged.
 const updateSeriesConfig = async (req, res) => {
     try {
         const body = req.body || {};
+        const $set = {};
+        if (body.series_info !== undefined) $set.series_info = body.series_info;
+        if (body.characters !== undefined) $set.characters = body.characters;
+        if (body.relationship_state !== undefined) $set.relationship_state = body.relationship_state;
+        if (body.timeline !== undefined) $set.timeline = body.timeline;
+        if (body.hidden_future_events !== undefined) $set.hidden_future_events = body.hidden_future_events;
+        if (body.daily_slots !== undefined) $set.daily_slots = body.daily_slots;
+        if (Object.keys($set).length === 0) {
+            return res.status(400).json({ error: "No config fields to update; send at least one of series_info, characters, relationship_state, timeline, hidden_future_events, daily_slots" });
+        }
         const doc = await SeriesConfig.findByIdAndUpdate(
             'current',
-            {
-                $set: {
-                    series_info: body.series_info ?? {},
-                    characters: body.characters ?? {},
-                    relationship_state: body.relationship_state ?? {},
-                    timeline: body.timeline ?? [],
-                    hidden_future_events: body.hidden_future_events ?? [],
-                    daily_slots: body.daily_slots ?? []
-                }
-            },
+            { $set },
             { new: true, upsert: true }
         );
         res.status(200).json({ success: true, config: doc });
