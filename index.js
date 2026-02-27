@@ -44,6 +44,8 @@ app.set('trust proxy', true);
 const allowedOrigins = [
   process.env.NEXT_PUBLIC_URL,
   "https://mmeko.com",
+  "https://www.mmeko.com",
+  
 
   "https://mmekowebsite-mu.vercel.app", // Vercel deployment
 
