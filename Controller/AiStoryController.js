@@ -386,7 +386,7 @@ const generateDailyStory = async () => {
             ? `📅 Episodic series: Day ${config.dayIndex}/30 | ${config.emotion} | ${config.perspective}`
             : `📅 Day Index: ${config.dayIndex} | Type: ${config.type} | Emotion: ${config.emotion}`);
 
-        // Check if today's story already exists (by date) OR this episode number already exists (episodic)
+        // Check if today's story already exists (by date) OR this episode + series title already exists (episodic)
         today.setHours(0, 0, 0, 0);
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -395,10 +395,14 @@ const generateDailyStory = async () => {
             createdAt: { $gte: today, $lt: tomorrow }
         });
         if (!existingStory && useEpisodic) {
-            existingStory = await Story.findOne({ story_number: config.dayIndex });
+            const seriesTitle = seriesConfig.series_info?.series_title || '';
+            existingStory = await Story.findOne({
+                story_number: config.dayIndex,
+                title: seriesTitle
+            });
         }
         if (existingStory) {
-            console.log("✅ Today's story already exists. Skipping generation.");
+            console.log("✅ Today's story already exists (or same episode + series title). Skipping generation.");
             generationLocks.delete(lockKey); // Release lock
             return existingStory;
         }
