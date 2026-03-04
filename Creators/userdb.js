@@ -21,6 +21,8 @@ const markertdata = new Scheme(
     username: {
       type: String,
       required: false,
+      unique: true,
+      sparse: true, // allow multiple null/empty, unique only for non-empty
     },
 
     bio: {
