@@ -3,12 +3,16 @@ const userdb = require("../../Creators/userdb");
 const mongoose = require("mongoose");
 
 const getAllExclusivePosts = async (req, res) => {
-  const userid = req.body.userid || req.query.userid;
+  let userid = req.body.userid || req.query.userid;
+  const username = req.body.username || req.query.username;
 
-  console.log('[getAllExclusivePosts] Request received for userid:', userid);
+  if (username && String(username).trim()) {
+    const user = await userdb.findOne({ username: String(username).trim() }).exec();
+    if (user) userid = user._id.toString();
+  }
 
   if (!userid) {
-    return res.status(400).json({ ok: false, message: "Missing required parameter: userid" });
+    return res.status(400).json({ ok: false, message: "Missing required parameter: userid or username" });
   }
 
   try {

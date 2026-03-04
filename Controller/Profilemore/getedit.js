@@ -2,19 +2,21 @@ const completedb = require("../../Creators/usercomplete")
 const userdb = require("../../Creators/userdb")
 
 const updatePost = async (req, res) => {
-    const userid = req.body.userid;
-    
-    console.log("🔍 [getedit] Received request for userid:", userid);
-    
+    let userid = req.body.userid;
+    const username = req.body.username;
+
+    if (username && String(username).trim()) {
+        const byUsername = await userdb.findOne({ username: String(username).trim() }).exec();
+        if (byUsername) userid = byUsername._id.toString();
+    }
+
     if (!userid) {
         return res.status(400).json({ "ok": false, 'message': 'user Id invalid!!' })
     }
 
-
     try {
-
-        let du = await completedb.findOne({ useraccountId: userid }).exec()
-        let usersedit = await userdb.findOne({ _id: userid }).exec()
+        let du = await completedb.findOne({ useraccountId: userid }).exec();
+        let usersedit = await userdb.findOne({ _id: userid }).exec();
         
         console.log("🔍 [getedit] Database query results:", {
             hasCompletedData: !!du,

@@ -7,36 +7,53 @@ const settingdb = require("../../Creators/settingsdb")
 
 
 const readProfile = async (req, res) => {
-
-
-
-  const userid = req.body.userid;
+  const bodyUserid = req.body?.userid || req.body?.userId;
+  const bodyUsername = req.body?.username || req.body?.userName || req.body?.slug;
+  let userid = bodyUserid;
   let dues;
-  let exclusive = false
-  let emailnot = false
-  let pushnot = false
-
-
-  // let data = await connectdatabase()
+  let exclusive = false;
+  let emailnot = false;
+  let pushnot = false;
 
   let Creator_portfolio;
 
-  // console.log('inside profile')
-
   try {
+    let du;
+    if (bodyUsername && String(bodyUsername).trim()) {
+      // Decode URL encoding so %40 from client becomes @ for DB lookup
+      let decoded = String(bodyUsername).trim();
+      try { decoded = decodeURIComponent(decoded); } catch (e) { /* keep as-is */ }
+      const raw = decoded.trim();
+      const withoutAt = raw.replace(/^@+/, '');
+      const candidates = [raw];
+      if (withoutAt !== raw) candidates.push(withoutAt);
+      du = await userdb.findOne({ username: { $in: candidates } }).exec();
+      if (!du) {
+        du = await userdb.findOne({ username: new RegExp('^' + raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') }).exec();
+      }
+      if (!du && withoutAt !== raw) {
+        du = await userdb.findOne({ username: new RegExp('^' + withoutAt.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', 'i') }).exec();
+      }
+      if (!du) {
+        return res.status(404).json({
+          ok: false,
+          message: 'User not found for this username.',
+          debug: process.env.NODE_ENV !== 'production' ? { tried: candidates, raw, withoutAt } : undefined
+        });
+      }
+      userid = du._id.toString();
+    } else if (bodyUserid) {
+      du = await userdb.findOne({ _id: bodyUserid }).exec();
+    } else {
+      return res.status(400).json({ ok: false, message: 'Provide userid or username.' });
+    }
 
-    // console.log('inside profile database')
-
-    let du = await userdb.findOne({
-      _id: userid
-    }).exec()
-    //console.log('checking creator database')
     let creatorava = await creators.findOne({
       userid: userid
-    }).exec()
+    }).exec();
     let notificaton_turn = await settingdb.findOne({
       userid: userid
-    }).exec()
+    }).exec();
 
     if (notificaton_turn) {
       emailnot = notificaton_turn.emailnot
@@ -68,7 +85,8 @@ const readProfile = async (req, res) => {
       exclusive = false
     }
 
-    dues = du.toObject()
+    dues = du.toObject();
+    dues.userId = userid; // ensure string id for frontend
     dues.exclusive = exclusive;
     dues.creator = Creator_portfolio;
     // Also set creator_portfolio field (use value from userdb which is updated when portfolio is created/deleted)
