@@ -108,7 +108,8 @@ const streamVideo = async (req, res) => {
             streamData.body.pipe(res);
         }
     } catch (error) {
-        console.error("Video stream error:", error);
+        const errMsg = (error && (error.code || error.message || String(error))) || 'Unknown';
+        console.error("Video stream error:", errMsg);
         if (!res.headersSent) {
             res.status(500).json({ error: "Internal Server Error" });
         }
