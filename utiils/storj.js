@@ -81,6 +81,25 @@ const getBucketName = (folder) => {
   }
 };
 
+const isBucketNotFound = (err) =>
+  (err && (err.code === 'NoSuchBucket' || err.code === 'NotFound' || (err.message && String(err.message).toLowerCase().includes('bucket does not exist'))));
+
+/** Resolve bucket for upload; use post bucket as fallback if requested bucket does not exist. */
+async function getBucketForUpload(folder) {
+  const primary = getBucketName(folder);
+  if (primary === STORJ_BUCKET_POST) return primary;
+  try {
+    await s3Client.headBucket({ Bucket: primary }).promise();
+    return primary;
+  } catch (err) {
+    if (isBucketNotFound(err)) {
+      console.warn("[storj] Bucket not found:", primary, "- using fallback bucket:", STORJ_BUCKET_POST);
+      return STORJ_BUCKET_POST;
+    }
+    throw err;
+  }
+}
+
 const generateUniqueFileName = (originalName) => {
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 15);
@@ -159,7 +178,7 @@ async function saveFile(file, filePath, folder = STORJ_BUCKET_DEFAULT) {
       Key: key,
       Body: processedBuffer,
       ContentType: mimetype,
-      ACL: 'public-read',
+      // Storj S3 does not support ACL; omit to avoid putObject failure
     };
 
     await s3Client.putObject(params).promise();
@@ -185,7 +204,7 @@ async function saveFile(file, filePath, folder = STORJ_BUCKET_DEFAULT) {
 // uploadSingleFileToCloudinary (buffer → Storj)
 // -----------------------------
 async function uploadSingleFileToCloudinary(file, folder = STORJ_BUCKET_DEFAULT) {
-  const bucket = getBucketName(folder);
+  const bucket = await getBucketForUpload(folder);
 
   if (!file) return { public_id: "", file_link: "" };
 
@@ -203,7 +222,7 @@ async function uploadSingleFileToCloudinary(file, folder = STORJ_BUCKET_DEFAULT)
       Key: key,
       Body: processedBuffer,
       ContentType: file.mimetype,
-      ACL: 'public-read',
+      // Storj S3 does not support ACL; omit to avoid putObject failure
     };
 
     await s3Client.putObject(params).promise();
@@ -224,27 +243,34 @@ async function uploadSingleFileToCloudinary(file, folder = STORJ_BUCKET_DEFAULT)
 // uploadManyFilesToCloudinary (buffers → Storj)
 // -----------------------------
 async function uploadManyFilesToCloudinary(files, folder = STORJ_BUCKET_DEFAULT) {
-  const bucket = getBucketName(folder);
+  const bucket = await getBucketForUpload(folder);
 
   if (!files || files.length === 0) return [];
 
   const results = await Promise.all(
     files.map(async (file) => {
       try {
-        const processedBuffer = await processBufferByMime(
-          file.buffer,
-          file.originalname,
-          file.mimetype
-        );
+        const buffer = file.buffer ?? file?.buffer;
+        if (!buffer) {
+          console.error("[uploadManyFilesToCloudinary] No buffer on file:", file.originalname || file.fieldname);
+          return { public_id: "", file_link: "", filename: file.originalname || "" };
+        }
+        let processedBuffer;
+        try {
+          processedBuffer = await processBufferByMime(buffer, file.originalname, file.mimetype);
+        } catch (processErr) {
+          console.warn("[uploadManyFilesToCloudinary] processBufferByMime failed, using original buffer:", file.originalname, processErr?.message);
+          processedBuffer = buffer;
+        }
 
-        const key = generateUniqueFileName(file.originalname);
+        const key = generateUniqueFileName(file.originalname || "image.jpg");
 
         const params = {
           Bucket: bucket,
           Key: key,
           Body: processedBuffer,
           ContentType: file.mimetype,
-          ACL: 'public-read',
+          // Storj S3 does not support ACL; omit to avoid putObject failure
         };
 
         await s3Client.putObject(params).promise();
@@ -258,6 +284,8 @@ async function uploadManyFilesToCloudinary(files, folder = STORJ_BUCKET_DEFAULT)
           filename: file.originalname,
         };
       } catch (error) {
+        const errStr = (error && (error.code || error.message || String(error))) || 'Unknown';
+        console.error("[uploadManyFilesToCloudinary] File upload error:", file.originalname, errStr);
         return {
           public_id: "",
           file_link: "",
@@ -291,7 +319,8 @@ async function deleteFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
     console.log(`[deleteFile] Successfully deleted ${publicId} from ${bucket}`);
     return true;
   } catch (error) {
-    console.error(`[deleteFile] Error deleting ${publicId}:`, error?.message || error);
+    const errStr = (error && (error.code || error.message || String(error))) || 'Unknown';
+    console.error(`[deleteFile] Error deleting ${publicId}:`, errStr);
     return false;
   }
 }
@@ -345,20 +374,38 @@ async function updateManyFileToCloudinary(oldPublicIds = [], newFiles = [], fold
   }
 }
 
+// Normalize publicId: if it's a full URL (e.g. https://gateway.storjshare.io/post/key.mp4), extract the key only.
+// S3 Key must be the object key, not a full URL.
+function normalizeS3Key(publicId) {
+  if (!publicId || typeof publicId !== 'string') return null;
+  const trimmed = publicId.trim();
+  if (!trimmed) return null;
+  // Full URL: extract path and take last segment as key
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    try {
+      const u = new URL(trimmed);
+      const pathSegments = u.pathname.split('/').filter(Boolean);
+      return pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
+    } catch {
+      return null;
+    }
+  }
+  return trimmed;
+}
+
 // -----------------------------
 // previewFile (get file info)
 // -----------------------------
 async function previewFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
-  const bucket = getBucketName(folder);
+  const key = normalizeS3Key(publicId);
+  if (!key) return null;
 
-  if (!publicId) {
-    return null;
-  }
+  const bucket = getBucketName(folder);
 
   try {
     const params = {
       Bucket: bucket,
-      Key: publicId,
+      Key: key,
     };
 
     const response = await s3Client.headObject(params).promise();
@@ -369,7 +416,15 @@ async function previewFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
       etag: response.ETag,
     };
   } catch (error) {
-    console.error(`[previewFile] Error getting info for ${publicId}:`, error?.message || error);
+    // Never pass the full error to console (avoids printing stack for S3 NotFound)
+    const errMsg = (error && (error.code || error.message || String(error))) || 'Unknown';
+    if (error && error.code === 'NotFound') {
+      if (process.env.DEBUG_PREVIEW_FILE) {
+        console.warn(`[previewFile] Not found: ${key}`);
+      }
+    } else {
+      console.error(`[previewFile] Error getting info for ${key}:`, errMsg);
+    }
     return null;
   }
 }
@@ -378,12 +433,13 @@ async function previewFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
 // streamFile (read via SDK and return stream + headers)
 // -----------------------------
 async function streamFile(publicId, folder = STORJ_BUCKET_DEFAULT, start, end) {
+  const key = normalizeS3Key(publicId);
+  if (!key) return null;
   const bucket = getBucketName(folder);
-  if (!publicId) return null;
   try {
     const params = {
       Bucket: bucket,
-      Key: publicId
+      Key: key
     };
 
     // Add Range parameter if start/end are provided
@@ -428,7 +484,8 @@ function getSignedViewUrl(publicId, folder = STORJ_BUCKET_DEFAULT, expiresSecond
     });
     return url;
   } catch (error) {
-    console.error('[getSignedViewUrl] Error:', error?.message || error);
+    const errStr = (error && (error.code || error.message || String(error))) || 'Unknown';
+    console.error('[getSignedViewUrl] Error:', errStr);
     return '';
   }
 }

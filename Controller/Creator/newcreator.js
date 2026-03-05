@@ -53,8 +53,16 @@ const createCreator = async (req, res) => {
 
   /**
    * Validate incoming files and upload using in-memory buffers
+   * Multer may expose req.files as array (upload.any()) or object (upload.fields())
    */
-  const filesCount = Array.isArray(req.files) ? req.files.length : 0;
+  const rawFiles = req.files;
+  const filesArray = Array.isArray(rawFiles)
+    ? rawFiles
+    : rawFiles && typeof rawFiles === 'object'
+      ? (Array.isArray(rawFiles.creatorfiles) ? rawFiles.creatorfiles : Object.values(rawFiles).flat())
+      : [];
+  const filesCount = filesArray.length;
+  console.log("[createCreator] filesCount:", filesCount, "photolink.length:", Array.isArray(photolink) ? photolink.length : 0);
 
   // Require files for all users, regardless of creator_verified status
   if (!filesCount && !photolink.length) {
@@ -65,8 +73,8 @@ const createCreator = async (req, res) => {
   }
 
   // Upload new files - always upload if files are provided
-  const results = (req.files && req.files.length > 0)
-    ? (await uploadManyFilesToCloudinary(req.files, 'creator')) || []
+  const results = (filesArray.length > 0)
+    ? (await uploadManyFilesToCloudinary(filesArray, 'creator')) || []
     : [];
 
   // Merge uploaded files with any photolinks passed from frontend
@@ -90,9 +98,13 @@ const createCreator = async (req, res) => {
 
   // Require successful file upload for all users
   if (!creatorfiles.length) {
+    const hadFiles = filesCount > 0;
+    console.error("[createCreator] File upload failed. hadFiles:", hadFiles, "resultsWithLink:", results.filter((r) => r && r.file_link).length);
     return res.status(400).json({
       ok: false,
-      message: "File upload failed. Please try again with valid image files.",
+      message: hadFiles
+        ? "File upload failed. Please try again with valid image files. Check server logs for details."
+        : "No files uploaded. Please attach at least one image file.",
     });
   }
 

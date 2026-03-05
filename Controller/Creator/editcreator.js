@@ -126,18 +126,23 @@ const editCreator = async (req, res) => {
   }
 
   // Handle existing images that should be preserved
-  if (data.existingImages && Array.isArray(data.existingImages)) {
-    
-    const existingFiles = data.existingImages.map((imgUrl) => ({
-      creatorfilelink: imgUrl,
-      creatorfilepublicid: null, // Existing images might not have public_id
-    }));
-    
-    
-    // Merge existing files with new files
-    creatorfiles = [...existingFiles, ...creatorfiles];
-    
-  } else {
+  // Multipart often sends repeated fields as single value; support both array and JSON string
+  let existingImagesList = data.existingImages;
+  if (existingImagesList != null) {
+    if (typeof existingImagesList === 'string') {
+      try {
+        existingImagesList = JSON.parse(existingImagesList);
+      } catch {
+        existingImagesList = existingImagesList ? [existingImagesList] : [];
+      }
+    }
+    if (Array.isArray(existingImagesList) && existingImagesList.length > 0) {
+      const existingFiles = existingImagesList.map((imgUrl) => ({
+        creatorfilelink: imgUrl,
+        creatorfilepublicid: null,
+      }));
+      creatorfiles = [...existingFiles, ...creatorfiles];
+    }
   }
 
   //let data = await connectdatabase()
