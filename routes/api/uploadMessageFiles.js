@@ -10,7 +10,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ 
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB max file size
+    fileSize: 50 * 1024 * 1024, // 50MB max file size
     files: 5 // Max 5 files at once
   }
 });
@@ -32,7 +32,7 @@ router.post('/', upload.array('file', 5), async (req, res) => {
 
     // Validate file sizes and types
     const maxImageSize = 5 * 1024 * 1024; // 5MB
-    const maxVideoSize = 10 * 1024 * 1024; // 10MB
+    const maxVideoSize = 50 * 1024 * 1024; // 50MB // 10MB
     
     for (const file of req.files) {
       if (file.mimetype.startsWith('image/')) {
@@ -46,7 +46,8 @@ router.post('/', upload.array('file', 5), async (req, res) => {
         if (file.size > maxVideoSize) {
           return res.status(400).json({
             ok: false,
-            message: `Video ${file.originalname} exceeds 10MB limit`
+            message: `Video ${file.originalname} exceeds 50MB limit`
+
           });
         }
       } else {
