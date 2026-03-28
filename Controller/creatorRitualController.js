@@ -1,6 +1,7 @@
 const CreatorRitual = require('../models/CreatorRitual');
 const { uploadToStorj } = require('../utiils/storjUpload');
-
+const admindb = require("../Creators/admindb");
+// ─── Helper: mark expired rituals ────────────────────────────────────────────
 async function markExpiredRituals() {
     try {
         await CreatorRitual.updateMany(
@@ -12,6 +13,7 @@ async function markExpiredRituals() {
     }
 }
 
+// ─── POST /api/creator-rituals/upload ────────────────────────────────────────
 // Accepts: multipart/form-data
 //   - userId        (string)
 //   - title         (string, max 60 chars)
@@ -20,6 +22,7 @@ async function markExpiredRituals() {
 //   - panel_1_subtitle … panel_15_subtitle (string fields)
 const uploadRitual = async (req, res) => {
     try {
+        // Accept both 'userId' and 'userid' (matches rest of codebase)
         const userId = req.body.userId || req.body.userid || '';
         const { title, song } = req.body;
 
@@ -31,6 +34,7 @@ const uploadRitual = async (req, res) => {
             return res.status(400).json({ ok: false, message: 'title is required' });
         }
 
+        // ── Validate all 15 panel images are present ──────────────────────────
         const files = req.files || {};
         const missingPanels = [];
         for (let i = 1; i <= 15; i++) {
@@ -45,6 +49,7 @@ const uploadRitual = async (req, res) => {
             });
         }
 
+        // ── Upload all 15 panel images to Storj in parallel ───────────────────
         console.log(`📸 [CreatorRitual] Uploading 15 panel images for user ${userId}...`);
         const timestamp = Date.now();
 
@@ -61,6 +66,7 @@ const uploadRitual = async (req, res) => {
         const uploadedPanels = await Promise.all(uploadPromises);
         console.log(`✅ [CreatorRitual] All 15 images uploaded`);
 
+        // ── Build panels array with subtitles ─────────────────────────────────
         const panels = uploadedPanels
             .sort((a, b) => a.panel_number - b.panel_number)
             .map(({ panel_number, imageUrl }) => ({
@@ -69,6 +75,7 @@ const uploadRitual = async (req, res) => {
                 subtitle: (req.body[`panel_${panel_number}_subtitle`] || '').trim()
             }));
 
+        // ── Handle optional audio file upload ─────────────────────────────────
         let songUrl = song || null;
         if (files['audioFile'] && files['audioFile'][0]) {
             const audioFile = files['audioFile'][0];
@@ -77,9 +84,11 @@ const uploadRitual = async (req, res) => {
             console.log(`🎵 [CreatorRitual] Audio uploaded: ${songUrl}`);
         }
 
+        // ── Set lifecycle: expires 24h after creation ─────────────────────────
         const now = new Date();
         const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // +24h
 
+        // ── Save to database ──────────────────────────────────────────────────
         const ritual = new CreatorRitual({
             userId,
             title: title.trim(),
@@ -106,14 +115,16 @@ const uploadRitual = async (req, res) => {
     }
 };
 
+// ─── GET /api/creator-rituals/user/:userId ────────────────────────────────────
+// Returns ALL rituals for a user (active + expired) — permanent profile display
 const getUserRituals = async (req, res) => {
     try {
         await markExpiredRituals();
         const { userId } = req.params;
 
-        const rituals = await CreatorRitual.find({ userId, isExpired: false })
+        const rituals = await CreatorRitual.find({ userId })
             .sort({ createdAt: -1 })
-            .select('_id title coverImage panels likes views comments createdAt expiresAt song');
+            .select('_id title coverImage panels likes views comments createdAt expiresAt song isExpired');
 
         return res.status(200).json({ ok: true, rituals });
     } catch (err) {
@@ -122,6 +133,55 @@ const getUserRituals = async (req, res) => {
     }
 };
 
+const likeRitual = async (req, res) => {
+    try {
+        const { userId, username } = req.body;
+        if (!userId) return res.status(400).json({ ok: false, message: 'userId required' });
+
+        const ritual = await CreatorRitual.findById(req.params.id);
+        if (!ritual) return res.status(404).json({ ok: false, message: 'Ritual not found' });
+
+        const alreadyLiked = ritual.likedBy.indexOf(userId);
+        if (alreadyLiked > -1) {
+            ritual.likedBy.splice(alreadyLiked, 1);
+            ritual.likes = Math.max(0, ritual.likes - 1);
+        } else {
+            ritual.likedBy.push(userId);
+            ritual.likes += 1;
+
+            // ── Send notification to ritual owner (only on like, not unlike) ──
+            if (ritual.userId && ritual.userId !== userId) {
+                try {
+                    const displayName = username || 'Someone';
+                    console.log('[likeRitual] ritual.userId:', ritual.userId, '| req userId:', userId, '| username:', username);
+                    await admindb.create({
+                        userid: ritual.userId,
+                        message: `${displayName} liked your Ritual "${ritual.title}"`,
+                        seen: false,
+                        createdAt: new Date(),
+                    });
+                } catch (notifErr) {
+                    console.error('[CreatorRitual] Failed to create like notification:', notifErr.message);
+                }
+            }
+        }
+
+        await ritual.save();
+
+        return res.status(200).json({
+            ok: true,
+            liked: alreadyLiked === -1,
+            likes: ritual.likes
+        });
+    } catch (err) {
+        console.error('[CreatorRitual] likeRitual error:', err);
+        return res.status(500).json({ ok: false, message: err.message });
+    }
+};
+
+
+// ─── GET /api/creator-rituals/archived/:userId ───────────────────────────────
+// Returns expired (archived) rituals for profile page
 const getArchivedRituals = async (req, res) => {
     try {
         await markExpiredRituals();
@@ -138,6 +198,8 @@ const getArchivedRituals = async (req, res) => {
     }
 };
 
+// ─── GET /api/creator-rituals/:id ────────────────────────────────────────────
+// Returns a single ritual by ID + increments views
 const getRitualById = async (req, res) => {
     try {
         await markExpiredRituals();
@@ -157,37 +219,6 @@ const getRitualById = async (req, res) => {
         return res.status(500).json({ ok: false, message: err.message });
     }
 };
-
-const likeRitual = async (req, res) => {
-    try {
-        const { userId } = req.body;
-        if (!userId) return res.status(400).json({ ok: false, message: 'userId required' });
-
-        const ritual = await CreatorRitual.findById(req.params.id);
-        if (!ritual) return res.status(404).json({ ok: false, message: 'Ritual not found' });
-
-        const alreadyLiked = ritual.likedBy.indexOf(userId);
-        if (alreadyLiked > -1) {
-            ritual.likedBy.splice(alreadyLiked, 1);
-            ritual.likes = Math.max(0, ritual.likes - 1);
-        } else {
-            ritual.likedBy.push(userId);
-            ritual.likes += 1;
-        }
-
-        await ritual.save();
-
-        return res.status(200).json({
-            ok: true,
-            liked: alreadyLiked === -1,
-            likes: ritual.likes
-        });
-    } catch (err) {
-        console.error('[CreatorRitual] likeRitual error:', err);
-        return res.status(500).json({ ok: false, message: err.message });
-    }
-};
-
 const addComment = async (req, res) => {
     try {
         const { userId, username, text } = req.body;
@@ -202,6 +233,20 @@ const addComment = async (req, res) => {
         ritual.comments.push(comment);
         await ritual.save();
 
+        // ── Send notification to ritual owner ────────────────────────────────
+        if (ritual.userId && ritual.userId !== userId) {
+            try {
+                await admindb.create({
+                    userid: ritual.userId,
+                    message: `${username} commented on your Ritual "${ritual.title}"`,
+                    seen: false,
+                    createdAt: new Date(),
+                });
+            } catch (notifErr) {
+                console.error('[CreatorRitual] Failed to create comment notification:', notifErr.message);
+            }
+        }
+
         return res.status(200).json({
             ok: true,
             comment,
@@ -213,6 +258,8 @@ const addComment = async (req, res) => {
     }
 };
 
+// ─── GET /api/creator-rituals/feed ───────────────────────────────────────────
+// Returns active rituals from all creators (for the main /anya-style feed)
 const getFeed = async (req, res) => {
     try {
         await markExpiredRituals();
@@ -240,18 +287,35 @@ const getFeed = async (req, res) => {
     }
 };
 
+// ─── DELETE /api/creator-rituals/:id ─────────────────────────────────────────
 const deleteRitual = async (req, res) => {
     try {
-        const { userId } = req.body;
+        const userId = req.body.userId || req.query.userId;
+
+        console.log('[deleteRitual] req.body:', req.body);
+        console.log('[deleteRitual] ritualId:', req.params.id);
+
+        if (!userId) {
+            return res.status(400).json({ ok: false, message: 'userId is required' });
+        }
+
         const ritual = await CreatorRitual.findById(req.params.id);
 
-        if (!ritual) return res.status(404).json({ ok: false, message: 'Ritual not found' });
-        if (ritual.userId !== userId) {
+        if (!ritual) {
+            return res.status(404).json({ ok: false, message: 'Ritual not found' });
+        }
+
+        console.log('[deleteRitual] ritual.userId:', ritual.userId, '| req userId:', userId);
+
+        // Trim both sides to avoid whitespace mismatch
+        if (ritual.userId.toString().trim() !== userId.toString().trim()) {
             return res.status(403).json({ ok: false, message: 'Not authorised' });
         }
 
         await CreatorRitual.findByIdAndDelete(req.params.id);
+        console.log('[deleteRitual] Deleted ritual:', req.params.id);
         return res.status(200).json({ ok: true, message: 'Ritual deleted' });
+
     } catch (err) {
         console.error('[CreatorRitual] deleteRitual error:', err);
         return res.status(500).json({ ok: false, message: err.message });

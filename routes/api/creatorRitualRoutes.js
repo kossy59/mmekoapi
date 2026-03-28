@@ -78,5 +78,6 @@ router.post('/:id/comment', addComment);
 
 // Delete (owner only)
 router.delete('/:id', deleteRitual);
+router.post('/:id/delete', deleteRitual);
 
 module.exports = router;
