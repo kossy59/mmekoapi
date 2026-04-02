@@ -1,6 +1,7 @@
 const CreatorRitual = require('../models/CreatorRitual');
 const { uploadToStorj } = require('../utiils/storjUpload');
 const admindb = require("../Creators/admindb");
+const { pushActivityNotification } = require('../utiils/sendPushnot');
 // ─── Helper: mark expired rituals ────────────────────────────────────────────
 async function markExpiredRituals() {
     try {
@@ -141,38 +142,37 @@ const likeRitual = async (req, res) => {
         const ritual = await CreatorRitual.findById(req.params.id);
         if (!ritual) return res.status(404).json({ ok: false, message: 'Ritual not found' });
 
-        const alreadyLiked = ritual.likedBy.indexOf(userId);
-        if (alreadyLiked > -1) {
-            ritual.likedBy.splice(alreadyLiked, 1);
-            ritual.likes = Math.max(0, ritual.likes - 1);
-        } else {
-            ritual.likedBy.push(userId);
-            ritual.likes += 1;
+        const alreadyLiked = ritual.likedBy.includes(userId);
 
-            // ── Send notification to ritual owner (only on like, not unlike) ──
-            if (ritual.userId && ritual.userId !== userId) {
-                try {
-                    const displayName = username || 'Someone';
-                    console.log('[likeRitual] ritual.userId:', ritual.userId, '| req userId:', userId, '| username:', username);
-                    await admindb.create({
-                        userid: ritual.userId,
-                        message: `${displayName} liked your Ritual "${ritual.title}"`,
-                        seen: false,
-                        createdAt: new Date(),
-                    });
-                } catch (notifErr) {
-                    console.error('[CreatorRitual] Failed to create like notification:', notifErr.message);
-                }
+        await CreatorRitual.findByIdAndUpdate(req.params.id, 
+            alreadyLiked
+                ? { $pull: { likedBy: userId }, $inc: { likes: -1 } }
+                : { $addToSet: { likedBy: userId }, $inc: { likes: 1 } },
+            { new: true }
+        );
+
+        if (!alreadyLiked && ritual.userId && ritual.userId !== userId) {
+            try {
+                const displayName = username || 'Someone';
+                await admindb.create({
+                    userid: ritual.userId,
+                    message: `${displayName} liked your Ritual "${ritual.title}"`,
+                    seen: false,
+                    createdAt: new Date(),
+                });
+                await pushActivityNotification(ritual.userId, `${displayName} liked your Ritual "${ritual.title}"`);
+                console.log('[likeRitual]  notification sent to', ritual.userId);
+            } catch (notifErr) {
+                console.error('[likeRitual]  notification failed:', notifErr.message);
             }
         }
 
-        await ritual.save();
-
         return res.status(200).json({
             ok: true,
-            liked: alreadyLiked === -1,
-            likes: ritual.likes
+            liked: !alreadyLiked,
+            likes: alreadyLiked ? ritual.likes - 1 : ritual.likes + 1
         });
+
     } catch (err) {
         console.error('[CreatorRitual] likeRitual error:', err);
         return res.status(500).json({ ok: false, message: err.message });
@@ -180,8 +180,6 @@ const likeRitual = async (req, res) => {
 };
 
 
-// ─── GET /api/creator-rituals/archived/:userId ───────────────────────────────
-// Returns expired (archived) rituals for profile page
 const getArchivedRituals = async (req, res) => {
     try {
         await markExpiredRituals();
@@ -198,8 +196,6 @@ const getArchivedRituals = async (req, res) => {
     }
 };
 
-// ─── GET /api/creator-rituals/:id ────────────────────────────────────────────
-// Returns a single ritual by ID + increments views
 const getRitualById = async (req, res) => {
     try {
         await markExpiredRituals();
@@ -233,19 +229,34 @@ const addComment = async (req, res) => {
         ritual.comments.push(comment);
         await ritual.save();
 
-        // ── Send notification to ritual owner ────────────────────────────────
-        if (ritual.userId && ritual.userId !== userId) {
-            try {
-                await admindb.create({
-                    userid: ritual.userId,
-                    message: `${username} commented on your Ritual "${ritual.title}"`,
-                    seen: false,
-                    createdAt: new Date(),
-                });
-            } catch (notifErr) {
-                console.error('[CreatorRitual] Failed to create comment notification:', notifErr.message);
-            }
-        }
+       if (ritual.userId && ritual.userId !== userId) {
+    try {
+        const displayName = username || 'Someone';
+        console.log('[likeRitual] ritual.userId:', ritual.userId, '| req userId:', userId, '| username:', username);
+        
+        await admindb.create({
+            userid: ritual.userId,
+            message: `${displayName} liked your Ritual "${ritual.title}"`,
+            seen: false,
+            createdAt: new Date(),
+        });
+        console.log('[likeRitual] ✅ admindb notification created');
+
+        const pushdb = require('../Creators/pushnotifydb');
+        const sub = await pushdb.findOne({ userid: ritual.userId });
+        console.log('[likeRitual] push subscription found:', sub ? '✅ YES' : '❌ NO — user has no push subscription');
+
+        const userdb = require('../Creators/userdb');
+        const owner = await userdb.findOne({ _id: ritual.userId });
+        console.log('[likeRitual] ritual owner in userdb:', owner ? '✅ YES' : '❌ NO — userId not found in userdb');
+
+        await pushActivityNotification(ritual.userId, `${displayName} liked your Ritual "${ritual.title}"`);
+        console.log('[likeRitual] ✅ pushActivityNotification called');
+
+    } catch (notifErr) {
+        console.error('[likeRitual] ❌ notification failed:', notifErr.message);
+    }
+}
 
         return res.status(200).json({
             ok: true,
@@ -258,8 +269,6 @@ const addComment = async (req, res) => {
     }
 };
 
-// ─── GET /api/creator-rituals/feed ───────────────────────────────────────────
-// Returns active rituals from all creators (for the main /anya-style feed)
 const getFeed = async (req, res) => {
     try {
         await markExpiredRituals();
@@ -287,7 +296,6 @@ const getFeed = async (req, res) => {
     }
 };
 
-// ─── DELETE /api/creator-rituals/:id ─────────────────────────────────────────
 const deleteRitual = async (req, res) => {
     try {
         const userId = req.body.userId || req.query.userId;
@@ -307,7 +315,6 @@ const deleteRitual = async (req, res) => {
 
         console.log('[deleteRitual] ritual.userId:', ritual.userId, '| req userId:', userId);
 
-        // Trim both sides to avoid whitespace mismatch
         if (ritual.userId.toString().trim() !== userId.toString().trim()) {
             return res.status(403).json({ ok: false, message: 'Not authorised' });
         }
