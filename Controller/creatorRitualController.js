@@ -236,7 +236,7 @@ const addComment = async (req, res) => {
         
         await admindb.create({
             userid: ritual.userId,
-            message: `${displayName} liked your Ritual "${ritual.title}"`,
+            message: `${displayName} commented on your Ritual "${ritual.title}"`,
             seen: false,
             createdAt: new Date(),
         });
