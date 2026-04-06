@@ -85,11 +85,9 @@ const uploadRitual = async (req, res) => {
             console.log(`🎵 [CreatorRitual] Audio uploaded: ${songUrl}`);
         }
 
-        // ── Set lifecycle: expires 24h after creation ─────────────────────────
         const now = new Date();
         const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // +24h
 
-        // ── Save to database ──────────────────────────────────────────────────
         const ritual = new CreatorRitual({
             userId,
             title: title.trim(),
