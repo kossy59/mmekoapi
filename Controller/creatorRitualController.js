@@ -229,40 +229,30 @@ const addComment = async (req, res) => {
         ritual.comments.push(comment);
         await ritual.save();
 
-       if (ritual.userId && ritual.userId !== userId) {
-    try {
-        const displayName = username || 'Someone';
-        console.log('[likeRitual] ritual.userId:', ritual.userId, '| req userId:', userId, '| username:', username);
-        
-        await admindb.create({
-            userid: ritual.userId,
-            message: `${displayName} commented on your Ritual "${ritual.title}"`,
-            seen: false,
-            createdAt: new Date(),
-        });
-        console.log('[likeRitual] ✅ admindb notification created');
-
-        const pushdb = require('../Creators/pushnotifydb');
-        const sub = await pushdb.findOne({ userid: ritual.userId });
-        console.log('[likeRitual] push subscription found:', sub ? '✅ YES' : '❌ NO — user has no push subscription');
-
-        const userdb = require('../Creators/userdb');
-        const owner = await userdb.findOne({ _id: ritual.userId });
-        console.log('[likeRitual] ritual owner in userdb:', owner ? '✅ YES' : '❌ NO — userId not found in userdb');
-
-        await pushActivityNotification(ritual.userId, `${displayName} liked your Ritual "${ritual.title}"`);
-        console.log('[likeRitual] ✅ pushActivityNotification called');
-
-    } catch (notifErr) {
-        console.error('[likeRitual] ❌ notification failed:', notifErr.message);
-    }
-}
+        if (ritual.userId && ritual.userId !== userId) {
+            try {
+                const displayName = username || 'Someone';
+                await admindb.create({
+                    userid: ritual.userId,
+                    message: `💬 ${displayName} commented on your Ritual "${ritual.title}"`,
+                    seen: false,
+                    createdAt: new Date(),
+                });
+                await pushActivityNotification(
+                    ritual.userId,
+                    `💬 ${displayName} commented on your Ritual "${ritual.title}"`
+                );
+            } catch (notifErr) {
+                console.error('[addComment] notification failed:', notifErr.message);
+            }
+        }
 
         return res.status(200).json({
             ok: true,
             comment,
             totalComments: ritual.comments.length
         });
+
     } catch (err) {
         console.error('[CreatorRitual] addComment error:', err);
         return res.status(500).json({ ok: false, message: err.message });
