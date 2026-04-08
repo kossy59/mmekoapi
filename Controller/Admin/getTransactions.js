@@ -354,23 +354,26 @@ exports.getRevenueByGoldPack = async (req, res) => {
     // Gold pack prices mapping (from golds array - updated prices)
     const goldPackPrices = {
       1.00: { gold: 250, bonus: "Test" },
-      5.99: { gold: 50, bonus: "" },
-      9.99: { gold: 100, bonus: "" },
-      19.99: { gold: 200, bonus: "" },
-      35.99: { gold: 400, bonus: "" },
-      65.99: { gold: 1000, bonus: "" },
-      259.99: { gold: 5000, bonus: "" },
-      499.99: { gold: 10000, bonus: "" },
-      949.99: { gold: 20000, bonus: "" },
+      6: { gold: 50, bonus: "" },
+      10: { gold: 100, bonus: "" },
+      20: { gold: 200, bonus: "" },
+      36: { gold: 400, bonus: "" },
+      66: { gold: 1000, bonus: "" },
+      260: { gold: 5000, bonus: "" },
+      500: { gold: 10000, bonus: "" },
+      950: { gold: 20000, bonus: "" },
     };
 
     // Profit percentage mapping by base gold amount (from the revenue analysis table - updated percentages)
     const profitPercentages = {
-      50: 66.61,
-      100: 59.96,
-      200: 59.98,
-      400: 55.55,
-      1000: 39.39
+      50: 66.67,
+      100: 60.00,
+      200: 60.00,
+      400: 55.56,
+      1000: 39.39,
+      5000: 23.08,
+      10000: 20.00,
+      20000: 15.79
     };
 
     // Get only successful transactions (confirmed and finished statuses)
