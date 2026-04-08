@@ -361,6 +361,7 @@ exports.getRevenueByGoldPack = async (req, res) => {
       65.99: { gold: 1000, bonus: "" },
       259.99: { gold: 5000, bonus: "" },
       499.99: { gold: 10000, bonus: "" },
+      949.99: { gold: 20000, bonus: "" },
     };
 
     // Profit percentage mapping by base gold amount (from the revenue analysis table - updated percentages)
