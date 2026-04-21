@@ -19,7 +19,6 @@ if (!process.env.STORJ_ACCESS_KEY_ID) {
     console.log('[Storj Debug] Dotenv result:', result);
   } catch (e) {
     console.log('[Storj Debug] Dotenv error:', e.message);
-    // dotenv might not be available, continue with system env vars
   }
 }
 
@@ -34,6 +33,9 @@ const STORJ_BUCKET_CREATOR_APPLICATION = process.env.STORJ_BUCKET_CREATOR_APPLIC
 const STORJ_BUCKET_MESSAGE = process.env.STORJ_BUCKET_MESSAGE || "message";
 const STORJ_PUBLIC_ACCESS_GRANT = process.env.STORJ_PUBLIC_ACCESS_GRANT || "";
 const STORJ_LINKSHARE_API = process.env.STORJ_LINKSHARE_API || "https://api.link.storjshare.io";
+
+// ✅ How long signed URLs stay valid — 7 days (max allowed by Storj)
+const SIGNED_URL_EXPIRES_SECONDS = 7 * 24 * 60 * 60;
 
 if (!STORJ_ACCESS_KEY_ID || !STORJ_SECRET_ACCESS_KEY || !STORJ_ENDPOINT) {
   console.error('[Storj Config Debug] Environment variables status:');
@@ -54,10 +56,10 @@ if (!STORJ_ACCESS_KEY_ID || !STORJ_SECRET_ACCESS_KEY || !STORJ_ENDPOINT) {
 // -----------------------------
 const s3Client = new AWS.S3({
   endpoint: STORJ_ENDPOINT,
-  region: 'us-east-1', // Storj uses us-east-1 as default region
+  region: 'us-east-1',
   accessKeyId: STORJ_ACCESS_KEY_ID,
   secretAccessKey: STORJ_SECRET_ACCESS_KEY,
-  s3ForcePathStyle: true, // Required for Storj
+  s3ForcePathStyle: true,
   signatureVersion: 'v4',
 });
 
@@ -66,25 +68,18 @@ const s3Client = new AWS.S3({
 // -----------------------------
 const getBucketName = (folder) => {
   switch (folder) {
-    case 'post':
-      return STORJ_BUCKET_POST;
-    case 'profile':
-      return STORJ_BUCKET_PROFILE;
-    case 'creator':
-      return STORJ_BUCKET_CREATOR;
-    case 'creator-application':
-      return STORJ_BUCKET_CREATOR_APPLICATION;
-    case 'message':
-      return STORJ_BUCKET_MESSAGE;
-    default:
-      return STORJ_BUCKET_DEFAULT;
+    case 'post':             return STORJ_BUCKET_POST;
+    case 'profile':          return STORJ_BUCKET_PROFILE;
+    case 'creator':          return STORJ_BUCKET_CREATOR;
+    case 'creator-application': return STORJ_BUCKET_CREATOR_APPLICATION;
+    case 'message':          return STORJ_BUCKET_MESSAGE;
+    default:                 return STORJ_BUCKET_DEFAULT;
   }
 };
 
 const isBucketNotFound = (err) =>
   (err && (err.code === 'NoSuchBucket' || err.code === 'NotFound' || (err.message && String(err.message).toLowerCase().includes('bucket does not exist'))));
 
-/** Resolve bucket for upload; use post bucket as fallback if requested bucket does not exist. */
 async function getBucketForUpload(folder) {
   const primary = getBucketName(folder);
   if (primary === STORJ_BUCKET_POST) return primary;
@@ -103,42 +98,62 @@ async function getBucketForUpload(folder) {
 const generateUniqueFileName = (originalName) => {
   const timestamp = Date.now();
   const random = Math.random().toString(36).substring(2, 15);
-  const extension = originalName.split('.').pop();
+  const extension = (originalName || "image.jpg").split('.').pop();
   return `${timestamp}-${random}.${extension}`;
 };
 
 const getFileUrl = (bucket, key) => {
-  // Storj public URL format
   return `${STORJ_ENDPOINT}/${bucket}/${key}`;
 };
 
-// Attempt to create a public link via Storj Linksharing API (recommended for public assets)
-async function createLinkshareUrl(bucket, key) {
-  if (!STORJ_PUBLIC_ACCESS_GRANT) {
-    return "";
-  }
+// ✅ Get a signed URL (actually accessible by browser — no auth needed)
+function getSignedUrl(bucket, key, expiresSeconds = SIGNED_URL_EXPIRES_SECONDS) {
   try {
-    const body = {
-      access: STORJ_PUBLIC_ACCESS_GRANT,
-      paths: [`sj://${bucket}/${key}`],
-      public: true,
-    };
-    const res = await axios.post(`${STORJ_LINKSHARE_API}/api/v1/share`, body, {
-      headers: { 'Content-Type': 'application/json' },
-      timeout: 10000, // Reduced timeout
+    return s3Client.getSignedUrl('getObject', {
+      Bucket: bucket,
+      Key: key,
+      Expires: Math.max(60, Math.min(7 * 24 * 3600, Number(expiresSeconds) || SIGNED_URL_EXPIRES_SECONDS)),
     });
-    // API may return an array of objects with 'url' or a single object
-    const data = res.data;
-    if (Array.isArray(data) && data.length > 0 && typeof data[0]?.url === 'string') {
-      return data[0].url;
-    }
-    if (data && typeof data.url === 'string') {
-      return data.url;
-    }
   } catch (err) {
-    // Non-fatal; fall back to gateway URL or proxy
+    console.error('[getSignedUrl] Error:', err?.message || err);
+    return '';
   }
-  return "";
+}
+
+// Attempt Linkshare public URL — falls back to signed URL
+async function getBestPublicUrl(bucket, key) {
+  // 1. Try Linkshare if access grant is configured
+  if (STORJ_PUBLIC_ACCESS_GRANT) {
+    try {
+      const body = {
+        access: STORJ_PUBLIC_ACCESS_GRANT,
+        paths: [`sj://${bucket}/${key}`],
+        public: true,
+      };
+      const res = await axios.post(`${STORJ_LINKSHARE_API}/api/v1/share`, body, {
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 8000,
+      });
+      const data = res.data;
+      const url = Array.isArray(data) ? data[0]?.url : data?.url;
+      if (typeof url === 'string' && url.startsWith('http')) {
+        return url;
+      }
+    } catch (err) {
+      console.warn('[getBestPublicUrl] Linkshare failed, falling back to signed URL:', err?.message || err);
+    }
+  }
+
+  // 2. ✅ Fall back to signed URL — this is always accessible by the browser
+  const signed = getSignedUrl(bucket, key);
+  if (signed) {
+    console.log('[getBestPublicUrl] Using signed URL for:', key);
+    return signed;
+  }
+
+  // 3. Last resort — raw endpoint URL (likely won't load in browser without auth)
+  console.warn('[getBestPublicUrl] Signed URL also failed, using raw endpoint URL for:', key);
+  return getFileUrl(bucket, key);
 }
 
 // -----------------------------
@@ -155,47 +170,34 @@ async function processBufferByMime(buffer, filename, mimetype) {
 // saveFile (from disk path)
 // -----------------------------
 async function saveFile(file, filePath, folder = STORJ_BUCKET_DEFAULT) {
-  if (!filePath) {
-    return { public_id: "", file_link: "" };
-  }
+  if (!filePath) return { public_id: "", file_link: "" };
 
   const bucket = getBucketName(folder);
-  const originalname = path.basename(filePath);
-  const mimetype = undefined;
 
   try {
     const fs = require('fs');
     const path = require('path');
 
-    // Read file into memory
     const buffer = fs.readFileSync(filePath);
-    const processedBuffer = await processBufferByMime(buffer, originalname, mimetype);
-
+    const originalname = path.basename(filePath);
+    const processedBuffer = await processBufferByMime(buffer, originalname, undefined);
     const key = generateUniqueFileName(originalname);
 
     const params = {
       Bucket: bucket,
       Key: key,
       Body: processedBuffer,
-      ContentType: mimetype,
-      // Storj S3 does not support ACL; omit to avoid putObject failure
+      ContentType: undefined,
     };
 
     await s3Client.putObject(params).promise();
 
-    // Clean up local file after upload
-    try {
-      fs.unlinkSync(filePath);
-    } catch (_) { }
+    try { fs.unlinkSync(filePath); } catch (_) { }
 
-    let fileUrl = await createLinkshareUrl(bucket, key);
-    if (!fileUrl) fileUrl = getFileUrl(bucket, key);
-
-    return {
-      public_id: key,
-      file_link: fileUrl,
-    };
+    const fileUrl = await getBestPublicUrl(bucket, key);
+    return { public_id: key, file_link: fileUrl };
   } catch (error) {
+    console.error('[saveFile] Error:', error?.message || error);
     return { public_id: "", file_link: "" };
   }
 }
@@ -205,16 +207,10 @@ async function saveFile(file, filePath, folder = STORJ_BUCKET_DEFAULT) {
 // -----------------------------
 async function uploadSingleFileToCloudinary(file, folder = STORJ_BUCKET_DEFAULT) {
   const bucket = await getBucketForUpload(folder);
-
   if (!file) return { public_id: "", file_link: "" };
 
   try {
-    const processedBuffer = await processBufferByMime(
-      file.buffer,
-      file.originalname,
-      file.mimetype
-    );
-
+    const processedBuffer = await processBufferByMime(file.buffer, file.originalname, file.mimetype);
     const key = generateUniqueFileName(file.originalname);
 
     const params = {
@@ -222,19 +218,14 @@ async function uploadSingleFileToCloudinary(file, folder = STORJ_BUCKET_DEFAULT)
       Key: key,
       Body: processedBuffer,
       ContentType: file.mimetype,
-      // Storj S3 does not support ACL; omit to avoid putObject failure
     };
 
     await s3Client.putObject(params).promise();
 
-    let fileUrl = await createLinkshareUrl(bucket, key);
-    if (!fileUrl) fileUrl = getFileUrl(bucket, key);
-
-    return {
-      public_id: key,
-      file_link: fileUrl,
-    };
+    const fileUrl = await getBestPublicUrl(bucket, key);
+    return { public_id: key, file_link: fileUrl };
   } catch (error) {
+    console.error('[uploadSingleFileToCloudinary] Error:', error?.message || error);
     return { public_id: "", file_link: "" };
   }
 }
@@ -244,22 +235,22 @@ async function uploadSingleFileToCloudinary(file, folder = STORJ_BUCKET_DEFAULT)
 // -----------------------------
 async function uploadManyFilesToCloudinary(files, folder = STORJ_BUCKET_DEFAULT) {
   const bucket = await getBucketForUpload(folder);
-
   if (!files || files.length === 0) return [];
 
   const results = await Promise.all(
     files.map(async (file) => {
       try {
-        const buffer = file.buffer ?? file?.buffer;
+        const buffer = file.buffer;
         if (!buffer) {
           console.error("[uploadManyFilesToCloudinary] No buffer on file:", file.originalname || file.fieldname);
           return { public_id: "", file_link: "", filename: file.originalname || "" };
         }
+
         let processedBuffer;
         try {
           processedBuffer = await processBufferByMime(buffer, file.originalname, file.mimetype);
         } catch (processErr) {
-          console.warn("[uploadManyFilesToCloudinary] processBufferByMime failed, using original buffer:", file.originalname, processErr?.message);
+          console.warn("[uploadManyFilesToCloudinary] processBufferByMime failed, using original buffer:", processErr?.message);
           processedBuffer = buffer;
         }
 
@@ -270,13 +261,19 @@ async function uploadManyFilesToCloudinary(files, folder = STORJ_BUCKET_DEFAULT)
           Key: key,
           Body: processedBuffer,
           ContentType: file.mimetype,
-          // Storj S3 does not support ACL; omit to avoid putObject failure
         };
 
         await s3Client.putObject(params).promise();
 
-        let fileUrl = await createLinkshareUrl(bucket, key);
-        if (!fileUrl) fileUrl = getFileUrl(bucket, key);
+        // ✅ Use getBestPublicUrl — signed URL fallback ensures browser can load the image
+        const fileUrl = await getBestPublicUrl(bucket, key);
+
+        if (!fileUrl) {
+          console.error("[uploadManyFilesToCloudinary] Could not get a public URL for:", key);
+          return { public_id: key, file_link: "", filename: file.originalname };
+        }
+
+        console.log(`[uploadManyFilesToCloudinary] Uploaded ${file.originalname} → ${fileUrl}`);
 
         return {
           public_id: key,
@@ -286,11 +283,7 @@ async function uploadManyFilesToCloudinary(files, folder = STORJ_BUCKET_DEFAULT)
       } catch (error) {
         const errStr = (error && (error.code || error.message || String(error))) || 'Unknown';
         console.error("[uploadManyFilesToCloudinary] File upload error:", file.originalname, errStr);
-        return {
-          public_id: "",
-          file_link: "",
-          filename: file.originalname,
-        };
+        return { public_id: "", file_link: "", filename: file.originalname };
       }
     })
   );
@@ -303,19 +296,10 @@ async function uploadManyFilesToCloudinary(files, folder = STORJ_BUCKET_DEFAULT)
 // -----------------------------
 async function deleteFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
   const bucket = getBucketName(folder);
-
-  if (!publicId) {
-    console.warn("[deleteFile] No public_id provided");
-    return false;
-  }
+  if (!publicId) { console.warn("[deleteFile] No public_id provided"); return false; }
 
   try {
-    const params = {
-      Bucket: bucket,
-      Key: publicId,
-    };
-
-    await s3Client.deleteObject(params).promise();
+    await s3Client.deleteObject({ Bucket: bucket, Key: publicId }).promise();
     console.log(`[deleteFile] Successfully deleted ${publicId} from ${bucket}`);
     return true;
   } catch (error) {
@@ -326,89 +310,60 @@ async function deleteFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
 }
 
 // -----------------------------
-// updateSingleFileToCloudinary (delete old + upload new)
+// updateSingleFileToCloudinary
 // -----------------------------
 async function updateSingleFileToCloudinary(oldPublicId, newFile, folder = STORJ_BUCKET_DEFAULT) {
-  const bucket = getBucketName(folder);
-
   try {
-    // Delete old file
-    if (oldPublicId) {
-      await deleteFile(oldPublicId, folder);
-    }
-
-    // Upload new file
-    const result = await uploadSingleFileToCloudinary(newFile, folder);
-    return result;
+    if (oldPublicId) await deleteFile(oldPublicId, folder);
+    return await uploadSingleFileToCloudinary(newFile, folder);
   } catch (error) {
     return { public_id: "", file_link: "" };
   }
 }
 
 // -----------------------------
-// updateManyFileToCloudinary (delete many + upload many)
-// Signature kept for backward compatibility with controllers
+// updateManyFileToCloudinary
 // -----------------------------
 async function updateManyFileToCloudinary(oldPublicIds = [], newFiles = [], folder = STORJ_BUCKET_DEFAULT) {
-  const bucket = getBucketName(folder);
-
   try {
-    // Best-effort delete of old files
     if (Array.isArray(oldPublicIds) && oldPublicIds.length > 0) {
-      await Promise.all(
-        oldPublicIds
-          .filter(Boolean)
-          .map((publicId) => deleteFile(publicId, folder).catch(() => false))
-      );
+      await Promise.all(oldPublicIds.filter(Boolean).map(id => deleteFile(id, folder).catch(() => false)));
     }
-
-    // Upload new files
     if (Array.isArray(newFiles) && newFiles.length > 0) {
-      const results = await uploadManyFilesToCloudinary(newFiles, folder);
-      return results;
+      return await uploadManyFilesToCloudinary(newFiles, folder);
     }
-
     return [];
   } catch (error) {
     return [];
   }
 }
 
-// Normalize publicId: if it's a full URL (e.g. https://gateway.storjshare.io/post/key.mp4), extract the key only.
-// S3 Key must be the object key, not a full URL.
+// -----------------------------
+// normalizeS3Key
+// -----------------------------
 function normalizeS3Key(publicId) {
   if (!publicId || typeof publicId !== 'string') return null;
   const trimmed = publicId.trim();
   if (!trimmed) return null;
-  // Full URL: extract path and take last segment as key
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
     try {
       const u = new URL(trimmed);
       const pathSegments = u.pathname.split('/').filter(Boolean);
       return pathSegments.length > 0 ? pathSegments[pathSegments.length - 1] : null;
-    } catch {
-      return null;
-    }
+    } catch { return null; }
   }
   return trimmed;
 }
 
 // -----------------------------
-// previewFile (get file info)
+// previewFile
 // -----------------------------
 async function previewFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
   const key = normalizeS3Key(publicId);
   if (!key) return null;
-
   const bucket = getBucketName(folder);
-
   try {
-    const params = {
-      Bucket: bucket,
-      Key: key,
-    };
-
-    const response = await s3Client.headObject(params).promise();
+    const response = await s3Client.headObject({ Bucket: bucket, Key: key }).promise();
     return {
       size: response.ContentLength,
       lastModified: response.LastModified,
@@ -416,12 +371,9 @@ async function previewFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
       etag: response.ETag,
     };
   } catch (error) {
-    // Never pass the full error to console (avoids printing stack for S3 NotFound)
     const errMsg = (error && (error.code || error.message || String(error))) || 'Unknown';
     if (error && error.code === 'NotFound') {
-      if (process.env.DEBUG_PREVIEW_FILE) {
-        console.warn(`[previewFile] Not found: ${key}`);
-      }
+      if (process.env.DEBUG_PREVIEW_FILE) console.warn(`[previewFile] Not found: ${key}`);
     } else {
       console.error(`[previewFile] Error getting info for ${key}:`, errMsg);
     }
@@ -430,39 +382,29 @@ async function previewFile(publicId, folder = STORJ_BUCKET_DEFAULT) {
 }
 
 // -----------------------------
-// streamFile (read via SDK and return stream + headers)
+// streamFile
 // -----------------------------
 async function streamFile(publicId, folder = STORJ_BUCKET_DEFAULT, start, end) {
   const key = normalizeS3Key(publicId);
   if (!key) return null;
   const bucket = getBucketName(folder);
   try {
-    const params = {
-      Bucket: bucket,
-      Key: key
-    };
-
-    // Add Range parameter if start/end are provided
+    const params = { Bucket: bucket, Key: key };
     if (typeof start === 'number') {
-      const rangeString = `bytes=${start}-${typeof end === 'number' ? end : ''}`;
-      params.Range = rangeString;
+      params.Range = `bytes=${start}-${typeof end === 'number' ? end : ''}`;
     }
-
     const response = await s3Client.getObject(params).promise();
-
-    // AWS SDK v2 returns Body as Buffer, we need to create a readable stream
     const { Readable } = require('stream');
     const stream = new Readable();
     stream.push(response.Body);
-    stream.push(null); // End the stream
-
+    stream.push(null);
     return {
-      body: stream, // Readable stream
+      body: stream,
       contentType: response.ContentType || 'application/octet-stream',
       contentLength: response.ContentLength,
       lastModified: response.LastModified,
       etag: response.ETag,
-      contentRange: response.ContentRange, // Important for 206 responses
+      contentRange: response.ContentRange,
       acceptRanges: response.AcceptRanges,
     };
   } catch (error) {
@@ -471,27 +413,16 @@ async function streamFile(publicId, folder = STORJ_BUCKET_DEFAULT, start, end) {
 }
 
 // -----------------------------
-// getSignedViewUrl (temporary public URL)
+// getSignedViewUrl (public export)
 // -----------------------------
-function getSignedViewUrl(publicId, folder = STORJ_BUCKET_DEFAULT, expiresSeconds = 600) {
+function getSignedViewUrl(publicId, folder = STORJ_BUCKET_DEFAULT, expiresSeconds = SIGNED_URL_EXPIRES_SECONDS) {
   const bucket = getBucketName(folder);
   if (!publicId) return '';
-  try {
-    const url = s3Client.getSignedUrl('getObject', {
-      Bucket: bucket,
-      Key: publicId,
-      Expires: Math.max(60, Math.min(7 * 24 * 3600, Number(expiresSeconds) || 600)),
-    });
-    return url;
-  } catch (error) {
-    const errStr = (error && (error.code || error.message || String(error))) || 'Unknown';
-    console.error('[getSignedViewUrl] Error:', errStr);
-    return '';
-  }
+  return getSignedUrl(bucket, publicId, expiresSeconds);
 }
 
 // -----------------------------
-// Export functions (maintaining compatibility with existing code)
+// Exports
 // -----------------------------
 module.exports = {
   uploadSingleFileToCloudinary,
