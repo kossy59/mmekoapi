@@ -128,6 +128,16 @@ const markertdata = new Scheme(
       enum: ["none", "pending", "accepted", "rejected"],
       default: "none",
     },
+    fan_verified: {
+  type: Boolean,
+  required: false,
+  default: false,
+},
+fan_application_status: {
+  type: String,
+  enum: ["none", "pending", "accepted", "rejected"],
+  default: "none",
+},
     // Creator_Application: { type: Boolean, required: false, default: false },
     creator_portfolio_id: {
       type: String,

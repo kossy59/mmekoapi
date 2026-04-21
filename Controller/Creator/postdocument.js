@@ -59,8 +59,15 @@ const createCreator = async (req, res) => {
   }
 
   // Upload files to Cloudinary
-  let results = await uploadManyFilesToCloudinary(req.files, `creator-application`);
-  console.log("results from cloudinary: ", results);
+let results = await uploadManyFilesToCloudinary(req.files, `creator-application`);
+
+// ✅ Guard — don't save if uploads failed
+if (!results || results.length < 2 || !results[0].file_link || !results[1].file_link) {
+  return res.status(400).json({
+    ok: false,
+    message: "File upload failed. Please try again.",
+  });
+}  console.log("results from cloudinary: ", results);
 
   let holdingIdPhotofile = {};
   let idPhotofile = {};

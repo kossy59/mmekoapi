@@ -46,7 +46,8 @@ function initializeScheduledTasks() {
 
     // ── ADD THIS BLOCK ─────────────────────────────────────────────────────────
     // Mark expired creator rituals every hour
-    // After 24h: removed from /anya feed, visible only on creator's profile
+   // After 30 days: removed from /anya feed, visible only on creator's profile
+
     cron.schedule('0 * * * *', async () => {
         console.log('⏰ Running mark expired creator rituals...');
         try {

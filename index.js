@@ -79,6 +79,8 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(cookieParser());
+app.use("/verifyfan", require("./routes/api/creator/verifyfan"));
+app.use("/rejectfan", require("./routes/api/creator/rejectfan"));
 
 // Log requests for debugging
 app.use((req, res, next) => {

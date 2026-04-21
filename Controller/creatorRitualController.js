@@ -86,7 +86,8 @@ const uploadRitual = async (req, res) => {
         }
 
         const now = new Date();
-        const expiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // +24h
+       const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // +30 days
+
 
         const ritual = new CreatorRitual({
             userId,
