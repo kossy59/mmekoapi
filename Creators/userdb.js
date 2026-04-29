@@ -135,7 +135,7 @@ const markertdata = new Scheme(
 },
 fan_application_status: {
   type: String,
-  enum: ["none", "pending", "accepted", "rejected"],
+  enum: ["none", "pending", "accepted", "rejected", "approved", "declined"],
   default: "none",
 },
     // Creator_Application: { type: Boolean, required: false, default: false },
