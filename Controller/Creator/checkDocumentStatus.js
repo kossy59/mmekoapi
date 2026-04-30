@@ -3,26 +3,49 @@ const userdb = require("../../Creators/userdb");
 
 const checkDocumentStatus = async (req, res) => {
   const userid = req.params.userid;
+  const type = req.query.type; // "fan" or "creator"
+
+  if (!userid) {
+    return res.status(400).json({ ok: false, message: "User ID is required" });
+  }
 
   try {
-    const user = await userdb.findById(userid).exec();
-    console.log("🔍 user found:", user?.fan_application_status, user?.fan_verified); // ADD THIS
+    if (type === "fan") {
+      // Check fan_application_status on the user record
+      const user = await userdb.findById(userid).exec();
+      if (!user) return res.status(200).json({ status: "none" });
 
-    if (user?.fan_application_status === "accepted") {
-      console.log("✅ returning approved");  // ADD THIS
-      return res.status(200).json({ status: "approved" });
-    }
-    if (user?.fan_application_status === "rejected") {
-      return res.status(200).json({ status: "rejected" });
-    }
+      const fanStatus = user.fan_application_status || "none";
+      const statusMap = {
+        none:     "none",
+        pending:  "pending",
+        accepted: "approved",
+        approved: "approved",
+        rejected: "rejected",
+        declined: "rejected",
+      };
+      return res.status(200).json({ status: statusMap[fanStatus] || "none" });
 
-    // ✅ If no status yet, check if a document exists (= pending)
-    const doc = await documentdb.findOne({ userid }).exec();
-    if (doc) {
-      return res.status(200).json({ status: "pending" });
-    }
+    } else {
+      // Creator: check only docs where fan_submission is NOT true
+      const doc = await documentdb.findOne({ userid, fan_submission: { $ne: true } }).exec();
+      if (doc) {
+        return res.status(200).json({ status: "pending" });
+      }
 
-    return res.status(200).json({ status: "none" });
+      const user = await userdb.findById(userid).exec();
+      if (user && user.Creator_Application_status) {
+        const statusMap = {
+          none:     "none",
+          pending:  "pending",
+          accepted: "approved",
+          rejected: "rejected",
+        };
+        return res.status(200).json({ status: statusMap[user.Creator_Application_status] || "none" });
+      }
+
+      return res.status(200).json({ status: "none" });
+    }
   } catch (err) {
     return res.status(500).json({ ok: false, message: `${err.message}!` });
   }
