@@ -111,6 +111,8 @@ const handleLogin = async (req, res) => {
           creator_portfolio: user.creator_portfolio,
           creator_portfolio_id: user.creator_portfolio_id,
           Creator_Application_status: user.Creator_Application_status,
+          fan_verified: user.fan_verified || false,
+fan_application_status: user.fan_application_status || "none",
           followers: user.followers,
           following: user.following,
           isVip: user.isVip,

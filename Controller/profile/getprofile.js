@@ -94,7 +94,7 @@ const readProfile = async (req, res) => {
     dues.emailnot = emailnot;
     dues.pushnot = pushnot;
     dues.hosttype = "Fan meet"; // Default host type
-    
+    dues.fan_verified = du.fan_verified || false;
     if (creatorava) {
       // let images = creatorava.creatorfiles.split(",")
       if (creatorava.creatorfiles.length > 0) {
